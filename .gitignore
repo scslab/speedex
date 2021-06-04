@@ -1,0 +1,15 @@
+aclocal.m4
+autom4te.cache/
+missing
+configure
+install-sh
+config.h.in
+config.h
+Makefile.in
+Makefile
+config.log
+config.status
+stamp-h1
+*.so
+build/
+
