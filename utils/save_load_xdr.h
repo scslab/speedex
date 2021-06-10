@@ -1,6 +1,9 @@
 #pragma once
 
-//! \file Utilities for saving and loading xdr objects to disk
+/*! \file save_load_xdr.h
+
+Utilities for saving and loading xdr objects to disk 
+*/
 
 #include "utils/cleanup.h"
 
@@ -9,8 +12,8 @@
 
 namespace speedex {
 
-/*! \fn load xdr obj from disk, using \a buffer to serialize xdr object.
-
+/*! Load an xdr object from disk, 
+    reading the disk into \a buffer and deserializing from this buffer.
 */
 template<typename xdr_type>
 int __attribute__((warn_unused_result)) 
@@ -48,8 +51,8 @@ load_xdr_from_file_fast(
  	return 0;
 }
 
-/*! \fn load xdr from disk, dynamically allocating buffer for deserialization
-  Can be somewhat slower than \fn load_xdr_from_file_fast, but easier to use.
+/*! Load an xdr object from disk, dynamically allocating buffer for deserialization
+  Can be somewhat slower than  load_xdr_from_file_fast(), but easier to use.
 */
 template<typename xdr_type>
 int __attribute__((warn_unused_result)) 
@@ -112,7 +115,7 @@ preallocate_file(const char* filename, size_t size = 0) {
 }
 
 /*! Save xdr object to disk.
-    Slower than \fn save_xdr_to_file_fast because it 
+    Slower than save_xdr_to_file_fast() because it 
     of serialization buffer allocation, but easier
     to use.
 */

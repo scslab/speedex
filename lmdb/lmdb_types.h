@@ -1,5 +1,11 @@
 #pragma once
 
+/*! \file lmdb_types.h
+
+  Convenience wrappers around lmdb data structures. 
+
+*/
+
 #include <cstdint>
 #include <cstring>
 #include <optional>
@@ -16,6 +22,7 @@
 
 namespace speedex {
 
+//! lmdb error type
 class dberror : public std::runtime_error {
   static std::string mkWhat(int code, const char *msg);
 public:
