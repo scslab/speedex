@@ -13,7 +13,7 @@
 %from header_summary_includes cimport *
 #endif
 
-namespace edce
+namespace speedex
 {
 
 struct HeaderSummary {
@@ -27,4 +27,4 @@ struct ExperimentSummary {
 	HeaderSummary headers<>;
 };
 
-} /* edce */
+} /* speedex */

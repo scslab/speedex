@@ -23,9 +23,16 @@ XH_FILES = $(X_FILES:.x=.h)
 LMDB_SRCS = lmdb/lmdb_types.cc \
 	lmdb/lmdb_wrapper.cc
 
+MEMORY_DATABASE_SRCS = memory_database/memory_database.cc \
+	memory_database/memory_database_view.cc \ 
+	memory_database/user_account.cc
+
 UTILS_SRCS = utils/cleanup.cc
 
+
+
 SRCS = $(LMDB_SRCS) \
+	$(MEMORY_DATABASE_SRCS) \
 	$(UTILS_SRCS)
 
 MAIN_CCS = main/simple.cc

@@ -19,7 +19,7 @@
 
 
 
-namespace edce {
+namespace speedex {
 	
 const MAX_NUMBER_DISTINCT_ASSETS = 256;
 
@@ -50,4 +50,4 @@ struct AccountModificationTxList {
 typedef AccountModificationTxList AccountModificationBlock<>;
 
 
-}
+} /* speedex */

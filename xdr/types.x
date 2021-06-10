@@ -9,7 +9,7 @@
 #endif
 
 
-namespace edce
+namespace speedex
 {
 
 typedef unsigned int uint32;

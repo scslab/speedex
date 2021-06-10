@@ -13,7 +13,7 @@
 %from iblt_wire_includes cimport *
 #endif
 
-namespace edce {
+namespace speedex {
 
 struct IBLTWireFormat {
 	opaque rawData<>;

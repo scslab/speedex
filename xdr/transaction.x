@@ -14,7 +14,7 @@
 %from transaction_includes cimport *
 #endif
 
-namespace edce
+namespace speedex
 {
 
 enum TransactionProcessingStatus {

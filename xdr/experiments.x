@@ -21,7 +21,7 @@
 #endif
 
 
-namespace edce {
+namespace speedex {
 
 struct ExperimentParameters {
 	int tax_rate;
@@ -37,20 +37,6 @@ typedef AccountID AccountIDList<>;
 
 
 typedef SignedTransaction ExperimentBlock<>;
-
-
-//struct ExperimentBlock {
-//	Transaction txs<>;
-//};
-
-/*struct Experiment {
-	int tax_rate;
-	int smooth_mult;
-	int num_assets;
-	int num_accounts;
-	int persistence_frequency;
-	ExperimentBlock blocks<>;
-};*/
 
 struct TxProcessingMeasurements {
 	float process_time;
@@ -145,4 +131,4 @@ struct ExperimentConfig {
 
 typedef ExperimentConfig ExperimentConfigList<>;
 
-}
+} /* speedex */

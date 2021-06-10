@@ -25,7 +25,7 @@
 #endif
 
 
-namespace edce {
+namespace speedex {
 	
 program BlockTransfer{
 	version BlockTransferV1 {
@@ -58,4 +58,4 @@ program ExperimentControl {
 	} = 1;
 } = 0x11111113;
 
-}
+} /* speedex */

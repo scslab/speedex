@@ -12,7 +12,7 @@
 %from types_xdr cimport *
 %from trie_proof_includes cimport *
 #endif
-namespace edce {
+namespace speedex {
 	
 	struct ProofNode {
 		opaque prefix_length_and_bv[4];

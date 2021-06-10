@@ -13,7 +13,7 @@
 %from cryptocoin_experiment_includes cimport *
 #endif
 
-namespace edce
+namespace speedex
 {
 
 struct DateSnapshot {
@@ -39,4 +39,4 @@ struct GeneratedExperimentVolumeData {
 };
 
 
-} /* edce */
+} /* speedex */

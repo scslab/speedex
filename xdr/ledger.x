@@ -14,7 +14,7 @@
 %from transaction_xdr cimport *
 %from ledger_includes cimport *
 #endif
-namespace edce {
+namespace speedex {
 	
 struct TransactionSet {
 	Transaction txs<>;

@@ -32,10 +32,9 @@ void LMDBInstance::create_db(const char* name) {
   wtx.commit();
 
   persisted_round_number = 0;
-  commitment_state = LMDBCommitmentState::BLOCK_END;
 }
 
-void LMDBInstance::commit_wtxn(dbenv::wtxn& txn, uint64_t persisted_round, bool do_sync, LMDBCommitmentState state) {
+void LMDBInstance::commit_wtxn(dbenv::wtxn& txn, uint64_t persisted_round, bool do_sync) {
 
   if (persisted_round < persisted_round_number) {
     throw std::runtime_error("can't overwrite later round with earlier round");
@@ -49,7 +48,6 @@ void LMDBInstance::commit_wtxn(dbenv::wtxn& txn, uint64_t persisted_round, bool 
 
   //careful if moving db to a different endian machine
   txn.put(metadata_dbi, dbval("persisted block"), dbval(&persisted_round, sizeof(uint64_t)));
-  txn.put(metadata_dbi, dbval("persisted state"), dbval(&state, 1));
   txn.commit();
 
   if (do_sync) { 

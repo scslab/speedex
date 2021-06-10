@@ -16,7 +16,7 @@
 %from block_includes cimport *
 #endif
 
-namespace edce {
+namespace speedex {
 
 const MAX_TRANSACTIONS_PER_BLOCK = 1000000;
 const MAX_NUM_ASSETS = 1000;
@@ -34,43 +34,6 @@ typedef SignedTransaction SignedTransactionList<MAX_TRANSACTIONS_PER_BLOCK>;
 
 // payload is SignedTransactionList
 typedef opaque SerializedBlock<>;
-
-//struct PartialMiniblock {
-//	union switch(bool exists) {
-//		case 0:
-//			SignedTransaction transaction;
-//		default:
-//			void;
-//	} transactions<TRANSACTIONS_PER_MINIBLOCK>;
-//	SignedTransaction transactions<TRANSACTIONS_PER_MINIBLOCK>;
-//	uint32 missingSlots<TRANSACTIONS_PER_MINIBLOCK>;
-//	Hash transactionHash;
-//	uint64 creator;
-//	Signature sig;
-//};
-
-//struct TransactionMiniblock {
-//	union switch(bool parsed) {
-//		case TRUE:
-//			SignedTransaction transactions<TRANSACTIONS_PER_MINIBLOCK>;
-//		case FALSE:
-//			opaque data<>;
-//	} body;
-//	Hash transactionHash;
-//	uint64 creator;
-//	Signature sig;
-//};
-
-//struct MiniblockSelector {
-//	uint64 creator;
-//	Hash transactionHash;
-//	opaque inclusionBits<MINIBLOCK_SELECTOR_BYTES>;
-//};
-//
-//struct BlockSpecification {
-//	MiniblockSelector selections<>;
-//};
-
 
 const OFFER_KEY_LEN_BYTES = 22; // MerkleWorkUnit::WORKUNIT_KEY_LEN; 
 
@@ -94,8 +57,6 @@ struct InternalHashes {
 	Hash modificationLogHash;
 	Hash blockMapHash;
 };
-
-//typedef opaque PriceBuffer[6];
 
 struct Block {
 	Hash prevBlockHash;
@@ -220,4 +181,4 @@ struct BlockValidationMeasurements {
 };
 
 
-}
+} /* speedex */
