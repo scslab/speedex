@@ -70,5 +70,9 @@ xdrpy_module: $(XDRC) $(PYX_FILES) $(PXD_FILES) $(PXD_INCLUDE_FILES) $(X_FILES:.
 
 all-local: xdrpy_module $(SRCS:.cc=.o)
 
+.PHONY: doc
+doc:
+	doxygen Doxyfile
+
 
 
