@@ -12,4 +12,9 @@ config.status
 stamp-h1
 *.so
 build/
+*.o
+doc/
+*.deps
+*.dirstamp
+depcomp
 

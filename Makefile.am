@@ -17,6 +17,30 @@ X_FILES = xdr/types.x \
 	xdr/experiments.x
 
 XH_FILES = $(X_FILES:.x=.h)
+
+#main srcs
+
+LMDB_SRCS = lmdb/lmdb_types.cc \
+	lmdb/lmdb_wrapper.cc
+
+UTILS_SRCS = utils/cleanup.cc
+
+SRCS = $(LMDB_SRCS) \
+	$(UTILS_SRCS)
+
+MAIN_CCS = main/simple.cc
+
+AM_CPPFLAGS = $(libcrypto_CFLAGS) $(gsl_CFLAGS) $(xdrpp_CFLAGS) $(libsodium_CFLAGS) $(LIBFYAML_CFLAGS) $(lmdb_CFLAGS)
+LDADD = $(libcrypto_LIBS) $(gsl_LIBS) $(xdrpp_LIBS) -ltbb -lglpk $(libsodium_LIBS) $(LIBFYAML_LIBS) $(lmdb_LIBS)
+
+$(SRCS:.cc=.o) : $(XH_FILES)
+$(MAIN_CCS:.cc=.o) : $(XH_FILES)
+
+bin_PROGRAMS = simple
+
+simple_SOURCES = $(SRCS) main/simple.cc
+
+#building x files
 $(XH_FILES) : $(XDRC)
 
 SUFFIXES = .x .h
@@ -44,4 +68,7 @@ clean-local:
 xdrpy_module: $(XDRC) $(PYX_FILES) $(PXD_FILES) $(PXD_INCLUDE_FILES) $(X_FILES:.x=.h)
 	python3 setup.py build_ext --inplace --makeflags="$(MAKEFLAGS)" --pyx_files="$(PYX_FILES)"
 
-all-local: xdrpy_module
+all-local: xdrpy_module $(SRCS:.cc=.o)
+
+
+
