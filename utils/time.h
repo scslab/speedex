@@ -1,5 +1,7 @@
 #pragma once
 
+#include <chrono>
+
 /*!  \file Minor utility functions for measuring time */
 
 namespace speedex {

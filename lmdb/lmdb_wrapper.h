@@ -23,7 +23,8 @@ namespace speedex {
     Beyond dbenv, tracks persisted round number and MDB_dbi for object data and metadata
     databases.
 */
-class LMDBInstance {
+struct LMDBInstance {
+
   dbenv env;
   MDB_dbi dbi;
   bool env_open;
@@ -32,8 +33,6 @@ class LMDBInstance {
 
   uint64_t persisted_round_number; // state up to and including persisted_round_number has been persisted.
   //Starts at 0 - means that we can't have a block number 0, except as a base/bot instance
-
-public:
 
   const uint64_t& get_persisted_round_number() const {
     return persisted_round_number;

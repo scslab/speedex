@@ -30,8 +30,10 @@ Modifications to accounts are not threadsafe with commit/rollback.
 */
 class UserAccount {
 
-	static_assert(MAX_OPS_PER_TX == RESERVED_SEQUENCE_NUM_LOWBITS + 1, "ops mismatch");
-	static_assert(__builtin_popcount(MAX_OPS_PER_TX) == 1, "should be power of two");
+	static_assert(
+		MAX_OPS_PER_TX == RESERVED_SEQUENCE_NUM_LOWBITS + 1, "ops mismatch");
+	static_assert(
+		__builtin_popcount(MAX_OPS_PER_TX) == 1, "should be power of two");
 
 	using amount_t = typename RevertableAsset::amount_t;
 
@@ -46,6 +48,9 @@ class UserAccount {
 
 	uint64_t last_committed_id;
 
+	/*! Apply some function to an asset.  Acquires a lock on uncommittted_assets
+	    if the current account does not own the asset in question.
+	*/
 	template<typename return_type>
 	return_type operate_on_asset(
 		unsigned int asset, 
@@ -62,23 +67,11 @@ class UserAccount {
 		return func(owned_assets[asset], amount);
 	}
 
-	void operate_on_asset(unsigned int asset, amount_t amount, void (*func)(RevertableAsset&, const amount_t&)) {
-		unsigned int owned_assets_size = owned_assets.size();
-		if (asset >= owned_assets_size) {
-			std::lock_guard lock(uncommitted_assets_mtx);
-			while (asset >= owned_assets_size + uncommitted_assets.size()) {
-				uncommitted_assets.emplace_back();
-			}
-			func(uncommitted_assets[asset - owned_assets_size], amount);
-			return;
-		}
-		func(owned_assets[asset], amount);
-	}
-
 	AccountID owner;
 	PublicKey pk;
 
-	static_assert(sizeof(pk) == crypto_sign_PUBLICKEYBYTES, "pk size should be pkbytes");
+	static_assert(
+		sizeof(pk) == crypto_sign_PUBLICKEYBYTES, "pk size should be pkbytes");
 
 public:
 
@@ -95,7 +88,8 @@ public:
 		owned_assets(std::move(other.owned_assets)),
 		uncommitted_assets(std::move(other.uncommitted_assets)),
 
-		sequence_number_vec(other.sequence_number_vec.load(std::memory_order_acquire)),
+		sequence_number_vec(
+			other.sequence_number_vec.load(std::memory_order_acquire)),
 
 		last_committed_id(other.last_committed_id),
 
@@ -108,7 +102,8 @@ public:
 	UserAccount& operator=(UserAccount&& other) {
 		owned_assets = std::move(other.owned_assets);
 		uncommitted_assets = std::move(other.uncommitted_assets);
-		sequence_number_vec = other.sequence_number_vec.load(std::memory_order_acquire);
+		sequence_number_vec 
+			= other.sequence_number_vec.load(std::memory_order_acquire);
 		last_committed_id = other.last_committed_id;
 		owner = other.owner;
 		pk = other.pk;
@@ -126,12 +121,14 @@ public:
 
 			for (unsigned int i = 0; i < commitment.assets.size(); i++) {
 				if (commitment.assets[i].asset < owned_assets.size()) {
-					throw std::runtime_error("assets in commitment should be sorted");
+					throw std::runtime_error(
+						"assets in commitment should be sorted");
 				}
 				while (owned_assets.size() < commitment.assets[i].asset) {
 					owned_assets.emplace_back(0);
 				}
-				owned_assets.emplace_back(commitment.assets[i].amount_available);
+				owned_assets.emplace_back(
+					commitment.assets[i].amount_available);
 			}
 		}
 
@@ -145,29 +142,58 @@ public:
 	}
 
 	void transfer_available(unsigned int asset, amount_t amount) {
-		operate_on_asset(asset, amount, [] (RevertableAsset& asset, const amount_t& amount) {asset.transfer_available(amount);});
+		operate_on_asset<void>(
+			asset,
+			amount, 
+			[] (RevertableAsset& asset, const amount_t& amount) {
+				asset.transfer_available(amount);
+			});
 	}
 
 	void transfer_escrow(unsigned int asset, amount_t amount) {
-		operate_on_asset(asset, amount, [] (RevertableAsset& asset, const amount_t& amount) {asset.transfer_escrow(amount);});
+		operate_on_asset<void>(
+			asset, 
+			amount, 
+			[] (RevertableAsset& asset, const amount_t& amount) {
+				asset.transfer_escrow(amount);
+			});
 	}
 
 	void escrow(unsigned int asset, amount_t amount) {
-		operate_on_asset(asset, amount, [] (RevertableAsset& asset, const amount_t& amount) {asset.escrow(amount);});
+		operate_on_asset<void>(asset, 
+			amount, 
+			[] (RevertableAsset& asset, const amount_t& amount) {
+				asset.escrow(amount);
+			});
 	}
 
 	bool conditional_transfer_available(unsigned int asset, amount_t amount) {
-		return operate_on_asset<bool>(asset, amount, [] (RevertableAsset& asset, const amount_t& amount) {return asset.conditional_transfer_available(amount);});
+		return operate_on_asset<bool>(
+			asset, 
+			amount, 
+			[] (RevertableAsset& asset, const amount_t& amount) {
+				return asset.conditional_transfer_available(amount);
+			});
 	}
 
 	bool conditional_escrow(unsigned int asset, amount_t amount) {
-		return operate_on_asset<bool>(asset, amount, [] (RevertableAsset& asset, const amount_t& amount) {return asset.conditional_escrow(amount);});
+		return operate_on_asset<bool>(
+			asset, 
+			amount, 
+			[] (RevertableAsset& asset, const amount_t& amount) {
+				return asset.conditional_escrow(amount);
+			});
 	}
 
 	amount_t lookup_available_balance(unsigned int asset) {
 		[[maybe_unused]]
 		amount_t unused = 0;
-		return operate_on_asset<amount_t>(asset, unused, [] (RevertableAsset& asset, [[maybe_unused]] const amount_t& amount) {return asset.lookup_available_balance();});
+		return operate_on_asset<amount_t>(
+			asset, 
+			unused, 
+			[] (RevertableAsset& asset, [[maybe_unused]] const amount_t& _) {
+				return asset.lookup_available_balance();
+			});
 	}
 
 	//! Reserves a sequence number on this account
@@ -194,7 +220,8 @@ public:
 	
 	void log() {
 		for (unsigned int i = 0; i < owned_assets.size(); i++) {
-			std::printf ("%u=%ld ", i, owned_assets[i].lookup_available_balance());
+			std::printf (
+				"%u=%ld ", i, owned_assets[i].lookup_available_balance());
 		}
 		std::printf("\n");
 	}

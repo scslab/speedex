@@ -27,15 +27,20 @@ MEMORY_DATABASE_SRCS = memory_database/memory_database.cc \
 	memory_database/memory_database_view.cc \ 
 	memory_database/user_account.cc
 
-UTILS_SRCS = utils/cleanup.cc
+MODLOG_SRCS = modlog/account_modification_log.cc \
+	modlog/file_prealloc_worker.cc \
+	modlog/log_entry_fns.cc
 
-
+UTILS_SRCS = utils/cleanup.cc \
+	utils/header_persistence.cc
 
 SRCS = $(LMDB_SRCS) \
 	$(MEMORY_DATABASE_SRCS) \
+	$(MODLOG_SRCS) \
 	$(UTILS_SRCS)
 
-MAIN_CCS = main/simple.cc
+MAIN_CCS = main/simple.cc \
+	main/trie_comparison.cc
 
 AM_CPPFLAGS = $(libcrypto_CFLAGS) $(gsl_CFLAGS) $(xdrpp_CFLAGS) $(libsodium_CFLAGS) $(LIBFYAML_CFLAGS) $(lmdb_CFLAGS)
 LDADD = $(libcrypto_LIBS) $(gsl_LIBS) $(xdrpp_LIBS) -ltbb -lglpk $(libsodium_LIBS) $(LIBFYAML_LIBS) $(lmdb_LIBS)
@@ -43,9 +48,10 @@ LDADD = $(libcrypto_LIBS) $(gsl_LIBS) $(xdrpp_LIBS) -ltbb -lglpk $(libsodium_LIB
 $(SRCS:.cc=.o) : $(XH_FILES)
 $(MAIN_CCS:.cc=.o) : $(XH_FILES)
 
-bin_PROGRAMS = simple
+bin_PROGRAMS = simple trie_comparison
 
 simple_SOURCES = $(SRCS) main/simple.cc
+trie_comparison_SOURCES = $(SRCS) main/trie_comparison.cc
 
 #building x files
 $(XH_FILES) : $(XDRC)

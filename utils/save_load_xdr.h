@@ -5,7 +5,13 @@
 Utilities for saving and loading xdr objects to disk 
 */
 
+#include <fcntl.h>
+#include <sys/stat.h>
+
+#include <xdrpp/marshal.h>
+
 #include "utils/cleanup.h"
+#include "utils/time.h"
 
 #include "xdr/database_commitments.h"
 
@@ -128,8 +134,6 @@ save_xdr_to_file(const xdr_type& value, const char* filename) {
 	if (f == nullptr) {
 		return -1;
 	}
-
-	auto timestamp = init_time_measurement();
 
 	auto buf = xdr::xdr_to_opaque(value);
 
@@ -335,7 +339,7 @@ save_account_block_fast(
 
 	auto res2 = lseek(fd.get(), 0, SEEK_SET);
 	if (res2 != 0) {
-		threrror("lseek")
+		threrror("lseek");
 	}
 
 	p.put32(aligned_first_reinterpreted, xdr::size32(num_written));

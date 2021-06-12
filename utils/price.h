@@ -87,12 +87,12 @@ bool is_valid_price(const Price& price) {
 }
 
 template<size_t ARRAY_LEN>
-static Price read_price_big_endian(const std::array<unsigned char, ARRAY_LEN>& buf) {
+Price read_price_big_endian(const std::array<unsigned char, ARRAY_LEN>& buf) {
 	static_assert(ARRAY_LEN >= PRICE_BYTES, "not enough bytes to read price");
 	return read_price_big_endian(buf.data());
 }
 
-static Price read_price_big_endian(const unsigned char* buf) {
+Price read_price_big_endian(const unsigned char* buf) {
 	Price p = 0;
 	for (uint8_t loc = 0; loc < PRICE_BYTES; loc++) {
 		p <<=8;
@@ -124,19 +124,19 @@ double tax_to_double(const uint8_t tax_rate) {
 
 
 //! subtract 1/2^smooth_mult
-static Price smooth_mult(const Price& price, const uint8_t smooth_mult) {
+Price smooth_mult(const Price& price, const uint8_t smooth_mult) {
 	return (price - (price>>smooth_mult));
 }
 
-static bool a_over_b_leq_c(const Price& a, const Price& b, const Price& c) {
+bool a_over_b_leq_c(const Price& a, const Price& b, const Price& c) {
 	return (((uint128_t)a)<<PRICE_RADIX) <= ((uint128_t) b) * ((uint128_t) c);
 }
 
-static bool a_over_b_lt_c(const Price& a, const Price& b, const Price &c) {
+bool a_over_b_lt_c(const Price& a, const Price& b, const Price &c) {
 	return (((uint128_t)a)<<PRICE_RADIX) < ((uint128_t) b) * ((uint128_t) c);
 }
 
-static uint128_t wide_multiply_val_by_a_over_b(const uint128_t value, const Price& a, const Price& b) {
+uint128_t wide_multiply_val_by_a_over_b(const uint128_t value, const Price& a, const Price& b) {
 	uint128_t denom = b;
 	uint128_t numer = a;
 	uint128_t modulo = (value/denom) * numer;
@@ -145,7 +145,7 @@ static uint128_t wide_multiply_val_by_a_over_b(const uint128_t value, const Pric
 }
 
 //it's not 100% accurate - there's some carries that get lost, but ah well.
-static Price 
+Price 
 safe_multiply_and_drop_lowbits(const uint128_t& first, const uint128_t& second, const uint64_t& lowbits_to_drop) {
 
 	if (lowbits_to_drop < 64 || lowbits_to_drop > 196) {
@@ -185,16 +185,16 @@ safe_multiply_and_drop_lowbits(const uint128_t& first, const uint128_t& second, 
 
 		out += (high_high << (used_lowbits));
 
-		if (out > PRICE_MAX) {
-			out = PRICE_MAX;
+		if (out > MAX_PRICE) {
+			out = MAX_PRICE;
 		}
 	} else {
 		uint64_t highbits_offset = lowbits_to_drop - 128;
 
 		out += (high_high >> highbits_offset);
 
-		if (out > PRICE_MAX) {
-			out = PRICE_MAX;
+		if (out > MAX_PRICE) {
+			out = MAX_PRICE;
 		}
 
 	}

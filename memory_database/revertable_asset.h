@@ -83,7 +83,7 @@ public:
 
 	//Another approach would be to subtract, see if the original value you subtracted
 	// from is actually high enough, and apologize if not (undo).
-	//THis creates the option to make txs that shouldn't fail fail, though.
+	//This creates the option to make txs that shouldn't fail fail, though.
 	//Unclear which causes less contention.
 
 	bool conditional_transfer_available(const amount_t& amount) {

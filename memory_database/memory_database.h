@@ -9,24 +9,28 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
 #include <xdrpp/marshal.h>
 
-#include "user_account.h"
+#include "memory_database/background_thunk_clearer.h"
+#include "memory_database/typedefs.h"
+#include "memory_database/user_account.h"
+
+#include "trie/merkle_trie.h"
+#include "trie/prefix.h"
+
+#include "utils/big_endian.h"
+
+#include "xdr/database_commitments.h"
 #include "xdr/types.h"
 #include "xdr/transaction.h"
-#include "database_types.h"
-#include "merkle_trie.h"
-#include "merkle_trie_utils.h"
-#include "xdr/database_commitments.h"
 
-#include "lmdb_wrapper.h"
-#include "utils.h"
+#include "lmdb/lmdb_wrapper.h"
+#include "utils/time.h"
 
+#include "config.h"
+#include "modlog/account_modification_log.h"		
 
-#include "../config.h"
-#include "account_modification_log.h"		
-
-#include "memory_database/memory_database_auxiliary.h"
 
 /*
 Transaction processing should be stopped before running commit/rollback/check_valid_state/produce_commitment.
@@ -67,26 +71,116 @@ If fail
 - rollback_produce_state_commitment(); in this order
 */
 
+namespace speedex {
+
+class MemoryDatabase;
+
+struct AccountLMDB : public LMDBInstance {
+
+	constexpr static auto DB_NAME = "account_lmdb";
+
+	AccountLMDB() : LMDBInstance() {}
+
+	void open_env() {
+		LMDBInstance::open_env(
+			std::string(ROOT_DB_DIRECTORY) + std::string(ACCOUNT_DB));
+	}
+
+	void create_db() {
+		LMDBInstance::create_db(DB_NAME);
+	}
+
+	void open_db() {
+		LMDBInstance::open_db(DB_NAME);
+	}
+
+	using LMDBInstance::sync;
+};
+
+
+struct ThunkKVPair {
+	AccountID key;
+	xdr::opaque_vec<> msg;
+
+	ThunkKVPair() = default;
+};
+
+struct KVAssignment {
+	ThunkKVPair& kv;
+	const MemoryDatabase& db;
+	void operator=(const AccountID owner);
+};
+
+struct DBPersistenceThunk {
+	using thunk_list_t = std::vector<ThunkKVPair>;
+
+	std::unique_ptr<thunk_list_t> kvs;
+	MemoryDatabase* db;
+	uint64_t current_block_number;
+
+	DBPersistenceThunk(MemoryDatabase& db, uint64_t current_block_number)
+		: kvs(std::make_unique<thunk_list_t>())
+		, db(&db)
+		, current_block_number(current_block_number) {}
+
+	KVAssignment operator[](size_t idx) {
+		if (idx >= kvs->size()) {
+			std::printf("invalid kvs access: %lu (size: %lu)\n", 
+				idx, kvs->size());
+			throw std::runtime_error("invalid kvs access");
+		}
+
+		return KVAssignment{kvs->at(idx), *db};
+	}
+
+	void clear() {
+		kvs.reset();
+	}
+
+	void resize(size_t sz) {
+		kvs->resize(sz);
+	}
+
+	void reserve(size_t sz) {
+		kvs->reserve(sz);
+	}
+	
+	void push_back(const AccountID account) {
+		kvs->emplace_back();
+		KVAssignment{kvs->back(), *db} = account; 
+	}
+
+	size_t size() const {
+		return kvs->size();
+	}
+};
+
+struct AccountCreationThunk {
+	uint64_t current_block_number;
+	uint64_t num_accounts_created;
+};
+
+
 class MemoryDatabase {
 public:
 	constexpr static int TRIE_KEYLEN = sizeof(AccountID);
 
-	using DBEntryT = UserAccount;//std::unique_ptr<UserAccount>;
+	using DBEntryT = UserAccount;
 	using DBMetadataT = CombinedMetadata<SizeMixin>;
 	using DBStateCommitmentValueT = XdrTypeWrapper<AccountCommitment>;
 
-	using DBStateCommitmentTrie = MerkleTrie<TRIE_KEYLEN, DBStateCommitmentValueT, DBMetadataT>;
+	using trie_prefix_t = AccountIDPrefix;
 
-	static inline void write_trie_key(DBStateCommitmentTrie::prefix_t& buf, AccountID account) {
-		PriceUtils::write_unsigned_big_endian(buf, account);
+	using DBStateCommitmentTrie = MerkleTrie<trie_prefix_t, DBStateCommitmentValueT, DBMetadataT>;
+
+
+	static inline void write_trie_key(trie_prefix_t& buf, AccountID account) {
+		buf = trie_prefix_t{account};
 	}
 
 	using index_map_t = std::map<AccountID, account_db_idx>;
 
 private:
-
-	friend class UserAccountWrapper;
-
 
 	index_map_t user_id_to_idx_map;
 	index_map_t uncommitted_idx_map;
@@ -94,8 +188,6 @@ private:
 
 	std::vector<DBEntryT> database;
 	std::vector<DBEntryT> uncommitted_db;
-	//std::vector<
-	//	std::pair<AccountID, UserAccountWrapper>> uncommitted_trie_entries;
 
 	mutable std::shared_mutex committed_mtx;
 	std::shared_mutex uncommitted_mtx;
@@ -106,6 +198,7 @@ private:
 	DBStateCommitmentTrie commitment_trie;
 
 	AccountLMDB account_lmdb_instance;
+	BackgroundThunkClearer<DBPersistenceThunk> background_thunk_clearer;
 
 	std::vector<DBPersistenceThunk> persistence_thunks;
 	std::vector<AccountCreationThunk> account_creation_thunks;
@@ -132,10 +225,7 @@ private:
 	friend class AccountCreationView;
 	friend class UnlimitedMoneyBufferedMemoryDatabaseView;
 
-	//void _rollback(); // rollback without the locks
-
 	void _produce_state_commitment(Hash& hash);
-//	void _produce_state_commitment(Hash& hash, const std::vector<AccountID>& dirty_accounts);
 
 	void rollback_new_accounts_(uint64_t current_block_number);
 
@@ -145,8 +235,6 @@ public:
 	uint64_t get_persisted_round_number() {
 		return account_lmdb_instance.get_persisted_round_number();
 	}
-
-	using FrozenDBStateCommitmentTrie = FrozenMerkleTrie<TRIE_KEYLEN, DBStateCommitmentValueT, DBMetadataT>;
 
 	MemoryDatabase()
 		: user_id_to_idx_map(),
@@ -196,7 +284,6 @@ public:
 	void commit_new_accounts(uint64_t current_block_number);
 	void rollback_new_accounts(uint64_t current_block_number);
 
-	//void produce_state_commitment(Hash& hash, const std::vector<AccountID>& dirty_accounts);
 	void produce_state_commitment(Hash& hash, const AccountModificationLog& log);
 	void produce_state_commitment() {
 		//for init only
@@ -210,16 +297,13 @@ public:
 		_produce_state_commitment(hash);
 	}
 
-	//void tentative_produce_state_commitment(Hash& hash, const std::vector<AccountID>& dirty_accounts);
-	void tentative_produce_state_commitment(Hash& hash, const AccountModificationLog& log);
+	void tentative_produce_state_commitment(
+		Hash& hash, const AccountModificationLog& log);
 
 	void rollback_produce_state_commitment(const AccountModificationLog& log);
 	void finalize_produce_state_commitment();
 	
-	//std::optional<dbenv::wtxn> persist_lmdb(uint64_t current_block_number, AccountModificationLog& log, bool lazy_commit = false);
-	//std::optional<dbenv::wtxn> persist_lmdb(uint64_t current_block_number, const std::vector<AccountID>& dirty_accounts, bool lazy_commit = false);
 	void persist_lmdb(uint64_t current_block_number);
-	//void finish_persist_lmdb(dbenv::wtxn write_txn, uint64_t current_block_number);
 
 	void open_lmdb_env() {
 		account_lmdb_instance.open_env();
@@ -292,4 +376,4 @@ public:
 
 };
 
-}
+} /* speedex */

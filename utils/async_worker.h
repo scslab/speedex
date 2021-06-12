@@ -1,5 +1,10 @@
 #pragma once 
 
+
+/*! \file async_worker.h
+	Asynchronous background worker base class.
+*/
+
 #include <atomic>
 #include <condition_variable>
 #include <cstdint>
@@ -9,15 +14,16 @@
 namespace speedex
 {
 
-/*! \class AsyncWorker 
+/*!
   Generic class for running asynchronous tasks on background threads.
   Extend class to use.
 
   Extensions should ensure that they clean up any threads that they create
   in their destructors.
 */
-
 class AsyncWorker {
+
+protected:
 	mutable std::mutex mtx;
 	std::condition_variable cv;
 	bool done_flag = false;
