@@ -23,7 +23,7 @@ static OfferType map_int_to_type(int type) {
 	return static_cast<OfferType>(-1);
 }
 
-
+[[maybe_unused]]
 static int category_to_idx(const OfferCategory& id, const unsigned int asset_count) {
 
 	if (id.sellAsset >= asset_count || id.buyAsset >= asset_count) {
@@ -38,6 +38,7 @@ static int category_to_idx(const OfferCategory& id, const unsigned int asset_cou
 	return idx_out;
 }
 
+[[maybe_unused]]
 static OfferCategory category_from_idx(const int idx, const int asset_count) {
 	int units_per_order_type = asset_count * (asset_count - 1);
 	OfferType type = map_int_to_type(idx/units_per_order_type);

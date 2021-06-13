@@ -831,7 +831,9 @@ WARN_LOGFILE           =
 # Note: If this tag is empty the current directory is searched.
 
 INPUT                  = header_hash/ \
+                         price_computation \
                          memory_database/ \
+                         modlog \
                          lmdb/ \
                          orderbook/ \
                          trie/ \

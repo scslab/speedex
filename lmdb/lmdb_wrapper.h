@@ -1,5 +1,17 @@
 #pragma once
 
+/*! \file lmdb_wrapper.h
+
+Wrap LMDB in a convenient interface.
+
+Mock stub for this interface lets one
+conditionally send lmdb changes based 
+on the most recent block number reflected
+in the database.  Helpful when
+repairing from a crash (and i.e. some
+lmdbs got persisted and some didn't).
+*/
+
 #include <cstdint>
 #include <cstring>
 #include <optional>
@@ -26,24 +38,29 @@ namespace speedex {
 struct LMDBInstance {
 
   dbenv env;
+  //! Data DBI
   MDB_dbi dbi;
   bool env_open;
 
+  //! Metadata DBI (currently just round number).
   MDB_dbi metadata_dbi;
 
   uint64_t persisted_round_number; // state up to and including persisted_round_number has been persisted.
   //Starts at 0 - means that we can't have a block number 0, except as a base/bot instance
 
-  const uint64_t& get_persisted_round_number() const {
+  //! Get the most recent round number 
+  //! reflected on disk.
+  const uint64_t get_persisted_round_number() const {
     return persisted_round_number;
   }
 
-  LMDBInstance(std::size_t mapsize = 0x1000000000) 
+  LMDBInstance(size_t mapsize = 0x1000000000) 
     : env{mapsize}
     , dbi{0}
     , env_open{false}
     , persisted_round_number(0) {};
 
+  //! Open lmdb environment at a specified path.
   void open_env(const std::string path, unsigned flags = DEFAULT_LMDB_FLAGS, mdb_mode_t mode = 0666) {
     env.open(path.c_str(), flags, mode);
     env_open = true;
