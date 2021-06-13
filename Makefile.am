@@ -4,7 +4,8 @@ SUBDIRS = $(PKGCONFIG_SUBDIRS)
 
 CLEANFILES = *~ .*~
 
-X_FILES = xdr/types.x \
+X_FILES = \
+	xdr/types.x \
 	xdr/transaction.x \
 	xdr/ledger.x \
 	xdr/block.x \
@@ -18,25 +19,36 @@ X_FILES = xdr/types.x \
 
 XH_FILES = $(X_FILES:.x=.h)
 
-#main srcs
+# main srcs
 
-LMDB_SRCS = lmdb/lmdb_types.cc \
+LMDB_SRCS = \
+	lmdb/lmdb_types.cc \
 	lmdb/lmdb_wrapper.cc
 
-MEMORY_DATABASE_SRCS = memory_database/memory_database.cc \
+MEMORY_DATABASE_SRCS = \
+	memory_database/memory_database.cc \
 	memory_database/memory_database_view.cc \ 
 	memory_database/user_account.cc
 
-MODLOG_SRCS = modlog/account_modification_log.cc \
+MODLOG_SRCS = \
+	modlog/account_modification_log.cc \
 	modlog/file_prealloc_worker.cc \
 	modlog/log_entry_fns.cc
 
-UTILS_SRCS = utils/cleanup.cc \
+ORDERBOOK_SRCS = \
+	orderbook/commitment_checker.cc \
+	orderbook/lmdb.cc \
+	orderbook/orderbook.cc
+
+UTILS_SRCS = \
+	utils/cleanup.cc \
 	utils/header_persistence.cc
 
-SRCS = $(LMDB_SRCS) \
+SRCS = \
+	$(LMDB_SRCS) \
 	$(MEMORY_DATABASE_SRCS) \
 	$(MODLOG_SRCS) \
+	$(ORDERBOOK_SRCS) \
 	$(UTILS_SRCS)
 
 MAIN_CCS = main/simple.cc \

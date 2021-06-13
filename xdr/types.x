@@ -58,6 +58,10 @@ struct Offer
 	Price minPrice;
 };
 
+const OFFER_KEY_LEN_BYTES = 22; // Number of bytes in offer key
 
+typedef opaque OfferKeyType[OFFER_KEY_LEN_BYTES];
 
-}
+typedef uint128 FractionalSupply;
+
+} /* speedex */

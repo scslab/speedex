@@ -38,20 +38,23 @@ static_assert(PRICE_RADIX % 4 == 0,
 constexpr static Price PRICE_ONE = ((uint64_t)1)<<PRICE_RADIX;
 
 //! Fixed-point representation of a price to double representation
-double to_double(const Price& price) {
+inline static double 
+to_double(const Price& price) {
 	return (double)price / (double) ((uint64_t)1<<PRICE_RADIX);
 }
 
 //! Double representation of a price to a fixed-point representation
 //! (rounding away the low bits from the double).
-Price from_double(const double price_d) {
+inline static Price 
+from_double(const double price_d) {
 	return (uint64_t)(price_d * (((uint64_t)1)<<PRICE_RADIX));
 }
 
 //! Writes a price (in big endian) to \a buf.
 //! Uses PRICE_BYTES bytes in buf.
 template<typename ArrayType>
-void write_price_big_endian(ArrayType& buf, const Price& price) {
+inline static void 
+write_price_big_endian(ArrayType& buf, const Price& price) {
 
 	for (uint8_t loc = 0; loc < PRICE_BYTES; loc++) {
 		uint8_t offset = ((PRICE_BYTES - loc - 1) * 8);
@@ -61,7 +64,8 @@ void write_price_big_endian(ArrayType& buf, const Price& price) {
 
 //! Writes a price (in big endian) to \a buf.
 //! Overwrites from buf to buf + (PRICE_BYTES -1), inclusive.
-void write_price_big_endian(unsigned char* buf, const Price& price) {
+inline static void 
+write_price_big_endian(unsigned char* buf, const Price& price) {
 	for (uint8_t loc = 0; loc < PRICE_BYTES; loc++) {
 		uint8_t offset = ((PRICE_BYTES - loc - 1) * 8);
 		buf[loc] = (price >> offset) & 0xFF;
@@ -70,7 +74,8 @@ void write_price_big_endian(unsigned char* buf, const Price& price) {
 
 //! Constrains a uint128 value to lie between 1 and MAX_PRICE.
 //! Does not do any radix conversions.
-Price impose_price_bounds(const uint128_t& val) {
+inline static Price 
+impose_price_bounds(const uint128_t& val) {
 	if (val > MAX_PRICE) {
 		return MAX_PRICE;
 	}
@@ -82,17 +87,20 @@ Price impose_price_bounds(const uint128_t& val) {
 
 //! Checks whether the input is within the bounds of a valid
 //! price value.
-bool is_valid_price(const Price& price) {
+inline static bool 
+is_valid_price(const Price& price) {
 	return price <= MAX_PRICE && price != 0;
 }
 
 template<size_t ARRAY_LEN>
-Price read_price_big_endian(const std::array<unsigned char, ARRAY_LEN>& buf) {
+inline static Price 
+read_price_big_endian(const std::array<unsigned char, ARRAY_LEN>& buf) {
 	static_assert(ARRAY_LEN >= PRICE_BYTES, "not enough bytes to read price");
 	return read_price_big_endian(buf.data());
 }
 
-Price read_price_big_endian(const unsigned char* buf) {
+inline static Price 
+read_price_big_endian(const unsigned char* buf) {
 	Price p = 0;
 	for (uint8_t loc = 0; loc < PRICE_BYTES; loc++) {
 		p <<=8;
@@ -102,7 +110,8 @@ Price read_price_big_endian(const unsigned char* buf) {
 }
 
 template<typename ArrayType>
-Price read_price_big_endian(const ArrayType& buf) {
+inline static Price 
+read_price_big_endian(const ArrayType& buf) {
 	Price p = 0;
 	for (uint8_t loc = 0; loc < PRICE_BYTES; loc++) {
 		p <<= 8;
@@ -111,32 +120,38 @@ Price read_price_big_endian(const ArrayType& buf) {
 	return p;
 }
 
-double amount_to_double(const uint128_t& value, unsigned int radix = 0) {
+inline static double 
+amount_to_double(const uint128_t& value, unsigned int radix = 0) {
 	uint64_t top = value >> 64;
 	uint64_t bot = value & UINT64_MAX;
 	return ((((double) top * (((double) (UINT64_MAX)) + 1)) + ((double) bot))) / (double) (((uint128_t)1)<<radix);
 }
 
-double tax_to_double(const uint8_t tax_rate) {
+inline static double 
+tax_to_double(const uint8_t tax_rate) {
 	double tax_d = tax_rate;
 	return (1.0) - std::exp2f(-tax_d);
 }
 
 
 //! subtract 1/2^smooth_mult
-Price smooth_mult(const Price& price, const uint8_t smooth_mult) {
+inline static Price 
+smooth_mult(const Price& price, const uint8_t smooth_mult) {
 	return (price - (price>>smooth_mult));
 }
 
-bool a_over_b_leq_c(const Price& a, const Price& b, const Price& c) {
+inline static bool 
+a_over_b_leq_c(const Price& a, const Price& b, const Price& c) {
 	return (((uint128_t)a)<<PRICE_RADIX) <= ((uint128_t) b) * ((uint128_t) c);
 }
 
-bool a_over_b_lt_c(const Price& a, const Price& b, const Price &c) {
+inline static bool 
+a_over_b_lt_c(const Price& a, const Price& b, const Price &c) {
 	return (((uint128_t)a)<<PRICE_RADIX) < ((uint128_t) b) * ((uint128_t) c);
 }
 
-uint128_t wide_multiply_val_by_a_over_b(const uint128_t value, const Price& a, const Price& b) {
+inline static uint128_t 
+wide_multiply_val_by_a_over_b(const uint128_t value, const Price& a, const Price& b) {
 	uint128_t denom = b;
 	uint128_t numer = a;
 	uint128_t modulo = (value/denom) * numer;
@@ -145,7 +160,7 @@ uint128_t wide_multiply_val_by_a_over_b(const uint128_t value, const Price& a, c
 }
 
 //it's not 100% accurate - there's some carries that get lost, but ah well.
-Price 
+inline static Price 
 safe_multiply_and_drop_lowbits(const uint128_t& first, const uint128_t& second, const uint64_t& lowbits_to_drop) {
 
 	if (lowbits_to_drop < 64 || lowbits_to_drop > 196) {

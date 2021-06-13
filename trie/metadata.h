@@ -20,11 +20,38 @@ The non-atomic versions are passed around (as i.e. metadata deltas).
 
 namespace speedex {
 
-namespace {
 constexpr static auto load_order = std::memory_order_relaxed;//acquire;
 constexpr static auto store_order = std::memory_order_relaxed;//release;
 constexpr static auto load_store_order = std::memory_order_relaxed;//acq_rel;
-}
+
+namespace {
+
+
+
+template<class T>
+concept Metadata_arithmetic
+	= requires(
+		T self, const T& other) {
+		std::same_as<T&, decltype(
+			self += other)>;
+		std::same_as<T&, decltype(
+			self -= other)>;
+	};
+
+template<typename T>
+concept Metadata_clear
+	= requires(T self) {
+		self.clear();
+	};
+} /* anonymous namespace */
+
+template<class T>
+concept Metadata
+	 = Metadata_arithmetic<T>;
+
+
+
+
 
 //! Empty metadata no-op class
 struct EmptyMetadata {
@@ -42,8 +69,6 @@ struct EmptyMetadata {
 	EmptyMetadata& operator-=(const EmptyMetadata& other) { return *this; }
 
 	EmptyMetadata operator-() { return EmptyMetadata(); }
-
-	bool operator==(const EmptyMetadata& other) { return true; };
 
 	EmptyMetadata unsafe_substitute(EmptyMetadata other) { 
 		return EmptyMetadata(); 
@@ -116,11 +141,6 @@ struct AtomicDeletableMixin {
 		num_deleted_subnodes.fetch_sub(other.num_deleted_subnodes, store_order);
 	}
 
-	bool operator== (const DeletableMixin& other) {
-		return num_deleted_subnodes.load(load_order) 
-			== other.num_deleted_subnodes;
-	}
-
 	bool compare_exchange(BaseT::value_t expect, BaseT::value_t desired) {
 		return num_deleted_subnodes.compare_exchange_strong(
 			expect, desired, load_store_order);
@@ -170,10 +190,6 @@ struct SizeMixin {
 		return *this;
 	}
 
-	bool operator==(const SizeMixin& other) {
-		return size == other.size;
-	}
-
 	std::string to_string() const {
 		std::stringstream s;
 		s << "size:"<<size<<" ";
@@ -204,9 +220,6 @@ struct AtomicSizeMixin {
 		size.fetch_sub(other.size, store_order);
 	}
 
-	bool operator== (const SizeMixin& other) {
-		return size.load(load_order) == other.size;
-	}
 	void clear() {
 		size = 0;
 	}
@@ -223,11 +236,104 @@ struct AtomicSizeMixin {
 
 };
 
-template<typename ...MetadataComponents>
+
+
+
+struct AtomicRollbackMixin;
+
+
+/*! Marker for nodes that are conditionally inserted
+and should be rolled back later.
+
+
+ "Rollback" is not really the right word, except in our particular use case.
+
+If you insert an object as a "rollback" when it's already present in the trie,
+ and then rollback, the object will be deleted.
+
+This is ok when all keys are distinct.  The use case is when we insert a
+ key to an uncommitted offers trie in rollback mode, 
+ then merge in to committed_offers.  If validation fails, we have to remove
+ all the newly created offers, so we want to delete all the ones marked as 
+ "rollback".
+
+This does NOT maintain a version for each node in the trie, and rollback to a
+prior version of the node.
+*/
+struct RollbackMixin {
+	using value_t = int32_t;
+
+	using AtomicT = AtomicRollbackMixin;
+	value_t num_rollback_subnodes;
+
+	template<typename ValueType>
+	RollbackMixin(const ValueType& ptr) 
+		: num_rollback_subnodes(0) {}
+	RollbackMixin() : num_rollback_subnodes(0) {}
+
+	RollbackMixin& operator+=(const RollbackMixin& other) {
+		num_rollback_subnodes += other.num_rollback_subnodes;
+		return *this;
+	}
+
+	RollbackMixin& operator-=(const RollbackMixin& other) {
+		num_rollback_subnodes -= other.num_rollback_subnodes;
+		return *this;
+	}
+
+	std::string to_string() const {
+		std::stringstream s;
+		s << "num_rollback_subnodes:"<<num_rollback_subnodes<<" ";
+		return s.str();
+	}
+
+	template<typename AtomicType>
+	void unsafe_load_from(const AtomicType& s) {
+		num_rollback_subnodes = s.num_rollback_subnodes.load(load_order);
+	}
+};
+
+struct AtomicRollbackMixin {
+
+	using BaseT = RollbackMixin;
+
+	std::atomic<BaseT::value_t> num_rollback_subnodes;
+
+	template<typename ValueType>
+	AtomicRollbackMixin(const ValueType& val) : num_rollback_subnodes(0) {}
+
+	AtomicRollbackMixin() : num_rollback_subnodes(0) {}
+
+	void operator+= (const BaseT& other) {
+		num_rollback_subnodes.fetch_add(
+			other.num_rollback_subnodes, store_order);
+	}
+
+	void operator-= (const BaseT& other) {
+		num_rollback_subnodes.fetch_sub(
+			other.num_rollback_subnodes, store_order);
+	}
+
+	void clear() {
+		num_rollback_subnodes = 0;
+	}
+
+	void unsafe_store(const RollbackMixin& other) {
+		num_rollback_subnodes.store(other.num_rollback_subnodes, store_order);
+	}
+
+	std::string to_string() const {
+		std::stringstream s;
+		s << "num_rollback_subnodes:"<<num_rollback_subnodes<<" ";
+		return s.str();
+	}
+};
+
+template<Metadata ...MetadataComponents>
 struct AtomicCombinedMetadata;
 
 //! Merge multiple metadata mixins into one object.
-template <typename ...MetadataComponents>
+template <Metadata ...MetadataComponents>
 struct CombinedMetadata : public MetadataComponents... {
 	using AtomicT = AtomicCombinedMetadata<MetadataComponents...>;
 
@@ -238,7 +344,6 @@ struct CombinedMetadata : public MetadataComponents... {
 
 	using MetadataComponents::operator+=...;
 	using MetadataComponents::operator-=...;
-	using MetadataComponents::operator==...;
 	using MetadataComponents::unsafe_load_from...;
 
 	CombinedMetadata& operator+=(const CombinedMetadata& other) {
@@ -255,23 +360,14 @@ struct CombinedMetadata : public MetadataComponents... {
 		return out;
 	}
 
-	bool operator==(const CombinedMetadata& other) {
-		bool result = true;
-		((result = result && MetadataComponents::operator==(other)),...);
-		return result;
-	}
-
-	bool operator!=(const CombinedMetadata& other) {
-		return !(*this == other);
-	}
-
 	void clear() {
 		*this = CombinedMetadata();
 	}
-	CombinedMetadata clone() const {
+
+	/*CombinedMetadata clone() const {
 		CombinedMetadata output = *this;
 		return output;
-	}
+	}*/
 
 	CombinedMetadata substitute(const CombinedMetadata& other) {
 		CombinedMetadata output = *this;
@@ -296,14 +392,13 @@ struct CombinedMetadata : public MetadataComponents... {
 };
 
 //! Threadsafe mixed metadata wrapper
-template<typename ...MetadataComponents>
+template<Metadata ...MetadataComponents>
 struct AtomicCombinedMetadata : public MetadataComponents::AtomicT... {
 
 	using BaseT = CombinedMetadata<MetadataComponents...>;
 
 	using MetadataComponents::AtomicT::operator+=...;
 	using MetadataComponents::AtomicT::operator-=...;
-	using MetadataComponents::AtomicT::operator==...;
 	using MetadataComponents::AtomicT::clear...;
 	using MetadataComponents::AtomicT::unsafe_store...;
 
@@ -319,11 +414,7 @@ struct AtomicCombinedMetadata : public MetadataComponents::AtomicT... {
 	void operator-=(const BaseT& other) {
 		(MetadataComponents::AtomicT::operator-=(other),...);
 	}
-	bool operator==(const BaseT& other) {
-		bool comparison = true;
-		((comparison &= MetadataComponents::AtomicT::operator+=(other)),...);
-		return comparison;
-	}
+
 	void clear() {
 		(MetadataComponents::AtomicT::clear(),...);
 	}

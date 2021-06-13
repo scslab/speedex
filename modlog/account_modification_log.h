@@ -108,6 +108,9 @@ public:
 		file_preallocator.cancel_prealloc();
 	}
 
+	//! Nominally accumulates a vector with all of the values in the trie.
+	//! Functions as an interation over all values by injecting
+	//! a nonstardard operator= into VectorType.
 	template<typename VectorType>
 	void parallel_accumulate_values(VectorType& vec) const {
 		std::shared_lock lock(mtx);

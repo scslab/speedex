@@ -34,7 +34,8 @@ void MemoryDatabase::escrow(
 
 bool MemoryDatabase::conditional_transfer_available(
 	account_db_idx user_index, AssetID asset_type, int64_t change) {
-	return find_account(user_index).conditional_transfer_available(asset_type, change);
+	return find_account(user_index)
+		.conditional_transfer_available(asset_type, change);
 }
 
 bool MemoryDatabase::conditional_escrow(
@@ -93,18 +94,19 @@ struct CommitValueLambda {
 	template<typename Applyable>
 	void operator() (const Applyable& work_root) {
 
-		auto lambda = [this] (const AccountModificationTxList& commitment) {
-			AccountID owner = commitment.owner;
+		auto lambda = [this] (const AccountID owner) {
 			account_db_idx idx;
 			if (db.lookup_user_id(owner, &idx)) {
 				db._commit_value(idx);
 			} else {
-				//was a new value
-				std::printf("couldn't lookup possibly new acct %lu\n", owner);
+				//Commit account creation should be done before
+				// calling commit values.
+				throw std::runtime_error(
+					"couldn't lookup new acct" + std::to_string(owner));
 			}
 		};
 
-		work_root . apply(lambda);
+		work_root . apply_to_keys(lambda);
 	}
 };
 
@@ -214,40 +216,13 @@ void MemoryDatabase::rollback_new_accounts_(uint64_t current_block_number) {
 	clear_internal_data_structures();
 }
 
-struct ValidateStateReduce {
-	std::vector<MemoryDatabase::DBEntryT>& database;
-	bool valid;
-
-	void operator() (const tbb::blocked_range<std::size_t>& r) {
-
-		bool local_valid = true;
-		for (auto i = r.begin(); i < r.end(); i++) {
-			auto result = database[i].in_valid_state();
-			if (!result) {
-				local_valid = false;
-				return;
-			}
-		}
-		valid = local_valid && valid;
-	}
-
-	ValidateStateReduce(ValidateStateReduce& x, tbb::split) : database(x.database), valid(x.valid) {}
-
-	void join(ValidateStateReduce& x) {
-		valid = valid && x.valid;
-	}
-
-	ValidateStateReduce(std::vector<MemoryDatabase::DBEntryT>& database) : database(database), valid(true) {}
-};
-
 struct ValidityCheckLambda {
 	MemoryDatabase& db;
 	std::atomic_flag& error_found;
 	template<typename Applyable>
 	void operator() (const Applyable& work_root) {
 
-		auto lambda = [this] (const AccountModificationTxList& commitment) {
-			AccountID owner = commitment.owner;
+		auto lambda = [this] (const AccountID owner) {
 			account_db_idx idx;
 			db.lookup_user_id(owner, &idx);
 			if (!db._check_valid(idx)) {
@@ -255,7 +230,7 @@ struct ValidityCheckLambda {
 			}
 		};
 
-		work_root . apply(lambda);
+		work_root . apply_to_keys(lambda);
 	}
 };
 
@@ -275,30 +250,6 @@ bool MemoryDatabase::check_valid_state(const AccountModificationLog& dirty_accou
 
 	size_t uncommitted_db_size = uncommitted_db.size();
 	for (size_t i = 0; i < uncommitted_db_size; i++) {
-		if (!uncommitted_db[i].in_valid_state()) {
-			return false;
-		}
-	}
-	return true;
-}
-
-//checks uncommitted state as well as committed.
-//The idea is you call this before committing.
-bool MemoryDatabase::check_valid_state() {
-	std::shared_lock lock(committed_mtx);
-	std::shared_lock lock2(uncommitted_mtx);
-	auto db_size = database.size();
-
-	ValidateStateReduce validator(database);
-
-	tbb::parallel_reduce(tbb::blocked_range<std::size_t>(0, db_size), validator);
-
-	if (!validator.valid) {
-		return false;
-	}
-
-	int uncommitted_db_size = uncommitted_db.size();
-	for (int i = 0; i < uncommitted_db_size; i++) {
 		if (!uncommitted_db[i].in_valid_state()) {
 			return false;
 		}
@@ -542,6 +493,9 @@ void MemoryDatabase::clear_persistence_thunks_and_reload(uint64_t expected_persi
 
 void MemoryDatabase::commit_persistence_thunks(uint64_t max_round_number) {
 
+	// Gather all the thunks that can be persisted at once, 
+	// to minimize time spent locking the persistence thunks
+	// mutex (which block creation acquires occasionally).
 	std::vector<DBPersistenceThunk> thunks_to_commit;
 	{
 		std::lock_guard lock(db_thunks_mtx);
@@ -561,9 +515,6 @@ void MemoryDatabase::commit_persistence_thunks(uint64_t max_round_number) {
 		return;
 	}
 
-
-	//new thunks are pushed on the back, so iterating from the front is ok so long as we lock access to thunks
-	// to prevent reference invalication on a realloc
 	auto current_block_number = get_persisted_round_number();
 
 	dbenv::wtxn write_txn{nullptr};
@@ -574,7 +525,6 @@ void MemoryDatabase::commit_persistence_thunks(uint64_t max_round_number) {
 
 	for (size_t i = 0; i < thunks_to_commit.size(); i++) {
 
-		// this lets blocks add thunks during commits
 		auto& thunk = thunks_to_commit.at(i);
 
 		if (thunk.current_block_number > max_round_number) {
@@ -736,5 +686,19 @@ void KVAssignment::operator=(const AccountID account) {
 	kv.key = account;
 	kv.msg = xdr::xdr_to_opaque(commitment);
 } 
+
+KVAssignment 
+DBPersistenceThunk::operator[](size_t idx) {
+	if (idx >= kvs->size()) {
+		throw std::runtime_error(
+			std::string("invalid kvs access: ")
+			+ std::to_string(idx)
+			+ std::string("(size: ")
+			+ std::to_string(kvs->size())
+			+ std::string(")"));
+	}
+
+	return KVAssignment{kvs->at(idx), *db};
+}
 
 } /* speedex */

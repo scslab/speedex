@@ -47,6 +47,8 @@ public:
 		= !std::is_same<EmptyMetadata, MetadataType>::value;
 	constexpr static bool METADATA_DELETABLE 
 		= std::is_base_of<DeletableMixin, MetadataType>::value;
+	constexpr static bool METADATA_ROLLBACK
+		= std::is_base_of<RollbackMixin, MetadataType>::value;
 	constexpr static bool HAS_SIZE 
 		= std::is_base_of<SizeMixin, MetadataType>::value;
 
@@ -131,13 +133,9 @@ private:
 			return;
 		}
 
-		TRIE_INFO("computing metadata, currently %s", 
-			metadata.to_string().c_str());
 		for (auto iter = children.begin(); iter != children.end(); iter++) {
-			TRIE_INFO("updating branch_bits %d with %s", 
-				(*iter).first, (*iter).second->metadata.to_string().c_str());
 			update_metadata(
-				(*iter).first, (*iter).second->metadata.unsafe_load());
+				(*iter).second->metadata.unsafe_load());
 		}
 	}
 
@@ -733,6 +731,14 @@ public:
 	NoOpTask
 	coroutine_apply(ApplyFn& func, CoroutineThrottler& throttler);
 	*/
+
+	template<bool x = METADATA_ROLLBACK>
+	typename std::enable_if<x, void>::type
+	clear_rollback();
+
+	template<bool x = METADATA_ROLLBACK>
+	typename std::enable_if<x, std::pair<bool, MetadataType>>::type
+	do_rollback();
 };
 
 
@@ -776,6 +782,7 @@ protected:
 	constexpr static bool METADATA_DELETABLE = TrieT::METADATA_DELETABLE;
 	constexpr static bool HAS_METADATA = TrieT::HAS_METADATA;
 	constexpr static int HAS_SIZE = TrieT::HAS_SIZE;
+	constexpr static bool METADATA_ROLLBACK = TrieT::METADATA_ROLLBACK;
 
 
 	void invalidate_hash() {
@@ -1371,6 +1378,24 @@ public:
 	invalidate_hash_to_node_nolocks(TrieT* target) {
 		invalidate_hash();
 		root -> invalidate_hash_to_node_nolocks(target);
+	}
+
+
+	template<bool x = METADATA_ROLLBACK>
+	typename std::enable_if<x, void>::type
+	do_rollback() {
+		std::lock_guard lock(*hash_modify_mtx);
+		root -> do_rollback();
+		if (root -> single_child()) {
+			root = root -> get_single_child();
+		}
+	}
+
+	template<bool x = METADATA_ROLLBACK>
+	typename std::enable_if<x, void>::type
+	clear_rollback() {
+		std::lock_guard lock(*hash_modify_mtx);
+		root -> clear_rollback();
 	}
 };
 
@@ -2567,7 +2592,7 @@ TrieNode<TEMPLATE_PARAMS>::unmark_for_deletion(const prefix_t key) {
 	if (deleted_obj) {
 		invalidate_hash();
 	}
-	update_metadata(branch_bits, metadata_change);
+	update_metadata(metadata_change);
 	return res;
 
 }
@@ -2625,7 +2650,7 @@ TrieNode<TEMPLATE_PARAMS>::mark_for_deletion(const prefix_t key) {
 	if (deleted_obj) {
 		invalidate_hash();
 	}
-	update_metadata(branch_bits, metadata_change);
+	update_metadata(metadata_change);
 	return res;
 }
 
@@ -2697,7 +2722,7 @@ TrieNode<TEMPLATE_PARAMS>::perform_marked_deletions(
 
 
 		auto result = child_ptr->perform_marked_deletions(side_effect_handler);
-		update_metadata(branch_bits, result.second);
+		update_metadata(result.second);
 		if (result.first) {
 			TRIE_INFO("deleting subtree");
 			children.erase(branch_bits);
@@ -2750,9 +2775,6 @@ TrieNode<TEMPLATE_PARAMS>::clean_singlechild_nodes(const prefix_t explore_path) 
 		(*next_iter).second -> clean_singlechild_nodes(explore_path);
 	}
 }
-	
-
-
 
 TEMPLATE_SIGNATURE
 template<bool x>
@@ -2770,8 +2792,7 @@ TrieNode<TEMPLATE_PARAMS>::clear_marked_deletions() {
 	}
 }
 
-//INVARIANT : this is not frozen
-// will cause a write copy on no-op delete of nonexistent key, nbd
+
 TEMPLATE_SIGNATURE
 //First value is TRUE IFF parent should delete child
 //next is "has anything been deleted"
@@ -3816,6 +3837,82 @@ TrieNode<TEMPLATE_PARAMS>::accumulate_keys(VectorType& output) {
 		}
 	}
 }
+
+
+TEMPLATE_SIGNATURE
+template<bool x>
+typename std::enable_if<x, void>::type
+TrieNode<TEMPLATE_PARAMS>::clear_rollback() {
+	static_assert(x == METADATA_ROLLBACK, "no funny business");
+
+	if (metadata.unsafe_load().num_rollback_subnodes == 0) { // ok bc root gets exclusive lock
+		return;
+	}
+	metadata.num_rollback_subnodes = 0;
+
+	for (auto iter = children.begin(); iter != children.end(); iter++) {
+		(*iter).second -> clear_rollback();
+	}
+}
+
+TEMPLATE_SIGNATURE
+template<bool x>
+typename std::enable_if<x, std::pair<bool, MetadataType>>::type
+TrieNode<TEMPLATE_PARAMS>::do_rollback() {
+	static_assert(x == METADATA_ROLLBACK, "no funny business");
+
+	//no lock needed because MerkleTrie gets exclusive lock
+
+	if (metadata.num_rollback_subnodes == 0) {
+		TRIE_INFO("no subnodes, returning");
+		return std::make_pair(false, MetadataType());
+	}
+
+	invalidate_hash();
+
+	if (prefix_len == MAX_KEY_LEN_BITS && metadata.num_rollback_subnodes == 1) {
+		return std::make_pair(true, -metadata.unsafe_load()); // safe bc exclusive lock
+	}
+
+	if (prefix_len == MAX_KEY_LEN_BITS && metadata.num_rollback_subnodes > 1) {
+		throw std::runtime_error(
+			"can't have num rollback subnodes > 1 at leaf");
+	}
+
+	auto metadata_delta = MetadataType();
+
+	for (unsigned int branch_bits = 0; 
+		branch_bits <= MAX_BRANCH_VALUE; 
+		branch_bits++) 
+	{
+		TRIE_INFO("scanning branch bits %d", branch_bits);
+
+		auto iter = children.find(branch_bits);
+		if (iter == children.end()) {
+			continue;
+		}
+
+		auto& child_ptr = (*iter).second;
+		auto result = child_ptr->do_rollback();
+		update_metadata(result.second);
+		if (result.first) {
+			TRIE_INFO("deleting subtree");
+			children.erase(branch_bits);
+		} else {
+			if (child_ptr->single_child()) {
+				TRIE_INFO(
+					"contracting size 1 subtree, prefix len %d", prefix_len);
+				auto replacement_child_ptr = child_ptr->get_single_child();
+				children.emplace(
+					(*iter).first, std::move(replacement_child_ptr));
+			} 
+		}
+		metadata_delta += result.second;
+	}
+	TRIE_INFO("done scanning");
+	return std::make_pair(children.empty(), metadata_delta);
+}
+
 
 #undef TEMPLATE_PARAMS
 #undef TEMPLATE_SIGNATURE

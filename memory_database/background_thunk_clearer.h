@@ -6,6 +6,7 @@
 
 namespace speedex {
 
+//! Free database persistence thunks in the background.
 template<typename Clearable>
 class BackgroundThunkClearer : public AsyncWorker {
 
@@ -30,7 +31,8 @@ class BackgroundThunkClearer : public AsyncWorker {
 			std::unique_lock lock(mtx);
 
 			if ((!done_flag) && (!exists_work_to_do())) {
-				cv.wait(lock, [this] () {return done_flag || exists_work_to_do();});
+				cv.wait(
+					lock, [this] () {return done_flag || exists_work_to_do();});
 			}
 
 			if (done_flag) return;

@@ -33,18 +33,6 @@
 
 
 /*
-Transaction processing should be stopped before running commit/rollback/check_valid_state/produce_commitment.
-But this is a global property.  We do not put a lock on every db call (and indeed, we would regardless need some
-global modification lock).
-
-Commit/rollback/check_valid_state/produce commitment are locked so as to be safe with each other.
-All db modifications are locked (or not) so as to be threadsafe with each other.
-
-These two sets together are not threadsafe.
-*/
-
-
-/*
 //TODO the commit model might be unnecessary for block production?  specifically the loading atomic vals into regular vals.  Maybe gives faster access though.
 
 Commit loads atomic asset numbers into stable locations, and more importantly, merges in new accounts to main db.
@@ -75,6 +63,9 @@ namespace speedex {
 
 class MemoryDatabase;
 
+/*! Wrapper class around an LMDB instance for the account database,
+with some extra parameters filled in (i.e. database file location).
+*/
 struct AccountLMDB : public LMDBInstance {
 
 	constexpr static auto DB_NAME = "account_lmdb";
@@ -98,6 +89,9 @@ struct AccountLMDB : public LMDBInstance {
 };
 
 
+/*! Database thunk entry.
+Key of modified account, and bytes vector to store in database.
+*/
 struct ThunkKVPair {
 	AccountID key;
 	xdr::opaque_vec<> msg;
@@ -105,12 +99,28 @@ struct ThunkKVPair {
 	ThunkKVPair() = default;
 };
 
+/*! Transient value for accumulating the contents of a DBPersistenceThunk.
+
+The nonstandard operator= takes in an accountID and computes the ThunkKVPair
+for the account.
+
+Used when iterating over an account mod log.
+*/
 struct KVAssignment {
 	ThunkKVPair& kv;
 	const MemoryDatabase& db;
 	void operator=(const AccountID owner);
 };
 
+
+/*! Stores all of the changes to the account database, to be persisted to disk
+later.
+
+Acts as a vector for the purposes of account mod log's 
+parallel_accumulate_values().  Returns KVAssignment objects in response to 
+operator[].  Operator=, applied to these output values, inserts a ThunkKVPair
+into this thunk (at the location that was given to operator[]).
+*/
 struct DBPersistenceThunk {
 	using thunk_list_t = std::vector<ThunkKVPair>;
 
@@ -123,15 +133,7 @@ struct DBPersistenceThunk {
 		, db(&db)
 		, current_block_number(current_block_number) {}
 
-	KVAssignment operator[](size_t idx) {
-		if (idx >= kvs->size()) {
-			std::printf("invalid kvs access: %lu (size: %lu)\n", 
-				idx, kvs->size());
-			throw std::runtime_error("invalid kvs access");
-		}
-
-		return KVAssignment{kvs->at(idx), *db};
-	}
+	KVAssignment operator[](size_t idx);
 
 	void clear() {
 		kvs.reset();
@@ -145,11 +147,6 @@ struct DBPersistenceThunk {
 		kvs->reserve(sz);
 	}
 	
-	void push_back(const AccountID account) {
-		kvs->emplace_back();
-		KVAssignment{kvs->back(), *db} = account; 
-	}
-
 	size_t size() const {
 		return kvs->size();
 	}
@@ -160,6 +157,16 @@ struct AccountCreationThunk {
 	uint64_t num_accounts_created;
 };
 
+/*!
+An in memory datastore mapping AccountIDs to account balances.
+
+Transaction processing should be stopped before running 
+commit/rollback/check_valid_state/produce_commitment.
+We do not put a lock on every db call.  However,
+commit/rollback/check_valid_state are locked against each other,
+and database persistence can be done safely in the background.
+
+*/
 
 class MemoryDatabase {
 public:
@@ -171,7 +178,8 @@ public:
 
 	using trie_prefix_t = AccountIDPrefix;
 
-	using DBStateCommitmentTrie = MerkleTrie<trie_prefix_t, DBStateCommitmentValueT, DBMetadataT>;
+	using DBStateCommitmentTrie 
+		= MerkleTrie<trie_prefix_t, DBStateCommitmentValueT, DBMetadataT>;
 
 
 	static inline void write_trie_key(trie_prefix_t& buf, AccountID account) {
@@ -230,6 +238,29 @@ private:
 	void rollback_new_accounts_(uint64_t current_block_number);
 
 	void set_trie_commitment_to_user_account_commits(const AccountModificationLog& log);
+
+
+	friend class ValidityCheckLambda;
+	//! Check whether one account (by db idx) is in a valid state.
+	bool _check_valid(account_db_idx account_idx) {
+		if (account_idx >= database.size()) {
+			/*
+				Newly created accounts are always valid.
+				Transaction validation checks that ID is well formed,
+				pk exists, etc.
+
+				Creation transfers a small amount of money to the account,
+				and that account cannot send its own transactions 
+				until the next block.
+
+				It can receive payments within the dbview of the tx that 
+				created the account, but receiving payments can't make an
+				account invalid.
+			*/
+			return true;
+		}
+		return database[account_idx].in_valid_state();
+	}
 public:
 
 	uint64_t get_persisted_round_number() {
@@ -251,8 +282,6 @@ public:
 		return database.size();
 	}
 
-	const static AssetID NATIVE_ASSET = 0;
-
 	//Be careful with creating new accounts.  If we have to rearrange database/resize vector, we'll break any pointers we export, probably.
 	//We use integer indexes so that we can enforce the invariant that these indices never change.  We could reuse indices if we delete accounts.
 
@@ -269,13 +298,6 @@ public:
 
 	void _commit_value(account_db_idx account_idx) {
 		database[account_idx].commit();
-	}
-
-	bool _check_valid(account_db_idx account_idx) {
-		if (account_idx >= database.size()) {
-			return true; //newly created accounts are always valid
-		}
-		return database[account_idx].in_valid_state();
 	}
 
 	void commit_values();
@@ -331,8 +353,6 @@ public:
 
 	bool conditional_transfer_available(
 		account_db_idx user_index, AssetID asset_type, int64_t change);
-	//bool conditional_transfer_escrow(
-	//	account_db_idx user_index, AssetID asset_type, int64_t change);
 	bool conditional_escrow(
 		account_db_idx user_index, AssetID asset_type, int64_t change);
 
@@ -357,22 +377,43 @@ public:
 	void log();
 	void values_log();
 
-	//Obv not threadsafe with logging asset changes
-	//not threadsafe with creating accounts or committing or rollbacking
-	//not threadsafe with anything, probably. 
-	bool check_valid_state();
+	/*! Checks whether the database is in a valid state
+
+	Specifically checks every modified account to validate that
+	all account balances are positive.
+	Obviously not threadsafe with logging asset changes
+	not threadsafe with creating accounts or committing or rolling back
+	*/
 	bool check_valid_state(const AccountModificationLog& dirty_accounts);
 
 	AccountCommitment produce_commitment(account_db_idx idx) const {
 		return database[idx].produce_commitment();
 	}
 
-	void add_persistence_thunk(uint64_t current_block_number, AccountModificationLog& log);
-	void commit_persistence_thunks(uint64_t max_round_number);
+	/*! Generate a peristence thunk given a log of which accounts were modified.
+	*/
+	void 
+	add_persistence_thunk(
+		uint64_t current_block_number, AccountModificationLog& log);
+	
+	/*! Commit stored persistence thunks, up to and including the input
+	round number.
+	*/
+	void 
+	commit_persistence_thunks(uint64_t max_round_number);
+	
 	void force_sync() {
 		account_lmdb_instance.sync();
 	}
-	void clear_persistence_thunks_and_reload(uint64_t expected_persisted_round_number);
+
+	/*! Clear persistence thunks and reload database state from LDMB.
+
+	Expects the input round number to be the round number in the database.
+	If not, then we must have persisted some amount of data that we were not
+	supposed to (which means some kind of bug).
+	*/
+	void clear_persistence_thunks_and_reload(
+		uint64_t expected_persisted_round_number);
 
 };
 

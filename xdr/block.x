@@ -35,13 +35,7 @@ typedef SignedTransaction SignedTransactionList<MAX_TRANSACTIONS_PER_BLOCK>;
 // payload is SignedTransactionList
 typedef opaque SerializedBlock<>;
 
-const OFFER_KEY_LEN_BYTES = 22; // MerkleWorkUnit::WORKUNIT_KEY_LEN; 
-
-typedef uint128 FractionalSupply;
-
-typedef opaque OfferKeyType[OFFER_KEY_LEN_BYTES];
-
-struct SingleWorkUnitStateCommitment {
+struct SingleOrderbookStateCommitment {
 	Hash rootHash;
 	FractionalSupply fractionalSupplyActivated;
 	OfferKeyType partialExecThresholdKey;
@@ -49,11 +43,11 @@ struct SingleWorkUnitStateCommitment {
 	FractionalSupply partialExecOfferActivationAmount;
 };
 
-typedef SingleWorkUnitStateCommitment WorkUnitStateCommitment<MAX_NUM_WORK_UNITS>;
+typedef SingleOrderbookStateCommitment OrderbookStateCommitment<MAX_NUM_WORK_UNITS>;
 
 struct InternalHashes {
 	Hash dbHash;
-	WorkUnitStateCommitment clearingDetails;
+	OrderbookStateCommitment clearingDetails;
 	Hash modificationLogHash;
 	Hash blockMapHash;
 };

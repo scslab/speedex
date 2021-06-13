@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "utils/async_worker.h"
 
 namespace speedex {
@@ -10,17 +12,17 @@ class BackgroundDeleter : public AsyncWorker {
 	using AsyncWorker::mtx;
 	using AsyncWorker::cv;
 
-	ToBeDeleted* to_delete = nullptr;
+	std::vector<ToBeDeleted*> work;
 
 	bool exists_work_to_do() override final {
-		return to_delete != nullptr;
+		return work.size() != 0;
 	}
 
 	void do_deletions() {
-		if (to_delete != nullptr) {
-			delete to_delete;
-			to_delete = nullptr;
+		for (ToBeDeleted* ptr : work) {
+			delete ptr;
 		}
+		work.clear();
 	}
 
 	void run() {
@@ -52,7 +54,14 @@ public:
 	void call_delete(ToBeDeleted* ptr) {
 		wait_for_async_task();
 		std::lock_guard lock(mtx);
-		to_delete = ptr;
+		work.push_back(ptr);
+		cv.notify_all();
+	}
+
+	void call_delete(std::vector<ToBeDeleted*> ptrs) {
+		wait_for_async_task();
+		std::lock_guard lock(mtx);
+		work = ptrs;
 		cv.notify_all();
 	}
 };
