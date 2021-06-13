@@ -21,6 +21,12 @@ XH_FILES = $(X_FILES:.x=.h)
 
 # main srcs
 
+HEADER_HASH_SRCS = \
+	header_hash/block_header_hash_map.cc
+
+PRICE_COMPUTATION_SRCS = \
+	price_computation/lp_solver.cc
+
 LMDB_SRCS = \
 	lmdb/lmdb_types.cc \
 	lmdb/lmdb_wrapper.cc
@@ -38,13 +44,16 @@ MODLOG_SRCS = \
 ORDERBOOK_SRCS = \
 	orderbook/commitment_checker.cc \
 	orderbook/lmdb.cc \
-	orderbook/orderbook.cc
+	orderbook/orderbook.cc \
+	orderbook/orderbook_manager.cc
 
 UTILS_SRCS = \
 	utils/cleanup.cc \
 	utils/header_persistence.cc
 
 SRCS = \
+	$(HEADER_HASH_SRCS) \
+	$(PRICE_COMPUTATION_SRCS) \
 	$(LMDB_SRCS) \
 	$(MEMORY_DATABASE_SRCS) \
 	$(MODLOG_SRCS) \

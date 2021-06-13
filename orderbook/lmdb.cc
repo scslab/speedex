@@ -5,7 +5,9 @@
 namespace speedex {
 
 
-void OrderbookLMDB::write_thunks(const uint64_t current_block_number, bool debug) {
+ThunkGarbage
+__attribute__((warn_unused_result)) 
+OrderbookLMDB::write_thunks(const uint64_t current_block_number, bool debug) {
 
 	dbenv::wtxn wtx = wbegin();
 
@@ -31,9 +33,6 @@ void OrderbookLMDB::write_thunks(const uint64_t current_block_number, bool debug
 	// iterate from top to bot, adding only successful offers and rolling key downwards
 
 	prefix_t key_buf;
-
-	//unsigned char key_buf[MerkleWorkUnit::WORKUNIT_KEY_LEN];
-	//memset(key_buf, 0, MerkleWorkUnit::WORKUNIT_KEY_LEN);
 
 
 	bool key_set = false;
@@ -331,8 +330,7 @@ void OrderbookLMDB::write_thunks(const uint64_t current_block_number, bool debug
 			if (print)
 				std::printf("continuing to future %lu %lu\n", future, relevant_thunks[future].current_block_number);
 			if (relevant_thunks[i].partial_exec_key < relevant_thunks[future].partial_exec_key) {
-			//auto res = memcmp(relevant_thunks[i].partial_exec_key.data(), relevant_thunks[future].partial_exec_key.data(), MerkleWorkUnit::WORKUNIT_KEY_LEN);
-			//if (res < 0) {
+		
 				//strictly less than 0 - that is, round i's key is strictly less than round future's, so i's partial exec offer then fully clears in future.
 				// We already took care of the 0 case in the preceding loop.
 				auto partial_exec_key_bytes = relevant_thunks[i].partial_exec_key.get_bytes_array();
@@ -345,17 +343,17 @@ void OrderbookLMDB::write_thunks(const uint64_t current_block_number, bool debug
 		std::printf("done saving workunit\n");
 
 
-	std::vector<trie_t*> to_delete;
+	ThunkGarbage output;
 
 	for (auto& thunk : relevant_thunks) {
-		to_delete.push_back(
+		output.add(
 			thunk.cleared_offers
 				.dump_contents_for_detached_deletion_and_clear());
 	}
 
 	commit_wtxn(wtx, current_block_number);
 
-	background_deleter.call_delete(to_delete);
+	return output;
 }
 
 

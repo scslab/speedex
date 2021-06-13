@@ -14,6 +14,45 @@
 
 
 namespace speedex {
+
+/*! Persisting thunks leaves large offer tries (i.e. the offers that cleared),
+and freeing tries can take a nonzero amount of time (lots of memory
+accesses).  We run this in a background thread.
+
+This class encapsulates a list of pointers to delete.  Deletes any contents
+left inside the class when going out of scope, which should cut down 
+on accidental memory leaks.
+*/
+
+class ThunkGarbage {
+	using trie_t = OrderbookTrie::TrieT;
+	std::vector<trie_t*> to_delete;
+
+public:
+	ThunkGarbage() : to_delete() {}
+
+	~ThunkGarbage() {
+		for (auto* ptr : to_delete) {
+			delete ptr;
+		}
+	}
+
+	void add(trie_t* garbage) {
+		to_delete.push_back(garbage);
+	}
+
+	void add(std::vector<trie_t*> ptrs) {
+		to_delete.insert(to_delete.end(), ptrs.begin(), ptrs.end());
+	}
+
+	std::vector<trie_t*>
+	release() {
+		auto out = std::move(to_delete);
+		to_delete.clear();
+		return out;
+	}
+};
+
 /*! Wrapper around lmdb instance.  Also includes 
 persistence thunks (and manages those thunks).
 */
@@ -24,7 +63,6 @@ class OrderbookLMDB : public LMDBInstance {
 	std::vector<thunk_t> thunks;
 
 	using trie_t = OrderbookTrie::TrieT;
-	BackgroundDeleter<trie_t> background_deleter;
 
 public:
 	
@@ -43,8 +81,11 @@ public:
 		Take care to not migrate wtx across threads.
 
 		Erases thunks that were committed to disk from memory.
+
+		Returns a list of pointers which the caller is responsible for deleting.
 	*/
-	void write_thunks(
+	ThunkGarbage
+	__attribute__((warn_unused_result)) write_thunks(
 		const uint64_t current_block_number,
 		bool debug = false);
 

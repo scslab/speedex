@@ -49,6 +49,7 @@ static void generate_orderbook_trie_key(
 	write_unsigned_big_endian(buf, offer_id, offset);
 }
 
+[[maybe_unused]]
 static void 
 generate_orderbook_trie_key(const Offer& offer, OrderbookTriePrefix& buf) {
 	generate_orderbook_trie_key(

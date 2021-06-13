@@ -68,7 +68,9 @@ class Orderbook {
 
 	void undo_thunk(OrderbookLMDBCommitmentThunk& thunk);
 
-	void persist_lmdb(uint64_t current_block_number);
+	ThunkGarbage
+	__attribute__((warn_unused_result))
+	persist_lmdb(uint64_t current_block_number);
 
 	void add_offers(OrderbookTrie&& offers) {
 		INFO("merging in to \"%d %d\"", category.sellAsset, category.buyAsset);
@@ -83,10 +85,15 @@ class Orderbook {
 		return committed_offers.unmark_for_deletion(key);
 	}
 
-	friend class MerkleWorkUnitManager;
+	friend class OrderbookManager;
 
 	void rollback_validation();
 	void finalize_validation();
+
+	//! Extra parameter is convenient for templating lmdb loading methods
+	void finalize_validation_for_loading(uint64_t current_block_number) {
+		finalize_validation();
+	}
 
 	void rollback_thunks(uint64_t current_block_number);
 
@@ -162,18 +169,32 @@ public:
 		committed_offers.hash(hash_buf);
 	}
 
-	std::pair<Price, Price> get_execution_prices(const Price* prices, const uint8_t smooth_mult) const;
-	std::pair<Price, Price> get_execution_prices(Price sell_price, Price buy_price, const uint8_t smooth_mult) const;
+	//! Compute the price quotients at which trades happen in this block.
+	//! Returns a pair: (full exec ratio, partial exec ratio).
+	//! Minimum prices below full exec are guaranteed to fully trade,
+	//! and those above partial exec never trade.
+	std::pair<Price, Price> 
+	get_execution_prices(
+		const Price* prices, const uint8_t smooth_mult) const;
+
+	std::pair<Price, Price> 
+	get_execution_prices(
+		Price sell_price, Price buy_price, const uint8_t smooth_mult) const;
 
 	EndowAccumulator get_metadata(Price p) const;
 	//GetMetadataTask coro_get_metadata(Price p, EndowAccumulator& endow_out, DemandCalcScheduler& scheduler) const;
 
+	//! Calculate demand and supply at a given set of prices and a given
+	//! smooth mult.
 	void calculate_demands_and_supplies(
 		const Price* prices, 
 		uint128_t* demands_workspace, 
 		uint128_t* supplies_workspace,
 		const uint8_t smooth_mult);
 
+	//! Calculate demand and supply at given set of prices,
+	//! given that the endow calculations (the binary searches) have already
+	//! been done.
 	void calculate_demands_and_supplies_from_metadata(
 		const Price* prices, 
 		uint128_t* demands_workspace,

@@ -13,6 +13,7 @@ namespace speedex {
 
 /*! Fully clear a trade offer.
 */
+[[maybe_unused]]
 static void
 clear_offer_full(
 	const Offer& offer, 
@@ -42,6 +43,7 @@ clear_offer_full(
 out_sell_amount is the amount deducted from the offer that partially
 clears.
 */
+[[maybe_unused]]
 static void
 clear_offer_partial(
 	const Offer& offer, 

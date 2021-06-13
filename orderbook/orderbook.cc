@@ -152,124 +152,16 @@ void Orderbook::generate_metadata_index() {
 				price::PRICE_BIT_LEN);
 }
 
-//rolls back transaction processing, NOT commit_for_production.
-//TODO might want to rework this
-/*void MerkleWorkUnit::rollback_for_production() {
-	INFO("doing rollback for production for sell %d buy %d", category.sellAsset, category.buyAsset);
-	uncommitted_offers.clear();
-	INFO("starting clear_marked_deletions");
-	committed_offers.clear_marked_deletions();
-//	if (lmdb_instance) {
-		lmdb_instance.pop_top_thunk();
-	//}
-}*/
 
-void Orderbook::persist_lmdb(uint64_t current_block_number) {
+ThunkGarbage
+__attribute__((warn_unused_result))
+Orderbook::persist_lmdb(uint64_t current_block_number) {
 
 	if (!lmdb_instance) {
-		return;
+		return ThunkGarbage();
 	}
-	lmdb_instance.write_thunks(current_block_number);
-
-	//auto stats = lmdb_instance.stat();
-
-	//bool do_check = false;
-	//INTEGRITY_CHECK_F(do_check = true);
-
-	//bool error_found = false;
-
-	//if (stats.ms_entries != committed_offers.size()) {
-//		std::printf("stats.ms_entries = %lu, committed_offers.size = %u\n", stats.ms_entries, committed_offers.size());
-	//	do_check = true;
-	//	error_found = true;
-	//}
+	return lmdb_instance.write_thunks(current_block_number);
 }
-
-/*
-	//THIS OBVIOUSLY DOESN'T WORK WITH ASYNCHRONOUS PERSISTENCE; HENCE THE NEXT LINE
-	do_check = false;
-
-	if (do_check) {
-		auto iterator = committed_offers.begin();
-
-		unsigned int sz = 0;
-
-		auto wtxn = lmdb_instance.wbegin();
-		while (!iterator.at_end()) {
-			sz++;
-
-			const auto key = (*iterator) . first;
-
-			//std::printf("searching for mem key %s\n",  DebugUtils::__array_to_str(key, MerkleWorkUnit::WORKUNIT_KEY_LEN).c_str());
-
-			MerkleTrieT::prefix_t key_buf = key;
-
-//			unsigned char key_buf[MerkleWorkUnit::WORKUNIT_KEY_LEN];
-//			memcpy(key_buf, key.data(), MerkleWorkUnit::WORKUNIT_KEY_LEN);
-
-			auto key_buf_bytes = key_buf.get_bytes(key_buf.len());
-			auto db_key = dbval{key_buf_bytes};//, MerkleWorkUnit::WORKUNIT_KEY_LEN};
-
-			auto res = wtxn.get(lmdb_instance.get_data_dbi(), db_key);
-			if (!res) {
-				std::printf("IN MEM NOT DISK %s\n", key.to_string(key.len()).c_str());
-				//std::printf("found missing key: %s\n", DebugUtils::__array_to_str(key, MerkleWorkUnit::WORKUNIT_KEY_LEN).c_str());
-
-			//	if (lmdb_instance.get_top_thunk().uncommitted_offers.get_value(key)) {
-			//		std::printf("was present in current thunk!");
-			//	}
-				error_found = true;
-			} else {
-				//std::printf("FOUND\n");
-				//std::printf("key exists in db: %s\n", DebugUtils::__array_to_str(key, MerkleWorkUnit::WORKUNIT_KEY_LEN).c_str());
-			}
-			++iterator;
-		}
-
-		std::printf("iterated over %u memory elts\n", sz);
-
-		auto read_cursor = wtxn.cursor_open(lmdb_instance.get_data_dbi());
-		read_cursor.get(MDB_FIRST);
-
-		while (read_cursor) {
-			auto db_key = (*read_cursor).first;
-			MerkleTrieT::prefix_t key;
-			
-			const unsigned char* key_raw = static_cast<unsigned char*>(db_key.mv_data);
-
-			key.set_from_raw(key_raw, db_key.mv_size);
-			//memcpy(key.data(), key_raw, key.size());
-			if (key.size() != db_key.mv_size) {
-				throw std::runtime_error("mismatch in size!");
-			}
-
-			if (!committed_offers.get_value(key)) {
-				std::printf("read key len = %lu\n", db_key.mv_size);
-				std::printf("IN DISK NOT MEM %s\n", key.to_string(key.len()).c_str());
-				error_found = true;
-
-				Offer value;
-				dbval_to_xdr((*read_cursor). second, value);
-				prefix_t real_key;
-				generate_orderbook_trie_key(value, real_key);
-				std::printf("real key was %s\n", real_key.to_string(real_key.len()).c_str());;
-			}
-			++read_cursor;
-		}
-		if (error_found) {
-
-			committed_offers._log("committed_offers");
-
-			throw std::runtime_error("desync between memory and lmdb");
-		}
-
-		wtxn.abort();
-	} */
-
-//	lmdb_instance.clear_thunks(current_block_number);
-
-
-//}
 
 /*
 //old version
@@ -466,7 +358,7 @@ Orderbook::get_metadata(Price p) const{
 	
 	while (true) {
 		if (end==start) {
-			DEMAND_CALC_INFO("outputting idx %d, key %f", end, PriceUtils::to_double(indexed_metadata[end - 1].key));
+			DEMAND_CALC_INFO("outputting idx %d, key %f", end, price::to_double(indexed_metadata[end - 1].key));
 			DEMAND_CALC_INFO("supply:%lu", indexed_metadata[end - 1].metadata.endow);
 			return indexed_metadata[end - 1].metadata;
 		}
@@ -549,32 +441,9 @@ void Orderbook::calculate_demands_and_supplies_from_metadata(
 
 	uint64_t partial_exec_endow = metadata_partial.endow - full_exec_endow;//radix:0
 
-	//std::printf("new calc price bds %lu %lu\n", full_exec_p, partial_exec_p);
-	//std::printf("new calc endow %lu %lu\n", full_exec_endow, partial_exec_endow);
-
-
-	//std::printf("endow %lu %lu\n", full_exec_endow, partial_exec_endow);
-
 	uint128_t full_exec_endow_times_price = metadata_full.endow_times_price; // radix:PRICE_RADIX
 	uint128_t partial_exec_endow_times_price = metadata_partial.endow_times_price - full_exec_endow_times_price; //radix:PRICE_RADIX
 	if (metadata_full.endow_times_price > metadata_partial.endow_times_price) {
-
-		/*std::printf("full=%Lf partial=%Lf\n", (long double)metadata_full.endow_times_price, (long double)metadata_partial.endow_times_price);
-		committed_offers._log("");
-
-		unsigned char price_buf[6];
-
-		std::printf("sellAsset = %d buyAsset = %d\n", category.sellAsset, category.buyAsset);
-
-		PriceUtils::write_price_big_endian(price_buf, partial_exec_p);
-		std::printf("partial exec p = %s\n", DebugUtils::__array_to_str(price_buf, 6).c_str());
-		PriceUtils::write_price_big_endian(price_buf, full_exec_p);
-		std::printf("full exec p = %s\n", DebugUtils::__array_to_str(price_buf, 6).c_str());
-
-		for (unsigned int i = 0; i < indexed_metadata.size(); i++) {
-			PriceUtils::write_price_big_endian(price_buf, indexed_metadata[i].key);
-			std::printf("%s %ld %lf\n", DebugUtils::__array_to_str(price_buf, 6).c_str(), indexed_metadata[i].metadata.endow, (double) indexed_metadata[i].metadata.endow_times_price);
-		}*/
 		throw std::runtime_error("This should absolutely never happen, and means indexed_metadata or binary search is broken (or maybe an overflow)");
 	}
 
@@ -584,32 +453,16 @@ void Orderbook::calculate_demands_and_supplies_from_metadata(
 
 	if (smooth_mult) {
 
-
 		//net endow times ratio is at most (partial exec endow) * sell_over_buy.
 		uint128_t endow_over_epsilon = (partial_exec_endow) << smooth_mult; // radix:0
-
-		//DEMAND_CALC_INFO("net endow over epsilon:%f", PriceUtils::amount_to_double(endow_over_epsilon, 0));
 
 		uint128_t endow_times_price_over_epsilon = (partial_exec_endow_times_price)<<smooth_mult; //radix:PRICE_RADIX
 
 
-		//DEMAND_CALC_INFO("net endow times price over epsilon:%f", PriceUtils::amount_to_double(endow_times_price_over_epsilon, PriceUtils::PRICE_RADIX));
-
 		uint128_t sell_wide_multiply_result = price::wide_multiply_val_by_a_over_b(endow_times_price_over_epsilon, buy_price, sell_price); //radix:PRICE_RADIX
-
 
 		partial_sell_volume = (endow_over_epsilon<<price::PRICE_RADIX) - (sell_wide_multiply_result); //radix:PRICE_RADIX
 		if ((endow_over_epsilon<<price::PRICE_RADIX) < (sell_wide_multiply_result)) {
-			/*partial_sell_volume = 0;
-			std::printf("weird %lf\n", (double)(sell_wide_multiply_result - (endow_over_epsilon<<PriceUtils::PRICE_RADIX)));
-			//mostly a sanity check
-
-			std::printf("%lf %lf\n", (double) (sell_wide_multiply_result)/16777216, (double) (endow_over_epsilon<<PriceUtils::PRICE_RADIX)/16777216);
-
-			for (std::size_t i = 0; i < indexed_metadata.size(); i++) {
-				std::printf("%lu %lu %lf \n", indexed_metadata[i].key/16777216, indexed_metadata[i].metadata.endow, (double)indexed_metadata[i].metadata.endow_times_price/16777216);
-			}*/
-
 			throw std::runtime_error("this should not happen unless something has begun to overflow");
 		}
 
@@ -644,83 +497,25 @@ void Orderbook::calculate_demands_and_supplies(
 	uint128_t* demands_workspace, 
 	uint128_t* supplies_workspace,
 	const uint8_t smooth_mult) {
-	//ObjectiveFunctionInputs& func) {
 
-	//DEMAND_CALC_INFO("demand query: sellAsset %d buyAsset %d", category.sellAsset, category.buyAsset);
 	auto [full_exec_p, partial_exec_p] = get_execution_prices(prices, smooth_mult);
 	
 	auto sell_price = prices[category.sellAsset];
 	auto buy_price = prices[category.buyAsset];
 
-	//std::printf("regular calc price bds %lu %lu\n", full_exec_p, partial_exec_p);
-
-	//uint8_t extra_bits_len = (64-PriceUtils::PRICE_RADIX);
-	//uint128_t extra_bits = (((uint128_t)1)<<(extra_bits_len)) - 1;
-	//uint128_t ratio = (((uint128_t)sell_price)<<64) / buy_price;
-
-	//extra_bits &= ratio;
-	//ratio >>= extra_bits_len;
-	/*if (extra_bits) {
-		ratio ++;  //round up price.
-		//Not including this implicitly rounds down.
-		//THis is correct behavior.
-		//Metadata queries return sum of metadata
-		//for keys <= current key.
-		//We don't want to include sell offers with
-		// prices greater than our target price.
-
-	}*/
-
-	/*Price partial_exec_p = ratio & UINT64_MAX;
-	unsigned char price_bytes[PriceUtils::PRICE_BYTES];
-	PriceUtils::write_price_big_endian(price_bytes, partial_exec_p);
-
-	WorkUnitMetadata metadata_partial = committed_offers.metadata_query(price_bytes, PriceUtils::PRICE_BIT_LEN);
-	WorkUnitMetadata metadata_full = metadata_partial;
-	*/
-
-	//Price partial_exec_p = ratio & UINT64_MAX;
-	DEMAND_CALC_INFO("partial exec price:%f", PriceUtils::to_double(partial_exec_p));
-
 	auto metadata_partial = get_metadata(partial_exec_p);
 	auto metadata_full = metadata_partial;
-	if (smooth_mult) {
-		//Price full_exec_p = partial_exec_p - (partial_exec_p>>smooth_mult);
-		DEMAND_CALC_INFO("full exec price:%f", PriceUtils::to_double(full_exec_p));
+	if (smooth_mult) /* partial_exec_p != full_exec_p */{
 		metadata_full = get_metadata(full_exec_p);
-		//PriceUtils::write_price_big_endian(price_bytes, full_exec_p);
-		//metadata_full = committed_offers.metadata_query(price_bytes, PriceUtils::PRICE_BIT_LEN);
 	}
 
 	uint64_t full_exec_endow = metadata_full.endow;
 
-	//std::printf("full_exec_endow=%lu\n", full_exec_endow);
 	uint64_t partial_exec_endow = metadata_partial.endow - full_exec_endow;//radix:0
-	//std::printf("regular calc endow %lu %lu\n", full_exec_endow, partial_exec_endow);
 
 	uint128_t full_exec_endow_times_price = metadata_full.endow_times_price; // radix:PRICE_RADIX
 	uint128_t partial_exec_endow_times_price = metadata_partial.endow_times_price - full_exec_endow_times_price; //radix:PRICE_RADIX
 	if (metadata_full.endow_times_price > metadata_partial.endow_times_price) {
-
-		std::printf("full=%Lf partial=%Lf\n", (long double)metadata_full.endow_times_price, (long double)metadata_partial.endow_times_price);
-		committed_offers._log("");
-
-		unsigned char price_buf[6];
-
-		std::printf("sellAsset = %d buyAsset = %d\n", category.sellAsset, category.buyAsset);
-
-		price::write_price_big_endian(price_buf, partial_exec_p);
-		//std::printf("partial exec p = %s\n", DebugUtils::__array_to_str(price_buf, 6).c_str());
-		price::write_price_big_endian(price_buf, full_exec_p);
-		//std::printf("full exec p = %s\n", DebugUtils::__array_to_str(price_buf, 6).c_str());
-
-		for (unsigned int i = 0; i < indexed_metadata.size(); i++) {
-			price::write_price_big_endian(price_buf, indexed_metadata[i].key);
-			std::printf("%s %ld %lf\n", 
-				debug::array_to_str(price_buf, 6).c_str(), 
-				indexed_metadata[i].metadata.endow, 
-				(double) indexed_metadata[i].metadata.endow_times_price);
-		}
 		throw std::runtime_error("This should absolutely never happen, and means indexed_metadata or binary search is broken (or maybe an overflow)");
 	}
 
@@ -734,36 +529,14 @@ void Orderbook::calculate_demands_and_supplies(
 		//net endow times ratio is at most (partial exec endow) * sell_over_buy.
 		uint128_t endow_over_epsilon = (partial_exec_endow) << smooth_mult; // radix:0
 
-		//DEMAND_CALC_INFO("net endow over epsilon:%f", PriceUtils::amount_to_double(endow_over_epsilon, 0));
-
 		uint128_t endow_times_price_over_epsilon = (partial_exec_endow_times_price)<<smooth_mult; //radix:PRICE_RADIX
-
-
-		//DEMAND_CALC_INFO("net endow times price over epsilon:%f", PriceUtils::amount_to_double(endow_times_price_over_epsilon, PriceUtils::PRICE_RADIX));
 
 		uint128_t sell_wide_multiply_result = price::wide_multiply_val_by_a_over_b(endow_times_price_over_epsilon, buy_price, sell_price); //radix:PRICE_RADIX
 
-
 		partial_sell_volume = (endow_over_epsilon<<price::PRICE_RADIX) - (sell_wide_multiply_result); //radix:PRICE_RADIX
 		if ((endow_over_epsilon<<price::PRICE_RADIX) < (sell_wide_multiply_result)) {
-			partial_sell_volume = 0;
-			std::printf("weird %lf\n", (double)(sell_wide_multiply_result - (endow_over_epsilon<<price::PRICE_RADIX)));
-			//mostly a sanity check
-
-			std::printf("%lf %lf\n", (double) (sell_wide_multiply_result)/16777216, (double) (endow_over_epsilon<<price::PRICE_RADIX)/16777216);
-
-			for (std::size_t i = 0; i < indexed_metadata.size(); i++) {
-				std::printf("%lu %lu %lf \n", indexed_metadata[i].key/16777216, indexed_metadata[i].metadata.endow, (double)indexed_metadata[i].metadata.endow_times_price/16777216);
-			}
-
 			throw std::runtime_error("this should not happen unless something has begun to overflow");
 		}
-		/*partial_sell_volume = endow_over_epsilon
-			- PriceUtils::wide_multiply_val_by_a_over_b(
-				endow_times_price_over_epsilon,
-				buy_price,
-				sell_price);*/
-
 
 		uint128_t buy_wide_multiply_result = price::wide_multiply_val_by_a_over_b(
 			endow_over_epsilon<<price::PRICE_RADIX,
@@ -782,35 +555,13 @@ void Orderbook::calculate_demands_and_supplies(
 	uint128_t full_sell_volume = partial_sell_volume 
 		+ (((uint128_t)full_exec_endow)<<price::PRICE_RADIX);
 
-	//std::printf("partial_sell_volume=%f full_exec_endow=%f\n", PriceUtils::amount_to_double(partial_sell_volume), PriceUtils::amount_to_double(full_exec_endow));
 
 	auto full_buy_volume = partial_buy_volume 
-		+ price::wide_multiply_val_by_a_over_b(((uint128_t)full_exec_endow)<<price::PRICE_RADIX, sell_price, buy_price);//(((uint128_t)full_exec_amount) * ((uint128_t)sell_price)) / buy_price;
+		+ price::wide_multiply_val_by_a_over_b(((uint128_t)full_exec_endow)<<price::PRICE_RADIX, sell_price, buy_price);
 
-	constexpr bool aggressive_rounding = false; //INCORRECT to turn this on
-	if (aggressive_rounding) {
-		uint64_t lowbits = (((uint64_t) 1) << (price::PRICE_RADIX)) - 1;
-		full_buy_volume &= ~lowbits;
-		bool round_up = full_sell_volume & lowbits;
-		full_sell_volume &= ~lowbits;
-		full_sell_volume += (round_up << price::PRICE_RADIX);
-	}
-
-
-	//std::printf("orig full buy %lf orig full sell %lf\n", PriceUtils::amount_to_double(full_buy_volume), PriceUtils::amount_to_double(full_sell_volume));
 
 	demands_workspace[category.buyAsset] += full_buy_volume;
 	supplies_workspace[category.sellAsset] += full_sell_volume;
-
-	//double sell_price_d = PriceUtils::to_double(sell_price);
-	//double buy_price_d = PriceUtils::to_double(buy_price);
-	
-	//func.values[category.sellAsset][category.buyAsset] = (double) full_sell_volume;
-
-	//func.value += ((double)full_sell_volume) * sell_price_d * std::log2f(sell_price_d / buy_price_d);
-
-	//std::printf("work unit sell %lu buy %lu: demand %f supply %f\n", 
-	//	category.sellAsset, category.buyAsset, PriceUtils::amount_to_double(full_buy_volume), PriceUtils::amount_to_double(full_sell_volume));
 }
 
 bool Orderbook::tentative_clear_offers_for_validation(
@@ -821,19 +572,10 @@ bool Orderbook::tentative_clear_offers_for_validation(
 	const OrderbookStateCommitmentChecker& clearing_commitment_log,
 	BlockStateUpdateStatsWrapper& state_update_stats){
 
-
-	//int idx = WorkUnitManagerUtils::category_to_idx(category, 20);
-
-
 	prefix_t partialExecThresholdKey(local_clearing_log.partialExecThresholdKey);
 
 	int64_t endow_below_partial_exec_key = committed_offers.endow_lt_key(local_clearing_log.partialExecThresholdKey);
 	validation_statistics.activated_supply += FractionalAsset::from_integral(endow_below_partial_exec_key);
-
-
-	//if (idx == 266) {
-	//	std::printf("endow below partial exec key: %ld\n", endow_below_partial_exec_key);
-	//}
 
 	Price sellPrice = clearing_commitment_log.prices[category.sellAsset];
 	Price buyPrice = clearing_commitment_log.prices[category.buyAsset];
@@ -870,8 +612,6 @@ bool Orderbook::tentative_clear_offers_for_validation(
 		}
 		state_update_stats.fully_clear_offer_count += committed_offers.size();
 
-
-
 		{
 			std::lock_guard lock(*lmdb_instance.mtx);
 			auto& thunk = lmdb_instance.get_top_thunk_nolock();
@@ -879,8 +619,6 @@ bool Orderbook::tentative_clear_offers_for_validation(
 			thunk.cleared_offers = std::move(committed_offers);
 			committed_offers.clear();
 		}
-
-		//committed_offers.mark_entire_tree_for_deletion();
 
 		INFO("no partial exec correct exit");
 		return true;
@@ -891,11 +629,7 @@ bool Orderbook::tentative_clear_offers_for_validation(
 
 	serial_account_log.log_self_modification(partial_exec_offer.owner, partial_exec_offer.offerId);
 
-	//if (idx == 266) {
-	//	std::printf("logging self mod owner %lu offerId %lu\n", partial_exec_offer.owner, partial_exec_offer.offerId);
-//	}
 	int64_t partial_exec_sell_amount, partial_exec_buy_amount;
-
 
 	account_db_idx db_idx;
 
@@ -904,8 +638,6 @@ bool Orderbook::tentative_clear_offers_for_validation(
 		committed_offers.insert(local_clearing_log.partialExecThresholdKey, partial_exec_offer);
 		return false;
 	}
-
-	//std::printf("doing the partial exec clear\n");
 
 	clear_offer_partial(
 		partial_exec_offer, 

@@ -1,4 +1,19 @@
 #pragma once
+/*! \file merkle_trie.h
+
+Implementation of a Merkle Trie, a key value store.
+
+Keys are all fixed length.  
+
+Nodes can store metadata, such as number of leaves below said node
+or number of nodes marked as deleted.  These metadata can be elements
+of arbitrary commutative groups.
+
+In this implementation, children pointers are standard 8-byte pointers (i.e.
+virtual addresses).
+*/
+
+
 #include <unordered_map>
 #include <memory>
 #include <mutex>
@@ -353,10 +368,12 @@ public:
 		return prefix;
 	}
 
+	//! Return true iff node is a leaf node.
 	bool is_leaf() {
 		return prefix_len == MAX_KEY_LEN_BITS;
 	}
 
+	//! Returns value at node.  Throws error if not a leaf.
 	ValueType& get_value() {
 		if (!is_leaf()) {
 			throw std::runtime_error("can't get value from non leaf");

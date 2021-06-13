@@ -161,7 +161,10 @@ wide_multiply_val_by_a_over_b(const uint128_t value, const Price& a, const Price
 
 //it's not 100% accurate - there's some carries that get lost, but ah well.
 inline static Price 
-safe_multiply_and_drop_lowbits(const uint128_t& first, const uint128_t& second, const uint64_t& lowbits_to_drop) {
+safe_multiply_and_drop_lowbits(
+	const uint128_t& first, 
+	const uint128_t& second, 
+	const uint64_t& lowbits_to_drop) {
 
 	if (lowbits_to_drop < 64 || lowbits_to_drop > 196) {
 		throw std::runtime_error("unimplemented");
@@ -190,7 +193,8 @@ safe_multiply_and_drop_lowbits(const uint128_t& first, const uint128_t& second, 
 	if (lowbits_to_drop <= 128) {
 
 		uint64_t used_lowbits = 128-lowbits_to_drop;
-		uint64_t used_highbits = (used_lowbits <= PRICE_BIT_LEN) ? PRICE_BIT_LEN - used_lowbits : 0;
+		uint64_t used_highbits 
+			= (used_lowbits <= PRICE_BIT_LEN) ? PRICE_BIT_LEN - used_lowbits : 0;
 
 		uint64_t max_highbits = (((uint64_t)1) << used_highbits) - 1;
 		
