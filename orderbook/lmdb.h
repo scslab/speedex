@@ -1,5 +1,10 @@
 #pragma once
 
+/*! \file lmdb.h
+
+LMDB instance and related methods for persisting orderbook data.
+*/
+
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -41,10 +46,14 @@ public:
 		to_delete.push_back(garbage);
 	}
 
+	//! Add a vector of garbage pointers
+	//! (i.e. the result of release() on another garbage object).
 	void add(std::vector<trie_t*> ptrs) {
 		to_delete.insert(to_delete.end(), ptrs.begin(), ptrs.end());
 	}
 
+	//! Release the list of pointers (Caller becomes responsible for deleting
+	//! these pointers).
 	std::vector<trie_t*>
 	release() {
 		auto out = std::move(to_delete);

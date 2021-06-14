@@ -9,17 +9,19 @@ to load that data into memory.  Would only be relevant if Speedex runs for
 millions of blocks.
 */
 
+#include <cstdint>
+
 #include "config.h"
 
 #include "lmdb/lmdb_wrapper.h"
 
 #include "trie/merkle_trie.h"
-#include "trie/merkle_trie_utils.h"
-
+#include "trie/metadata.h"
+#include "trie/prefix.h"
 
 #include "xdr/types.h"
 
-namespace edce {
+namespace speedex {
 
 
 /*! LMDB instance for persisting block header hashes to disk
@@ -80,7 +82,6 @@ public:
 	//! back an insertion.
 	//! Should be followed either by rollback_validation() or
 	//! finalize_validation() 
-
 	bool tentative_insert_for_validation(
 		uint64_t block_number, const Hash& block_hash);
 	//! Undo the last block hash insertion (i.e. if subsequent, unrelated

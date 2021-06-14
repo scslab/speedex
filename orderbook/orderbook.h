@@ -1,5 +1,12 @@
 #pragma once
 
+/*! \file orderbook.h
+
+Manage a set of offers trading one fixed asset for another fixed asset.
+
+*/
+
+
 #include <cstdint>
 #include <iomanip>
 #include <sstream>
@@ -31,12 +38,45 @@ namespace speedex {
 typedef __int128 int128_t;
 typedef unsigned __int128 uint128_t;
 
+/*! One orderbooks is a collection of all offers trading one fixed asset
+ for another fixed asset.
+
+Workflow when producing a block:
+
+1. Iterate over transactions, get new offers, etc.  Then call add_offers
+on all those new offers.  These offers go into uncommitted_offers (no
+additional metadata).
+2. commit_for_production() merges uncommitted_offers into committed_offers.
+This also runs generate_metadata_index(), which does a pass over all the offers
+Also removes offers marked as deleted.
+(Internally, it's a tentative_commit_for_validation call and then
+a generate_metadata_index call).
+as a Tatonnement preprocessing phase.
+3. process_clear_offers() clears the set of open trade offers.
+
+Workflow when validating a block:
+1. Interate over nex transactions, get new offers etc.  Then call
+add_offers on those new offers.  These offers are marked by RollbackMixin
+metadata.
+2. tentative_commit_for_validation merges in uncommitted_offers to 
+committed_offers, removes offers marked as deleted.
+Makes a persistence thunk, and offers deleted are recorded in the thunk
+(useful for undoing a failed block).
+3. tentative_clear_offers_for_validation clears offers, and performs validation
+checks (make sure supply activation amounts add up, partial exec offer is
+present, etc).  Returns true if these checks pass.
+4. Additional validation checks (external)
+5. If those checks pass, finalize_validation (clears rollback markers) 
+If they fail, rollback_validation (undoes all state changes).
+
+*/
 class Orderbook {
 
 	const OfferCategory category;
 
 	using prefix_t = OrderbookTriePrefix;
 	
+	//! Offers committed to the orderbook.
 	OrderbookTrie committed_offers;
 
 	OrderbookTrie uncommitted_offers;
@@ -142,7 +182,6 @@ public:
 		SingleOrderbookStateCommitment& clearing_commitment_log,
 		BlockStateUpdateStatsWrapper& state_update_stats);
 	
-	//make the inserted things marked with some kind of metadata, which is deletable
 	bool tentative_clear_offers_for_validation(
 		MemoryDatabase& db,
 		SerialAccountModificationLog& serial_account_log,
@@ -203,8 +242,10 @@ public:
 		const EndowAccumulator& metadata_partial,
 		const EndowAccumulator& metadata_full);
 
-	uint8_t max_feasible_smooth_mult(int64_t amount, const Price* prices) const;
-	double max_feasible_smooth_mult_double(int64_t amount, const Price* prices) const;
+	uint8_t max_feasible_smooth_mult(
+		int64_t amount, const Price* prices) const;
+	double max_feasible_smooth_mult_double(
+		int64_t amount, const Price* prices) const;
 
 	size_t num_open_offers() const;
 
@@ -213,14 +254,8 @@ public:
 	std::pair<uint64_t, uint64_t> get_supply_bounds(
 		Price sell_price, Price buy_price, const uint8_t smooth_mult) const;
 
-	const std::vector<IndexType>& get_indexed_metadata() const {
-		return indexed_metadata;
-	}
-
-	size_t get_index_nnz() const {
-		return indexed_metadata.size() - 1; // first entry of index is 0, so ignore
-	}
-
+	//! Returns the OfferCategory for this orderbook, which specifies
+	//! the buy and sell assets for this orderbook.
 	OfferCategory get_category() const {
 		return category;
 	}

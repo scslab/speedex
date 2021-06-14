@@ -20,6 +20,7 @@ a crash could result in an unrecoverable state.
 
 #include "orderbook/orderbook_manager.h"
 #include "orderbook/typedefs.h"
+#include "orderbook/utils.h"
 
 
 namespace speedex {
@@ -74,8 +75,8 @@ public:
 		}
 	}
 
-	unsigned int get_num_work_units() const {
-		return main_manager.get_num_work_units();
+	unsigned int get_num_orderbooks() const {
+		return main_manager.get_num_orderbooks();
 	}
 
 	int get_num_assets() const {
@@ -128,15 +129,16 @@ protected:
 
 public:
 
-	/*void finish_merge(size_t offset = 0) {
-		auto new_offers_sz = std::min<size_t>(new_offers.size(), main_manager.get_num_work_units());
+	//! Merge contents of view into main orderbook manager.
+	//! Does not parallelize well.  Only used in e.g. replaying trusted blocks.
+	void finish_merge() {
+		auto new_offers_sz = std::min<size_t>(
+			new_offers.size(), main_manager.get_num_orderbooks());
 		for (size_t i = 0; i < new_offers_sz; i++) {
-			size_t idx = (i + offset) % new_offers_sz;
-			TRACE("merging in %lu of %lu.",idx, new_offers_sz);
-			main_manager.add_offers(idx, std::move(new_offers[idx]));
+			main_manager.add_offers(i, std::move(new_offers[i]));
 		}
 		new_offers.clear();
-	}*/
+	}
 
 	//! Merge the changes associated with orderbook index \a idx 
 	//! into the main trie.
@@ -160,13 +162,14 @@ public:
 		const AccountID owner, 
 		const uint64_t offer_id) {
 		ensure_suffient_new_offers_sz(idx);
-		generate_key(min_price, owner, offer_id, key_buf);
+		generate_orderbook_trie_key(min_price, owner, offer_id, key_buf);
 
 		//can't delete an uncommitted offer, so we don't check
 		//uncommitted buffer
 
 		return main_manager.mark_for_deletion(idx, key_buf);
 	}
+
 	int look_up_idx(const OfferCategory& id) {
 		return main_manager.look_up_idx(id);
 	}
@@ -177,6 +180,11 @@ public:
 
 	void clear() {
 		new_offers.clear();
+	}
+
+	//! Validate that an input offer category is well formed.
+	bool validate_category(const OfferCategory& category) {
+		return validate_category_(category, main_manager.get_num_assets());
 	}
 };
 
@@ -201,14 +209,17 @@ public:
 		const Price min_price, 
 		const AccountID owner, 
 		const uint64_t offer_id) {
-		generate_key(min_price, owner, offer_id, BaseSerialManager::key_buf);
+		
+		generate_orderbook_trie_key(
+			min_price, owner, offer_id, BaseSerialManager::key_buf);
+		
 		BaseSerialManager<OrderbookManager>::main_manager
 			.unmark_for_deletion(idx, key_buf);
 	}
 
 	//! Undo a call do add_offer
 	void unwind_add_offer(int idx, const Offer& offer) {
-		generate_key(offer, key_buf);
+		generate_orderbook_trie_key(offer, key_buf);
 		new_offers.at(idx).perform_deletion(key_buf);
 	}
 
@@ -220,7 +231,7 @@ public:
 		int idx, const Offer& offer, OpMetadata& metadata, LogType& log) 
 	{
 		ensure_suffient_new_offers_sz(idx);
-		generate_key(offer, key_buf);
+		generate_orderbook_trie_key(offer, key_buf);
 
 		//This always succeeds because we have a guarantee on uniqueness
 		// of offerId (from uniqueness of sequence numbers
@@ -236,7 +247,7 @@ LoadLMDBManagerView can be swapped in when replaying a block from disk.
 template<typename ManagerType = OrderbookManager>
 class ValidatingSerialManager : public BaseSerialManager<ManagerType> {
 
-	const WorkUnitStateCommitmentChecker& clearing_commitment;
+	const OrderbookStateCommitmentChecker& clearing_commitment;
 	ValidationStatistics activated_supplies;
 	ThreadsafeValidationStatistics& main_stats;
 	
@@ -258,8 +269,8 @@ public:
 
 	template<typename ...Args>
 	ValidatingSerialManager(
-		MerkleWorkUnitManager& main_manager, 
-		const WorkUnitStateCommitmentChecker& clearing_commitment, 
+		OrderbookManager& main_manager, 
+		const OrderbookStateCommitmentChecker& clearing_commitment, 
 		ThreadsafeValidationStatistics& main_stats,
 		 Args... args)
 		: BaseSerialManager<ManagerType>(main_manager, args...)
@@ -302,7 +313,7 @@ public:
 		int idx, const Offer& offer, OpMetadata& metadata, LogType& log)
 	{
 		ensure_suffient_new_offers_sz(idx);
-		generate_key(offer, key_buf);
+		generate_orderbook_trie_key(offer, key_buf);
 
 		// If theshold key is null, then all offers in the orderbook execute 
 		// fully

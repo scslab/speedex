@@ -1,5 +1,11 @@
 #pragma once
 
+/*! \file threadlocal_cache.h
+
+Maintain a concurrently-accessible threadlocal storage,
+without using pthread tls keys.
+*/
+
 #include <array>
 #include <atomic>
 #include <cstdint>

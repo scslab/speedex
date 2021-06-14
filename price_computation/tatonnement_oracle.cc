@@ -412,7 +412,7 @@ void TatonnementOracle::start_tatonnement_threads() {
 
 	bool first = true;
 
-	for (size_t i = 0; i < 3 ; i++) { // was i=4
+	for (size_t i = 0; i < 3 ; i++) {
 
 		auto params = new TatonnementControlParameters(num_assets, num_work_units);
 		if (params == nullptr) {

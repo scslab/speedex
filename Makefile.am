@@ -21,6 +21,11 @@ XH_FILES = $(X_FILES:.x=.h)
 
 # main srcs
 
+BLOCK_PROCESSING_SRCS = \
+	block_processing/block_producer.cc \
+	block_processing/block_validator.cc \
+	block_processing/serial_transaction_processor.cc
+
 HEADER_HASH_SRCS = \
 	header_hash/block_header_hash_map.cc
 
@@ -33,10 +38,15 @@ MEMORY_DATABASE_SRCS = \
 	memory_database/memory_database_view.cc \ 
 	memory_database/user_account.cc
 
+MEMPOOL_SRCS = \
+	mempool/mempool.cc \
+	mempool/mempool_cleaner.cc
+
 MODLOG_SRCS = \
 	modlog/account_modification_log.cc \
 	modlog/file_prealloc_worker.cc \
-	modlog/log_entry_fns.cc
+	modlog/log_entry_fns.cc \
+	modlog/log_merge_worker.cc
 
 ORDERBOOK_SRCS = \
 	orderbook/commitment_checker.cc \
@@ -46,6 +56,7 @@ ORDERBOOK_SRCS = \
 
 PRICE_COMPUTATION_SRCS = \
 	price_computation/lp_solver.cc \
+	price_computation/normalization_rolling_average.cc \
 	price_computation/tatonnement_oracle.cc
 
 UTILS_SRCS = \
@@ -53,9 +64,11 @@ UTILS_SRCS = \
 	utils/header_persistence.cc
 
 SRCS = \
+	$(BLOCK_PROCESSING_SRCS) \
 	$(HEADER_HASH_SRCS) \
 	$(LMDB_SRCS) \
 	$(MEMORY_DATABASE_SRCS) \
+	$(MEMPOOL_SRCS) \
 	$(MODLOG_SRCS) \
 	$(ORDERBOOK_SRCS) \
 	$(PRICE_COMPUTATION_SRCS) \

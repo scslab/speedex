@@ -200,16 +200,17 @@ struct dbenv : unique_destructor_t<mdb_env_close> {
       return out;
     }
 
-    // Open a named database.  Note that as long as this transaction
-    // commits, dbi continues to be valid and also does not need to be
-    // garbage-collected (since it's just an integer).
+    //! Open a named database.  Note that as long as this transaction
+    //! commits, dbi continues to be valid and also does not need to be
+    //! garbage-collected (since it's just an integer).
     dbi open(const char *name = nullptr, unsigned flags = 0) const;
 
-    // Look up a key in the database.  Returns std::nullopt if the key
-    // is not found in the database.  Throws dberror on any other
-    // failure condition.
+    //! Look up a key in the database.  Returns std::nullopt if the key
+    //! is not found in the database.  Throws dberror on any other
+    //! failure condition.
     dbval::opt get(dbi db, dbval key) const;
 
+    //!Open a database cursor within the transaction.
     cursor cursor_open(dbi db) const {
       MDB_cursor *c;
       check(mdb_cursor_open(tx_, db, &c));
@@ -222,23 +223,23 @@ struct dbenv : unique_destructor_t<mdb_env_close> {
     wtxn(wtxn &&t) : txn(std::move(t)) {}
     wtxn &operator=(wtxn &&t) { txn::operator=(std::move(t)); return *this; }
 
-    // Start a nested transaction.
+    //! Start a nested transaction.
     wtxn wbegin() const;
 
-    // Throws an exceptin on any failure.
+    //! Throws an exceptin on any failure.
     void put(dbi, dbval key, dbval val, unsigned flags = 0) const;
-    // Throws an exception on failures except MDB_NOOVERWRITE, in
-    // which case returns false and val is updated to existing value.
+    //! Throws an exception on failures except MDB_NOOVERWRITE, in
+    //! which case returns false and val is updated to existing value.
     bool tryput(dbi, dbval key, dbval *val, unsigned flags = 0) const;
 
-    // Remove a key from the database.
+    //! Remove a key from the database.
     bool del(dbi db, dbval key) const;
     bool del(dbi db, dbval key, dbval val) const;
   };
 
-  // Begin read-only transaction.
+  //! Begin read-only transaction.
   txn rbegin() const;
-  // Begin read-write transaction.
+  //! Begin read-write transaction.
   wtxn wbegin() const;
 };
 

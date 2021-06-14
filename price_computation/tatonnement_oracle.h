@@ -80,7 +80,6 @@ class TatonnementOracle {
 	OrderbookManager& work_unit_manager;
 	LPSolver& solver;
 	size_t num_assets;
-	int num_worker_threads;
 	ApproximationParameters active_approx_params;
 
 	//! Run Tatonnement with multiple control param settings in these threads.
@@ -166,12 +165,10 @@ class TatonnementOracle {
 public:
 	TatonnementOracle(
 		OrderbookManager& work_unit_manager,
-		LPSolver& solver,
-		int num_worker_threads)
+		LPSolver& solver)
 	: work_unit_manager(work_unit_manager)
 	, solver(solver)
 	, num_assets(work_unit_manager.get_num_assets())
-	, num_worker_threads(num_worker_threads)
 
 	{
 		internal_shared_price_workspace = new Price[num_assets];
@@ -196,6 +193,11 @@ public:
 		const ApproximationParameters approx_params, 
 		const uint16_t* v_relativizers = nullptr);
 	
+	//! Wait for all running tatonnement query threads to finish their queries,
+	//! typically by waiting for them to read a timeout signal or a signal
+	//! that some other thread finished a query first.
+	//! Important that tatonnement threads are not running while 
+	//! orderbooks are modified.
 	void wait_for_all_tatonnement_threads();
 	
 	//! return true iff timeout causes tatonnement end.

@@ -170,7 +170,11 @@ and database persistence can be done safely in the background.
 
 class MemoryDatabase {
 public:
-	constexpr static int TRIE_KEYLEN = sizeof(AccountID);
+	//! Designate one asset as the base asset of speedex.
+	//! Newly created accounts are required to get a small
+	//! amount of this asset.
+	//! If we decided to charge a gas fee, it would be in this asset. 
+	constexpr static AssetID NATIVE_ASSET = 0;
 
 	using DBEntryT = UserAccount;
 	using DBMetadataT = CombinedMetadata<SizeMixin>;

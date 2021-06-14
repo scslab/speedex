@@ -241,6 +241,7 @@ public:
 	void open_lmdb_env();
 	void open_lmdb();
 
+	//! Hash all of the orderbooks, storing results in clearing_details.
 	void hash(OrderbookStateCommitment& clearing_details);
 
 	uint8_t get_max_feasible_smooth_mult(

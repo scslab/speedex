@@ -12,17 +12,22 @@
 namespace speedex {
 
 /*! Fully clear a trade offer.
+
+Template argument is to allow passing either 
+a raw MemoryDatabase or an UnbufferedMemoryDatabaseView
+(in the case of block validation, when offers
+are immediately cleared).
 */
+template<typename Database>
 [[maybe_unused]]
 static void
 clear_offer_full(
 	const Offer& offer, 
 	const Price& sellPrice,
-	 const Price& buyPrice, 
-	 const uint8_t tax_rate, 
-	 MemoryDatabase& db, 
-	 const account_db_idx db_idx) {
-
+	const Price& buyPrice, 
+	const uint8_t tax_rate, 
+	Database& db, 
+	const account_db_idx db_idx) {
 
 	auto amount = FractionalAsset::from_integral(offer.amount);
 

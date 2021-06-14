@@ -152,6 +152,10 @@ public:
 
 Used for block validation, when we only check database validity
 at the end of transaction processing.
+
+Also used when unwinding transactions.  In this case, only 
+things to unwind are balance changes (not account creations),
+so no need to commit.
 */
 class UnbufferedMemoryDatabaseView : public AccountCreationView {
 

@@ -54,22 +54,6 @@ public:
 	}
 };
 
-/*
-Validation workflow:
-
-SerialTransactionValidator runs through offer lists, autoclears anything below partial execution threshold listed in block.  Logs amount of supply activated.
-All new offers added are marked as rollbackable.
-
-
-Next, we call tentative_commit_for_validation.  This merges tries together (needed to compute hashes), starts persistence thunk preparation.
-
-THen we call tentative_clear_offers_for_validation.  This is responsible for marking cleared entries as deleted, logging supply activation, and making the partial exec modifications.
-returns true if supply activations add up.  Also should finish adding entries to thunk.
-
-Then we do external validity checks.  Check hashes, clearing, supply activations add up, etc.
-
-If those pass, we call finalize_validation.  If fails, we call rollback_validation.
-*/
 void Orderbook::tentative_commit_for_validation(uint64_t current_block_number) {
 	{
 		std::lock_guard lock(*lmdb_instance.mtx);

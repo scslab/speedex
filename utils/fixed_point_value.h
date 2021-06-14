@@ -33,6 +33,7 @@ struct FixedPrecision {
 	FixedPrecision(value_t value, const EmptyStruct& foo) : value(value) {}
 	//! Construct from double (i.e. round double to fixed-point)
 	FixedPrecision(double d_val) : value(std::round(d_val * (((value_t) 1)<<radix))) {}
+	//! Construct with default value 0.
 	FixedPrecision() : value(0) {}
 
 	//! Construct from double, rounding up remaining precision bits
