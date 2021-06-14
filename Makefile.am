@@ -51,6 +51,7 @@ MODLOG_SRCS = \
 ORDERBOOK_SRCS = \
 	orderbook/commitment_checker.cc \
 	orderbook/lmdb.cc \
+	orderbook/offer_clearing_params.cc \
 	orderbook/orderbook.cc \
 	orderbook/orderbook_manager.cc
 
@@ -58,6 +59,9 @@ PRICE_COMPUTATION_SRCS = \
 	price_computation/lp_solver.cc \
 	price_computation/normalization_rolling_average.cc \
 	price_computation/tatonnement_oracle.cc
+
+SPEEDEX_SRCS = \
+	speedex/speedex_operation.cc
 
 UTILS_SRCS = \
 	utils/cleanup.cc \
@@ -72,6 +76,7 @@ SRCS = \
 	$(MODLOG_SRCS) \
 	$(ORDERBOOK_SRCS) \
 	$(PRICE_COMPUTATION_SRCS) \
+	$(SPEEDEX_SRCS) \
 	$(UTILS_SRCS)
 
 MAIN_CCS = main/simple.cc \

@@ -210,7 +210,8 @@ BlockValidator::validate_transaction_block_(
 	measurements.tx_validation_trie_merge_time = measure_time(timestamp);
 
 	BLOCK_INFO("tx validation success, checking db state");
-	auto res = management_structures.db.check_valid_state(management_structures.account_modification_log);
+	auto res = management_structures.db.check_valid_state(
+		management_structures.account_modification_log);
 	BLOCK_INFO("done checking db state = %d", res);
 	return res;
 }
@@ -289,17 +290,26 @@ public:
 	void operator() (const auto r) {
 		BlockStateUpdateStatsWrapper stats;
 
-		SerialTransactionValidator<LoadLMDBManagerView> tx_validator(management_structures, clearing_commitment, main_stats, current_round_number);
-		SerialAccountModificationLog serial_account_log(management_structures.account_modification_log);
+		SerialTransactionValidator<LoadLMDBManagerView> tx_validator(
+			management_structures, 
+			clearing_commitment, 
+			main_stats, 
+			current_round_number);
+
+		SerialAccountModificationLog serial_account_log(
+			management_structures.account_modification_log);
+		
 		for (size_t i = r.begin(); i < r.end(); i++) {
 			for (size_t j = 0; j < txs[i].new_transactions_self.size(); j++) {
 
-				tx_validator.validate_transaction(txs[i].new_transactions_self[j], stats, serial_account_log, current_round_number);
+				tx_validator.validate_transaction(
+					txs[i].new_transactions_self[j], 
+					stats, 
+					serial_account_log, 
+					current_round_number);
 			}
 		}
 		tx_validator.extract_manager_view().finish_merge();
-
-		//tx_validator.finish();
 	}
 
 	ParallelTrustedReplay(ParallelTrustedReplay& x, tbb::split)
@@ -342,11 +352,16 @@ BlockValidator::replay_trusted_block(
 		header.block.internalHashes.clearingDetails, prices, header.block.feeRate);
 		
 
-	auto replayer = ParallelTrustedReplay(block, management_structures, commitment_checker, validation_stats, header.block.blockNumber);
+	auto replayer = ParallelTrustedReplay(
+		block, management_structures, 
+		commitment_checker, 
+		validation_stats, 
+		header.block.blockNumber);
 
-	tbb::parallel_reduce(tbb::blocked_range<std::size_t>(0, block.size()), replayer);
+	tbb::parallel_reduce(tbb::blocked_range<size_t>(0, block.size()), replayer);
 
 	// No need to merge in account modification logs when replaying a trusted block. 
+	// No need to export validation stats either.
 }
 
 } /* speedex */

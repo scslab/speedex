@@ -174,5 +174,44 @@ struct BlockValidationMeasurements {
 	float reserved_space0;
 };
 
+struct TxProcessingMeasurements {
+	float process_time;
+	float finish_time;
+};
+
+struct OverallBlockProductionMeasurements {
+	TxProcessingMeasurements processing_measurements<>;
+	BlockCreationMeasurements block_creation_measurements;
+	BlockDataPersistenceMeasurements data_persistence_measurements;
+	float state_commitment_time;
+	BlockProductionHashingMeasurements production_hashing_measurements;
+	float format_time;
+	int num_txs;
+	float total_time;
+	BlockStateUpdateStats state_update_stats;
+	uint64 last_block_added_to_mempool;
+	float mempool_push_time;
+	float mempool_wait_time;
+	float total_init_time;
+	float total_block_build_time;
+	float total_block_creation_time;
+	float total_block_commitment_time;
+	float total_block_persist_time;
+	float total_time_from_basept;
+	float total_block_send_time;
+	float total_self_confirm_time;
+	float total_critical_persist_time;
+};
+
+struct OverallBlockValidationMeasurements {
+	BlockValidationMeasurements block_validation_measurements;
+	BlockDataPersistenceMeasurements data_persistence_measurements;
+	float total_time;
+	float total_persistence_time;
+	float block_load_time;
+	float validation_logic_time;
+	BlockStateUpdateStats state_update_stats;
+};
+
 
 } /* speedex */

@@ -1,6 +1,8 @@
 #pragma once
 
-/*! Process transactions in a single thread.
+/*! \file serial_transaction_processor.h
+
+Process transactions in a single thread.
 
 Not at all threadsafe.  Use one of these objects
 per thread.

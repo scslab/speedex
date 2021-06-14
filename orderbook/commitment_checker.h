@@ -16,7 +16,6 @@ that we sold to get some other asset (tracked per orderbook).
 #include <mutex>
 
 #include "utils/fixed_point_value.h"
-#include "utils/big_endian.h"
 
 #include "xdr/block.h"
 
@@ -91,9 +90,11 @@ struct SingleOrderbookStateCommitmentChecker
 Main method of import is check().  Compares equilibrium commitment against
 observed validation statistics.
 */
-struct OrderbookStateCommitmentChecker {
+class OrderbookStateCommitmentChecker {
 
 	const std::vector<SingleOrderbookStateCommitmentChecker> commitments;
+
+public:
 	const std::vector<Price> prices;
 	const uint8_t tax_rate;
 
@@ -109,16 +110,21 @@ struct OrderbookStateCommitmentChecker {
 		return commitments[idx];
 	}
 
-	const SingleOrderbookStateCommitmentChecker& at(size_t idx) const {
-		return commitments.at(idx);
-	}
-
+	//! Print out clearing stats
 	void log() const;
-	bool check(ThreadsafeValidationStatistics& fully_cleared_stats);
 
-	size_t size() const {
-		return commitments.size();
-	}
+	//! Check that the accumulated set of orderbook clearing stats
+	//! are actually clearing (supply exceeds taxed demand).
+	bool check_clearing();
+
+	//! Check that the amount of trading observed during validation
+	//! matches up with the expected trade anounts (i.e. when
+	//! validating a block).
+	bool check_stats(ThreadsafeValidationStatistics& fully_cleared_stats);
+
+//	size_t size() const {
+//		return commitments.size();
+//	}
 };
 
 } /* speedex */

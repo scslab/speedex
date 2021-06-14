@@ -13,7 +13,7 @@ LogMergeWorker::run() {
 		if (done_flag) return;
 		if (logs_ready_for_merge) {
 
-			account_modification_log.merge_in_log_batch();
+			modification_log.merge_in_log_batch();
 			
 			logs_ready_for_merge = false;
 		}

@@ -42,7 +42,7 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, bool debug) {
 	}
 
 	if (relevant_thunks.size() == 0) {
-		return;
+		return ThunkGarbage{};
 	}
 
 	if (relevant_thunks[0].current_block_number != get_persisted_round_number() + 1) {

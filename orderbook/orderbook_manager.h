@@ -246,6 +246,14 @@ public:
 
 	uint8_t get_max_feasible_smooth_mult(
 		const ClearingParams& clearing_params, Price* prices);
+
+	//! Compute a volume-weighted price asymmetry metric.
+	//! Used when tatonnement times out to quantify efficienty loss.
+	double
+	get_weighted_price_asymmetry_metric(
+		const ClearingParams& clearing_params,
+		const std::vector<Price>& prices)  const;
+
 	size_t num_open_offers() const;
 };
 

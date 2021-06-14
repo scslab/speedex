@@ -1,5 +1,13 @@
 #pragma once
 
+/*! \file block_validator.h
+
+Convenience wrapper around logic for validating a block of transactions.
+
+Only does the actual iteration over transactions.  Does not do 
+offer clearing/validation checks.
+*/
+
 #include "block_processing/serial_transaction_processor.h"
 
 #include "modlog/log_merge_worker.h"
@@ -17,8 +25,6 @@
 namespace speedex {
 /*! 
 Interface for producing valid block of transactions.
-Owns a background thread used for merging account modification logs
-in the background. 
 
 Each of the validation methods is essentially the same functionality.
 Each accepts a transaction block written in a different format.
@@ -27,7 +33,7 @@ Each accepts a transaction block written in a different format.
 class BlockValidator {
 
 	SpeedexManagementStructures& management_structures;
-	LogMergeWorker worker;
+	LogMergeWorker& worker;
 
 	//! Validate a batch of transactions
 	template<typename WrappedType>
@@ -40,9 +46,10 @@ class BlockValidator {
 
 public:
 	//! Create a new block validator.
-	BlockValidator(SpeedexManagementStructures& management_structures)
+	BlockValidator(SpeedexManagementStructures& management_structures,
+		LogMergeWorker& log_merge_worker)
 		: management_structures(management_structures)
-		, worker(management_structures.account_modification_log) {}
+		, worker(log_merge_worker) {}
 
 	bool validate_transaction_block(
 		const AccountModificationBlock& transactions,

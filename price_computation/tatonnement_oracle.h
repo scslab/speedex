@@ -76,6 +76,20 @@ struct MultifuncTatonnementObjective {
 	}
 };
 
+
+/*! 
+
+Operates as an oracle for price computation via Tatonnement.
+
+Owns all worker threads.
+
+Call compute_prices_grid_search() to activate query threads.
+Timeout can be run by launching a timeout thread.  This thread
+should be joined before proceeding to a future block.
+So too should wait_for_all_tatonnement_threads() be called 
+before modifying the orderbooks.
+*/
+
 class TatonnementOracle {
 	OrderbookManager& work_unit_manager;
 	LPSolver& solver;

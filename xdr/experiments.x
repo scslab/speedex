@@ -38,10 +38,7 @@ typedef AccountID AccountIDList<>;
 
 typedef SignedTransaction ExperimentBlock<>;
 
-struct TxProcessingMeasurements {
-	float process_time;
-	float finish_time;
-};
+/*
 
 struct ExperimentBlockResults {
 	TxProcessingMeasurements processing_measurements<>;
@@ -86,7 +83,8 @@ struct ExperimentValidationResults {
 	ExperimentParameters params;
 	ExperimentValidationBlockResults block_results<>;
 };
-
+ */
+ 
 enum NodeType {
 	BLOCK_PRODUCER = 0,
 	BLOCK_VALIDATOR = 1
@@ -94,9 +92,9 @@ enum NodeType {
 
 union SingleBlockResultsUnion switch(NodeType type) {
 	case BLOCK_PRODUCER:
-		ExperimentBlockResults productionResults;
+		OverallBlockProductionMeasurements productionResults;
 	case BLOCK_VALIDATOR:
-		ExperimentValidationBlockResults validationResults;
+		OverallBlockValidationMeasurements validationResults;
 };
 
 struct ExperimentResultsUnion {

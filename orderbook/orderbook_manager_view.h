@@ -341,7 +341,7 @@ public:
 		// Otherwise, compare the offer's key to the partial exec threshold.
 		auto key_buf_bytes = key_buf.get_bytes_array();
 		auto res = memcmp(
-			clearing_commitment.at(idx).partialExecThresholdKey.data(), 
+			clearing_commitment[idx].partialExecThresholdKey.data(), 
 			key_buf_bytes.data(), 
 			ORDERBOOK_KEY_LEN);
 

@@ -1,5 +1,11 @@
 #include "orderbook/commitment_checker.h"
 
+#include "orderbook/utils.h"
+
+#include "utils/big_endian.h"
+#include "utils/debug_macros.h"
+#include "utils/price.h"
+
 namespace speedex {
 
 SingleValidationStatistics& 
@@ -118,7 +124,44 @@ OrderbookStateCommitmentChecker::log() const {
 }
 
 bool
-OrderbookStateCommitmentChecker::check(
+OrderbookStateCommitmentChecker::check_clearing() {
+	auto num_work_units = commitments.size();
+	auto num_assets = prices.size();
+
+	std::vector<FractionalAsset> supplies, demands;
+	supplies.resize(num_assets);
+	demands.resize(num_assets);
+
+	for (unsigned int i = 0; i < num_work_units; i++) {
+		auto category = category_from_idx(i, num_assets);
+
+		auto supply_activated = commitments[i].fractionalSupplyActivated();
+
+		supplies[category.sellAsset] += supply_activated;
+
+		auto demanded_raw = price::wide_multiply_val_by_a_over_b(
+			supply_activated.value, 
+			prices[category.sellAsset], 
+			prices[category.buyAsset]);
+
+		demands[category.buyAsset] += FractionalAsset::from_raw(demanded_raw);
+	}
+
+	for (auto i = 0u; i < num_assets; i++) {
+		FractionalAsset taxed_demand = demands[i].tax(tax_rate);
+
+		CLEARING_INFO("asset %d supplies %lf demands %lf taxed_demand %lf", 
+			i, supplies[i].to_double(), demands[i].to_double(), taxed_demand.to_double());
+		if (supplies[i] < taxed_demand) {
+			CLEARING_INFO("invalid clearing: asset %d", i);
+			return false;
+		}
+	}
+	return true;
+}
+
+bool
+OrderbookStateCommitmentChecker::check_stats(
 	ThreadsafeValidationStatistics& fully_cleared_stats)
 {
 	fully_cleared_stats.make_minimum_size(commitments.size());

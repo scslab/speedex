@@ -323,15 +323,6 @@ OrderbookManager::tentative_clear_offers_for_validation(
 	return !exists_failure.test_and_set();
 }
 
-size_t 
-OrderbookManager::get_total_nnz() const {
-	size_t acc = 0;
-	for (size_t i = 0; i < orderbooks.size(); i++) {
-		acc += orderbooks[i].get_index_nnz();
-	}
-	return acc;
-}
-
 uint8_t 
 OrderbookManager::get_max_feasible_smooth_mult(
 	const ClearingParams& clearing_params, Price* prices) 
@@ -346,6 +337,37 @@ OrderbookManager::get_max_feasible_smooth_mult(
 	}
 	return max;
 }
+
+double 
+OrderbookManager::get_weighted_price_asymmetry_metric(
+	const ClearingParams& clearing_params,
+	const std::vector<Price>& prices) const 
+{
+	auto num_orderbooks = orderbooks.size();
+
+	double total_vol = 0;
+	double weighted_vol = 0;
+
+	for (size_t i = 0; i < num_orderbooks; i++) {
+		double feasible_mult = orderbooks[i].max_feasible_smooth_mult_double(
+			clearing_params.orderbook_params[i].supply_activated.ceil(), prices.data());
+		auto category = orderbooks[i].get_category();
+		Price sell_price = prices[category.sellAsset];
+
+		double volume 
+			= clearing_params
+				.orderbook_params[i]
+				.supply_activated
+				.to_double() 
+			* price::to_double(sell_price);
+		
+		total_vol += volume;
+
+		weighted_vol += feasible_mult * volume;
+	}
+	return weighted_vol / total_vol;
+}
+
 
 void 
 OrderbookManager::clear_offers_for_data_loading(

@@ -105,9 +105,8 @@ void Orderbook::finalize_validation() {
 	}
 }
 
-
-
 //rolls back tentative_commit_for_validation, along with transaction side effects
+// also rolls back tentative_clear_offers_for_validation via undo_thunk.
 void Orderbook::rollback_validation() {
 	
 	uncommitted_offers.clear();

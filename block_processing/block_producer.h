@@ -19,18 +19,20 @@ namespace speedex {
 
 /*! 
 Interface for producing valid block of transactions.
-Owns a background thread used for merging account modification logs
-in the background. */
+*/
 class BlockProducer {
 
 	SpeedexManagementStructures& management_structures;
-	LogMergeWorker worker;
+	//! Merge account mod logs in a background thread.
+	LogMergeWorker& worker;
 
 public:
 	//! Create a new block producer.
-	BlockProducer(SpeedexManagementStructures& management_structures)
+	BlockProducer(
+		SpeedexManagementStructures& management_structures,
+		LogMergeWorker& log_merge_worker)
 		: management_structures(management_structures)
-		, worker(management_structures.account_modification_log) {}
+		, worker(log_merge_worker) {}
 
 	//! Mints a new block of transactions.
 	//! output block is implicitly held within account_modification_log
