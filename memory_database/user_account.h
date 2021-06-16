@@ -40,12 +40,20 @@ class UserAccount {
 	mutable std::mutex uncommitted_assets_mtx;
 
 	// using a map here really slows things down.
+	//! Assets owned by the account
 	std::vector<RevertableAsset> owned_assets;
+	//! Assets owned by the account, but which were not owned (i.e.
+	//! memory was not allocated towards recording them) prior to this block.
+	//! Separating new assets from prior assets avoids every op
+	//! taking a loc on owned_assets.
 	std::vector<RevertableAsset> uncommitted_assets;
 
+	//! Bitvector of committed/reserved sequence numbers in the current block.
+	//! Offsets are from last_committed_id.  I.e. to reserve sequence number
+	//! last_committed_id + 3, set sequence_number_vec |= 1 << (3 + 1)
 	std::atomic<uint64_t> sequence_number_vec;
 
-
+	//! Highest sequence number that has been committed from the account
 	uint64_t last_committed_id;
 
 	/*! Apply some function to an asset.  Acquires a lock on uncommittted_assets
@@ -75,6 +83,7 @@ class UserAccount {
 
 public:
 
+	//! Create a new account with a given public key.
 	UserAccount(AccountID owner, PublicKey public_key) :
 		uncommitted_assets_mtx(),
 		last_committed_id(0),
@@ -132,15 +141,20 @@ public:
 			}
 		}
 
-
+	//! Return the public key associated with the account.
 	PublicKey get_pk() const {
 		return pk;
 	}
 
+	//! Return the ID of the owner of the account.
 	AccountID get_owner() const {
 		return owner;
 	}
 
+
+	//! Transfer amount of asset to the account's (unescrowed) balance.
+	//! Negative amounts mean a withdrawal.
+	//! Unconditionally executes.
 	void transfer_available(unsigned int asset, amount_t amount) {
 		operate_on_asset<void>(
 			asset,
@@ -150,6 +164,10 @@ public:
 			});
 	}
 
+/*
+	//! Transfer amount of asset to the account's escrowed balance
+	//! Note that assets don't actually store escrowed balance,
+	//! so this is a no-op
 	void transfer_escrow(unsigned int asset, amount_t amount) {
 		operate_on_asset<void>(
 			asset, 
@@ -158,7 +176,8 @@ public:
 				asset.transfer_escrow(amount);
 			});
 	}
-
+*/
+	//! Escrow amount units of asset.
 	void escrow(unsigned int asset, amount_t amount) {
 		operate_on_asset<void>(asset, 
 			amount, 
@@ -167,6 +186,9 @@ public:
 			});
 	}
 
+	//! Attempt to transfer amount units of asset to the account.
+	//! Returns true on success.
+	//! Can only fail if amount is negative (i.e. a withdrawal).
 	bool conditional_transfer_available(unsigned int asset, amount_t amount) {
 		return operate_on_asset<bool>(
 			asset, 
@@ -176,6 +198,11 @@ public:
 			});
 	}
 
+
+	//! Attempt to escrow amount units of asset to the account.
+	//! Returns true on success.
+	//! Can only fail if amount is positive (negative means release from
+	//! escrow).
 	bool conditional_escrow(unsigned int asset, amount_t amount) {
 		return operate_on_asset<bool>(
 			asset, 
@@ -185,6 +212,7 @@ public:
 			});
 	}
 
+	//! Returns an account's available balance of some asset.
 	amount_t lookup_available_balance(unsigned int asset) {
 		[[maybe_unused]]
 		amount_t unused = 0;
@@ -212,7 +240,11 @@ public:
 	void rollback();
 	bool in_valid_state();
 	
+	//! Generate an account commitment (for hashing)
+	//! based on committed account balances
 	AccountCommitment produce_commitment() const;
+	//! Generate an account commitment (for hashing)
+	//! based on uncommitted account balances.
 	AccountCommitment tentative_commitment() const;
 
 	static dbval produce_lmdb_key(const AccountID& owner);

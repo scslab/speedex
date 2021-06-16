@@ -350,8 +350,7 @@ public:
 
 	void transfer_available(
 		account_db_idx user_index, AssetID asset_type, int64_t change);
-	void transfer_escrow(
-		account_db_idx user_index, AssetID asset_type, int64_t change);
+
 	void escrow(
 		account_db_idx user_index, AssetID asset_type, int64_t change);
 

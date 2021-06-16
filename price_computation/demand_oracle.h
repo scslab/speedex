@@ -1,5 +1,11 @@
 #pragma once
 
+/*! \file demand_oracle.h
+
+Runs a single supply/demand query.
+Owns background threads to run these queries.
+*/
+
 #include "orderbook/orderbook.h"
 #include "orderbook/utils.h"
 
@@ -16,6 +22,8 @@ and, when active, wait on a spinlock for
 a signal from the main thread.
 
 Otherwise, sleep as a regular AsyncWorker.
+
+Each worker should be assigned to only one ParallelDemandOracle.
 */
 class DemandOracleWorker : public AsyncWorker {
 	using AsyncWorker::cv;
@@ -114,6 +122,8 @@ class DemandOracleWorker : public AsyncWorker {
 	}
 public:
 
+	//! Initialize this demand worker to run on orderbooks between starting_work_unit (incl)
+	//! and ending_work_unit (excl)
 	void init(unsigned int num_assets_, size_t starting_work_unit_, size_t ending_work_unit_) {
 		num_assets = num_assets_;
 		starting_work_unit = starting_work_unit_;
@@ -181,6 +191,12 @@ public:
 
 Call activate_oracle() (deactivate_oracle()) before
 (after) usage to wake (put to sleep) the background threads.
+
+Each worker should be assigned to only one ParallelDemandOracle.
+
+Not threadsafe.  Each Tatonnement copy should have its own
+oracle.
+
 */ 
 template<unsigned int NUM_WORKERS>
 class ParallelDemandOracle {
@@ -189,19 +205,27 @@ class ParallelDemandOracle {
 
 	unsigned int num_assets;
 
+	//! Caller thread is reponsible for orderbooks from
+	//! main_thread_start_idx(incl) to main_thread_end_idx(excl)
 	constexpr static size_t main_thread_start_idx = 0;
-	size_t main_thread_end_idx = 0;
+
+	//! Caller thread is reponsible for orderbooks from
+	//! main_thread_start_idx(incl) to main_thread_end_idx(excl)
+	const size_t main_thread_end_idx;
 
 	DemandOracleWorker workers[NUM_WORKERS];
 
 public:
+	//! Initialize oracle with a given number of assets and a given
+	//! number of orderbooks.
 	ParallelDemandOracle(size_t num_work_units, size_t num_assets)
 		: num_work_units(num_work_units)
 		, num_assets(num_assets)
+		, main_thread_end_idx(num_work_units / (NUM_WORKERS + 1))
 	{
 
 		size_t num_shares = NUM_WORKERS + 1;
-		main_thread_end_idx = num_work_units / (num_shares);
+		//main_thread_end_idx = num_work_units / (num_shares);
 
 		for (size_t i = 0; i < NUM_WORKERS; i++) {
 			size_t start_idx = (num_work_units * (i+1)) / num_shares;

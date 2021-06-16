@@ -68,9 +68,6 @@ public:
 		available.fetch_add(amount, write_order);
 	}
 
-	void transfer_escrow(const amount_t& amount) {
-	}
-
 	bool conditional_escrow(const amount_t& amount) {
 		if (amount > 0) {
 			auto result = conditional_transfer_available(-amount);

@@ -1599,6 +1599,7 @@ number of children [4bytes]
 hash of root node
 
 */
+namespace {
 
 template <typename ValueType, typename prefix_t>
 static void 
@@ -1621,8 +1622,6 @@ compute_hash_value_node(
 		throw std::runtime_error("error in crypto_generichash");
 	}
 }
-
-namespace {
 
 template<
 	typename Map, 

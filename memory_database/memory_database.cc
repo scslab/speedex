@@ -23,10 +23,7 @@ void MemoryDatabase::transfer_available(
 	account_db_idx user_index, AssetID asset_type, int64_t change) {
 	find_account(user_index).transfer_available(asset_type, change);
 }
-void MemoryDatabase::transfer_escrow(
-	account_db_idx user_index, AssetID asset_type, int64_t change) {
-	find_account(user_index).transfer_escrow(asset_type, change);
-}
+
 void MemoryDatabase::escrow(
 	account_db_idx user_index, AssetID asset_type, int64_t change) {
 	find_account(user_index).escrow(asset_type, change);

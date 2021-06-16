@@ -1,5 +1,11 @@
 #pragma once
 
+/*! \file ranges.h
+
+TBB helper objects used for iterating over tries
+
+*/
+
 #include "trie/prefix.h"
 #include "trie/recycling_impl/allocator.h"
 #include "utils/threadlocal_cache.h"
@@ -11,6 +17,7 @@
 namespace speedex {
 
 
+//! TBB iterator range used when hashing a trie.
 template<typename TrieT>
 class AccountHashRange {
 	
@@ -21,24 +28,31 @@ class AccountHashRange {
 	allocator_t& allocator;
 
 public:
+	//! Nodes for which this range is responsible for hashing.
 	std::vector<ptr_t> nodes;
 
+	//! TBB: is this range worth executing
 	bool empty() const {
 		return num_children == 0;
 	}
 
+	//! TBB: can this range be divided
 	bool is_divisible() const {
 		return num_children > 1000;
 	}
 
+	//! Number of nodes for which this range is responsible.
 	size_t num_nodes() const {
 		return nodes.size();
 	}
 
+	//! Get an actual reference on a node to be hashed.
 	TrieT& operator[](size_t idx) const {
 		return allocator.get_object(nodes[idx]);
 	}
 
+	//! Construct a default range (for the whole trie)
+	//! from the trie root.
 	AccountHashRange(ptr_t node, allocator_t& allocator) 
 		: num_children(0)
 		, allocator(allocator)
@@ -47,6 +61,7 @@ public:
 			num_children = (allocator.get_object(node).size());
 		};
 
+	//! TBB: splitting constructor.
 	AccountHashRange(AccountHashRange& other, tbb::split) 
 		: num_children(0)
 		, allocator(other.allocator)
@@ -70,27 +85,39 @@ public:
 	}
 };
 
-
+//! TBB range when accumulating a list of the values in the trie.
 template<typename TrieT, unsigned int GRAIN_SIZE = 1000>
 struct AccountAccumulateValuesRange {
 	using ptr_t =  TrieT::ptr_t;
 	using allocator_t =  TrieT::allocator_t;
+
+	//! Nodes for which this range is responsible.
+	//! The lists of values underneath these pointers
+	//! are consecutive.
 	std::vector<ptr_t> work_list;
 
+	//! Total number of values underneath pointers in 
+	//! work_list
 	uint64_t work_size;
 
+	//! Offset in the accumulator vector in which to 
+	//! start placing values.
 	uint64_t vector_offset;
 
+	//! Convert recycling ptrs into virtual addresses
 	const allocator_t& allocator;
 
+	//! TBB: is this range worth executing
 	bool empty() const {
 		return work_size == 0;
 	}
 
+	//! TBB: can this range be effectively subdivided.
 	bool is_divisible() const {
 		return work_size > GRAIN_SIZE;
 	}
 
+	//! Construct range covering the whole trie
 	AccountAccumulateValuesRange(ptr_t work_root, const allocator_t& allocator)
 		: work_list()
 		, work_size(allocator.get_object(work_root).size())
@@ -99,6 +126,7 @@ struct AccountAccumulateValuesRange {
 			work_list.push_back(work_root);
 		}
 
+	//! TBB: splitting constructor
 	AccountAccumulateValuesRange(AccountAccumulateValuesRange& other, tbb::split)
 		: work_list()
 		, work_size(0)
@@ -122,11 +150,9 @@ struct AccountAccumulateValuesRange {
 
 				work_list.push_back(other.work_list[0]);
 
-				//work_list.push_back(other.work_list[0]);
 				other.work_list.erase(other.work_list.begin());
 				
 				auto sz = allocator.get_object(work_list.back()).size();
-				//std::printf("stole %lu of %lu\n", sz, original_sz);
 				work_size += sz;
 				other.work_size -= sz;
 

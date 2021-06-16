@@ -9,6 +9,7 @@ Miscellaneous debug utility functions.
 namespace speedex {
 
 namespace debug {
+//! Convert a byte array to a hex string.
 static std::string array_to_str(const unsigned char* array, const int len) {
 	std::stringstream s;
 	s.fill('0');

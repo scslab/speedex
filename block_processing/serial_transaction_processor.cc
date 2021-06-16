@@ -341,10 +341,10 @@ SerialTransactionProcessor::unwind_transaction(
 //CREATE_ACCOUNT
 
 template<typename SerialManager>
-template<typename DatabaseViewType>
+template<typename DatabaseView>
 TransactionProcessingStatus
 SerialTransactionHandler<SerialManager>::process_operation(
-	OperationMetadata<DatabaseViewType>& metadata,
+	OperationMetadata<DatabaseView>& metadata,
 	const CreateAccountOp& op) {
 
 	if (op.startingBalance < CREATE_ACCOUNT_MIN_STARTING_BALANCE) {
@@ -380,10 +380,10 @@ SerialTransactionHandler<SerialManager>::process_operation(
 //CREATE_SELL_OFFER
 
 template<typename SerialManager>
-template<typename DatabaseViewType>
+template<typename DatabaseView>
 TransactionProcessingStatus 
 SerialTransactionHandler<SerialManager>::process_operation(
-	OperationMetadata<DatabaseViewType>& metadata,
+	OperationMetadata<DatabaseView>& metadata,
 	const CreateSellOfferOp& op,
 	SerialAccountModificationLog& serial_account_log) {
 
@@ -437,10 +437,10 @@ SerialTransactionProcessor::unwind_operation(
 //CANCEL_SELL_OFFER
 
 template<typename SerialManager>
-template<typename DatabaseViewType>
+template<typename DatabaseView>
 TransactionProcessingStatus 
 SerialTransactionHandler<SerialManager>::process_operation(
-	OperationMetadata<DatabaseViewType>& metadata,
+	OperationMetadata<DatabaseView>& metadata,
 	const CancelSellOfferOp& op) {
 	int market_idx = serial_manager.look_up_idx(op.category);
 	auto found_offer = serial_manager.delete_offer(
@@ -485,10 +485,10 @@ SerialTransactionProcessor::unwind_operation(
 //PAYMENT
 
 template<typename SerialManager>
-template<typename DatabaseViewType>
+template<typename DatabaseView>
 TransactionProcessingStatus 
 SerialTransactionHandler<SerialManager>::process_operation(
-	OperationMetadata<DatabaseViewType>& metadata,
+	OperationMetadata<DatabaseView>& metadata,
 	const PaymentOp& op) {
 	
 	account_db_idx target_account_idx = -1;
@@ -515,10 +515,10 @@ SerialTransactionHandler<SerialManager>::process_operation(
 //MONEY_PRINTER
 
 template<typename SerialManager>
-template<typename DatabaseViewType>
+template<typename DatabaseView>
 TransactionProcessingStatus
 SerialTransactionHandler<SerialManager>::process_operation(
-	OperationMetadata<DatabaseViewType>& metadata,
+	OperationMetadata<DatabaseView>& metadata,
 	const MoneyPrinterOp& op) {
 
 	if (op.amount < 0) {
