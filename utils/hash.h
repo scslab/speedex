@@ -1,5 +1,9 @@
 #pragma once
 
+/*! \file hash.h
+Hash xdr objects
+*/
+
 #include <sodium.h>
 #include <xdrpp/marshal.h>
 

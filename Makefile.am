@@ -88,10 +88,19 @@ LDADD = $(libcrypto_LIBS) $(gsl_LIBS) $(xdrpp_LIBS) -ltbb -lglpk $(libsodium_LIB
 $(SRCS:.cc=.o) : $(XH_FILES)
 $(MAIN_CCS:.cc=.o) : $(XH_FILES)
 
-bin_PROGRAMS = simple trie_comparison
+
+TEST_SRCS = trie/tests/test_prefix.h
+
+test_runner.cc : $(TEST_SRCS) $(XHFILES)
+	cxxtestgen --error-printer -o test_runner.cc $(TEST_SRCS)
+
+bin_PROGRAMS = simple trie_comparison \
+	test
 
 simple_SOURCES = $(SRCS) main/simple.cc
 trie_comparison_SOURCES = $(SRCS) main/trie_comparison.cc
+
+test_SOURCES = $(SRCS) test_runner.cc
 
 #building x files
 $(XH_FILES) : $(XDRC)
@@ -107,7 +116,7 @@ PXD_INCLUDE_FILES = $(X_FILES:.x=_includes.pxd)
 PYXDR_CPP_FILES = $(X_FILES:.x=_xdr.cpp)
 
 clean-local:
-	$(RM) $(PYX_FILES) $(PXD_FILES) $(PXD_INCLUDE_FILES) $(PYXDR_CPP_FILES) $(XH_FILES)
+	$(RM) $(PYX_FILES) $(PXD_FILES) $(PXD_INCLUDE_FILES) $(PYXDR_CPP_FILES) $(XH_FILES) test_runner.cc
 
 %_xdr.pyx : %.x $(XDRC) $(X_FILES)
 	$(XDRC) --pyx $< -o $(basename $@).pyx
@@ -126,6 +135,7 @@ all-local: xdrpy_module $(SRCS:.cc=.o)
 .PHONY: doc
 doc:
 	doxygen Doxyfile
+
 
 
 

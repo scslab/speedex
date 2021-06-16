@@ -133,6 +133,7 @@ private:
 
 	hash_t hash;
 
+	//! Adds an input metadata object to the node's metadata.
 	void update_metadata(
 		const MetadataType& metadata_delta) {
 		if (HAS_METADATA) {
@@ -155,7 +156,14 @@ private:
 	}
 
 
+	//! Get the branch bits of the input prefix.
+	//! The branch bits are the BRANCH_BITS many bits
+	//! of the input prefix that immediately follow
+	//! the first prefix_len bits.
 	unsigned char get_branch_bits(const prefix_t& data) const;
+
+	//! Compute the length (in bits) of the longest matching prefix
+	//! of this node's prefix with the input prefix.
 	PrefixLenBits get_prefix_match_len(
 		const prefix_t& other, 
 		const PrefixLenBits other_len = MAX_KEY_LEN_BITS) const;
@@ -169,14 +177,19 @@ private:
 		return hash;
 	}
 
+	//! Invalidate the cached hash.  Hash will be recomputed
+	//! on next call to hash()
 	void invalidate_hash() {
 		hash_valid.store(false, std::memory_order_release);
 	}
 
+	//! Mark the cached hash as valid.  Called during
+	//! calls to hash()
 	void validate_hash() {
 		hash_valid.store(true, std::memory_order_release);
 	}
 
+	//! Check whether the cached hash value is valid.
 	bool get_hash_valid() const {
 		return hash_valid.load(std::memory_order_acquire);
 	}
@@ -219,6 +232,8 @@ public:
 		, metadata() // Take care of setting metadata in caller
 	{}
 
+
+	//! Construct a new value leaf with a given input value.
 	template<typename InsertFn, typename InsertedValueType>
 	static trie_ptr_t 
 	make_value_leaf(
@@ -381,6 +396,9 @@ public:
 		return children.value();
 	}
 
+	//! Construct an empty trie node (0 prefix, 0 prefix_len).
+	//! A node should only be empty if it is the root of an
+	//! empty trie.
 	static trie_ptr_t make_empty_node() {
 		return std::make_unique<TrieNode>();
 	}
@@ -411,6 +429,7 @@ public:
 	template<typename... ApplyToValueBeforeHashFn>
 	void compute_hash();
 
+	//! Get the value associated with a given key.
 	template<bool x = HAS_VALUE>
 	std::optional<ValueType> 
 	get_value(typename std::enable_if<x, const prefix_t&>::type query_key);

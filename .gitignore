@@ -17,4 +17,6 @@ doc/
 *.deps
 *.dirstamp
 depcomp
+test
+test_runner.cc
 

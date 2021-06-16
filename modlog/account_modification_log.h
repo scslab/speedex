@@ -1,5 +1,11 @@
 #pragma once
 
+/*! \file account_modification_log.h
+
+Maintains a log of which accounts were modified while processing a block.
+Implicitly assembles a block of transactions during block production.
+*/
+
 #include <cstdint>
 #include <thread>
 

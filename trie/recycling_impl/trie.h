@@ -959,7 +959,6 @@ AccountTrieNode<ValueType>::merge_in(ptr_t node, allocation_context_t& allocator
 	// case 3
 
 	if (other.prefix_len == prefix_match_len /* thus prefix_len > prefix_match_len */ ) {
-//		std::printf("case 3\n");
 		auto original_sz = size();
 		auto other_sz = other.size();
 
