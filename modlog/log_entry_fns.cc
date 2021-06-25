@@ -14,9 +14,9 @@ struct NewSelfTransactionCompareFn {
 	}
 };
 
-template<typename Value, typename CompareFn>
-void dedup(std::vector<Value>& values, CompareFn comparator) {
-	for (std::size_t i = 1; i < values.size(); i++) {
+template<typename value_list, typename CompareFn>
+void dedup(value_list& values, CompareFn comparator) {
+	for (size_t i = 1u; i < values.size(); i++) {
 		if (comparator(values[i], values[i-1])) {
 			values.erase(values.begin() + i);
 		} else {
@@ -24,6 +24,33 @@ void dedup(std::vector<Value>& values, CompareFn comparator) {
 		}
 	}
 }
+
+void 
+LogMergeFn::value_merge(
+	AccountModificationTxList& original_value, 
+	const AccountModificationTxList& merge_in_value)
+{
+	for (const auto& new_tx : merge_in_value.new_transactions_self) {
+		original_value.new_transactions_self.push_back(new_tx);
+	}
+	//original_value.new_transactions_self.insert(
+	//	original_value.new_transactions_self.end(),
+	//	merge_in_value.new_transactions_self.begin(),
+	//	merge_in_value.new_transactions_self.end());
+	original_value.identifiers_self.insert(
+		original_value.identifiers_self.end(),
+		merge_in_value.identifiers_self.begin(),
+		merge_in_value.identifiers_self.end());
+	original_value.identifiers_others.insert(
+		original_value.identifiers_others.end(),
+		merge_in_value.identifiers_others.begin(),
+		merge_in_value.identifiers_others.end());
+
+	if (original_value.owner != merge_in_value.owner) {
+		throw std::runtime_error("owner mismatch when merging logs!!!");
+	}
+}
+
 
 void 
 LogNormalizeFn::apply_to_value (AccountModificationTxListWrapper& log) {

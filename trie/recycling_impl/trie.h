@@ -446,6 +446,9 @@ class SerialAccountTrie {
 
 	friend class AccountTrie<ValueType>;
 
+	static_assert(sizeof(node_t) <= 64, "account trie node should be at most 1 cache line");
+
+
 public:
 
 	SerialAccountTrie(AccountTrieNodeAllocator<node_t>& allocator) 

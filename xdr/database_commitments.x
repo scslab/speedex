@@ -42,7 +42,7 @@ struct TxIdentifier {
 
 struct AccountModificationTxList {
 	AccountID owner;
-	SignedTransaction new_transactions_self<>; //transactions
+	SignedTransaction new_transactions_self<MAX_SEQ_NUMS_PER_BLOCK>; //transactions
 	uint64 identifiers_self<>; // sequence numbers, in addition
 	TxIdentifier identifiers_others<>;
 };

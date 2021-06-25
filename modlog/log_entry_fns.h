@@ -24,11 +24,11 @@ struct LogInsertFn : public GenericInsertFn {
 
 	static void value_insert(AccountModificationTxList& main_value, const SignedTransaction& self_transaction) {
 		main_value.new_transactions_self.push_back(self_transaction);
-		if (main_value.new_transactions_self.size() > main_value.new_transactions_self.capacity() || main_value.new_transactions_self.size() > 500000) {
-			std::printf("%lu %lu %lu\n", main_value.new_transactions_self.size(), main_value.new_transactions_self.capacity(),
-				main_value.new_transactions_self.size());
-			throw std::runtime_error("invalid main_value!!!");
-		}
+		//if (main_value.new_transactions_self.size() > main_value.new_transactions_self.capacity() || main_value.new_transactions_self.size() > 500000) {
+		//	std::printf("%lu %lu %lu\n", main_value.new_transactions_self.size(), main_value.new_transactions_self.capacity(),
+		//		main_value.new_transactions_self.size());
+		//	throw std::runtime_error("invalid main_value!!!");
+		//}
 	}
 /*
 	template<typename AtomicMetadataType, typename ValueType>
@@ -49,24 +49,9 @@ struct LogInsertFn : public GenericInsertFn {
 
 //might like to make these one struct, reduce extra code/etc, but type signatures on metadata merge are slightly diff
 struct LogMergeFn {
-	static void value_merge(AccountModificationTxList& original_value, const AccountModificationTxList& merge_in_value) {
-		original_value.new_transactions_self.insert(
-			original_value.new_transactions_self.end(),
-			merge_in_value.new_transactions_self.begin(),
-			merge_in_value.new_transactions_self.end());
-		original_value.identifiers_self.insert(
-			original_value.identifiers_self.end(),
-			merge_in_value.identifiers_self.begin(),
-			merge_in_value.identifiers_self.end());
-		original_value.identifiers_others.insert(
-			original_value.identifiers_others.end(),
-			merge_in_value.identifiers_others.begin(),
-			merge_in_value.identifiers_others.end());
-
-		if (original_value.owner != merge_in_value.owner) {
-			throw std::runtime_error("owner mismatch when merging logs!!!");
-		}
-	}
+	static void value_merge(
+		AccountModificationTxList& original_value, 
+		const AccountModificationTxList& merge_in_value);
 };
 
 struct LogNormalizeFn {

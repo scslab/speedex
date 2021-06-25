@@ -273,7 +273,7 @@ save_account_block_fast(
 
 	size_t total_written_bytes = 0;
 
-	const xdr::xvector<SignedTransaction>* tx_buffer = nullptr;
+	const xdr::xvector<SignedTransaction, MAX_SEQ_NUMS_PER_BLOCK>* tx_buffer = nullptr;
 	size_t buffer_idx = 0;
 	size_t num_written = 0;
 

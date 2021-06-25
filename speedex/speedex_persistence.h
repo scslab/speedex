@@ -24,6 +24,10 @@ Phase 3: Everything else (orderbooks, header hash)
 
 namespace speedex {
 
+/*! Call before sending transaction block to a validator.
+Persists account block + header, and prepares memory database with a persistence
+thunk.
+*/
 std::unique_ptr<AccountModificationBlock>
 persist_critical_round_data(
 	SpeedexManagementStructures& management_structures,
@@ -32,24 +36,28 @@ persist_critical_round_data(
 	bool get_block = false,
 	uint64_t log_offset = 0);
 
+//! Memory database loads persistence thunk into lmdb
 void 
 persist_async_phase1(
 	SpeedexManagementStructures& management_structures,
 	const uint64_t current_block_number,
 	BlockDataPersistenceMeasurements& measurements);
 
+//! Msync the memory database lmdb
 void
 persist_async_phase2(
 	SpeedexManagementStructures& management_structures,
 	uint64_t current_block_number,
 	BlockDataPersistenceMeasurements& measurements);
 
+//! Finish persistence (orderbooks, header hash map).
 void
 persist_async_phase3(
 	SpeedexManagementStructures& management_structures,
 	uint64_t current_block_number,
 	BlockDataPersistenceMeasurements& measurements);
 
+//! Operates a background thread for phase 3 persistence.
 class AsyncPersisterPhase3 : public AsyncWorker {
 	using AsyncWorker::mtx;
 	using AsyncWorker::cv;
@@ -90,7 +98,8 @@ public:
 	}
 };
 
-
+//! Operates a background thread for phase 2 persistence.
+//! Automatically calls phase 3 when done.
 class AsyncPersisterPhase2 : public AsyncWorker {
 	using AsyncWorker::mtx;
 	using AsyncWorker::cv;
@@ -137,6 +146,8 @@ public:
 	}
 };
 
+//! Operates a background thread for phase 1 persistence.
+//! Automatically calls phase 2 when done.
 struct AsyncPersister : public AsyncWorker {
 	using AsyncWorker::mtx;
 	using AsyncWorker::cv;
@@ -157,7 +168,6 @@ struct AsyncPersister : public AsyncWorker {
 		return latest_measurements != nullptr;
 	}
 
-
 	void run();
 
 public:
@@ -169,13 +179,15 @@ public:
 			start_async_thread([this] {run();});
 		}
 
-
-
 	uint64_t get_highest_persisted_block() {
 		std::lock_guard lock(mtx);
 		return highest_persisted_block;
 	}
 
+
+	//! Begin persisting a block to disk 
+	//! (all blocks up to persist_block_number).
+	//! When phase 1 finishes, phase 2 is automatically called.
 	void do_async_persist(
 		const uint64_t persist_block_number, 
 		BlockDataPersistenceMeasurements& measurements) {
@@ -197,6 +209,10 @@ public:
 		cv.notify_one();
 	}
 
+	//! Wait for all async persistence phases to complete.
+	//! Clears up all uses of measurements object reference.
+	//! Should be called before shutdown or before invalidating measurements
+	//! object reference.
 	void wait_for_async_persist() {
 		//clears up all uses of measurements reference
 		wait_for_async_task();

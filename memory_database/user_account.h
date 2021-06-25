@@ -35,6 +35,9 @@ class UserAccount {
 	static_assert(
 		__builtin_popcount(MAX_OPS_PER_TX) == 1, "should be power of two");
 
+	static_assert(
+		MAX_SEQ_NUMS_PER_BLOCK <= 64, "rework sequence num reservations");
+
 	using amount_t = typename RevertableAsset::amount_t;
 
 	mutable std::mutex uncommitted_assets_mtx;

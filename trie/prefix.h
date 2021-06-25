@@ -1,5 +1,11 @@
 #pragma once
 
+
+/*! \file prefix.h
+
+Two implementations of a trie prefix.  One is an arbitrary-length
+byte array, and one is specialized for accountid keys.
+*/
 #include <atomic>
 #include <compare>
 #include <concepts>
@@ -367,6 +373,7 @@ public:
 	bool 
 	operator==(const AccountIDPrefix& other) const = default;
 
+	//! Get the bits of the prefix just beyond branch_point
 	unsigned char get_branch_bits(const PrefixLenBits branch_point) const {
 		if (branch_point.len >= MAX_LEN_BITS) {
 			std::printf("Bad branch bits was %u\n", branch_point.len);
@@ -375,6 +382,8 @@ public:
 		return (prefix >> (60 - branch_point.len)) & BRANCH_MASK;
 	}
 
+	//! Compute the length of the longest matching initial subsequence
+	//! of this prefix and the other prefix.
 	PrefixLenBits get_prefix_match_len(
 		const PrefixLenBits& self_len, 
 		const AccountIDPrefix& other, 
@@ -392,10 +401,12 @@ public:
 		return std::min({computed, self_len, other_len});
 	}
 
+	//! Truncate the prefix to a defined length
 	void truncate(const PrefixLenBits truncate_point) {
 		prefix &= (UINT64_MAX << (64 - truncate_point.len));
 	}
 
+	//! Convert prefix to an array of bytes.
 	xdr::opaque_array<MAX_LEN_BYTES> get_bytes_array() const {
 		xdr::opaque_array<MAX_LEN_BYTES> out;
 		write_unsigned_big_endian(out, prefix);
@@ -419,6 +430,7 @@ public:
 		return debug::array_to_str(bytes.data(), len.num_prefix_bytes());
 	}
 
+	//! Modify the prefix by setting the bits after fixed_len to bb
 	void set_next_branch_bits(PrefixLenBits fixed_len, const uint8_t bb) {
 		uint8_t offset = (60-fixed_len.len);	
 		uint64_t mask = ((uint64_t) BRANCH_MASK) << offset;
