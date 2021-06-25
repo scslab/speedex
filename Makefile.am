@@ -61,7 +61,8 @@ PRICE_COMPUTATION_SRCS = \
 	price_computation/tatonnement_oracle.cc
 
 SPEEDEX_SRCS = \
-	speedex/speedex_operation.cc
+	speedex/speedex_operation.cc \
+	speedex/speedex_persistence.cc
 
 UTILS_SRCS = \
 	utils/cleanup.cc \
