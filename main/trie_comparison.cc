@@ -325,6 +325,7 @@ int main(int argc, char const *argv[])
 	while(true) {
 		float res = 0;
 		reuse_trie.clear();
+		reuse_trie_value.clear();
 		reuse_static_value_trie.clear();
 		switch(test) {
 			case 0:
