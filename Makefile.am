@@ -29,6 +29,10 @@ BLOCK_PROCESSING_SRCS = \
 CRYPTO_SRCS = \
 	crypto/crypto_utils.cc
 
+EXPERIMENTS_SRCS = \
+	experiments/producer_node.cc \
+	experiments/validator_node.cc
+
 HEADER_HASH_SRCS = \
 	header_hash/block_header_hash_map.cc
 
@@ -85,6 +89,7 @@ UTILS_SRCS = \
 SRCS = \
 	$(BLOCK_PROCESSING_SRCS) \
 	$(CRYPTO_SRCS) \
+	$(EXPERIMENTS_SRCS) \
 	$(HEADER_HASH_SRCS) \
 	$(LMDB_SRCS) \
 	$(MEMORY_DATABASE_SRCS) \
@@ -98,6 +103,7 @@ SRCS = \
 	$(UTILS_SRCS)
 
 MAIN_CCS = main/simple.cc \
+	main/speedex_producer_experiment.cc \
 	main/synthetic_data_gen_from_params.cc \
 	main/trie_comparison.cc 
 
@@ -114,11 +120,13 @@ test_runner.cc : $(TEST_SRCS) $(XHFILES)
 	cxxtestgen --error-printer -o test_runner.cc $(TEST_SRCS)
 
 bin_PROGRAMS = simple \
+	speedex_producer_experiment \
 	synthetic_data_gen \
 	trie_comparison \
 	test
 
 simple_SOURCES = $(SRCS) main/simple.cc
+speedex_producer_experiment_SOURCES = $(SRCS) main/speedex_producer_experiment.cc
 synthetic_data_gen_SOURCES = $(SRCS) main/synthetic_data_gen_from_params.cc
 trie_comparison_SOURCES = $(SRCS) main/trie_comparison.cc
 

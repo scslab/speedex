@@ -1,6 +1,4 @@
-
 #include "rpc/consensus_api.h"
-
 
 #include "utils/debug_macros.h"
 
