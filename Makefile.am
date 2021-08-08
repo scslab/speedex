@@ -26,6 +26,9 @@ BLOCK_PROCESSING_SRCS = \
 	block_processing/block_validator.cc \
 	block_processing/serial_transaction_processor.cc
 
+CRYPTO_SRCS = \
+	crypto/crypto_utils.cc
+
 HEADER_HASH_SRCS = \
 	header_hash/block_header_hash_map.cc
 
@@ -60,9 +63,18 @@ PRICE_COMPUTATION_SRCS = \
 	price_computation/normalization_rolling_average.cc \
 	price_computation/tatonnement_oracle.cc
 
+RPC_SRCS = \
+	rpc/block_forwarder.cc
+
 SPEEDEX_SRCS = \
+	speedex/speedex_node.cc
 	speedex/speedex_operation.cc \
+	speedex/speedex_options.cc \
 	speedex/speedex_persistence.cc
+
+SYNTHETIC_DATA_GEN_SRCS = \
+	synthetic_data_generator/synthetic_data_gen.cc \
+	synthetic_data_generator/synthetic_data_gen_options.cc
 
 UTILS_SRCS = \
 	utils/cleanup.cc \
@@ -70,6 +82,7 @@ UTILS_SRCS = \
 
 SRCS = \
 	$(BLOCK_PROCESSING_SRCS) \
+	$(CRYPTO_SRCS) \
 	$(HEADER_HASH_SRCS) \
 	$(LMDB_SRCS) \
 	$(MEMORY_DATABASE_SRCS) \
@@ -77,11 +90,14 @@ SRCS = \
 	$(MODLOG_SRCS) \
 	$(ORDERBOOK_SRCS) \
 	$(PRICE_COMPUTATION_SRCS) \
+	$(RPC_SRCS) \
 	$(SPEEDEX_SRCS) \
+	$(SYNTHETIC_DATA_GEN_SRCS) \
 	$(UTILS_SRCS)
 
 MAIN_CCS = main/simple.cc \
-	main/trie_comparison.cc
+	main/synthetic_data_gen_from_params.cc \
+	main/trie_comparison.cc 
 
 AM_CPPFLAGS = $(libcrypto_CFLAGS) $(gsl_CFLAGS) $(xdrpp_CFLAGS) $(libsodium_CFLAGS) $(LIBFYAML_CFLAGS) $(lmdb_CFLAGS)
 LDADD = $(libcrypto_LIBS) $(gsl_LIBS) $(xdrpp_LIBS) -ltbb -lglpk $(libsodium_LIBS) $(LIBFYAML_LIBS) $(lmdb_LIBS)
@@ -95,10 +111,13 @@ TEST_SRCS = trie/tests/test_prefix.h
 test_runner.cc : $(TEST_SRCS) $(XHFILES)
 	cxxtestgen --error-printer -o test_runner.cc $(TEST_SRCS)
 
-bin_PROGRAMS = simple trie_comparison \
+bin_PROGRAMS = simple \
+	synthetic_data_gen \
+	trie_comparison \
 	test
 
 simple_SOURCES = $(SRCS) main/simple.cc
+synthetic_data_gen_SOURCES = $(SRCS) main/synthetic_data_gen_from_params.cc
 trie_comparison_SOURCES = $(SRCS) main/trie_comparison.cc
 
 test_SOURCES = $(SRCS) test_runner.cc

@@ -79,13 +79,14 @@ public:
 		BlockValidationMeasurements& measurements,
 		BlockStateUpdateStatsWrapper& state_update_stats);
 
-	//! Replay a block loaded from disk
-	//! TODO alternate fn calls depending on save format
-	void replay_trusted_block(
-		const AccountModificationBlock& block,
-		const HashedBlock& header);
-
 };
+
+//! Replay a block loaded from disk
+// TODO alternate fn calls depending on save format
+void replay_trusted_block(
+	SpeedexManagementStructures& management_structures,
+	const AccountModificationBlock& block,
+	const HashedBlock& header);
 
 
 

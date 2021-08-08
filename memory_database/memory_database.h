@@ -1,5 +1,10 @@
 #pragma once
 
+/*! \file memory_database.h
+ Manages an in-memory database of all account states.
+
+*/
+
 #include <atomic>
 #include <map>
 #include <memory>
@@ -298,18 +303,34 @@ public:
 		commit_values();
 	}
 
+	//! Commit changes to all of the values (account states)
+	//! logged as modified in dirty_accounts.
 	void commit_values(const AccountModificationLog& dirty_accounts);
 
 	void _commit_value(account_db_idx account_idx) {
 		database[account_idx].commit();
 	}
 
+	//! Commit changes to all accounts
 	void commit_values();
+	//! Rollback changes to all accounts.
+	//! It would be natural to use an account modification log to only
+	//! have to rollback modified accounts.  However, as implemented, 
+	//! validation shortcircuits without necessarily logging exactly which
+	//! accounts are modified and does not bother actually building the
+	//! modification log trie.  TODO measure whether actually building the trie
+	//! (and logging all modified accounts, even when txs fail) is a faster
+	//! way of rolling back accounts.
 	void rollback_values();
 
+	//! Commit a set of newly created accounts.
+	//! Creates a thunk logging which accounts were created in this block.
 	void commit_new_accounts(uint64_t current_block_number);
+	//! Rollback the creation of new accounts that occurred after the current
+	//! block number (not including current_block_number).
 	void rollback_new_accounts(uint64_t current_block_number);
 
+	//! Generates a state commitment using committed account balance values.
 	void produce_state_commitment(Hash& hash, const AccountModificationLog& log);
 	void produce_state_commitment() {
 		//for init only
@@ -323,9 +344,15 @@ public:
 		_produce_state_commitment(hash);
 	}
 
+	//! Generates a state commitment using account balance values
+	//! that reflect uncommitted changes.
 	void tentative_produce_state_commitment(
 		Hash& hash, const AccountModificationLog& log);
 
+	//! Undo tentative_produce_state_commitment().  Note that in this case,
+	//! we can use the modification log to rollback, given that when we get
+	//! here, the log has actually been built properly (unlike when 
+	//! we shortcircuit due to a bad transaction).
 	void rollback_produce_state_commitment(const AccountModificationLog& log);
 	void finalize_produce_state_commitment();
 	
@@ -372,6 +399,8 @@ public:
 	void commit_sequence_number(
 		account_db_idx user_index, uint64_t sequence_number);
 
+	//! Get the public key associated with an account.
+	//! Returns nullopt if no such account exists.
 	std::optional<PublicKey> get_pk(AccountID account) const;
 
 	//not threadsafe with commit/rollback

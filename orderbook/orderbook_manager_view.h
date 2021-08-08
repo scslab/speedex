@@ -353,7 +353,7 @@ public:
 
 			// Insertions are marked with rollback metadata, in case
 			// we rollback the whole block later (for some unrelated reason).
-			new_offers.at(idx).template insert<RollbackInsertFn> (
+			new_offers.at(idx).template insert<RollbackInsertFn<OfferWrapper>> (
 				key_buf, OfferWrapper(offer));
 		} else {
 			// Threshold key is strictly bigger than offer's key.

@@ -26,24 +26,17 @@
 
 
 namespace speedex {
-	
+
+
 program BlockTransfer{
 	version BlockTransferV1 {
 		void send_block(HashedBlock, SerializedBlock) = 1;
 	} = 1;
-} = 0x10734299;
-
-program BlockAcknowledge {
-	version BlockAcknowledgeV1 {
-		void ack_block(uint64) = 1;
-	} = 1;
 } = 0x11111111;
-
-typedef string hostname<>;
 
 program RequestBlockForwarding {
 	version RequestBlockForwardingV1 {
-		void request_forwarding(hostname) = 1;
+		uint32 request_forwarding(void) = 1;
 	} = 1;
 } = 0x11111112;
 

@@ -335,7 +335,8 @@ public:
 };
 
 void
-BlockValidator::replay_trusted_block(
+replay_trusted_block(
+	SpeedexManagementStructures& management_structures,
 	const AccountModificationBlock& block,
 	const HashedBlock& header) {
 
@@ -351,7 +352,6 @@ BlockValidator::replay_trusted_block(
 	OrderbookStateCommitmentChecker commitment_checker(
 		header.block.internalHashes.clearingDetails, prices, header.block.feeRate);
 		
-
 	auto replayer = ParallelTrustedReplay(
 		block, management_structures, 
 		commitment_checker, 

@@ -199,7 +199,7 @@ public:
 		const prefix_t key, 
 		typename std::enable_if<!std::is_same<ValueType, InsertedValueType>::value, const InsertedValueType&>::type value,
 		allocation_context_t& allocator) {
-		ValueType value_out = InsertFn::template new_value<ValueType>(key);
+		ValueType value_out = InsertFn::new_value(key);
 		InsertFn::value_insert(value_out, value);
 
 		children.set_value(allocator, value_out);
@@ -483,7 +483,7 @@ public:
 		return out;
 	}
 
-	template<typename InsertFn = OverwriteInsertFn, typename InsertedValueType = ValueType>
+	template<typename InsertFn = OverwriteInsertFn<ValueType>, typename InsertedValueType = ValueType>
 	void insert(AccountID account, const InsertedValueType& value) {
 		auto& ref = allocation_context.get_object(root);
 		ref.template insert<InsertFn, InsertedValueType>(AccountIDPrefix{account}, value, allocation_context);

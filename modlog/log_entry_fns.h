@@ -1,5 +1,13 @@
 #pragma once
 
+/*! Utility functions to manage inserting account modifications to the 
+account modification trie's value entries.
+
+Accounts could be modified in different ways (i.e. by sending new transactions
+or receiving payments).  Code here is passed into the trie insert() logic
+and called on trie values.
+*/
+
 #include <cstdint>
 
 #include "trie/utils.h"
@@ -10,37 +18,40 @@
 
 namespace speedex {
 
-
-struct LogInsertFn : public GenericInsertFn {
+//! Insert modifications to the log for one account
+struct LogInsertFn : public GenericInsertFn<XdrTypeWrapper<AccountModificationTxList>> {
 	using AccountModificationTxListWrapper = XdrTypeWrapper<AccountModificationTxList>;
 
-	static void value_insert(AccountModificationTxList& main_value, const uint64_t self_sequence_number) {
+	//! Log that an account has been modified by one of its own past 
+	//! transactions (e.g. an offer has cleared).
+	static void value_insert(
+		AccountModificationTxList& main_value, 
+		const uint64_t self_sequence_number) 
+	{
 		main_value.identifiers_self.push_back(self_sequence_number);
 	}
 
-	static void value_insert(AccountModificationTxList& main_value, const TxIdentifier& other_identifier) {
+	//! Log that an account has been modified by a transaction from another
+	//! account (e.g. a payment).
+	static void value_insert(
+		AccountModificationTxList& main_value, 
+		const TxIdentifier& other_identifier) 
+	{
 		main_value.identifiers_others.push_back(other_identifier);
 	}
 
-	static void value_insert(AccountModificationTxList& main_value, const SignedTransaction& self_transaction) {
+	//! Log that an account has been modified by itself, when it sends a new
+	//! transaction.
+	static void value_insert(
+		AccountModificationTxList& main_value, 
+		const SignedTransaction& self_transaction) 
+	{
 		main_value.new_transactions_self.push_back(self_transaction);
-		//if (main_value.new_transactions_self.size() > main_value.new_transactions_self.capacity() || main_value.new_transactions_self.size() > 500000) {
-		//	std::printf("%lu %lu %lu\n", main_value.new_transactions_self.size(), main_value.new_transactions_self.capacity(),
-		//		main_value.new_transactions_self.size());
-		//	throw std::runtime_error("invalid main_value!!!");
-		//}
 	}
-/*
-	template<typename AtomicMetadataType, typename ValueType>
-	static typename AtomicMetadataType::BaseT 
-	metadata_insert(AtomicMetadataType& original_metadata, const ValueType& new_value) {
-		//multiple insertions to one key doesn't change any metadata, since metadata is only size
-		return typename AtomicMetadataType::BaseT();
-	}
-*/
-	template<typename OutType>
-	static AccountModificationTxListWrapper new_value(const AccountIDPrefix prefix) {
-		static_assert(std::is_same<OutType, AccountModificationTxListWrapper>::value, "invalid type invocation");
+
+	//! Initialize an empty account modification log entry.
+	static AccountModificationTxListWrapper 
+	new_value(const AccountIDPrefix prefix) {
 		AccountModificationTxListWrapper out;
 		out.owner = prefix.get_account();
 		return out;
@@ -56,6 +67,8 @@ struct LogMergeFn {
 
 struct LogNormalizeFn {
 	using AccountModificationTxListWrapper = XdrTypeWrapper<AccountModificationTxList>;
+	//! Set account modification logs to a canonical representation.
+	//! This means de-duplicating and sorting modification log lists.
 	static void apply_to_value (AccountModificationTxListWrapper& log);
 };
 

@@ -42,17 +42,20 @@ struct IndexedMetadata {
 			metadata (metadata) {}
 };
 
+//! Base functions for inserting values into a trie.  
+//! Override to do nondefault things when inserting new values.
+template<typename ValueType>
 struct GenericInsertFn {
-	template<typename MetadataType, typename ValueType>
+	template<typename MetadataType>
 	static MetadataType new_metadata(const ValueType& value) {
 		return MetadataType(value);
 	}
 
-	template<typename ValueType, typename prefix_t>
+	template<typename prefix_t>
 	static ValueType new_value(const prefix_t& prefix) {
 		return ValueType{};
 	}
-};
+}; 
 
 //can call unsafe methods bc exclusive locks on metadata inputs in caller
 struct OverwriteMergeFn {
@@ -76,14 +79,15 @@ struct OverwriteMergeFn {
 };
 
 //can call unsafe methods bc excl locks on metadata inputs in caller
-struct OverwriteInsertFn : public GenericInsertFn {
+//! Overwrite previous value when inserting new value into a trie.
+template<typename ValueType>
+struct OverwriteInsertFn : public GenericInsertFn<ValueType> {
 
-	template<typename ValueType>
 	static void value_insert(ValueType& main_value, const ValueType& other_value) {
 		main_value = other_value;
 	}
 
-	template<typename AtomicMetadataType, typename ValueType>
+	template<typename AtomicMetadataType>
 	static typename AtomicMetadataType::BaseT 
 	metadata_insert(AtomicMetadataType& original_metadata, const ValueType& new_value) {
 
@@ -95,8 +99,9 @@ struct OverwriteInsertFn : public GenericInsertFn {
 	}
 };
 
-struct RollbackInsertFn : public OverwriteInsertFn {
-	template<typename MetadataType, typename ValueType>
+template<typename ValueType>
+struct RollbackInsertFn : public OverwriteInsertFn<ValueType> {
+	template<typename MetadataType>
 	static MetadataType new_metadata(const ValueType& value) {
 		auto out = MetadataType(value);
 		out.num_rollback_subnodes = 1;
@@ -104,7 +109,7 @@ struct RollbackInsertFn : public OverwriteInsertFn {
 	}
 
 
-	template<typename AtomicMetadataType, typename ValueType>
+	template<typename AtomicMetadataType>
 	static typename AtomicMetadataType::BaseT 
 	metadata_insert(AtomicMetadataType& original_metadata, const ValueType& new_value) {
 

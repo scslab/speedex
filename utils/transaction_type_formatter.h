@@ -8,6 +8,7 @@ namespace speedex {
 
 namespace tx_formatter {
 
+[[maybe_unused]]
 static Operation make_operation(CreateAccountOp op) {
 	Operation out;
 	out.body.type(CREATE_ACCOUNT);
@@ -15,6 +16,7 @@ static Operation make_operation(CreateAccountOp op) {
 	return out;
 }
 
+[[maybe_unused]]
 static Operation make_operation(CreateSellOfferOp op) {
 	Operation out;
 	out.body.type(CREATE_SELL_OFFER);
@@ -22,6 +24,7 @@ static Operation make_operation(CreateSellOfferOp op) {
 	return out;
 }
 
+[[maybe_unused]]
 static Operation make_operation(CancelSellOfferOp op) {
 	Operation out;
 	out.body.type(CANCEL_SELL_OFFER);
@@ -29,6 +32,7 @@ static Operation make_operation(CancelSellOfferOp op) {
 	return out;
 }
 
+[[maybe_unused]]
 static Operation make_operation(PaymentOp op) {
 	Operation out;
 	out.body.type(PAYMENT);
@@ -36,6 +40,7 @@ static Operation make_operation(PaymentOp op) {
 	return out;
 }
 
+[[maybe_unused]]
 static Operation make_operation(MoneyPrinterOp op) {
 	Operation out;
 	out.body.type(MONEY_PRINTER);

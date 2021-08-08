@@ -1,5 +1,12 @@
 #pragma once
 
+/*! \file revertable_asset.h
+
+Threadsafe (mostly) record of an amount of an asset.  Can be reverted to
+a previously committed state.
+
+*/
+
 #include <cstdint>
 #include <atomic>
 
@@ -44,6 +51,7 @@ private:
 
 public:
 
+	// Initialize asset with 0 balance.
 	RevertableAsset() 
 		: available(0),
 		committed_available(0) {}
@@ -64,10 +72,16 @@ public:
 		available.fetch_add(-amount, write_order);
 	}
 
+	//! Adjust the amount of available money by amount (which can be positive
+	//! or negative).
 	void transfer_available(const amount_t& amount) {
 		available.fetch_add(amount, write_order);
 	}
 
+	//! Attempt to escrow amount units of money.
+	//! Fails if amount of available money is too small
+	//! Negative inputs cannot fail (i.e. negative inputs mean releasing money
+	//! from escrow).
 	bool conditional_escrow(const amount_t& amount) {
 		if (amount > 0) {
 			auto result = conditional_transfer_available(-amount);
@@ -78,12 +92,22 @@ public:
 		}
 	}
 
-	//Another approach would be to subtract, see if the original value you subtracted
-	// from is actually high enough, and apologize if not (undo).
-	//This creates the option to make txs that shouldn't fail fail, though.
-	//Unclear which causes less contention.
+
+	//! Attempt to change the amount of available money.
+	//! Reductions of the amount below 0 will fail.
+	//! Positive inputs represent increasing the amount of money in the account,
+	//! which can never fail.
+	//! Another approach would be to subtract, see if the original value you subtracted
+	//! from is actually high enough, and apologize if not (undo).
+	//! This creates the option to make txs that shouldn't fail fail, though.
+	//! Unclear which causes less contention.
 
 	bool conditional_transfer_available(const amount_t& amount) {
+
+		if (amount > 0) {
+			transfer_available(amount);
+			return true;
+		}
 		while (true) {
 			amount_t current_available
 				= available.load(std::memory_order_relaxed);
@@ -102,14 +126,20 @@ public:
 		}	
 	}
 
-
+	//! Return the available balance (with current round's modifications
+	//! applied).
 	int64_t lookup_available_balance() {
 		return available.load(read_order);
 	}
 
+	//! Produce a state commitment based on committed asset value (no
+	//! modifications from current round).
 	AssetCommitment produce_commitment(AssetID asset) const {
-		return AssetCommitment(asset, committed_available);//, committed_escrow);
+		return AssetCommitment(asset, committed_available);
 	}
+
+	//! Produce a state commitment based on asset value, including current
+	//! round's modifications.
 	AssetCommitment tentative_commitment(AssetID asset) const {
 		return AssetCommitment{asset, available.load(read_order)};
 	}
@@ -122,10 +152,13 @@ public:
 		committed_available = new_avail;
 		return committed_available;
 	}
+
+	//! Rollback to previously committed value.
 	void rollback() {
 		available.store(committed_available, write_order);
 	}
 
+	//! Check that the amount of available money is nonnegative.
 	bool in_valid_state() {
 		int64_t available_load = available.load(read_order);
 		return (available_load >= 0);

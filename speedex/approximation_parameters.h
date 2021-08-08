@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-/* \file approximation_parameters.h
+/*! \file approximation_parameters.h
 
 Store in one object the approximation parameter
 targets for speedex operation.

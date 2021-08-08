@@ -1,5 +1,13 @@
 #pragma once
 
+/*! \file children_map.h
+
+Organizes pointers to children of a trie node.
+
+This implementation stores a literal list of pointers.
+
+*/
+
 #include "trie/bitvector.h"
 
 namespace speedex {
@@ -61,6 +69,7 @@ private:
 
 public:
 
+	//! Set this instance to storing a trie value.
 	void set_value(ValueType new_value) {
 		if (!value_active) {
 			clear_open_links();
@@ -187,6 +196,7 @@ public:
 	using iterator = iterator_<false>;
 	using const_iterator = iterator_<true>;
 
+	//! Set an input pointer to be the child at offset branch_bits.
 	void emplace(uint8_t branch_bits, trie_ptr_t&& ptr) {
 		if (value_active) {
 			throw std::runtime_error("can't emplace ptr if value active!");
@@ -267,6 +277,8 @@ public:
 		return const_iterator{0, nullptr};
 	}
 
+
+	//! Find the child at offset \a bb.
 	iterator find(uint8_t bb) {
 		if (bv.contains(bb)) {
 			return iterator{bv.drop_lt(bb), map};
@@ -274,6 +286,7 @@ public:
 		return end();
 	}
 
+	//! Find the child at offset \a bb.
 	const_iterator find(uint8_t bb) const {
 		if (bv.contains(bb)) {
 			return const_iterator{bv.drop_lt(bb), map};
@@ -285,6 +298,7 @@ public:
 		return bv.empty();
 	}
 
+	//! Return the number of active child nodes.
 	size_t size() const {
 		return bv.size();
 	}

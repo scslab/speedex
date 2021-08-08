@@ -125,26 +125,12 @@ public:
 
 	void join(BlockProductionReduce& other) {
 
-		//other.finish();
-		
-
-		//for (size_t i = 0; i < other.accumulated_processors.size(); i++) {
-	//		accumulated_processors.emplace_back(std::move(other.accumulated_processors.at(i)));
-	//	}
-
 		for (auto iter = other.status_counts.begin(); iter != other.status_counts.end(); iter++) {
 			status_counts[iter->first] += iter->second;
 		}
 
 		stats += other.stats;
-
-	//	other.accumulated_processors.clear();	
 	}
-
-	/*void finish() {
-		accumulated_processors.emplace_back(std::move(tx_processor));
-		tx_processor.clear();
-	}*/
 
 	BlockProductionReduce(
 		SpeedexManagementStructures& management_structures,

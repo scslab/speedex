@@ -1,5 +1,10 @@
 #pragma once
 
+/*! \file user_account.h
+
+Manage the account state for one user.
+*/
+
 #include <atomic>
 #include <cstdint>
 #include <memory>
@@ -35,6 +40,8 @@ class UserAccount {
 	static_assert(
 		__builtin_popcount(MAX_OPS_PER_TX) == 1, "should be power of two");
 
+	//! Reminder that we only can reserve the next 64 sequence numbers
+	//! in this implementation, before a block commits.
 	static_assert(
 		MAX_SEQ_NUMS_PER_BLOCK <= 64, "rework sequence num reservations");
 
@@ -167,19 +174,6 @@ public:
 			});
 	}
 
-/*
-	//! Transfer amount of asset to the account's escrowed balance
-	//! Note that assets don't actually store escrowed balance,
-	//! so this is a no-op
-	void transfer_escrow(unsigned int asset, amount_t amount) {
-		operate_on_asset<void>(
-			asset, 
-			amount, 
-			[] (RevertableAsset& asset, const amount_t& amount) {
-				asset.transfer_escrow(amount);
-			});
-	}
-*/
 	//! Escrow amount units of asset.
 	void escrow(unsigned int asset, amount_t amount) {
 		operate_on_asset<void>(asset, 
@@ -239,8 +233,13 @@ public:
 	void commit_sequence_number(
 		uint64_t sequence_number);
 
+	//! Commit the current round's modifications to user's account.
 	void commit();
+	//! Rollback current round's modifications to user's account
 	void rollback();
+
+	//! Check that this account is in a valid state (i.e. all asset
+	//! balances are nonnegative).
 	bool in_valid_state();
 	
 	//! Generate an account commitment (for hashing)
@@ -250,7 +249,10 @@ public:
 	//! based on uncommitted account balances.
 	AccountCommitment tentative_commitment() const;
 
+	//! Convert an account ID into a key (byte string) for lmdb.
 	static dbval produce_lmdb_key(const AccountID& owner);
+
+	//! Convert an lmdb key (byte string) into an account id.
 	static AccountID read_lmdb_key(const dbval& key);
 	
 	void log() {

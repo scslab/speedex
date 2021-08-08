@@ -259,7 +259,7 @@ public:
 			!std::is_same<ValueType, InsertedValueType>::value,
 			InsertedValueType>::type leaf_value) {
 
-		ValueType value_out = InsertFn::template new_value<ValueType>(key);
+		ValueType value_out = InsertFn::new_value(key);
 		InsertFn::value_insert(value_out, leaf_value);
 		return std::make_unique<TrieNode>(
 			key, 
@@ -1217,7 +1217,7 @@ public:
 	}
 
 	template<
-		typename InsertFn = OverwriteInsertFn, 
+		typename InsertFn = OverwriteInsertFn<ValueType>, 
 		typename InsertedValueType = ValueType, 
 		bool x = HAS_VALUE>
 	void insert(
@@ -1230,7 +1230,7 @@ public:
 		root->template insert<x, InsertFn, InsertedValueType>(data, leaf_value);
 	}
 
-	template<typename InsertFn = OverwriteInsertFn, bool x = HAS_VALUE>
+	template<typename InsertFn = OverwriteInsertFn<ValueType>, bool x = HAS_VALUE>
 	void insert(typename std::enable_if<!x, const prefix_t>::type data) {
 		std::lock_guard lock(*hash_modify_mtx);
 
@@ -2141,7 +2141,7 @@ TrieNode<TEMPLATE_PARAMS>::_insert(
 		prefix_len = MAX_KEY_LEN_BITS;
 		
 		//new value
-		children.set_value(InsertFn::template new_value<ValueType>(prefix));
+		children.set_value(InsertFn::new_value(prefix));
 
 		InsertFn::value_insert(children.value(), leaf_value);
 		//value = leaf_value;

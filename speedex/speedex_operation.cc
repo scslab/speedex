@@ -7,6 +7,7 @@
 #include "utils/hash.h"
 #include "utils/header_persistence.h"
 #include "utils/time.h"
+#include "utils/save_load_xdr.h"
 
 namespace speedex {
 
@@ -61,11 +62,11 @@ speedex_block_creation_logic(
 	SpeedexManagementStructures& management_structures,
 	TatonnementManagementStructures& tatonnement,
 	const HashedBlock& prev_block,
-	OverallBlockProductionMeasurements& overall_measurements)
+	OverallBlockProductionMeasurements& overall_measurements,
+	BlockStateUpdateStatsWrapper& state_update_stats)
 {
 
 	auto& stats = overall_measurements.block_creation_measurements;
-	BlockStateUpdateStatsWrapper state_update_stats;
 
 	HashedBlock new_block;
 
@@ -268,8 +269,6 @@ speedex_block_creation_logic(
 		achieved_feerate);
 
 	overall_measurements.format_time = measure_time(timestamp);
-
-	overall_measurements.state_update_stats = state_update_stats.get_xdr();
 
 	tatonnement.oracle.wait_for_all_tatonnement_threads();
 	timeout_th.join();
@@ -590,44 +589,58 @@ template bool speedex_block_validation_logic(
 
 
 
-/*
-uint64_t edce_load_persisted_data(
-	EdceManagementStructures& management_structures) {
 
-	std::printf("starting load persisted data\n");
+uint64_t speedex_load_persisted_data(
+	SpeedexManagementStructures& management_structures) {
+
 
 	management_structures.db.load_lmdb_contents_to_memory();
-	std::printf("loaded db\n");
-	management_structures.work_unit_manager.load_lmdb_contents_to_memory();
-	std::printf("loaded offers\n");
+	management_structures.orderbook_manager.load_lmdb_contents_to_memory();
 	management_structures.block_header_hash_map.load_lmdb_contents_to_memory();
-	std::printf("loaded hashmap\n");
 
 	auto db_round = management_structures.db.get_persisted_round_number();
 
-	auto max_workunit_round = management_structures.work_unit_manager.get_max_persisted_round_number();
+	auto max_orderbook_round = management_structures.orderbook_manager.get_max_persisted_round_number();
+	auto min_orderbook_round = management_structures.orderbook_manager.get_min_persisted_round_number();
 
-	if (max_workunit_round > db_round) {
+	if (max_orderbook_round > db_round) {
 		throw std::runtime_error("can't reload if workunit persists without db (bc of the cancel offers thing)");
 	}
 
-	std::printf("db round: %lu manager max round: %lu hashmap %lu\n", 
-		db_round, management_structures.work_unit_manager.get_max_persisted_round_number(), management_structures.block_header_hash_map.get_persisted_round_number());
+	BLOCK_INFO("db round: %lu manager max round: %lu hashmap %lu", 
+		db_round, 
+		max_orderbook_round, 
+		management_structures.block_header_hash_map.get_persisted_round_number());
 
-	auto start_round = std::min({db_round, management_structures.work_unit_manager.get_min_persisted_round_number(), management_structures.block_header_hash_map.get_persisted_round_number()});
-	auto end_round = std::max({db_round, max_workunit_round, management_structures.block_header_hash_map.get_persisted_round_number()});
+	auto start_round = std::min(
+		{
+			db_round, 
+			min_orderbook_round, 
+			management_structures.block_header_hash_map.get_persisted_round_number()
+		});
+	auto end_round = std::max(
+		{
+			db_round, 
+			max_orderbook_round, 
+			management_structures.block_header_hash_map.get_persisted_round_number()
+		});
 
-	std::printf("replaying rounds [%lu, %lu]\n", start_round, end_round);
+	BLOCK_INFO("replaying rounds [%lu, %lu]", start_round, end_round);
 
 	for (auto i = start_round; i <= end_round; i++) {
-		edce_replay_trusted_round(management_structures, i);
+		speedex_replay_trusted_round(management_structures, i);
 	}
 	management_structures.db.commit_values();
 	return end_round;
 }
 
-void edce_replay_trusted_round(
-	EdceManagementStructures& management_structures,
+
+//! Replay round based on tx block data on disk
+//! Used for catch up on data from trusted sources
+//! or from data logged on disk (i.e. if db crashed
+//! before fsync)
+void speedex_replay_trusted_round(
+	SpeedexManagementStructures& management_structures,
 	const uint64_t round_number) {
 
 	if (round_number == 0) {
@@ -651,33 +664,35 @@ void edce_replay_trusted_round(
 	BLOCK_INFO("replayed txs in block %lu", round_number);
 
 	//not actually used or checked.
-	ThreadsafeValidationStatistics validation_stats(management_structures.work_unit_manager.get_num_work_units());
+	ThreadsafeValidationStatistics validation_stats(
+		management_structures.orderbook_manager.get_num_orderbooks());
+
 	std::vector<Price> prices;
 	for (unsigned i = 0; i < header.block.prices.size(); i++) {
 		prices.push_back(header.block.prices[i]);
 	}
-	WorkUnitStateCommitmentChecker commitment_checker(header.block.internalHashes.clearingDetails, prices, header.block.feeRate);
+	OrderbookStateCommitmentChecker commitment_checker(
+		header.block.internalHashes.clearingDetails, prices, header.block.feeRate);
 
-	management_structures.work_unit_manager.commit_for_loading(round_number);
+	management_structures.orderbook_manager.commit_for_loading(round_number);
 
 	NullModificationLog no_op_modification_log{};
 
-	management_structures.work_unit_manager.clear_offers_for_data_loading(
+	management_structures.orderbook_manager.clear_offers_for_data_loading(
 		management_structures.db, no_op_modification_log, validation_stats, commitment_checker, round_number);
 
-	management_structures.work_unit_manager.finalize_for_loading(round_number);
+	management_structures.orderbook_manager.finalize_for_loading(round_number);
 
-	std::printf("creating header loading hash map\n");
 	auto header_hash_map = LoadLMDBHeaderMap(round_number, management_structures.block_header_hash_map);
 	header_hash_map.insert_for_loading(round_number, header.hash);
 
 	if (management_structures.db.get_persisted_round_number() < round_number) {
 		management_structures.db.persist_lmdb(round_number);
 	}
-	management_structures.work_unit_manager.persist_lmdb_for_loading(round_number);
+	management_structures.orderbook_manager.persist_lmdb_for_loading(round_number);
 	if (management_structures.block_header_hash_map.get_persisted_round_number() < round_number) {
 		management_structures.block_header_hash_map.persist_lmdb(round_number);
 	}
-} */
+} 
 
 } /* speedex */

@@ -20,70 +20,21 @@
 %from experiments_includes cimport *
 #endif
 
-
 namespace speedex {
 
 struct ExperimentParameters {
-	int tax_rate;
-	int smooth_mult;
-	int num_threads;
-	int num_assets;
-	int num_accounts;
-	int persistence_frequency;
-	int num_blocks;
+	unsigned int tax_rate;
+	unsigned int smooth_mult;
+	unsigned int num_threads;
+	unsigned int num_assets;
+	unsigned int num_accounts;
+	unsigned int persistence_frequency;
+	unsigned int num_blocks;
 };
 
 typedef AccountID AccountIDList<>;
 
-
 typedef SignedTransaction ExperimentBlock<>;
-
-/*
-
-struct ExperimentBlockResults {
-	TxProcessingMeasurements processing_measurements<>;
-	BlockCreationMeasurements block_creation_measurements;
-	BlockDataPersistenceMeasurements data_persistence_measurements;
-	float state_commitment_time;
-	BlockProductionHashingMeasurements production_hashing_measurements;
-	float format_time;
-	int num_txs;
-	float total_time;
-	BlockStateUpdateStats state_update_stats;
-	uint64 last_block_added_to_mempool;
-	float mempool_push_time;
-	float mempool_wait_time;
-	float total_init_time;
-	float total_block_build_time;
-	float total_block_creation_time;
-	float total_block_commitment_time;
-	float total_block_persist_time;
-	float total_time_from_basept;
-	float total_block_send_time;
-	float total_self_confirm_time;
-	float total_critical_persist_time;
-};
-
-struct ExperimentResults {
-	ExperimentBlockResults block_results<>;
-	ExperimentParameters params;
-};
-
-struct ExperimentValidationBlockResults {
-	BlockValidationMeasurements block_validation_measurements;
-	BlockDataPersistenceMeasurements data_persistence_measurements;
-	float total_time;
-	float total_persistence_time;
-	float block_load_time;
-	float validation_logic_time;
-	BlockStateUpdateStats state_update_stats;
-};
-
-struct ExperimentValidationResults {
-	ExperimentParameters params;
-	ExperimentValidationBlockResults block_results<>;
-};
- */
  
 enum NodeType {
 	BLOCK_PRODUCER = 0,
@@ -97,9 +48,14 @@ union SingleBlockResultsUnion switch(NodeType type) {
 		OverallBlockValidationMeasurements validationResults;
 };
 
+struct TaggedSingleBlockResults {
+	SingleBlockResultsUnion results;
+	uint64 blockNumber;
+};
+
 struct ExperimentResultsUnion {
 	ExperimentParameters params;
-	SingleBlockResultsUnion block_results<>;
+	TaggedSingleBlockResults block_results<>;
 };
 
 //locked
