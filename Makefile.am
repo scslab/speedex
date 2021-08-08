@@ -103,7 +103,9 @@ SRCS = \
 	$(UTILS_SRCS)
 
 MAIN_CCS = main/simple.cc \
+	main/replicated_simulation_experiment_controller.cc \
 	main/speedex_producer_experiment.cc \
+	main/speedex_validator_experiment.cc \
 	main/synthetic_data_gen_from_params.cc \
 	main/trie_comparison.cc 
 
@@ -120,13 +122,17 @@ test_runner.cc : $(TEST_SRCS) $(XHFILES)
 	cxxtestgen --error-printer -o test_runner.cc $(TEST_SRCS)
 
 bin_PROGRAMS = simple \
+	replicated_simulation_experiment_controller \
 	speedex_producer_experiment \
+	speedex_validator_experiment \
 	synthetic_data_gen \
 	trie_comparison \
 	test
 
 simple_SOURCES = $(SRCS) main/simple.cc
+replicated_simulation_experiment_controller_SOURCES = $(SRCS) main/replicated_simulation_experiment_controller.cc
 speedex_producer_experiment_SOURCES = $(SRCS) main/speedex_producer_experiment.cc
+speedex_validator_experiment_SOURCES = $(SRCS) main/speedex_validator_experiment.cc
 synthetic_data_gen_SOURCES = $(SRCS) main/synthetic_data_gen_from_params.cc
 trie_comparison_SOURCES = $(SRCS) main/trie_comparison.cc
 
