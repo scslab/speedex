@@ -73,6 +73,19 @@ BlockForwarder::add_forwarding_target(const std::string& hostname) {
 	BLOCK_INFO("done connecting to forwarding target");
 }
 
+void
+BlockForwarder::request_forwarding_from(const std::string& hostname) {
+	BLOCK_INFO("requesting block forwarding from %s", hostname.c_str());
+
+	auto fd = xdr::tcp_connect(hostname.c_str(), FORWARDING_REQUEST_PORT);
+
+	request_client_t req_client{fd.get()};
+
+	if (!req_client.request_forwarding()) {
+		throw std::runtime_error("unable to get request block forwarding");
+	}
+}
+
 void 
 BlockForwarder::run() {
 	BLOCK_INFO("Starting block forwarder thread");

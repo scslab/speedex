@@ -25,6 +25,7 @@ class BlockForwarder : public AsyncWorker {
 
 	using forwarding_client_t = xdr::srpc_client<BlockTransferV1>;
 	using socket_t = xdr::unique_sock;
+	using request_client_t = xdr::srpc_client<RequestBlockForwardingV1>;
 
 	std::vector<std::unique_ptr<forwarding_client_t>> forwarding_targets;
 	std::vector<socket_t> sockets;
@@ -62,6 +63,8 @@ public:
 	void shutdown_target_connections();
 
 	void add_forwarding_target(const std::string& hostname);
+
+	void request_forwarding_from(const std::string& hostname);
 };
 
 } /* speedex */

@@ -64,7 +64,9 @@ PRICE_COMPUTATION_SRCS = \
 	price_computation/tatonnement_oracle.cc
 
 RPC_SRCS = \
-	rpc/block_forwarder.cc
+	rpc/block_forwarder.cc \
+	rpc/consensus_api.cc \
+	rpc/consensus_api_server.cc
 
 SPEEDEX_SRCS = \
 	speedex/speedex_node.cc

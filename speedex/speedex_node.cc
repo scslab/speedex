@@ -27,6 +27,10 @@ SpeedexNode::produce_block() {
 			.at(prev_block_number % MEASUREMENT_PERSIST_FREQUENCY)
 			.results
 			.productionResults();
+	measurement_results
+		.block_results
+		.at(prev_block_number % MEASUREMENT_PERSIST_FREQUENCY)
+		.blockNumber = prev_block_number + 1;
 	
 	auto mempool_push_ts = init_time_measurement();
 	mempool.push_mempool_buffer_to_mempool();
@@ -125,7 +129,6 @@ SpeedexNode::produce_block() {
 }
 
 template bool SpeedexNode::validate_block(const HashedBlock& header, std::unique_ptr<SerializedBlock> block);
-//template bool SpeedexNode::validate_block(const HashedBlock& header, std::unique_ptr<SignedTransactionList> block);
 template bool SpeedexNode::validate_block(const HashedBlock& header, std::unique_ptr<AccountModificationBlock> block);
 
 template<typename TxListType>
@@ -147,6 +150,10 @@ bool SpeedexNode::validate_block(const HashedBlock& header, std::unique_ptr<TxLi
 			.at(prev_block_number % MEASUREMENT_PERSIST_FREQUENCY)
 			.results
 			.validationResults();
+	measurement_results
+		.block_results
+		.at(prev_block_number % MEASUREMENT_PERSIST_FREQUENCY)
+		.blockNumber = prev_block_number + 1;
 
 	auto timestamp = init_time_measurement();
 
@@ -187,6 +194,8 @@ bool SpeedexNode::validate_block(const HashedBlock& header, std::unique_ptr<TxLi
 			prev_block.block.blockNumber, 
 			get_persistence_measurements(prev_block.block.blockNumber));
 	}
+
+
 
 	return true;
 }
