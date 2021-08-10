@@ -42,7 +42,7 @@ LMDB_SRCS = \
 
 MEMORY_DATABASE_SRCS = \
 	memory_database/memory_database.cc \
-	memory_database/memory_database_view.cc \ 
+	memory_database/memory_database_view.cc \
 	memory_database/user_account.cc
 
 MEMPOOL_SRCS = \
@@ -73,7 +73,7 @@ RPC_SRCS = \
 	rpc/consensus_api_server.cc
 
 SPEEDEX_SRCS = \
-	speedex/speedex_node.cc
+	speedex/speedex_node.cc \
 	speedex/speedex_operation.cc \
 	speedex/speedex_options.cc \
 	speedex/speedex_persistence.cc
