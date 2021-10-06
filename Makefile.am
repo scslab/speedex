@@ -43,7 +43,7 @@ LMDB_SRCS = \
 
 MEMORY_DATABASE_SRCS = \
 	memory_database/memory_database.cc \
-	memory_database/memory_database_view.cc \ 
+	memory_database/memory_database_view.cc \
 	memory_database/user_account.cc
 
 MEMPOOL_SRCS = \
