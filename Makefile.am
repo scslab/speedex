@@ -31,7 +31,8 @@ CRYPTO_SRCS = \
 
 EXPERIMENTS_SRCS = \
 	experiments/producer_node.cc \
-	experiments/validator_node.cc
+	experiments/validator_node.cc \
+	experiments/singlenode_init.cc
 
 HEADER_HASH_SRCS = \
 	header_hash/block_header_hash_map.cc
@@ -73,7 +74,8 @@ RPC_SRCS = \
 	rpc/consensus_api_server.cc
 
 SPEEDEX_SRCS = \
-	speedex/speedex_node.cc
+	speedex/speedex_measurements.cc \
+	speedex/speedex_node.cc \
 	speedex/speedex_operation.cc \
 	speedex/speedex_options.cc \
 	speedex/speedex_persistence.cc

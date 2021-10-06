@@ -82,7 +82,7 @@ RequestBlockForwardingV1_server::request_forwarding(rpc_sock_ptr* session)
   BLOCK_INFO("adding forwarding target to my targets %s", ip_addr.c_str());
   main_node.get_block_forwarder().add_forwarding_target(ip_addr); 
   BLOCK_INFO("done adding forwarding target");
-  return 1;
+  return std::make_unique<uint32_t>(1);
 }
 
 void

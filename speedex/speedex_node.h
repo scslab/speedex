@@ -11,6 +11,7 @@
 #include "rpc/block_forwarder.h"
 
 #include "speedex/speedex_management_structures.h"
+#include "speedex/speedex_measurements.h"
 #include "speedex/speedex_operation.h"
 #include "speedex/speedex_options.h"
 #include "speedex/speedex_persistence.h"
@@ -50,7 +51,6 @@ class SpeedexNode {
 
 	std::mutex confirmation_mtx;
 	std::mutex operation_mtx;
-	std::mutex measurement_mtx;
 
 	HashedBlock prev_block;
 
@@ -58,7 +58,8 @@ class SpeedexNode {
 
 	AsyncPersister async_persister;
 	
-	ExperimentResultsUnion measurement_results;
+	SpeedexMeasurements measurements_log;
+
 	std::string measurement_output_prefix;
 
 	const SpeedexOptions& options;
@@ -84,11 +85,13 @@ class SpeedexNode {
 	BlockValidator block_validator;
 
 	//utility methods
-	void set_current_measurements_type();
+	//void set_current_measurements_type();
 
-	BlockDataPersistenceMeasurements& 
-	get_persistence_measurements(uint64_t block_number);
-	BlockStateUpdateStats& get_state_update_stats(uint64_t block_number);
+	//BlockDataPersistenceMeasurements& 
+	//get_persistence_measurements(uint64_t block_number);
+	//BlockStateUpdateStats& get_state_update_stats(uint64_t block_number);
+
+	TaggedSingleBlockResults new_measurements() const;
 
 	void assert_state(NodeType required_state);
 	std::string state_to_string(NodeType query_state);
@@ -108,11 +111,10 @@ public:
 	, state(state)
 	, confirmation_mtx()
 	, operation_mtx()
-	, measurement_mtx()
 	, prev_block()
 	, highest_block(0)
 	, async_persister(management_structures)
-	, measurement_results()
+	, measurements_log(params)
 	, measurement_output_prefix(measurement_output_prefix)
 	, options(options) 
 	, block_forwarder()
@@ -123,10 +125,7 @@ public:
 	, block_producer(management_structures, log_merge_worker)
 	, block_validator(management_structures, log_merge_worker)
 	{
-		measurement_results.block_results.resize(MEASUREMENT_PERSIST_FREQUENCY);
-		measurement_results.params = params;
 		auto num_assets = management_structures.orderbook_manager.get_num_assets();
-		//prices = new Price[num_assets];
 		prices.resize(num_assets);
 		for (size_t i = 0; i < num_assets; i++) {
 			prices[i] = price::from_double(1.0);

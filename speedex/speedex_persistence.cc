@@ -61,19 +61,38 @@ AsyncPersister::run() {
 		if (done_flag) return;
 		persist_async_phase1(
 			management_structures, 
-			*block_number_to_persist, 
-			*latest_measurements);
+			persistence_callback -> block_number, 
+			persistence_callback -> measurements);
+
+		highest_persisted_block = persistence_callback -> block_number;
 
 		phase2_persist.do_async_persist_phase2(
-			*block_number_to_persist, latest_measurements);
+			std::move(persistence_callback));
 
-		highest_persisted_block = *block_number_to_persist;
-
-		block_number_to_persist = std::nullopt;
-		latest_measurements = nullptr;
 		cv.notify_one();
 	}
 }
+
+void 
+AsyncPersister::do_async_persist(
+	std::unique_ptr<PersistenceMeasurementLogCallback> callback)
+{
+	auto timestamp = init_time_measurement();
+
+	wait_for_async_task();
+
+	callback -> measurements.wait_for_persist_time = measure_time(timestamp);
+	{
+		std::lock_guard lock(mtx);
+		if (persistence_callback) {
+			throw std::runtime_error(
+				"can't start persist before last one finishes!");
+		}
+		persistence_callback = std::move(callback);
+	}
+	cv.notify_one();
+}
+
 
 void
 persist_async_phase2(
@@ -97,23 +116,35 @@ AsyncPersisterPhase2::run() {
 			cv.wait(lock, [this] () { return done_flag || exists_work_to_do();});
 		}
 		if (done_flag) return;
-		if (latest_measurements == nullptr) {
+		if (persistence_callback == nullptr) {
 			throw std::runtime_error("invalid call to async_persist_phase2!");
 		}
 
 		persist_async_phase2(
 			management_structures, 
-			*current_block_number, 
-			*latest_measurements);
+			persistence_callback -> block_number, 
+			persistence_callback -> measurements);
 		
 		phase3_persist.do_async_persist_phase3(
-			*current_block_number, latest_measurements);
+			std::move(persistence_callback));
 
-		latest_measurements = nullptr;
-		current_block_number = std::nullopt;
 		cv.notify_all();
 	}
 }
+
+
+void 
+AsyncPersisterPhase2::do_async_persist_phase2(
+	std::unique_ptr<PersistenceMeasurementLogCallback> callback)
+{
+	wait_for_async_task();
+
+	std::lock_guard lock(mtx);
+	persistence_callback = std::move(callback);
+
+	cv.notify_one();
+}
+
 
 void
 persist_async_phase3(
@@ -143,15 +174,29 @@ AsyncPersisterPhase3::run() {
 			cv.wait(lock, [this] () { return done_flag || exists_work_to_do();});
 		}
 		if (done_flag) return;
-		if (latest_measurements == nullptr) {
+		if (persistence_callback == nullptr) {
 			throw std::runtime_error("invalid call to async_persist_phase3!");
 		}
 		persist_async_phase3(
-			management_structures, *current_block_number, *latest_measurements);
-		latest_measurements = nullptr;
-		current_block_number = std::nullopt;
+			management_structures,
+			persistence_callback -> block_number,
+			persistence_callback -> measurements);
+		
+		persistence_callback = nullptr; // destructor calls finish on the callback, which logs measurements
+		
 		cv.notify_all();
 	}
+}
+
+void 
+AsyncPersisterPhase3::do_async_persist_phase3(
+	std::unique_ptr<PersistenceMeasurementLogCallback> callback)
+{
+	wait_for_async_task();
+
+	std::lock_guard lock(mtx);
+	persistence_callback = std::move(callback);
+	cv.notify_one();
 }
 
 } /* speedex */

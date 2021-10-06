@@ -15,12 +15,11 @@ SpeedexNode::produce_block() {
 	assert_state(BLOCK_PRODUCER);
 
 	uint64_t prev_block_number = prev_block.block.blockNumber;
-
-	std::lock_guard lock2(measurement_mtx);
 	
 	BLOCK_INFO("Starting production on block %lu", prev_block_number + 1);
 
-	set_current_measurements_type();
+	auto tagged_measurements = new_measurements();
+	/*set_current_measurements_type();
 	auto& current_measurements
 		= measurement_results
 			.block_results
@@ -30,7 +29,10 @@ SpeedexNode::produce_block() {
 	measurement_results
 		.block_results
 		.at(prev_block_number % MEASUREMENT_PERSIST_FREQUENCY)
-		.blockNumber = prev_block_number + 1;
+		.blockNumber = prev_block_number + 1; */
+
+	tagged_measurements.blockNumber = prev_block_number + 1;
+	auto& current_measurements = tagged_measurements.results.productionResults();
 	
 	auto mempool_push_ts = init_time_measurement();
 	mempool.push_mempool_buffer_to_mempool();
@@ -107,14 +109,16 @@ SpeedexNode::produce_block() {
 	auto async_ts = init_time_measurement();
 	if (prev_block.block.blockNumber % PERSIST_BATCH == 0) {
 		async_persister.do_async_persist(
-			prev_block.block.blockNumber, 
-			get_persistence_measurements(prev_block.block.blockNumber));
+			std::make_unique<PersistenceMeasurementLogCallback>(measurements_log, prev_block.block.blockNumber));
+			//prev_block.block.blockNumber, 
+			//get_persistence_measurements(prev_block.block.blockNumber));
 	}
 	current_measurements.data_persistence_measurements.async_persist_wait_time = measure_time(async_ts);
 
 	current_measurements.total_block_persist_time = measure_time_from_basept(start_time);
 
-	get_state_update_stats(prev_block.block.blockNumber) = state_update_stats.get_xdr();
+	current_measurements.state_update_stats = state_update_stats.get_xdr();
+	//get_state_update_stats(prev_block.block.blockNumber) = state_update_stats.get_xdr();
 
 	auto mempool_wait_ts = init_time_measurement();
 
@@ -139,21 +143,23 @@ bool SpeedexNode::validate_block(const HashedBlock& header, std::unique_ptr<TxLi
 
 	assert_state(BLOCK_VALIDATOR);
 
-	std::lock_guard lock2(measurement_mtx);
-
-	set_current_measurements_type();
+	//set_current_measurements_type();
 
 	//prev number is current - 1, so this indexing is ok (first block is 1, measurement location 0)
-	auto& current_measurements 
+	/*auto& current_measurements 
 		= measurement_results
 			.block_results
 			.at(prev_block_number % MEASUREMENT_PERSIST_FREQUENCY)
 			.results
-			.validationResults();
-	measurement_results
+			.validationResults(); */
+	auto measurements_base = new_measurements();
+	measurements_base.blockNumber = prev_block_number + 1;
+/*	measurement_results
 		.block_results
 		.at(prev_block_number % MEASUREMENT_PERSIST_FREQUENCY)
-		.blockNumber = prev_block_number + 1;
+		.blockNumber = prev_block_number + 1; */
+
+	auto& current_measurements = measurements_base.results.validationResults();
 
 	auto timestamp = init_time_measurement();
 
@@ -191,16 +197,22 @@ bool SpeedexNode::validate_block(const HashedBlock& header, std::unique_ptr<TxLi
 
 	if (prev_block.block.blockNumber % PERSIST_BATCH == 0) {
 		async_persister.do_async_persist(
-			prev_block.block.blockNumber, 
-			get_persistence_measurements(prev_block.block.blockNumber));
+			std::make_unique<PersistenceMeasurementLogCallback>(measurements_log, prev_block.block.blockNumber));
+			//prev_block.block.blockNumber, 
+			//get_persistence_measurements(prev_block.block.blockNumber));
 	}
-
-
-
 	return true;
 }
 
 
+TaggedSingleBlockResults
+SpeedexNode::new_measurements() const
+{
+	TaggedSingleBlockResults res;
+	res.results.type(state);
+	return res;
+}
+/*
 void SpeedexNode::set_current_measurements_type() {
 	measurement_results
 		.block_results
@@ -254,7 +266,7 @@ SpeedexNode::get_state_update_stats(uint64_t block_number) {
 	}
 	throw std::runtime_error("invalid state");
 }
-
+*/
 void 
 SpeedexNode::assert_state(NodeType required_state) {
 	if (state != required_state) {
@@ -277,21 +289,17 @@ SpeedexNode::state_to_string(NodeType query_state) {
 ExperimentResultsUnion 
 SpeedexNode::get_measurements() {
 	std::lock_guard lock(confirmation_mtx);
-	std::lock_guard lock2(measurement_mtx);
 	return get_measurements_nolock();
 }
 
+// should own confirmation_mtx before calling.
 ExperimentResultsUnion
 SpeedexNode::get_measurements_nolock() {
-	ExperimentResultsUnion out;
+
+	async_persister.wait_for_async_persist();
+	ExperimentResultsUnion out = measurements_log.get_measurements();
 
 	uint64_t num_measurements = highest_block;
-
-	out.block_results.insert(
-		out.block_results.end(), 
-		measurement_results.block_results.begin(), 
-		measurement_results.block_results.begin() + num_measurements);
-	out.params = measurement_results.params;
 
 	if (num_measurements == 0) {
 		BLOCK_INFO("returned no measurements.  Is this ok?");
@@ -313,9 +321,7 @@ SpeedexNode::get_measurements_nolock() {
 void 
 SpeedexNode::write_measurements() {
 	std::lock_guard lock(confirmation_mtx);
-	std::lock_guard lock2(measurement_mtx);
 	BLOCK_INFO("write measurements called");
-	async_persister.wait_for_async_persist();
 
 	auto filename = overall_measurement_filename();
 

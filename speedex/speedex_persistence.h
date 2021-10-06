@@ -16,6 +16,7 @@ Phase 3: Everything else (orderbooks, header hash)
 #include <cstdint>
 
 #include "speedex/speedex_management_structures.h"
+#include "speedex/speedex_measurements.h"
 
 #include "utils/async_worker.h"
 
@@ -62,12 +63,14 @@ class AsyncPersisterPhase3 : public AsyncWorker {
 	using AsyncWorker::mtx;
 	using AsyncWorker::cv;
 
+	std::unique_ptr<PersistenceMeasurementLogCallback> persistence_callback;
+
 	SpeedexManagementStructures& management_structures;
-	BlockDataPersistenceMeasurements* latest_measurements = nullptr;
-	std::optional<uint64_t> current_block_number = std::nullopt;
+	//BlockDataPersistenceMeasurements* latest_measurements = nullptr;
+	//std::optional<uint64_t> current_block_number = std::nullopt;
 	
 	bool exists_work_to_do() override final {
-		return latest_measurements != nullptr;
+		return persistence_callback != nullptr;
 	}
 
 	void run();
@@ -76,21 +79,13 @@ public:
 
 	AsyncPersisterPhase3(SpeedexManagementStructures& management_structures)
 		: AsyncWorker()
+		, persistence_callback(nullptr)
 		, management_structures(management_structures) {
 			start_async_thread([this] {run();});
 		}
 
 	void do_async_persist_phase3(
-		uint64_t current_block_number_caller, 
-		BlockDataPersistenceMeasurements* measurements) 
-	{
-		wait_for_async_task();
-
-		std::lock_guard lock(mtx);
-		latest_measurements = measurements;
-		current_block_number = current_block_number_caller;
-		cv.notify_one();
-	}
+		std::unique_ptr<PersistenceMeasurementLogCallback> callback);
 
 	~AsyncPersisterPhase3() {
 		wait_for_async_task();
@@ -104,14 +99,16 @@ class AsyncPersisterPhase2 : public AsyncWorker {
 	using AsyncWorker::mtx;
 	using AsyncWorker::cv;
 
+	std::unique_ptr<PersistenceMeasurementLogCallback> persistence_callback;
+
 	SpeedexManagementStructures& management_structures;
-	BlockDataPersistenceMeasurements* latest_measurements = nullptr;
-	std::optional<uint64_t> current_block_number = std::nullopt;
+	//BlockDataPersistenceMeasurements* latest_measurements = nullptr;
+	//std::optional<uint64_t> current_block_number = std::nullopt;
 
 	AsyncPersisterPhase3 phase3_persist;
 
 	bool exists_work_to_do() override final {
-		return latest_measurements != nullptr;
+		return persistence_callback != nullptr;
 	}
 
 	void run();
@@ -122,6 +119,7 @@ public:
 
 	AsyncPersisterPhase2(SpeedexManagementStructures& management_structures)
 		: AsyncWorker()
+		, persistence_callback(nullptr)
 		, management_structures(management_structures)
 		, phase3_persist(management_structures)
 		{
@@ -129,16 +127,7 @@ public:
 		}
 
 	void do_async_persist_phase2(
-		uint64_t current_block_number_caller, 
-		BlockDataPersistenceMeasurements* measurements)\
-	{
-		wait_for_async_task();
-
-		std::lock_guard lock(mtx);
-		latest_measurements = measurements;
-		current_block_number = current_block_number_caller;
-		cv.notify_one();
-	}
+		std::unique_ptr<PersistenceMeasurementLogCallback> callback);
 
 	~AsyncPersisterPhase2() {
 		wait_for_async_task();
@@ -152,11 +141,10 @@ struct AsyncPersister : public AsyncWorker {
 	using AsyncWorker::mtx;
 	using AsyncWorker::cv;
 
-	bool done_flag = false;
+	std::unique_ptr<PersistenceMeasurementLogCallback> persistence_callback;
+	//std::optional<uint64_t> block_number_to_persist;
 
-	std::optional<uint64_t> block_number_to_persist;
-
-	BlockDataPersistenceMeasurements* latest_measurements;
+	//BlockDataPersistenceMeasurements* latest_measurements;
 
 	SpeedexManagementStructures& management_structures;
 
@@ -165,7 +153,7 @@ struct AsyncPersister : public AsyncWorker {
 	AsyncPersisterPhase2 phase2_persist;
 
 	bool exists_work_to_do() override final {
-		return latest_measurements != nullptr;
+		return persistence_callback != nullptr;
 	}
 
 	void run();
@@ -174,6 +162,7 @@ public:
 
 	AsyncPersister(SpeedexManagementStructures& management_structures)
 		: AsyncWorker()
+		, persistence_callback(nullptr)
 		, management_structures(management_structures)
 		, phase2_persist(management_structures) {
 			start_async_thread([this] {run();});
@@ -189,25 +178,7 @@ public:
 	//! (all blocks up to persist_block_number).
 	//! When phase 1 finishes, phase 2 is automatically called.
 	void do_async_persist(
-		const uint64_t persist_block_number, 
-		BlockDataPersistenceMeasurements& measurements) {
-		
-		auto timestamp = init_time_measurement();
-
-		wait_for_async_task();
-
-		measurements.wait_for_persist_time = measure_time(timestamp);
-		{
-			std::lock_guard lock(mtx);
-			if (block_number_to_persist) {
-				throw std::runtime_error(
-					"can't start persist before last one finishes!");
-			}
-			block_number_to_persist = persist_block_number;
-			latest_measurements = &measurements;
-		}
-		cv.notify_one();
-	}
+		std::unique_ptr<PersistenceMeasurementLogCallback> callback);
 
 	//! Wait for all async persistence phases to complete.
 	//! Clears up all uses of measurements object reference.

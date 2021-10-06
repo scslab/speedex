@@ -108,16 +108,16 @@ struct BlockCreationMeasurements {
 };
 
 struct BlockDataPersistenceMeasurements {
-	float header_write_time;
-	float account_db_checkpoint_time;
-	float account_db_checkpoint_finish_time;	
-	float offer_checkpoint_time;
-	float account_log_write_time;
-	float block_hash_map_checkpoint_time;
-	float wait_for_persist_time;
-	float account_db_checkpoint_sync_time;
-	float total_critical_persist_time;
-	float async_persist_wait_time;
+	float header_write_time; //
+	float account_db_checkpoint_time; //
+	float account_db_checkpoint_finish_time; //	
+	float offer_checkpoint_time; //
+	float account_log_write_time; //
+	float block_hash_map_checkpoint_time; //
+	float wait_for_persist_time; //
+	float account_db_checkpoint_sync_time; //
+	float total_critical_persist_time; //
+	float async_persist_wait_time; //
 	float reserved_space3;
 	float reserved_space4;
 	float reserved_space5;
