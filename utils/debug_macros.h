@@ -38,6 +38,8 @@ Printouts include file/line information.
 
 #define MEMPOOL_DEBUG DEBUG_LEVEL_INFO
 
+#define HOTSTUFF_DEBUG DEBUG_LEVEL_INFO
+
 #define LOG(s, ...) std::printf((std::string("%-40s") + s + "\n").c_str(), (std::string(__FILE__) + "." + std::to_string(__LINE__) + ":").c_str() __VA_OPT__(,) __VA_ARGS__)
 
 #if DEBUG_LEVEL <= DEBUG_LEVEL_INFO || TRIE_DEBUG <= DEBUG_LEVEL_INFO || ROUNDING_DEBUG <= DEBUG_LEVEL_INFO ||  TATONNEMENT_DEBUG <= DEBUG_LEVEL_INFO || PROOF_DEBUG <= DEBUG_LEVEL_INFO
@@ -164,6 +166,15 @@ Printouts include file/line information.
 #else
 #define MEMPOOL_INFO(s, ...) (void)0
 #define MEMPOOL_INFO_F(s) (void)0
+#endif
+
+
+#if HOTSTUFF_DEBUG <= DEBUG_LEVEL_INFO
+#define HOTSTUFF_INFO(s, ...) LOG(s, __VA_ARGS__)
+#define HOTSTUFF_INFO_F(s) s
+#else
+#define HOTSTUFF_INFO(s, ...) (void)0
+#define HOTSTUFF_INFO_F(s) (void)0
 #endif
 
 #if INTEGRITY_CHECKS == ON

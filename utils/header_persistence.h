@@ -2,7 +2,7 @@
 
 /*! \file header_persistence.h
 
-Various utility functions for saving and loading block headers
+Utility functions for saving and loading block headers
 
 */
 

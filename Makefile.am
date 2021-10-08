@@ -15,7 +15,8 @@ X_FILES = \
 	xdr/consensus_api.x \
 	xdr/cryptocoin_experiment.x \
 	xdr/header_summary.x \
-	xdr/experiments.x
+	xdr/experiments.x \
+	xdr/hotstuff.x
 
 XH_FILES = $(X_FILES:.x=.h)
 
@@ -36,6 +37,13 @@ EXPERIMENTS_SRCS = \
 
 HEADER_HASH_SRCS = \
 	header_hash/block_header_hash_map.cc
+
+HOTSTUFF_SRCS = \
+	hotstuff/block.cc \
+	hotstuff/block_storage/io_utils.cc \
+	hotstuff/block_storage/block_store.cc \
+	hotstuff/crypto.cc \
+	hotstuff/replica_config.cc
 
 LMDB_SRCS = \
 	lmdb/lmdb_types.cc \
@@ -93,6 +101,7 @@ SRCS = \
 	$(CRYPTO_SRCS) \
 	$(EXPERIMENTS_SRCS) \
 	$(HEADER_HASH_SRCS) \
+	$(HOTSTUFF_SRCS) \
 	$(LMDB_SRCS) \
 	$(MEMORY_DATABASE_SRCS) \
 	$(MEMPOOL_SRCS) \

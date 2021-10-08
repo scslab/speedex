@@ -34,7 +34,6 @@ public:
 
 
 struct DeterministicKeyGenerator {
-	using SecretKey = std::array<unsigned char, 64>;
 
 	DeterministicKeyGenerator() {
 		if (sodium_init() == -1) {

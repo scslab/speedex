@@ -1,3 +1,6 @@
 [submodule "xdrpp"]
 	path = xdrpp
 	url = http://github.com/gramseyer/xdrpp.git
+[submodule "libhotstuff"]
+	path = libhotstuff
+	url = git@github.com:hot-stuff/libhotstuff.git
