@@ -13,7 +13,6 @@ class BlockStore {
 
 	struct BlockContext {
 		block_ptr_t block;
-		bool on_disk = false;
 	};
 
 	using Hash = speedex::Hash;
@@ -23,6 +22,11 @@ class BlockStore {
 	std::mutex mtx;
 
 public:
+
+	BlockStore() 
+		: block_cache()
+		, mtx()
+		{}
 
 	// Call before committing to any block (and executing it).
 	void write_to_disk(const Hash& block_hash);

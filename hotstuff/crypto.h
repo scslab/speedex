@@ -33,6 +33,10 @@ namespace hotstuff {
 struct PartialCertificate : public PartialCertificateWire {
 
     PartialCertificate(const speedex::Hash& _hash, const speedex::SecretKey& sk);
+
+    PartialCertificate(PartialCertificateWire&& wire_cert);
+
+    bool validate(const ReplicaInfo& info) const;
 };
 
 class QuorumCertificate {
@@ -45,8 +49,11 @@ public:
     QuorumCertificate(const speedex::Hash& obj_hash);
     QuorumCertificate(QuorumCertificateWire const& qc_wire);
 
+    // for buildling
     void add_partial_certificate(ReplicaID rid, const PartialCertificate& pc);
+    bool has_quorum(const ReplicaConfig& config) const; // assumes all certs inserted by add_partial_certificate are valid.
 
+    // for verifying qc from another node
     bool verify(const ReplicaConfig &config) const;
 
     const speedex::Hash &get_obj_hash() const {

@@ -1,4 +1,5 @@
 #include "hotstuff/block.h"
+#include "hotstuff/block_storage/io_utils.h"
 
 #include "utils/debug_macros.h"
 #include "utils/hash.h"
@@ -11,7 +12,12 @@ HotstuffBlock::HotstuffBlock(HotstuffBlockWire&& _wire_block)
 	, parsed_block_body(std::nullopt)
 	, block_height(0)
 	, parent_block_ptr(nullptr)
-	, self_qc(speedex::hash_xdr(wire_block.header)) {}
+	, self_qc(speedex::hash_xdr(wire_block.header))
+	, decided(false)
+	, applied(false)
+	, written_to_disk()
+	, self_produced(false)
+	{}
 
 
 void
@@ -19,6 +25,12 @@ HotstuffBlock::set_parent(block_ptr_t parent_block) {
 	parent_block_ptr = parent_block;
 	block_height = parent_block->block_height + 1;
 }
+
+void
+HotstuffBlock::set_justify(block_ptr_t justify_block) {
+	justify_block_ptr = justify_block;
+}
+
 
 bool HotstuffBlock::has_body() const {
 	return wire_block.body.size() > 0;
@@ -52,6 +64,20 @@ HotstuffBlock::try_delayed_parse()
 		return false;
 	}
 	return true;
+}
+
+void
+HotstuffBlock::write_to_disk() {
+	bool already_written = written_to_disk.test_and_set();
+
+	if (already_written) {
+		return;
+	}
+
+	save_block(wire_block);
+	if (parent_block_ptr != nullptr) {
+		parent_block_ptr -> write_to_disk();
+	}
 }
 
 } /* hotstuff */

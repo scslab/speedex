@@ -31,15 +31,49 @@ class HotstuffBlock {
 	//derived from header, with help of block store
 	uint64_t block_height;
 	block_ptr_t parent_block_ptr;
+	block_ptr_t justify_block_ptr; // block pointed to by qc
 
 	//fields to build for this block
 	QuorumCertificate self_qc;
+
+	//status fields
+	bool decided;
+	bool applied;
+	std::atomic_flag written_to_disk;
+
+	//TODO if you get qc on block that's not self produced, leader knows it was demoted.
+	// State machine recovery to be done in that case.
+	bool self_produced;
 
 public:
 
 	HotstuffBlock(HotstuffBlockWire&& _wire_block);
 
 	bool has_body() const;
+
+	bool has_been_decided() const {
+		return decided;
+	}
+
+	bool has_been_applied() const {
+		return applied;
+	}
+
+	void mark_applied() {
+		applied = true;
+	}
+
+	void decide() {
+		decided = true;
+	}
+
+	bool is_self_produced() const {
+		return self_produced;
+	}
+
+	uint64_t get_height() const {
+		return block_height;
+	}
 
 	/*
 	 * Checks that the block passes basic Hotstuff validity checks.
@@ -70,7 +104,30 @@ public:
 		return wire_block.header.parent_hash;
 	}
 
+	block_ptr_t 
+	get_parent() const {
+		return parent_block_ptr;
+	}
+
+	block_ptr_t
+	get_justify() const {
+		return justify_block_ptr;
+	}
+
+	const QuorumCertificate&
+	get_justify_qc() const {
+		return parsed_qc;
+	}
+
+	QuorumCertificate&
+	get_self_qc() {
+		return self_qc;
+	}
+
 	void set_parent(block_ptr_t parent_block);
+	void set_justify(block_ptr_t justify_block);
+
+	void write_to_disk();
 };
 
 

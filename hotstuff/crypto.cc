@@ -77,4 +77,8 @@ bool QuorumCertificate::verify(const ReplicaConfig &config) const {
     return n_valid >= config.nmajority;
 }
 
+bool QuorumCertificate::has_quorum(const ReplicaConfig& config) const {
+    return config.nmajority <= sigs.size();
+}
+
 }

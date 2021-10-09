@@ -40,6 +40,16 @@ struct HotstuffBlockWire {
 	opaque body<>; // serialized HeaderDataPair
 };
 
+struct ProposalWire {
+	HotstuffBlockWire proposal;
+	ReplicaID proposer;
+};
+
+struct VoteWire {
+	ReplicaID voter;
+	PartialCertificateWire partial_cert;	
+};
+
 } /* hotstuff */
 
 #endif

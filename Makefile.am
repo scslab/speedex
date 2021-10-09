@@ -42,7 +42,10 @@ HOTSTUFF_SRCS = \
 	hotstuff/block.cc \
 	hotstuff/block_storage/io_utils.cc \
 	hotstuff/block_storage/block_store.cc \
+	hotstuff/consensus.cc \
 	hotstuff/crypto.cc \
+	hotstuff/event.cc \
+	hotstuff/event_queue.cc \
 	hotstuff/replica_config.cc
 
 LMDB_SRCS = \

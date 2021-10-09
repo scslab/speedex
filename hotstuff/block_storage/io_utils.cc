@@ -18,7 +18,7 @@ std::string array_to_str(speedex::Hash const& hash) {
 }
 
 std::string
-block_filename(const HotstuffBlock& block)
+block_filename(const HotstuffBlockWire& block)
 {
 	auto const& header = block.header;
 
@@ -35,7 +35,7 @@ block_filename(const speedex::Hash& header_hash)
 	return std::string("TODOblock_storage/") + strname + std::string(".block");
 }
 
-void save_block(const HotstuffBlock& block) {
+void save_block(const HotstuffBlockWire& block) {
 	auto filename = block_filename(block);
 
 	if (speedex::save_xdr_to_file(block, filename.c_str()))
@@ -44,12 +44,12 @@ void save_block(const HotstuffBlock& block) {
 	}
 }
 
-std::optional<HotstuffBlock> 
+std::optional<HotstuffBlockWire> 
 load_block(const speedex::Hash& req_header_hash)
 {
 	auto filename = block_filename(req_header_hash);
 
-	HotstuffBlock block;
+	HotstuffBlockWire block;
 	if (speedex::load_xdr_from_file(block, filename.c_str()))
 	{
 		return std::nullopt;

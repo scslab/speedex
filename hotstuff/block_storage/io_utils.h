@@ -5,13 +5,13 @@
 namespace hotstuff {
 
 std::string
-block_filename(const HotstuffBlock& block);
+block_filename(const HotstuffBlockWire& block);
 
 std::string
 block_filename(const speedex::Hash& header_hash);
 
-void save_block(const HotstuffBlock& block);
+void save_block(const HotstuffBlockWire& block);
 
-HotstuffBlock load_block(const speedex::Hash& req_header_hash);
+HotstuffBlockWire load_block(const speedex::Hash& req_header_hash);
 
 } /* hotstuff */
