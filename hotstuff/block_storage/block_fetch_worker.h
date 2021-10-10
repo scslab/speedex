@@ -65,8 +65,8 @@ public:
 
 	void add_request(speedex::Hash const& request);
 
-	//! wakes requester thread, if sleeping.  Sends any pending request.
-	void send_requests();
+	// wakes requester thread, if sleeping.  Sends any pending request.
+	//void send_requests();
 
 };
 

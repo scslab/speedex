@@ -48,6 +48,7 @@ HOTSTUFF_SRCS = \
 	hotstuff/crypto.cc \
 	hotstuff/event.cc \
 	hotstuff/event_queue.cc \
+	hotstuff/hotstuff_protocol_client.cc \
 	hotstuff/network_event.cc \
 	hotstuff/network_event_queue.cc \
 	hotstuff/replica_config.cc

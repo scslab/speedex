@@ -22,10 +22,11 @@ BlockFetchWorker::BlockFetchWorker(const ReplicaInfo& info, NetworkEventQueue& n
 		start_async_thread([this] () {run();});
 	}
 
-BlockFetchWorker::~BlockFetchWorker() {
-	wait_for_async_task();
-	end_async_thread();
-}
+//BlockFetchWorker::~BlockFetchWorker() {
+//	wait_for_async_task();
+//	end_async_thread();
+//}
+
 /*
 void
 BlockFetchWorker::try_open_connection()
@@ -113,7 +114,7 @@ BlockFetchWorker::run() {
 
 		std::unique_ptr<BlockFetchResponse> res = nullptr;
 		try {
-			std::unique_ptr<BlockFetchResponse> res = fetch_client->fetch(req);
+			std::unique_ptr<BlockFetchResponse> res = client->fetch(req);
 		} catch(...) {
 			readd_request(req);
 			res = nullptr;
@@ -139,14 +140,16 @@ void
 BlockFetchWorker::add_request(speedex::Hash const& request) {
 	std::lock_guard lock(mtx);
 	reqs.push_back(request);
+	cv.notify_all();
 }
 
+/*
 void 
 BlockFetchWorker::send_requests() {
 	std::lock_guard lock(mtx);
 	//No waiting for async task - if we notify worker thread while it's not waiting,
 	// it'll recheck for work upon being done anyways
 	cv.notify_all();
-}
+}*/
 
 } /* hotstuff */

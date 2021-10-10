@@ -65,9 +65,9 @@ struct ProposeMessage {
 };
 
 program HotstuffProtocol {
-	version HotstuffProcolV1 {
-		void vote(PartialCertificateWire) = 1;
-		void propose(HotstuffBlockWire) = 2;
+	version HotstuffProtocolV1 {
+		void vote(VoteMessage) = 1;
+		void propose(ProposeMessage) = 2;
 	} = 1;
 } = 0x11111115;
 
