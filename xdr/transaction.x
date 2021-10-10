@@ -106,7 +106,6 @@ struct Operation {
 
 const MAX_OPS_PER_TX = 256;
 const RESERVED_SEQUENCE_NUM_LOWBITS = 255;
-const MAX_SEQ_NUMS_PER_BLOCK = 64;
 
 struct TransactionMetadata {
 	AccountID sourceAccount;

@@ -77,7 +77,7 @@ BlockSignatureChecker::check_all_sigs(const SerializedBlock& block) {
 
 
 
-std::pair<std::vector<DeterministicKeyGenerator::SecretKey>, std::vector<PublicKey>>
+std::pair<std::vector<SecretKey>, std::vector<PublicKey>>
 DeterministicKeyGenerator::gen_key_pair_list(size_t num_accounts) {
 	std::vector<SecretKey> sks;
 	std::vector<PublicKey> pks;
@@ -97,7 +97,7 @@ DeterministicKeyGenerator::gen_key_pair_list(size_t num_accounts) {
 
 
 // Clearly, a real-world system wouldn't generate keys all on the central server
-std::pair<DeterministicKeyGenerator::SecretKey, PublicKey> 
+std::pair<SecretKey, PublicKey> 
 DeterministicKeyGenerator::deterministic_key_gen(AccountID account) {
 	std::array<uint64_t, 4> seed; // 32 bytes
 	seed.fill(0);

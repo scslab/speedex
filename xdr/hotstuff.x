@@ -54,6 +54,23 @@ program FetchBlocks {
 	} = 1;
 } = 0x11111114;
 
+struct VoteMessage {
+	PartialCertificateWire vote;
+	ReplicaID voter;
+};
+
+struct ProposeMessage {
+	HotstuffBlockWire proposal;
+	ReplicaID proposer;
+};
+
+program HotstuffProtocol {
+	version HotstuffProcolV1 {
+		void vote(PartialCertificateWire) = 1;
+		void propose(HotstuffBlockWire) = 2;
+	} = 1;
+} = 0x11111115;
+
 } /* hotstuff */
 
 #endif

@@ -4,8 +4,6 @@
 #include "hotstuff/network_event.h"
 #include "hotstuff/network_event_queue.h"
 
-#include "rpc/rpcconfig.h"
-
 #include "utils/debug_macros.h"
 
 #include <chrono>
@@ -14,11 +12,11 @@
 namespace hotstuff {
 
 BlockFetchWorker::BlockFetchWorker(const ReplicaInfo& info, NetworkEventQueue& network_event_queue)
-	: AsyncWorker()
-	, socket()
-	, fetch_client()
+	: NonblockingRpcClient<client_t>(info)
+	//, socket()
+	//, fetch_client()
 	, reqs()
-	, info(info)
+//	, info(info)
 	, network_event_queue(network_event_queue)
 	{
 		start_async_thread([this] () {run();});
@@ -28,7 +26,7 @@ BlockFetchWorker::~BlockFetchWorker() {
 	wait_for_async_task();
 	end_async_thread();
 }
-
+/*
 void
 BlockFetchWorker::try_open_connection()
 {
@@ -80,6 +78,7 @@ BlockFetchWorker::open_connection()
 	socket = info.tcp_connect(HOTSTUFF_BLOCK_FETCH_PORT);
 	fetch_client = std::make_unique<client_t>(socket.get());
 }
+ */
 
 void 
 BlockFetchWorker::readd_request(BlockFetchRequest const& req)

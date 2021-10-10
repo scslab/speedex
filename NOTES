@@ -1,0 +1,2 @@
+To count source files:
+git-ls '*.h' '*.x' '*.cc' | xargs wc -l
