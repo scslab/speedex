@@ -4,14 +4,15 @@
 #include "utils/hash.h"
 #include "utils/save_load_xdr.h"
 
-#include <stringstream>
+#include <iomanip>
+#include <sstream>
 
 namespace hotstuff {
 
 std::string array_to_str(speedex::Hash const& hash) {
 	std::stringstream s;
 	s.fill('0');
-	for (int i = 0; i < hash.size(); i++) {
+	for (size_t i = 0; i < hash.size(); i++) {
 		s<< std::setw(2) << std::hex << (unsigned short)hash[i];
 	}
 	return s.str();

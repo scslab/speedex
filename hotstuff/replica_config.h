@@ -22,6 +22,8 @@
 #include "xdr/hotstuff.h"
 #include "xdr/types.h"
 
+#include <xdrpp/socket.h>
+
 #include <unordered_map>
 
 namespace hotstuff {
@@ -29,15 +31,20 @@ namespace hotstuff {
 struct ReplicaInfo {
 
     ReplicaID id;
+    std::string hostname;
     //salticidae::PeerId peer_id;
     speedex::PublicKey pk;
 
     ReplicaInfo(ReplicaID id,
+                std::string hostname,
                 //const salticidae::PeerId &peer_id,
-                const speedex::PublicKey pk)
+                const speedex::PublicKey& pk)
         : id(id)
+        , hostname(hostname)
        // , peer_id(peer_id)
         , pk(pk) {}
+
+    xdr::unique_sock tcp_connect(const char* service) const;
 };
 
 class ReplicaConfig {

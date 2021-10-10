@@ -5,7 +5,9 @@
 
 #include "hotstuff/block.h"
 
+#include <map>
 #include <mutex>
+#include <optional>
 
 namespace hotstuff {
 
@@ -31,8 +33,18 @@ public:
 	// Call before committing to any block (and executing it).
 	void write_to_disk(const Hash& block_hash);
 
+	struct MissingDependencies {
+		std::optional<speedex::Hash> parent_hash;
+		std::optional<speedex::Hash> justify_hash;
+
+		operator bool() {
+			return ((bool) parent_hash) || ((bool) justify_hash);
+		}
+	};
+
 	// Sets height of block.
-	// Parent block must exist in cache.  Returns false if not.
+	// Parent block & justify block must exist in cache.  
+	// Returns missing dependencies if not (and is no-op).
 	// This could happen for two reasons: (1) is a byzantine block proposer
 	// (i.e. propose with a good justify, but a bad parent)
 	// (2) is we incorrectly pruned out the parent
@@ -40,7 +52,8 @@ public:
 	// (1) we can safely throw away, (2) is a bug we should fix (if it happens),
 	// and (3) should not happen if we request parent on reception of proposal.
 	// Sets the height of the new block and parent block ptr.
-	bool insert_block(block_ptr_t block);
+	MissingDependencies
+	insert_block(block_ptr_t block);
 
 	//returns block from memory, if it exists.
 	// Does not look to disk for blocks.

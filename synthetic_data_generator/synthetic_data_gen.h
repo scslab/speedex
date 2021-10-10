@@ -25,7 +25,6 @@ namespace speedex {
 
 class SyntheticDataGenSigner {
 	DeterministicKeyGenerator key_gen;
-	using SecretKey = DeterministicKeyGenerator::SecretKey;
 	std::unordered_map<AccountID, SecretKey> key_map;
 
 public:

@@ -41,11 +41,15 @@ HEADER_HASH_SRCS = \
 HOTSTUFF_SRCS = \
 	hotstuff/block.cc \
 	hotstuff/block_storage/io_utils.cc \
+	hotstuff/block_storage/block_fetch_manager.cc \
+	hotstuff/block_storage/block_fetch_worker.cc \
 	hotstuff/block_storage/block_store.cc \
 	hotstuff/consensus.cc \
 	hotstuff/crypto.cc \
 	hotstuff/event.cc \
 	hotstuff/event_queue.cc \
+	hotstuff/network_event.cc \
+	hotstuff/network_event_queue.cc \
 	hotstuff/replica_config.cc
 
 LMDB_SRCS = \
@@ -128,7 +132,6 @@ LDADD = $(libcrypto_LIBS) $(gsl_LIBS) $(xdrpp_LIBS) -ltbb -lglpk $(libsodium_LIB
 
 $(SRCS:.cc=.o) : $(XH_FILES)
 $(MAIN_CCS:.cc=.o) : $(XH_FILES)
-
 
 TEST_SRCS = trie/tests/test_prefix.h
 

@@ -6,6 +6,13 @@ namespace hotstuff {
 
 using PublicKey = speedex::PublicKey;
 
+xdr::unique_sock
+ReplicaInfo::tcp_connect(const char* service) const
+{
+	return xdr::tcp_connect(hostname.c_str(), service);
+}
+
+
 ReplicaConfig::ReplicaConfig()
 	: nreplicas(0), nmajority(0) {}
 

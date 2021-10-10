@@ -59,7 +59,6 @@ public:
 	void 
 	on_receive_proposal(block_ptr_t bnew, ReplicaID proposer);
 
-
 	// should send vote to block proposer
 	virtual void do_vote(block_ptr_t block, ReplicaID proposer) = 0;
 
@@ -68,10 +67,6 @@ public:
 	virtual void notify_vm_of_highest_commitment(block_ptr_t bnew) = 0;
 
 	virtual void notify_vm_of_qc_on_nonself_block(block_ptr_t b_other) = 0;
-
-
-
-
 };
 
 

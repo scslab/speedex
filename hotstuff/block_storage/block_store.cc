@@ -18,20 +18,23 @@ BlockStore::write_to_disk(const Hash& hash) {
 		throw std::runtime_error("could not find block that needs to go to disk!");
 	}
 
-	it -> second.block.write_to_disk();
+	it -> second.block->write_to_disk();
 }
 
-bool
+
+BlockStore::MissingDependencies
 BlockStore::insert_block(block_ptr_t block)
 {
 	std::lock_guard lock(mtx);
 
+	MissingDependencies missing_dependencies;
+
 	auto const& parent = block->get_parent_hash();
-	auto it = block_cache.find(parent);
+	auto parent_it = block_cache.find(parent);
 	
 	if (parent_it == block_cache.end()) {
 		HOTSTUFF_INFO("failed to find parent for %s", debug::array_to_str(parent.data(), parent.size()));
-		return false;
+		missing_dependencies.parent_hash = parent;
 	}
 
 	auto const& justify_hash = block -> get_justify_hash();
@@ -39,14 +42,18 @@ BlockStore::insert_block(block_ptr_t block)
 
 	if (justify_it == block_cache.end()) {
 		HOTSTUFF_INFO("failed to find justify for %s", debug::array_to_str(justify_hash.data(), justify_hash.size()));
-		return false;
+		missing_dependencies.justify_hash = justify_hash;
+	}
+
+	if (missing_dependencies) {
+		return missing_dependencies;
 	}
 
 	block -> set_parent(parent_it -> second.block);
 	block -> set_justify(justify_it -> second.block);
 
-	block_cache.emplace(block -> get_hash(), BlockContext{.block = block, .on_disk = false});
-	return true;
+	block_cache.emplace(block -> get_hash(), BlockContext{.block = block});
+	return missing_dependencies;
 }
 
 block_ptr_t 

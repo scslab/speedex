@@ -4,6 +4,23 @@
 
 namespace hotstuff {
 
+
+void
+EventQueue::validate_and_add_event(Event&& e)
+{
+	if (!e.validate(core.get_config())) {
+		return;
+	}
+	add_event_(e);
+}
+
+void
+EventQueue::on_event(Event& e)
+{
+	e(core);
+}
+
+/*
 bool 
 EventQueue::exists_work_to_do() {
 	return events.size() != 0;
@@ -35,8 +52,6 @@ EventQueue::validate_and_add_event(Event&& e)
 	if (!e.validate(core.get_config())) {
 		return;
 	}
-
-	wait_for_async_task();
 	std::lock_guard lock(mtx);
 	events.emplace_back(std::move(e));
 	cv.notify_one();
@@ -64,6 +79,6 @@ EventQueue::run()
 		}
 		run_events(work_list);
 	}
-}
+} */
 
 } /* hotstuff */

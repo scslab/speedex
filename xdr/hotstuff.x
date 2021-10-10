@@ -40,15 +40,19 @@ struct HotstuffBlockWire {
 	opaque body<>; // serialized HeaderDataPair
 };
 
-struct ProposalWire {
-	HotstuffBlockWire proposal;
-	ReplicaID proposer;
+struct BlockFetchRequest {
+	speedex::Hash reqs<>;
 };
 
-struct VoteWire {
-	ReplicaID voter;
-	PartialCertificateWire partial_cert;	
+struct BlockFetchResponse {
+	HotstuffBlockWire responses<>;
 };
+
+program FetchBlocks {
+	version FetchBlocksV1 {
+		 BlockFetchResponse fetch(BlockFetchRequest) = 1;
+	} = 1;
+} = 0x11111114;
 
 } /* hotstuff */
 

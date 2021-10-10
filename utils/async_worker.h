@@ -27,7 +27,7 @@ protected:
 	mutable std::mutex mtx;
 	std::condition_variable cv;
 	//! Flag for signaling worker thread to terminate
-	bool done_flag = false;
+	std::atomic<bool> done_flag = false;
 
 public:
 

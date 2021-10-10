@@ -13,15 +13,18 @@ VoteEvent::VoteEvent(PartialCertificate&& _cert, block_ptr_t blk, ReplicaID rid)
 
 bool
 VoteEvent::validate(const ReplicaConfig& config) const {
-	auto const& info = config.get_info(rid);
+	//validation work moved to NetEvents
+/*	auto const& info = config.get_info(rid);
 	if (!cert.validate(info))
 	{
 		return false;
 	}
-
+*/
+	//sanity check, can be removed
 	if (block->get_hash() != cert.hash) {
 		throw std::runtime_error("built a VoteEvent where blk->get_hash() != cert.hash");
 	}
+
 	return true;
 }
 
@@ -42,8 +45,8 @@ ProposalEvent::validate(const ReplicaConfig& config) const {
 		return false;
 	}
 
-	// validates qc
-	return block -> validate_hotstuff(config);
+	// block validation moved to NetEvent
+	return true;//block -> validate_hotstuff(config);
 }
 
 void
