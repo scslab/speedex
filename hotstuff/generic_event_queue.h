@@ -66,11 +66,11 @@ GenericEventQueue<EventT>::run() {
 		{
 			std::unique_lock lock(mtx);
 			if ((!done_flag) && (!exists_work_to_do())) {
-			cv.wait(
-				lock, 
-				[this] () {
-					return done_flag || exists_work_to_do();
-				});
+				cv.wait(
+					lock, 
+					[this] () {
+						return done_flag || exists_work_to_do();
+					});
 			}
 			if (done_flag) return;
 			work_list = std::move(events);

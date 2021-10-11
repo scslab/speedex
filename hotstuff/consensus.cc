@@ -110,6 +110,8 @@ void HotstuffCore::on_receive_vote(const PartialCertificate& partial_cert, block
     if (has_quorum_after && !had_quorum_before)
     {
     	update_hqc(certified_block, self_qc);
+
+    	on_new_qc(certified_block -> get_hash());
     	//callback here to pacemaker
     }
 }

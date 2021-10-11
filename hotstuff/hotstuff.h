@@ -24,6 +24,11 @@ class HotstuffAppBase : public HotstuffCore {
 
 	speedex::SecretKey secret_key;
 
+	std::mutex qc_wait_mtx;
+	std::condition_variable qc_wait_cv;
+	std::optional<speedex::Hash> latest_new_qc;
+	bool cancel_wait;
+
 public:
 
 	HotstuffAppBase(const ReplicaConfig& config_, ReplicaID self_id, speedex::SecretKey sk)
@@ -34,11 +39,21 @@ public:
 		, network_event_queue(event_queue, block_fetch_manager, block_store, config)
 		, protocol_manager(event_queue, config, self_id)
 		, secret_key(sk)
+		, qc_wait_mtx()
+		, qc_wait_cv()
+		, latest_new_qc(std::nullopt)
+		, cancel_wait(false)
 		{}
 
 	void do_vote(block_ptr_t block, ReplicaID proposer) override final;
 
 	void do_propose(xdr::opaque_vec<>&& body);
+
+	void on_new_qc(speedex::Hash const& hash) override final;
+
+	bool wait_for_new_qc(speedex::Hash const& expected_next_qc) const;
+
+	void cancel_wait_for_new_qc();
 };
 
 } /* hotstuff */

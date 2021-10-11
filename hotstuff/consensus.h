@@ -78,6 +78,9 @@ public:
 	// should send vote to block proposer
 	virtual void do_vote(block_ptr_t block, ReplicaID proposer) = 0;
 
+	// called on getting a new qc.  Input is hash of qc'd obj.
+	virtual void on_new_qc(speedex::Hash const& hash) = 0;
+
 	virtual void apply_block(block_ptr_t block) = 0;
 
 	virtual void notify_vm_of_highest_commitment(block_ptr_t bnew) = 0;
