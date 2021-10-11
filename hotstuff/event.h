@@ -28,7 +28,7 @@ class VoteEvent {
 	block_ptr_t block;
 
 public:
-	VoteEvent(PartialCertificate&& cert, block_ptr_t blk, ReplicaID rid);
+	VoteEvent(PartialCertificate const& cert, block_ptr_t blk, ReplicaID rid);
 
 	bool validate(ReplicaConfig const& config) const;
 	void operator() (HotstuffCore& core) const;

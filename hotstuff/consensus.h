@@ -23,28 +23,42 @@
 #include "hotstuff/block.h"
 #include "hotstuff/crypto.h"
 
+#include <mutex>
+
 namespace hotstuff {
 
 class HotstuffCore {
     block_ptr_t genesis_block;                              /** the genesis block */
     /* === state variables === */
     /** block containing the QC for the highest block having one */
+protected:
     std::pair<block_ptr_t, QuorumCertificateWire> hqc; 		/**< highest QC */
+private:
     block_ptr_t b_lock;                         			/**< locked block */
     block_ptr_t b_exec;                         			/**< last executed block */
     uint32_t vheight;          								/**< height of the block last voted for */
+
+protected:
     /* === auxilliary variables === */
     ReplicaID self_id;           							/**< replica id of self in ReplicaConfig */
     ReplicaConfig config;	                 				/**< replica configuration */
     block_ptr_t b_leaf;										/**< highest tail block.  Build on this block */
 
+	std::mutex proposal_mutex; 								/**< lock access to b_leaf and hqc */
 
+	block_ptr_t get_genesis() const {
+		return genesis_block;
+	}
+
+private:
 	//qc_block is the block pointed to by qc
 	void update_hqc(block_ptr_t const& qc_block, const QuorumCertificate& qc);
 
 	void update(const block_ptr_t& nblk);
 
 public:
+
+	HotstuffCore(const ReplicaConfig& config, ReplicaID self_id);
 
 	const ReplicaConfig& get_config() {
 		return config;
@@ -58,6 +72,8 @@ public:
 
 	void 
 	on_receive_proposal(block_ptr_t bnew, ReplicaID proposer);
+
+
 
 	// should send vote to block proposer
 	virtual void do_vote(block_ptr_t block, ReplicaID proposer) = 0;

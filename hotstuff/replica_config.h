@@ -66,6 +66,19 @@ public:
     const speedex::PublicKey& 
     get_publickey(ReplicaID rid) const;
 
+    std::vector<ReplicaInfo> list_info() const {
+        std::vector<ReplicaInfo> out;
+        for (auto const& [_, info] : replica_map)
+        {
+            out.push_back(info);
+        }
+        return out;
+    }
+
+    bool is_valid_replica(ReplicaID replica) const {
+        return (replica_map.find(replica) != replica_map.end());
+    }
+
 //    const salticidae::PeerId &get_peer_id(ReplicaID rid) const;
 };
 

@@ -48,9 +48,11 @@ HOTSTUFF_SRCS = \
 	hotstuff/crypto.cc \
 	hotstuff/event.cc \
 	hotstuff/event_queue.cc \
-	hotstuff/hotstuff_protocol_client.cc \
+	hotstuff/hotstuff.cc \
 	hotstuff/network_event.cc \
 	hotstuff/network_event_queue.cc \
+	hotstuff/protocol/hotstuff_protocol_client.cc \
+	hotstuff/protocol/hotstuff_protocol_manager.cc \
 	hotstuff/replica_config.cc
 
 LMDB_SRCS = \

@@ -65,6 +65,11 @@ bool check_sig(const Signature& sig, const Hash& val, const PublicKey& pk)
 }
 
 bool QuorumCertificate::verify(const ReplicaConfig &config) const {
+    //check for genesis block
+    if (obj_hash == speedex::Hash()) {
+        return true;
+    }
+
     if (sigs.size() < config.nmajority) return false;
     size_t n_valid = 0;
     for (auto& [rid, sig] : sigs)

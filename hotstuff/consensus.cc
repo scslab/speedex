@@ -2,10 +2,24 @@
 
 namespace hotstuff {
 
+
+HotstuffCore::HotstuffCore(const ReplicaConfig& config, ReplicaID self_id)
+	: genesis_block(std::make_shared<HotstuffBlock>())
+	, hqc({genesis_block, genesis_block->get_self_qc().serialize()})
+	, b_lock(genesis_block)
+	, b_exec(genesis_block)
+	, vheight(0)
+	, self_id(self_id)
+	, config(config)
+	, b_leaf(genesis_block)
+	{}
+
 //qc_block is the block pointed to by qc
 void
 HotstuffCore::update_hqc(block_ptr_t const& qc_block, const QuorumCertificate& qc)
 {
+	std::lock_guard lock(proposal_mutex);
+
 	if (qc_block -> get_height() > hqc.first -> get_height()) {
 		hqc = {qc_block, qc.serialize()};
 		b_leaf = qc_block;

@@ -23,7 +23,9 @@ using block_ptr_t = std::shared_ptr<HotstuffBlock>;
 class HotstuffBlock {
 
 	HotstuffBlockWire wire_block;
-	QuorumCertificate parsed_qc;
+
+	//genesis_block lacks this
+	std::optional<QuorumCertificate> parsed_qc;
 
 	//delayed parse
 	std::optional<HeaderDataPair> parsed_block_body;
@@ -49,6 +51,14 @@ public:
 
 	HotstuffBlock(HotstuffBlockWire&& _wire_block);
 
+	//make genesis block
+	HotstuffBlock();
+
+	// copies wire_block, unfortunately
+	HotstuffBlockWire to_wire() const {
+		return wire_block;
+	}
+
 	bool has_body() const;
 
 	bool has_been_decided() const {
@@ -69,6 +79,10 @@ public:
 
 	bool is_self_produced() const {
 		return self_produced;
+	}
+
+	void set_self_produced() {
+		self_produced = true;
 	}
 
 	uint64_t get_height() const {
@@ -96,7 +110,7 @@ public:
 
 	const speedex::Hash& 
 	get_justify_hash() const {
-		return parsed_qc.get_obj_hash();
+		return parsed_qc->get_obj_hash();
 	}
 
 	const speedex::Hash& 
@@ -116,7 +130,7 @@ public:
 
 	const QuorumCertificate&
 	get_justify_qc() const {
-		return parsed_qc;
+		return *parsed_qc;
 	}
 
 	QuorumCertificate&
@@ -128,7 +142,11 @@ public:
 	void set_justify(block_ptr_t justify_block);
 
 	void write_to_disk();
+
+	static block_ptr_t 
+	mint_block(xdr::opaque_vec<>&& body, QuorumCertificateWire const& qc_wire, speedex::Hash const& parent_hash);
 };
+
 
 
 } /* hotstuff */

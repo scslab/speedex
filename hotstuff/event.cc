@@ -5,9 +5,9 @@
 namespace hotstuff {
 
 
-VoteEvent::VoteEvent(PartialCertificate&& _cert, block_ptr_t blk, ReplicaID rid)
+VoteEvent::VoteEvent(PartialCertificate const& _cert, block_ptr_t blk, ReplicaID rid)
 	: rid(rid)
-	, cert(std::move(cert))
+	, cert(_cert)
 	, block(blk)
 	{}
 

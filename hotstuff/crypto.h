@@ -49,7 +49,7 @@ public:
     QuorumCertificate(const speedex::Hash& obj_hash);
     QuorumCertificate(QuorumCertificateWire const& qc_wire);
 
-    // for buildling
+    // for building
     void add_partial_certificate(ReplicaID rid, const PartialCertificate& pc);
     bool has_quorum(const ReplicaConfig& config) const; // assumes all certs inserted by add_partial_certificate are valid.
 

@@ -25,10 +25,12 @@ class BlockStore {
 
 public:
 
-	BlockStore() 
+	BlockStore(block_ptr_t genesis_block) 
 		: block_cache()
 		, mtx()
-		{}
+		{
+			block_cache.emplace(genesis_block->get_hash(), genesis_block);
+		}
 
 	// Call before committing to any block (and executing it).
 	void write_to_disk(const Hash& block_hash);

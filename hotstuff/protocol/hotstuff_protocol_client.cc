@@ -1,4 +1,4 @@
-#include "hotstuff/hotstuff_protocol_client.h"
+#include "hotstuff/protocol/hotstuff_protocol_client.h"
 
 namespace hotstuff {
 

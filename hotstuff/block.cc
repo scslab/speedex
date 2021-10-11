@@ -19,6 +19,21 @@ HotstuffBlock::HotstuffBlock(HotstuffBlockWire&& _wire_block)
 	, self_produced(false)
 	{}
 
+HotstuffBlock::HotstuffBlock()
+	: wire_block()
+	, parsed_qc(std::nullopt)
+	, parsed_block_body(std::nullopt)
+	, block_height(0)
+	, parent_block_ptr(nullptr)
+	, self_qc(speedex::Hash())
+	, decided(true)
+	, applied(true)
+	, written_to_disk()
+	, self_produced(false)
+	{
+		written_to_disk.test_and_set();
+	}
+
 
 void
 HotstuffBlock::set_parent(block_ptr_t parent_block) {
@@ -44,7 +59,7 @@ HotstuffBlock::validate_hotstuff(const ReplicaConfig& config) const {
 		return false;
 	}
 
-	return parsed_qc.verify(config);
+	return parsed_qc->verify(config);
 }
 
 bool 
@@ -78,6 +93,22 @@ HotstuffBlock::write_to_disk() {
 	if (parent_block_ptr != nullptr) {
 		parent_block_ptr -> write_to_disk();
 	}
+}
+
+block_ptr_t 
+HotstuffBlock::mint_block(xdr::opaque_vec<>&& body, QuorumCertificateWire const& qc_wire, speedex::Hash const& parent_hash)
+{
+	HotstuffBlockWire wire_block;
+	wire_block.header.parent_hash = parent_hash;
+	wire_block.header.qc = qc_wire;
+	wire_block.header.body_hash = speedex::hash_xdr(body);
+	wire_block.body = std::move(body);
+
+	auto out = std::make_shared<HotstuffBlock>(std::move(wire_block));
+
+	out -> set_self_produced();
+
+	return out;
 }
 
 } /* hotstuff */
