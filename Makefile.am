@@ -41,6 +41,7 @@ HEADER_HASH_SRCS = \
 HOTSTUFF_SRCS = \
 	hotstuff/block.cc \
 	hotstuff/block_storage/io_utils.cc \
+	hotstuff/block_storage/block_fetch_server.cc \
 	hotstuff/block_storage/block_fetch_manager.cc \
 	hotstuff/block_storage/block_fetch_worker.cc \
 	hotstuff/block_storage/block_store.cc \
