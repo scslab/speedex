@@ -1,11 +1,13 @@
 #pragma once
 
 #include "hotstuff/block_storage/block_fetch_manager.h"
+#include "hotstuff/block_storage/block_fetch_server.h"
 #include "hotstuff/block_storage/block_store.h"
 #include "hotstuff/consensus.h"
 #include "hotstuff/event_queue.h"
 #include "hotstuff/network_event_queue.h"
 #include "hotstuff/protocol/hotstuff_protocol_manager.h"
+#include "hotstuff/protocol/hotstuff_server.h"
 #include "hotstuff/replica_config.h"
 
 #include <xdrpp/types.h>
@@ -15,14 +17,16 @@ namespace hotstuff {
 class HotstuffAppBase : public HotstuffCore {
 
 	BlockStore block_store;
-	BlockFetchManager block_fetch_manager;
+	BlockFetchManager block_fetch_manager; 			// outbound block requests
+	BlockFetchServer block_fetch_server; 			// inbound block requests
 
-	EventQueue event_queue;
-	NetworkEventQueue network_event_queue;
+	EventQueue event_queue;							// events for the protocol
+	NetworkEventQueue network_event_queue;			// validated (sig checked) events in from net
 
-	HotstuffProtocolManager protocol_manager;
+	HotstuffProtocolManager protocol_manager; 		// outbound protocol messages
+	HotstuffProtocolServer protocol_server;   		// inbound protocol messages
 
-	speedex::SecretKey secret_key;
+	speedex::SecretKey secret_key;					// sk for this node
 
 	std::mutex qc_wait_mtx;
 	std::condition_variable qc_wait_cv;
@@ -31,19 +35,7 @@ class HotstuffAppBase : public HotstuffCore {
 
 public:
 
-	HotstuffAppBase(const ReplicaConfig& config_, ReplicaID self_id, speedex::SecretKey sk)
-		: HotstuffCore(config_, self_id)
-		, block_store(get_genesis())
-		, block_fetch_manager(block_store)
-		, event_queue(*this)
-		, network_event_queue(event_queue, block_fetch_manager, block_store, config)
-		, protocol_manager(event_queue, config, self_id)
-		, secret_key(sk)
-		, qc_wait_mtx()
-		, qc_wait_cv()
-		, latest_new_qc(std::nullopt)
-		, cancel_wait(false)
-		{}
+	HotstuffAppBase(const ReplicaConfig& config_, ReplicaID self_id, speedex::SecretKey sk);
 
 	void do_vote(block_ptr_t block, ReplicaID proposer) override final;
 	speedex::Hash do_propose(xdr::opaque_vec<>&& body);

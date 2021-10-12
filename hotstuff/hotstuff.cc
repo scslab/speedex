@@ -6,6 +6,22 @@ namespace hotstuff {
 
 using xdr::operator==;
 
+HotstuffAppBase::HotstuffAppBase(const ReplicaConfig& config_, ReplicaID self_id, speedex::SecretKey sk)
+	: HotstuffCore(config_, self_id)
+	, block_store(get_genesis())
+	, block_fetch_manager(block_store)
+	, block_fetch_server(block_store)
+	, event_queue(*this)
+	, network_event_queue(event_queue, block_fetch_manager, block_store, config)
+	, protocol_manager(event_queue, config, self_id)
+	, protocol_server(network_event_queue)
+	, secret_key(sk)
+	, qc_wait_mtx()
+	, qc_wait_cv()
+	, latest_new_qc(std::nullopt)
+	, cancel_wait(false)
+	{}
+
 void
 HotstuffAppBase::do_vote(block_ptr_t block, ReplicaID proposer) 
 {
