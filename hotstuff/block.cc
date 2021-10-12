@@ -47,7 +47,8 @@ HotstuffBlock::set_justify(block_ptr_t justify_block) {
 }
 
 
-bool HotstuffBlock::has_body() const {
+bool
+HotstuffBlock::has_body() const {
 	return wire_block.body.size() > 0;
 }
 

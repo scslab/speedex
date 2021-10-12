@@ -5,6 +5,8 @@
 #include "hotstuff/event.h"
 #include "hotstuff/replica_config.h"
 
+#include "xdr/hotstuff.h"
+
 namespace hotstuff {
 
 class VoteNetEvent {
@@ -13,6 +15,8 @@ class VoteNetEvent {
 	ReplicaID voter;
 
 public:
+
+	VoteNetEvent(std::unique_ptr<VoteMessage> v);
 
 	bool validate(const ReplicaConfig& config) const;
 
@@ -32,6 +36,8 @@ class ProposalNetEvent {
 	ReplicaID proposer;
 
 public:
+
+	ProposalNetEvent(std::unique_ptr<ProposeMessage> p);
 
 	bool validate(const ReplicaConfig& config) const;
 
@@ -76,7 +82,8 @@ public:
 struct NetEvent {
 	std::variant<VoteNetEvent, ProposalNetEvent, BlockReceiveNetEvent> net_event;
 
-	NetEvent(BlockReceiveNetEvent const& event)
+	template<typename NetEventSubtype>
+	NetEvent(NetEventSubtype const& event)
 		: net_event(event)
 		{}
 

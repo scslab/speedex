@@ -88,13 +88,11 @@ HotstuffCore::update(const block_ptr_t& nblk) {
         if (!blk->has_been_applied()) {
         	apply_block(blk);
         	blk->mark_applied();
-
         }
+        notify_vm_of_commitment(blk);
 
     }
     b_exec = blk;
-
-    notify_vm_of_highest_commitment(b_exec);
 }
 
 void HotstuffCore::on_receive_vote(const PartialCertificate& partial_cert, block_ptr_t certified_block, ReplicaID voterid) {

@@ -46,7 +46,7 @@ public:
 		{}
 
 	void do_vote(block_ptr_t block, ReplicaID proposer) override final;
-	void do_propose(xdr::opaque_vec<>&& body);
+	speedex::Hash do_propose(xdr::opaque_vec<>&& body);
 
 	void on_new_qc(speedex::Hash const& hash) override final;
 	bool wait_for_new_qc(speedex::Hash const& expected_next_qc);

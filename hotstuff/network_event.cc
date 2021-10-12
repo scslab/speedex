@@ -2,6 +2,11 @@
 
 namespace hotstuff {
 
+VoteNetEvent::VoteNetEvent(std::unique_ptr<VoteMessage> v)
+	: cert(std::move(v -> vote))
+	, voter(v -> voter)
+	{}
+
 bool
 VoteNetEvent::validate(const ReplicaConfig& config) const
 {
@@ -15,6 +20,11 @@ VoteNetEvent::to_hotstuff_event(block_ptr_t voted_block)
 {
 	return Event(VoteEvent(std::move(cert), voted_block, voter));
 }
+
+ProposalNetEvent::ProposalNetEvent(std::unique_ptr<ProposalMessage> p)
+	: proposed_block(std::make_shared<HotstuffBlock>(std::move(p->proposal)))
+	, proposer(p -> proposer)
+	{}
 
 bool
 ProposalNetEvent::validate(const ReplicaConfig& config) const

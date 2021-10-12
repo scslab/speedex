@@ -53,6 +53,7 @@ HOTSTUFF_SRCS = \
 	hotstuff/network_event_queue.cc \
 	hotstuff/protocol/hotstuff_protocol_client.cc \
 	hotstuff/protocol/hotstuff_protocol_manager.cc \
+	hotstuff/protocol/hotstuff_server.cc \
 	hotstuff/replica_config.cc
 
 LMDB_SRCS = \

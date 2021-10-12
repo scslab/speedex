@@ -16,7 +16,7 @@ HotstuffAppBase::do_vote(block_ptr_t block, ReplicaID proposer)
 	protocol_manager.send_vote_to(block, cert, proposer);
 }
 
-void
+speedex::Hash
 HotstuffAppBase::do_propose(xdr::opaque_vec<>&& body)
 {
 	std::lock_guard lock(proposal_mutex);
@@ -30,6 +30,7 @@ HotstuffAppBase::do_propose(xdr::opaque_vec<>&& body)
 	b_leaf = newly_minted_block;
 
 	protocol_manager.broadcast_proposal(newly_minted_block);
+	return b_leaf -> get_hash();
 }
 
 void 
