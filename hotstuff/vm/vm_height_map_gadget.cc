@@ -1,5 +1,7 @@
 #include "hotstuff/vm/vm_height_map_gadget.h"
 
+#include <stdexcept>
+
 namespace hotstuff {
 
 void 
@@ -9,7 +11,7 @@ HeightMapGadget::add_height_pair(uint64_t hotstuff_height, uint64_t vm_height)
 		last_elt_iter = height_map.insert_after(height_map.before_begin(), {hotstuff_height, vm_height});
 		return;
 	}
-	height_map.insert_after(last_elt_iter, {hotstuff_height, vm_height});
+	last_elt_iter = height_map.insert_after(last_elt_iter, {hotstuff_height, vm_height});
 }
 
 std::optional<uint64_t> 
