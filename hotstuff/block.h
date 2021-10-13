@@ -44,7 +44,6 @@ class HotstuffBlock {
 
 	//status fields
 	bool decided;
-	bool applied;
 	std::atomic_flag written_to_disk;
 
 	//TODO if you get qc on block that's not self produced, leader knows it was demoted.
@@ -67,14 +66,6 @@ public:
 
 	bool has_been_decided() const {
 		return decided;
-	}
-
-	bool has_been_applied() const {
-		return applied;
-	}
-
-	void mark_applied() {
-		applied = true;
 	}
 
 	void decide() {

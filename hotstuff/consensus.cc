@@ -85,10 +85,8 @@ HotstuffCore::update(const block_ptr_t& nblk) {
         block_ptr_t blk = *it;
         blk -> decide();
 
-        if (!blk->has_been_applied()) {
-        	apply_block(blk);
-        	blk->mark_applied();
-        }
+        apply_block(blk);
+
         notify_vm_of_commitment(blk);
 
     }

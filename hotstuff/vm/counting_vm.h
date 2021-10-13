@@ -2,7 +2,7 @@
 
 #include "hotstuff/block.h"
 
-#include "hotstuff/vm/vm_height_map_gadget.h"
+#include "hotstuff/vm/speculative_exec_gadget.h"
 
 #include <cstdint>
 
@@ -16,7 +16,9 @@ class CountingVM {
 
 	uint64_t last_committed_state = 0;
 
-	HeightMapGadget height_map;
+	SpeculativeExecGadget<std::optional<uint64_t>> height_map;
+
+	void revert_to_last_commitment();
 
 public:
 
@@ -24,13 +26,14 @@ public:
 		: height_map() 
 		{}
 
-	xdr::opaque_vec<> get_next_proposal();
+	void make_empty_proposal(uint64_t proposal_height);
+
+	xdr::opaque_vec<> get_and_apply_next_proposal(uint64_t proposal_height);
 
 	void apply_block(block_ptr_t block);
 
 	void notify_vm_of_commitment(block_ptr_t blk);
 
-	void revert_to_last_commitment();
 };
 
 

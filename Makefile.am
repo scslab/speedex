@@ -56,11 +56,10 @@ HOTSTUFF_SRCS = \
 	hotstuff/protocol/hotstuff_protocol_manager.cc \
 	hotstuff/protocol/hotstuff_server.cc \
 	hotstuff/replica_config.cc \
-	hotstuff/vm/counting_vm.cc \
-	hotstuff/vm/vm_height_map_gadget.cc
+	hotstuff/vm/counting_vm.cc
 
 HOTSTUFF_TEST_SRCS = \
-	hotstuff/vm/tests/test_height_map_gadget.h
+	hotstuff/vm/tests/test_speculative_exec_gadget.h
 
 LMDB_SRCS = \
 	lmdb/lmdb_types.cc \

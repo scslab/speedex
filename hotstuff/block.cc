@@ -14,7 +14,6 @@ HotstuffBlock::HotstuffBlock(HotstuffBlockWire&& _wire_block)
 	, parent_block_ptr(nullptr)
 	, self_qc(speedex::hash_xdr(wire_block.header))
 	, decided(false)
-	, applied(false)
 	, written_to_disk()
 	, self_produced(false)
 	{}
@@ -27,7 +26,6 @@ HotstuffBlock::HotstuffBlock()
 	, parent_block_ptr(nullptr)
 	, self_qc(speedex::Hash())
 	, decided(true)
-	, applied(true)
 	, written_to_disk()
 	, self_produced(false)
 	{
@@ -109,8 +107,6 @@ HotstuffBlock::mint_block(xdr::opaque_vec<>&& body, QuorumCertificateWire const&
 	auto out = std::make_shared<HotstuffBlock>(std::move(wire_block));
 
 	out -> set_self_produced();
-	out -> decide();
-	out -> mark_applied();
 
 	return out;
 }
