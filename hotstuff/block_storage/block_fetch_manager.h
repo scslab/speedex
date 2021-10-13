@@ -31,7 +31,7 @@ class RequestContext {
 
 public:
 
-	RequestContext(speedex::Hash request);
+	RequestContext(speedex::Hash const& request);
 
 	void add_network_events(std::vector<NetEvent> events);
 
@@ -95,6 +95,9 @@ public:
 		, block_store(block_store)
 		{}
 
+	// add_fetch_request and deliver_block are ONLY called by
+	// the network event queue processor thread.  
+	// Not threadsafe.
 	void
 	add_fetch_request(
 		speedex::Hash const& requested_block, 

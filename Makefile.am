@@ -57,6 +57,9 @@ HOTSTUFF_SRCS = \
 	hotstuff/protocol/hotstuff_server.cc \
 	hotstuff/replica_config.cc
 
+HOTSTUFF_TEST_SRCS = \
+	hotstuff/vm/tests/test_height_map_gadget.h
+
 LMDB_SRCS = \
 	lmdb/lmdb_types.cc \
 	lmdb/lmdb_wrapper.cc
@@ -104,6 +107,9 @@ SYNTHETIC_DATA_GEN_SRCS = \
 	synthetic_data_generator/synthetic_data_gen.cc \
 	synthetic_data_generator/synthetic_data_gen_options.cc
 
+TRIE_TEST_SRCS = \
+	trie/tests/test_prefix.h
+
 UTILS_SRCS = \
 	utils/cleanup.cc \
 	utils/header_persistence.cc
@@ -138,7 +144,9 @@ LDADD = $(libcrypto_LIBS) $(gsl_LIBS) $(xdrpp_LIBS) -ltbb -lglpk $(libsodium_LIB
 $(SRCS:.cc=.o) : $(XH_FILES)
 $(MAIN_CCS:.cc=.o) : $(XH_FILES)
 
-TEST_SRCS = trie/tests/test_prefix.h
+TEST_SRCS = \
+	$(HOTSTUFF_TEST_SRCS) \
+	$(TRIE_TEST_SRCS)
 
 test_runner.cc : $(TEST_SRCS) $(XHFILES)
 	cxxtestgen --error-printer -o test_runner.cc $(TEST_SRCS)

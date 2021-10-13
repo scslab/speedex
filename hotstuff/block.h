@@ -3,9 +3,13 @@
 #include "hotstuff/crypto.h"
 #include "hotstuff/replica_config.h"
 
+#include "utils/debug_macros.h"
+
 #include "xdr/hotstuff.h"
 
 #include <cstdint>
+
+#include <xdrpp/marshal.h>
 
 namespace hotstuff {
 
@@ -28,7 +32,7 @@ class HotstuffBlock {
 	std::optional<QuorumCertificate> parsed_qc;
 
 	//delayed parse
-	std::optional<HeaderDataPair> parsed_block_body;
+	//std::optional<HeaderDataPair> parsed_block_body;
 
 	//derived from header, with help of block store
 	uint64_t block_height;
@@ -101,7 +105,23 @@ public:
 	 * body.size() == 0 is considered to be no speedex block (which is valid for speedex.  Just ignored.)
 	 * parse failures are considered an invalid speedex block. (but valid for hotstuff)
 	 */
-	bool try_delayed_parse();
+	template<typename ParseType>
+	std::optional<ParseType>
+	try_vm_parse() 
+	{
+		if (!has_body()) {
+			return std::nullopt;
+		}
+		auto parsed_block_body = std::make_optional<ParseType>();
+
+		try {
+			xdr::xdr_from_opaque(wire_block.body, *parsed_block_body);
+		} catch(...) {
+			HOTSTUFF_INFO("block parse failed");
+			return std::nullopt;
+		}
+		return parsed_block_body;
+	}
 
 	const speedex::Hash& 
 	get_hash() const {

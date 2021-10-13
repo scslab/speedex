@@ -4,6 +4,10 @@
 
 namespace hotstuff {
 
+EventQueue::EventQueue(HotstuffCore& core)
+	: GenericEventQueue<Event>()
+	, core(core)
+	{}
 
 void
 EventQueue::validate_and_add_event(Event&& e)

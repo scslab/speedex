@@ -9,12 +9,12 @@ Bitvector of size 16.  Used for storing which of a
 list of trie node children pointers are actove.
 
 */
-class BitVector {
+class TrieBitVector {
 	uint16_t bv = 0;
 public:
 
-	BitVector(uint16_t bv) : bv(bv) {}
-	BitVector() : bv(0) {}
+	TrieBitVector(uint16_t bv) : bv(bv) {}
+	TrieBitVector() : bv(0) {}
 
 	void add(unsigned char branch_bits) {
 		bv |= ((uint16_t)1)<<branch_bits;

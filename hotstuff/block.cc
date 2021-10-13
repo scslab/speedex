@@ -1,7 +1,7 @@
 #include "hotstuff/block.h"
 #include "hotstuff/block_storage/io_utils.h"
 
-#include "utils/debug_macros.h"
+
 #include "utils/hash.h"
 
 namespace hotstuff {
@@ -9,7 +9,7 @@ namespace hotstuff {
 HotstuffBlock::HotstuffBlock(HotstuffBlockWire&& _wire_block)
 	: wire_block(std::move(_wire_block))
 	, parsed_qc(wire_block.header.qc)
-	, parsed_block_body(std::nullopt)
+//	, parsed_block_body(std::nullopt)
 	, block_height(0)
 	, parent_block_ptr(nullptr)
 	, self_qc(speedex::hash_xdr(wire_block.header))
@@ -22,7 +22,7 @@ HotstuffBlock::HotstuffBlock(HotstuffBlockWire&& _wire_block)
 HotstuffBlock::HotstuffBlock()
 	: wire_block()
 	, parsed_qc(std::nullopt)
-	, parsed_block_body(std::nullopt)
+	//, parsed_block_body(std::nullopt)
 	, block_height(0)
 	, parent_block_ptr(nullptr)
 	, self_qc(speedex::Hash())
@@ -63,6 +63,7 @@ HotstuffBlock::validate_hotstuff(const ReplicaConfig& config) const {
 	return parsed_qc->verify(config);
 }
 
+/*
 bool 
 HotstuffBlock::try_delayed_parse() 
 {
@@ -80,7 +81,7 @@ HotstuffBlock::try_delayed_parse()
 		return false;
 	}
 	return true;
-}
+} */
 
 void
 HotstuffBlock::write_to_disk() {
@@ -108,6 +109,8 @@ HotstuffBlock::mint_block(xdr::opaque_vec<>&& body, QuorumCertificateWire const&
 	auto out = std::make_shared<HotstuffBlock>(std::move(wire_block));
 
 	out -> set_self_produced();
+	out -> decide();
+	out -> mark_applied();
 
 	return out;
 }

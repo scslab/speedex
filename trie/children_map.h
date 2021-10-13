@@ -8,7 +8,7 @@ This implementation stores a literal list of pointers.
 
 */
 
-#include "trie/bitvector.h"
+#include "utils/bitvector.h"
 
 namespace speedex {
 
@@ -38,7 +38,7 @@ class FixedChildrenMap {
 	};
 
 public:
-	using bv_t = BitVector;
+	using bv_t = BitVector<uint16_t>;
 private:
 
 	bv_t bv;

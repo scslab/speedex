@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "trie/bitvector.h"
+#include "utils/bitvector.h"
 #include "trie/utils.h"
 
 #include "trie/recycling_impl/allocator.h"
@@ -29,7 +29,7 @@ public:
 
 	using ptr_t = uint32_t;
 	using value_ptr_t = uint32_t;
-	using bv_t = BitVector;
+	using bv_t = BitVector<uint16_t>;
 
 private:
 

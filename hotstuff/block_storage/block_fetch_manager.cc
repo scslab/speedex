@@ -7,6 +7,13 @@
 namespace hotstuff {
 
 
+RequestContext::RequestContext(speedex::Hash const& request)
+	: request(request)
+	, block_is_received(false)
+	, dependent_network_events()
+	, requested_from(0)
+	{}
+
 bool 
 RequestContext::is_received() const {
 	return block_is_received.load(std::memory_order_relaxed);
@@ -15,6 +22,15 @@ RequestContext::is_received() const {
 void 
 RequestContext::mark_received() {
 	return block_is_received.store(true, std::memory_order_relaxed);
+}
+
+void
+RequestContext::add_network_events(std::vector<NetEvent> events)
+{
+	dependent_network_events.insert(
+		dependent_network_events.end(),
+		events.begin(),
+		events.end());
 }
 
 std::vector<speedex::Hash> 

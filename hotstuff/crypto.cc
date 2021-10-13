@@ -19,6 +19,8 @@
 
 #include "hotstuff/crypto.h"
 
+#include "utils/bitvector.h"
+
 namespace hotstuff {
 
 using Hash = speedex::Hash;
@@ -27,6 +29,12 @@ using PublicKey = speedex::PublicKey;
 using Signature = speedex::Signature;
 
 using xdr::operator==;
+
+bool check_sig(const Signature& sig, const Hash& val, const PublicKey& pk)
+{
+    return crypto_sign_verify_detached(
+        sig.data(), val.data(), val.size(), pk.data()) == 0;
+}
 
 PartialCertificate::PartialCertificate(const Hash& _hash, const SecretKey& sk)
     : PartialCertificateWire()
@@ -43,9 +51,56 @@ PartialCertificate::PartialCertificate(const Hash& _hash, const SecretKey& sk)
     }
 }
 
+PartialCertificate::PartialCertificate(PartialCertificateWire&& wire_cert)
+    : PartialCertificateWire(std::move(wire_cert))
+    {}
+
+bool 
+PartialCertificate::validate(const ReplicaInfo& info) const {
+    return check_sig(sig, hash, info.pk);
+}
+
 QuorumCertificate::QuorumCertificate(const Hash& obj_hash)
     : obj_hash(obj_hash)
     , sigs() {}
+
+QuorumCertificate::QuorumCertificate(QuorumCertificateWire const& qc_wire)
+    : obj_hash(qc_wire.justify)
+    , sigs()
+{
+    speedex::BitVector<ReplicaID> bv(qc_wire.bmp);
+
+    if (bv.size() != qc_wire.sigs.size()) {
+        return;
+    }
+
+    for (size_t i = 0; i < qc_wire.sigs.size(); i++) {
+        ReplicaID id = bv.pop();
+        auto const& sig = qc_wire.sigs[i];
+        sigs.emplace(id, sig);
+    }
+}
+
+QuorumCertificateWire 
+QuorumCertificate::serialize() const {
+    speedex::BitVector<ReplicaID> bv;
+
+    QuorumCertificateWire out;
+    out.justify = obj_hash;
+
+    out.sigs.reserve(sigs.size());
+
+    // from lowest to highest rid
+    for (auto const& [rid, sig] : sigs)
+    {
+        out.sigs.push_back(sig);
+        bv.add(rid);
+    }
+
+    out.bmp = bv.get();
+
+    return out;
+}
 
 void 
 QuorumCertificate::add_partial_certificate(ReplicaID rid, const PartialCertificate& pc) {
@@ -56,12 +111,6 @@ QuorumCertificate::add_partial_certificate(ReplicaID rid, const PartialCertifica
         throw std::invalid_argument("invalid replica id");
     }
     sigs.emplace(rid, pc.sig);
-}
-
-bool check_sig(const Signature& sig, const Hash& val, const PublicKey& pk)
-{
-    return crypto_sign_verify_detached(
-        sig.data(), val.data(), val.size(), pk.data()) == 0;
 }
 
 bool QuorumCertificate::verify(const ReplicaConfig &config) const {
@@ -86,4 +135,4 @@ bool QuorumCertificate::has_quorum(const ReplicaConfig& config) const {
     return config.nmajority <= sigs.size();
 }
 
-}
+} /* hotstuff */
