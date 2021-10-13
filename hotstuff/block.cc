@@ -50,6 +50,16 @@ HotstuffBlock::has_body() const {
 	return wire_block.body.size() > 0;
 }
 
+bool
+HotstuffBlock::supports_nonempty_child_proposal(int depth) const {
+	if (depth <= 0) return true;
+	if (!is_self_produced()) return false;
+	if (!justify_block_ptr) return false;
+	if (!parent_block_ptr) return false;
+	if (get_justify_hash() != get_parent_hash()) return false;
+	return parent_block_ptr -> supports_nonempty_child_proposal(depth - 1);
+}
+
 bool 
 HotstuffBlock::validate_hotstuff(const ReplicaConfig& config) const {
 	auto hash = speedex::hash_xdr(wire_block.body);

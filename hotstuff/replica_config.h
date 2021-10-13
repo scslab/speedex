@@ -26,23 +26,21 @@
 
 #include <unordered_map>
 
+#include <libfyaml.h>
+
 namespace hotstuff {
 
 struct ReplicaInfo {
 
     ReplicaID id;
     std::string hostname;
-    //salticidae::PeerId peer_id;
     speedex::PublicKey pk;
 
-    ReplicaInfo(ReplicaID id,
-                std::string hostname,
-                //const salticidae::PeerId &peer_id,
-                const speedex::PublicKey& pk)
+    ReplicaInfo(ReplicaID id)
         : id(id)
-        , hostname(hostname)
-       // , peer_id(peer_id)
-        , pk(pk) {}
+        {}
+
+    speedex::SecretKey parse(fy_node* info_yaml);
 
     xdr::unique_sock tcp_connect(const char* service) const;
 };
@@ -51,15 +49,17 @@ class ReplicaConfig {
 
     std::unordered_map<ReplicaID, ReplicaInfo> replica_map;
 
+    void add_replica(ReplicaID rid, const ReplicaInfo &info);
+
+    void finish_init();
+
 public:
     size_t nreplicas;
     size_t nmajority; 
 
     ReplicaConfig();
 
-    void add_replica(ReplicaID rid, const ReplicaInfo &info);
-
-    void finish_init();
+    speedex::SecretKey parse(fy_document* config_yaml, ReplicaID self_id);
 
     const ReplicaInfo& get_info(ReplicaID rid) const;
 
@@ -78,8 +78,6 @@ public:
     bool is_valid_replica(ReplicaID replica) const {
         return (replica_map.find(replica) != replica_map.end());
     }
-
-//    const salticidae::PeerId &get_peer_id(ReplicaID rid) const;
 };
 
 } /* hotstuff */

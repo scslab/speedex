@@ -14,7 +14,7 @@ HotstuffAppBase::HotstuffAppBase(const ReplicaConfig& config_, ReplicaID self_id
 	, event_queue(*this)
 	, network_event_queue(event_queue, block_fetch_manager, block_store, config)
 	, protocol_manager(event_queue, config, self_id)
-	, protocol_server(network_event_queue)
+	, protocol_server(network_event_queue, config)
 	, secret_key(sk)
 	, qc_wait_mtx()
 	, qc_wait_cv()
@@ -33,9 +33,13 @@ HotstuffAppBase::do_vote(block_ptr_t block, ReplicaID proposer)
 }
 
 speedex::Hash
-HotstuffAppBase::do_propose(xdr::opaque_vec<>&& body)
+HotstuffAppBase::do_propose()
 {
 	std::lock_guard lock(proposal_mutex);
+
+	uint64_t new_block_height = b_leaf -> get_height() + 1;
+
+	auto body = get_next_vm_block(b_leaf -> supports_nontrivial_child_proposal(), new_block_height);
 
 	auto newly_minted_block = HotstuffBlock::mint_block(std::move(body), hqc.second, b_leaf->get_hash());
 

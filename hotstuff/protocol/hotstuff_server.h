@@ -1,7 +1,5 @@
 #pragma once
 
-#include "hotstuff/network_event_queue.h"
-
 #include "rpc/rpcconfig.h"
 
 #include "xdr/hotstuff.h"
@@ -11,16 +9,22 @@
 
 namespace hotstuff {
 
+class ReplicaConfig;
+class NetworkEventQueue;
+
 class HotstuffProtocolHandler {
 
 	NetworkEventQueue& queue;
+
+	const ReplicaConfig& config;
 
 public:
 
 	using rpc_interface_type = HotstuffProtocolV1;
 
-	HotstuffProtocolHandler(NetworkEventQueue& queue)
+	HotstuffProtocolHandler(NetworkEventQueue& queue, const ReplicaConfig& config)
 		: queue(queue)
+		, config(config)
 		{}
 
 	//rpc methods
@@ -38,7 +42,7 @@ class HotstuffProtocolServer {
 
 public:
 
-	HotstuffProtocolServer(NetworkEventQueue& queue);
+	HotstuffProtocolServer(NetworkEventQueue& queue, const ReplicaConfig& config);
 };
 
 

@@ -42,7 +42,7 @@ struct DeterministicKeyGenerator {
 	}
 
 	std::pair<SecretKey, PublicKey> 
-	deterministic_key_gen(AccountID account);
+	deterministic_key_gen(uint64_t seed);
 
 	std::pair<std::vector<SecretKey>, std::vector<PublicKey>>
 	gen_key_pair_list(AccountID num_accounts);

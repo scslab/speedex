@@ -73,7 +73,7 @@ public:
 	void 
 	on_receive_proposal(block_ptr_t bnew, ReplicaID proposer);
 
-
+protected:
 
 	// should send vote to block proposer
 	virtual void do_vote(block_ptr_t block, ReplicaID proposer) = 0;

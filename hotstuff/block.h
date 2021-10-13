@@ -84,6 +84,8 @@ public:
 		return block_height;
 	}
 
+	bool supports_nonempty_child_proposal(int depth = 3) const;
+
 	/*
 	 * Checks that the block passes basic Hotstuff validity checks.
 	 * (1) hash(wire_block.body) == wire_block.body_hash
@@ -97,19 +99,19 @@ public:
 	 * parse failures are considered an invalid speedex block. (but valid for hotstuff)
 	 */
 	template<typename ParseType>
-	std::optional<ParseType>
+	std::unique_ptr<ParseType>
 	try_vm_parse() 
 	{
 		if (!has_body()) {
-			return std::nullopt;
+			return nullptr;
 		}
-		auto parsed_block_body = std::make_optional<ParseType>();
+		auto parsed_block_body = std::make_unique<ParseType>();
 
 		try {
 			xdr::xdr_from_opaque(wire_block.body, *parsed_block_body);
 		} catch(...) {
 			HOTSTUFF_INFO("block parse failed");
-			return std::nullopt;
+			return nullptr;
 		}
 		return parsed_block_body;
 	}

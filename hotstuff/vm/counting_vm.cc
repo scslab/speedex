@@ -2,6 +2,30 @@
 
 namespace hotstuff {
 
+std::strong_ordering 
+CountingVMBlockID::operator<=>(const CountingVMBlockID& other) {
+	if ((!value) && (!other.value)) {
+		return std::strong_ordering::equal;
+	}
+	if ((!value) && (other.value)) {
+		return std::strong_ordering::less;
+	}
+	if ((value) && (!other.value)) {
+		return std::strong_ordering::greater;
+	}
+	return (*value) <=> (*other.value);
+}
+
+void 
+CountingVM::exec_block(const block_type& blk) {
+	state = last_committed_state;
+	if (blk == state + 1) {
+		state ++;
+	} else {
+		std::printf("got invalid input state, no op");
+	}
+}
+/*
 xdr::opaque_vec<> 
 CountingVM::get_and_apply_next_proposal(uint64_t proposal_height)
 {
@@ -26,8 +50,9 @@ CountingVM::apply_block(block_ptr_t blk)
 
 	auto [lowest_speculative_exec_hs_height, speculative_block] = height_map.get_lowest_speculative_hotstuff_height();
 
-	std::optional<uint64_t> blk_value = blk -> template try_vm_parse<speedex::uint64>();
+	auto blk_value = blk -> template try_vm_parse<speedex::uint64>();
 
+	//TODO actual equality check
 	if (blk_value == speculative_block) {
 		return;
 	}
@@ -66,9 +91,8 @@ CountingVM::notify_vm_of_commitment(block_ptr_t blk)
 void 
 CountingVM::revert_to_last_commitment()
 {
-	height_map.lock();
 	height_map.clear();
 	state = last_committed_state;	
-}
+} */
 
 } /* hotstuff */

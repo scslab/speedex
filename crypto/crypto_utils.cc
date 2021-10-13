@@ -98,16 +98,16 @@ DeterministicKeyGenerator::gen_key_pair_list(size_t num_accounts) {
 
 // Clearly, a real-world system wouldn't generate keys all on the central server
 std::pair<SecretKey, PublicKey> 
-DeterministicKeyGenerator::deterministic_key_gen(AccountID account) {
-	std::array<uint64_t, 4> seed; // 32 bytes
+DeterministicKeyGenerator::deterministic_key_gen(uint64_t seed) {
+	std::array<uint64_t, 4> seed_bytes; // 32 bytes
 	seed.fill(0);
-	seed[0] = account;
+	seed[0] = seed;
 
 
 	SecretKey sk;
 	PublicKey pk;
 
-	if (crypto_sign_seed_keypair(pk.data(), sk.data(), reinterpret_cast<unsigned char*>(seed.data()))) {
+	if (crypto_sign_seed_keypair(pk.data(), sk.data(), reinterpret_cast<unsigned char*>(seed_bytes.data()))) {
 		throw std::runtime_error("sig gen failed!");
 	}
 

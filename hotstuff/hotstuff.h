@@ -32,17 +32,55 @@ class HotstuffAppBase : public HotstuffCore {
 	std::condition_variable qc_wait_cv;
 	std::optional<speedex::Hash> latest_new_qc;
 	bool cancel_wait;
+	
+protected:
+
+	virtual xdr::opaque_vec<> get_next_vm_block(bool nonempty_proposal, uint64_t hotstuff_height) = 0;
 
 public:
 
 	HotstuffAppBase(const ReplicaConfig& config_, ReplicaID self_id, speedex::SecretKey sk);
 
 	void do_vote(block_ptr_t block, ReplicaID proposer) override final;
-	speedex::Hash do_propose(xdr::opaque_vec<>&& body);
+	speedex::Hash do_propose();
 
 	void on_new_qc(speedex::Hash const& hash) override final;
 	bool wait_for_new_qc(speedex::Hash const& expected_next_qc);
 	void cancel_wait_for_new_qc();
+
+};
+
+template<typename VMType>
+class HotstuffApp : public HotstuffAppBase {
+
+	HotstuffVMBridge<VMType> vm_bridge;
+
+	xdr::opaque_vec<> get_next_vm_block(bool nonempty_proposal, uint64_t hotstuff_height) override final {
+		if (nonempty_proposal) {
+			return vm_bridge -> make_empty_proposal(hotstuff_height);
+		}
+		return vm_bridge -> get_and_apply_next_proposal(hotstuff_height);
+	}
+
+	void apply_block(block_ptr_t blk) override final {
+		vm_bridge -> apply_block(blk);
+	}
+
+
+	void notify_vm_of_commitment(block_ptr_t blk) override final {
+		vm_bridge -> notify_vm_of_commitment(blk);
+	}
+
+	void notify_vm_of_qc_on_nonself_block(block_ptr_t b_other) override final {
+		//no op needed
+	}
+
+public:
+
+	HotstuffApp(const ReplicaConfig& config, ReplicaID self_id, speedex::SecretKey sk, std::shared_ptr<VMType> vm)
+		: HotstuffAppBase(config, self_id, sk)
+		, vm_bridge(vm)
+		{}
 };
 
 } /* hotstuff */
