@@ -60,9 +60,6 @@ public:
 
 	BlockFetchWorker(const ReplicaInfo& info, NetworkEventQueue& network_event_queue);
 
-
-	~BlockFetchWorker();
-
 	void add_request(speedex::Hash const& request);
 
 	// wakes requester thread, if sleeping.  Sends any pending request.

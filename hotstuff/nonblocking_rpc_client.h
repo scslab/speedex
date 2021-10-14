@@ -39,12 +39,6 @@ protected:
 		, info(info)
 		, client(nullptr)
 		{}
-
-	~NonblockingRpcClient()
-	{
-		wait_for_async_task();
-		end_async_thread();
-	}
 };
 
 

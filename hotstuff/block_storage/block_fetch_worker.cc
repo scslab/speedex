@@ -22,10 +22,6 @@ BlockFetchWorker::BlockFetchWorker(const ReplicaInfo& info, NetworkEventQueue& n
 		start_async_thread([this] () {run();});
 	}
 
-//BlockFetchWorker::~BlockFetchWorker() {
-//	wait_for_async_task();
-//	end_async_thread();
-//}
 
 /*
 void

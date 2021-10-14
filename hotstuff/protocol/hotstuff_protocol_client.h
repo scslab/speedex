@@ -42,6 +42,11 @@ public:
 			start_async_thread([this] {run();});
 		}
 
+	~HotstuffProtocolClient() {
+		wait_for_async_task();
+		end_async_thread();
+	}
+
 	void
 	propose(proposal_t proposal);
 
