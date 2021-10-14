@@ -3,7 +3,7 @@
 namespace hotstuff {
 
 std::strong_ordering 
-CountingVMBlockID::operator<=>(const CountingVMBlockID& other) {
+CountingVMBlockID::operator<=>(const CountingVMBlockID& other) const {
 	if ((!value) && (!other.value)) {
 		return std::strong_ordering::equal;
 	}

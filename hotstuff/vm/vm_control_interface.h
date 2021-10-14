@@ -18,10 +18,10 @@ class VMControlInterface : public speedex::AsyncWorker {
 	using speedex::AsyncWorker::mtx;
 	using speedex::AsyncWorker::cv;
 
-	using proposal_buffer_t = std::unique_ptr<VMType::block_type>;
+	using proposal_buffer_t = std::unique_ptr<typename VMType::block_type>;
 	using submission_t = std::unique_ptr<typename VMType::block_type>;
 
-	constexpr size_t PROPOSAL_BUFFER_TARGET = 3;
+	constexpr static size_t PROPOSAL_BUFFER_TARGET = 3;
 
 	std::vector<submission_t> blocks_to_validate;
 

@@ -9,6 +9,7 @@
 #include "hotstuff/protocol/hotstuff_protocol_manager.h"
 #include "hotstuff/protocol/hotstuff_server.h"
 #include "hotstuff/replica_config.h"
+#include "hotstuff/vm/hotstuff_vm_bridge.h"
 
 #include <xdrpp/types.h>
 
@@ -57,18 +58,18 @@ class HotstuffApp : public HotstuffAppBase {
 
 	xdr::opaque_vec<> get_next_vm_block(bool nonempty_proposal, uint64_t hotstuff_height) override final {
 		if (nonempty_proposal) {
-			return vm_bridge -> make_empty_proposal(hotstuff_height);
+			return vm_bridge.make_empty_proposal(hotstuff_height);
 		}
-		return vm_bridge -> get_and_apply_next_proposal(hotstuff_height);
+		return vm_bridge.get_and_apply_next_proposal(hotstuff_height);
 	}
 
 	void apply_block(block_ptr_t blk) override final {
-		vm_bridge -> apply_block(blk);
+		vm_bridge.apply_block(blk);
 	}
 
 
 	void notify_vm_of_commitment(block_ptr_t blk) override final {
-		vm_bridge -> notify_vm_of_commitment(blk);
+		vm_bridge.notify_vm_of_commitment(blk);
 	}
 
 	void notify_vm_of_qc_on_nonself_block(block_ptr_t b_other) override final {

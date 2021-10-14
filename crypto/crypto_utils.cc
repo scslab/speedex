@@ -100,8 +100,8 @@ DeterministicKeyGenerator::gen_key_pair_list(size_t num_accounts) {
 std::pair<SecretKey, PublicKey> 
 DeterministicKeyGenerator::deterministic_key_gen(uint64_t seed) {
 	std::array<uint64_t, 4> seed_bytes; // 32 bytes
-	seed.fill(0);
-	seed[0] = seed;
+	seed_bytes.fill(0);
+	seed_bytes[0] = seed;
 
 
 	SecretKey sk;

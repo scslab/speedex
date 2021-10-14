@@ -1,5 +1,8 @@
 #pragma once
 
+#include "hotstuff/vm/speculative_exec_gadget.h"
+#include "hotstuff/vm/vm_control_interface.h"
+
 namespace hotstuff {
 
 template<typename VMType>
@@ -30,7 +33,7 @@ public:
 		, vm_interface(vm)
 		{}
 
-	void make_empty_proposal(uint64_t proposal_height) {
+	xdr::opaque_vec<> make_empty_proposal(uint64_t proposal_height) {
 		auto lock = speculation_map.lock();
 		speculation_map.add_height_pair(proposal_height, VMType::empty_block_id());
 		return xdr::opaque_vec<>();
@@ -41,14 +44,14 @@ public:
 		auto lock = speculation_map.lock();
 		auto proposal = vm_interface.get_proposal();
 		if (proposal == nullptr) {
-			height_map.add_height_pair(proposal_height, VMType::empty_block_id());
+			speculation_map.add_height_pair(proposal_height, VMType::empty_block_id());
 			return xdr::opaque_vec<>();
 		}
-		height_map.add_height_pair(proposal_height, VMType::nonempty_block_id(*proposal));
+		speculation_map.add_height_pair(proposal_height, VMType::nonempty_block_id(*proposal));
 		return xdr::xdr_to_opaque(*proposal);
 	}
 
-	void apply_block(block_ptr_t block) {
+	void apply_block(block_ptr_t blk) {
 
 		auto lock = speculation_map.lock();
 

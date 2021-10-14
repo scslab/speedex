@@ -23,8 +23,8 @@ ReplicaInfo::parse(fy_node* info_yaml) {
 
 	size_t found = fy_node_scanf(
 		info_yaml,
-		"sk_seed: %lu "
-		"hostname: %1024s",
+		"sk_seed %lu "
+		"hostname %1024s",
 		&sk_seed,
 		hostname_buf);
 
@@ -54,7 +54,7 @@ ReplicaConfig::parse(fy_document* config_yaml, ReplicaID self_id)
 	}
 
 	ReplicaID num_replicas = 0;
-	if (fy_document_scanf(config_yaml, "num_replicas: %u", &num_replicas) != 1)
+	if (fy_document_scanf(config_yaml, "/num_replicas %u", &num_replicas) != 1)
 	{
 		throw std::runtime_error("failed to parse num_replicas");
 	}
@@ -70,8 +70,9 @@ ReplicaConfig::parse(fy_document* config_yaml, ReplicaID self_id)
 		ReplicaInfo info(i);
 
 		auto node_str = std::string("replica_") + std::to_string(i);
+		std::printf("query for %s\n", node_str.c_str());
 
-		fy_node* info_node = fy_node_by_path(doc_root, node_str.c_str(), -1, FYNWF_PTR_DEFAULT);
+		fy_node* info_node = fy_node_by_path(doc_root, node_str.c_str(), FY_NT, FYNWF_PTR_DEFAULT);
 		if (info_node == NULL) {
 			throw std::runtime_error("failed to find info yaml");
 		}
@@ -84,6 +85,7 @@ ReplicaConfig::parse(fy_document* config_yaml, ReplicaID self_id)
 		}
 	}
 	if (sk_out) {
+		finish_init();
 		return *sk_out;
 	}
 	throw std::runtime_error("failed to parse self node");

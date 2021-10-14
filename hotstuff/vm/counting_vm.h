@@ -11,7 +11,9 @@ namespace hotstuff {
 struct CountingVMBlockID {
 	std::optional<uint64_t> value;
 
-	std::strong_ordering operator<=>(const CountingVMBlockID& other);
+	std::strong_ordering operator<=>(const CountingVMBlockID& other) const;
+
+	bool operator==(const CountingVMBlockID&) const = default;
 };
 
 

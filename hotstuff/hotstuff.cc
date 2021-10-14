@@ -39,7 +39,7 @@ HotstuffAppBase::do_propose()
 
 	uint64_t new_block_height = b_leaf -> get_height() + 1;
 
-	auto body = get_next_vm_block(b_leaf -> supports_nontrivial_child_proposal(), new_block_height);
+	auto body = get_next_vm_block(b_leaf -> supports_nonempty_child_proposal(), new_block_height);
 
 	auto newly_minted_block = HotstuffBlock::mint_block(std::move(body), hqc.second, b_leaf->get_hash());
 
