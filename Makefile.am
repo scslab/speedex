@@ -97,6 +97,14 @@ RPC_SRCS = \
 	rpc/consensus_api.cc \
 	rpc/consensus_api_server.cc
 
+SIMPLEX_SRCS = \
+	simplex/bitcompressed_row.cc \
+	simplex/simplex.cc
+
+SIMPLEX_TEST_SRCS = \
+	simplex/tests/test_bitcompressed_row.h \
+	simplex/tests/test_simplex.h
+
 SPEEDEX_SRCS = \
 	speedex/speedex_measurements.cc \
 	speedex/speedex_node.cc \
@@ -128,6 +136,7 @@ SRCS = \
 	$(ORDERBOOK_SRCS) \
 	$(PRICE_COMPUTATION_SRCS) \
 	$(RPC_SRCS) \
+	$(SIMPLEX_SRCS) \
 	$(SPEEDEX_SRCS) \
 	$(SYNTHETIC_DATA_GEN_SRCS) \
 	$(UTILS_SRCS)
@@ -149,6 +158,7 @@ $(MAIN_CCS:.cc=.o) : $(XH_FILES)
 
 TEST_SRCS = \
 	$(HOTSTUFF_TEST_SRCS) \
+	$(SIMPLEX_TEST_SRCS) \
 	$(TRIE_TEST_SRCS)
 
 test_runner.cc : $(TEST_SRCS) $(XHFILES)

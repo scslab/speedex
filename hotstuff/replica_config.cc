@@ -70,7 +70,6 @@ ReplicaConfig::parse(fy_document* config_yaml, ReplicaID self_id)
 		ReplicaInfo info(i);
 
 		auto node_str = std::string("replica_") + std::to_string(i);
-		std::printf("query for %s\n", node_str.c_str());
 
 		fy_node* info_node = fy_node_by_path(doc_root, node_str.c_str(), FY_NT, FYNWF_PTR_DEFAULT);
 		if (info_node == NULL) {

@@ -5,7 +5,7 @@ AC_CONFIG_MACRO_DIR([m4])
 
 dnl note to future geoff: -flto seems to break lmdb, so don't use it
 OPT_FLAGS="-march=native -O3"
-DEBUG_FLAGS="-ggdb -O2"
+DEBUG_FLAGS="-ggdb -O0"
 
 CXXFLAGS="-std=gnu++2a -fcoroutines $OPT_FLAGS $CXXFLAGS"
 CXX="g++"
