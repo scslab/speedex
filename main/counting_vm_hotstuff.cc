@@ -82,6 +82,7 @@ int main(int argc, char **argv)
 		if (pmaker.should_propose()) {
 			app.put_vm_in_proposer_mode();
 			pmaker.do_propose();
+			pmaker.wait_for_qc();
 		}
 		std::this_thread::sleep_for(1000ms);
 	}

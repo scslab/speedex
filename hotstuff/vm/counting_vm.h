@@ -41,46 +41,12 @@ public:
 		return std::make_unique<block_type>(state);
 	}
 
-
 	// Main workflow for non-proposer is exec_block (called indirectly
 	// by update) immediately followed by log_commitment
 	// Proposer skips the exec_block call.
 	void exec_block(const block_type& blk);
 
-	void log_commitment(const block_id& id) {
-		if (id.value) {
-			last_committed_state = *(id.value);
-			HOTSTUFF_INFO("VM: confirmed up to %lu", last_committed_state);
-		}
-	}
+	void log_commitment(const block_id& id);
 };
-
-/*
-class CountingVM {
-
-	uint64_t state = 0;
-
-	uint64_t last_committed_state = 0;
-
-	SpeculativeExecGadget<std::optional<uint64_t>> height_map;
-
-	void revert_to_last_commitment();
-
-public:
-
-	CountingVM()
-		: height_map() 
-		{}
-
-	void make_empty_proposal(uint64_t proposal_height);
-
-	xdr::opaque_vec<> get_and_apply_next_proposal(uint64_t proposal_height);
-
-	void apply_block(block_ptr_t block);
-
-	void notify_vm_of_commitment(block_ptr_t blk);
-
-};
- */
 
 } /* hotstuff */
