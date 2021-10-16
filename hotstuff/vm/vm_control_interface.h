@@ -54,7 +54,9 @@ public:
 		, additional_proposal_requests(0)
 		, is_proposer(false)
 		, highest_committed_id(std::nullopt)
-		{}
+		{
+			start_async_thread([this] {run();});
+		}
 
 	~VMControlInterface() {
 		end_async_thread();
@@ -72,6 +74,7 @@ void
 VMControlInterface<VMType>::set_proposer()
 {
 	std::lock_guard lock(mtx);
+	HOTSTUFF_INFO("VM INTERFACE: entering proposer mode");
 	is_proposer = true;
 }
 
@@ -80,7 +83,9 @@ typename VMControlInterface<VMType>::proposal_buffer_t
 VMControlInterface<VMType>::get_proposal()
 {
 	std::unique_lock lock(mtx);
+	HOTSTUFF_INFO("VM INTERFACE: start get_proposal");
 	if (!is_proposer) {
+		HOTSTUFF_INFO("VM INTERFACE: not in proposer mode, returning empty proposal");
 		return nullptr;
 	}
 
@@ -90,10 +95,14 @@ VMControlInterface<VMType>::get_proposal()
 		if (additional_proposal_requests < PROPOSAL_BUFFER_TARGET) {
 			additional_proposal_requests = PROPOSAL_BUFFER_TARGET;
 		}
+		cv.notify_all();
+		HOTSTUFF_INFO("VM INTERFACE: waiting on new proposal from vm");
 		cv.wait(lock, [this] { return done_flag || (!proposal_buffer.empty());});
 	}
 
 	if (done_flag) return nullptr;
+
+	HOTSTUFF_INFO("VM INTERFACE: got new proposal from vm");
 
 	auto out = std::move(proposal_buffer.front());
 	proposal_buffer.erase(proposal_buffer.begin());
@@ -142,6 +151,7 @@ VMControlInterface<VMType>::log_commitment(typename VMType::block_id block_id) {
 template<typename VMType>
 void
 VMControlInterface<VMType>::run() {
+	HOTSTUFF_INFO("VM INTERFACE: start run()");
 	while(true) {
 		std::unique_lock lock(mtx);
 

@@ -21,8 +21,9 @@ CountingVM::exec_block(const block_type& blk) {
 	state = last_committed_state;
 	if (blk == state + 1) {
 		state ++;
+		HOTSTUFF_INFO("VM: applied update, now at %lu", state);
 	} else {
-		std::printf("got invalid input state, no op");
+		HOTSTUFF_INFO("VM: got invalid input state, no op");
 	}
 }
 /*

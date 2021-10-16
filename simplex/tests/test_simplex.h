@@ -62,4 +62,18 @@ public:
 		TS_ASSERT_EQUALS(simplex.get_solution(get_category(10, 15)), 0);
 	}
 
+	void test_3asset() {
+		TaxFreeSimplex simplex(3);
+
+		simplex.add_orderbook_constraint(100, get_category(0, 1));
+		simplex.add_orderbook_constraint(100, get_category(1, 2));
+		simplex.add_orderbook_constraint(300, get_category(2, 0));
+
+		simplex.solve();
+
+		TS_ASSERT_EQUALS(simplex.get_solution(get_category(0, 1)), 100);
+		TS_ASSERT_EQUALS(simplex.get_solution(get_category(1, 2)), 100);
+		TS_ASSERT_EQUALS(simplex.get_solution(get_category(2, 0)), 100);
+	}
+
 };

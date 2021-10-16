@@ -1,5 +1,7 @@
 #pragma once
 
+#include "hotstuff/hotstuff_debug_macros.h"
+
 #include "hotstuff/vm/speculative_exec_gadget.h"
 #include "hotstuff/vm/vm_control_interface.h"
 
@@ -35,18 +37,22 @@ public:
 
 	xdr::opaque_vec<> make_empty_proposal(uint64_t proposal_height) {
 		auto lock = speculation_map.lock();
+		VM_BRIDGE_INFO("make empty proposal at height %lu", proposal_height);
 		speculation_map.add_height_pair(proposal_height, VMType::empty_block_id());
 		return xdr::opaque_vec<>();
 	}
 	
 	xdr::opaque_vec<> 
 	get_and_apply_next_proposal(uint64_t proposal_height) {
+		VM_BRIDGE_INFO("start get_and_apply_next_proposal for height %lu", proposal_height);
 		auto lock = speculation_map.lock();
 		auto proposal = vm_interface.get_proposal();
 		if (proposal == nullptr) {
+			VM_BRIDGE_INFO("try make nonempty, got empty proposal at height %lu", proposal_height);
 			speculation_map.add_height_pair(proposal_height, VMType::empty_block_id());
 			return xdr::opaque_vec<>();
 		}
+		VM_BRIDGE_INFO("make nonempty proposal at height %lu", proposal_height);
 		speculation_map.add_height_pair(proposal_height, VMType::nonempty_block_id(*proposal));
 		return xdr::xdr_to_opaque(*proposal);
 	}
@@ -75,6 +81,10 @@ public:
 		auto committed_block_id = speculation_map.on_commit_hotstuff(blk->get_height());
 
 		vm_interface.log_commitment(committed_block_id);
+	}
+
+	void put_vm_in_proposer_mode() {
+		vm_interface.set_proposer();
 	}
 
 };

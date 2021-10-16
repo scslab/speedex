@@ -1,5 +1,7 @@
 #pragma once
 
+#include "utils/debug_macros.h"
+
 #include <compare>
 #include <cstdint>
 #include <optional>
@@ -35,14 +37,20 @@ public:
 
 	std::unique_ptr<block_type> propose() {
 		state++;
+		HOTSTUFF_INFO("VM: proposing value %lu", state);
 		return std::make_unique<block_type>(state);
 	}
 
+
+	// Main workflow for non-proposer is exec_block (called indirectly
+	// by update) immediately followed by log_commitment
+	// Proposer skips the exec_block call.
 	void exec_block(const block_type& blk);
 
-	void log_confirmation(const block_id& id) {
+	void log_commitment(const block_id& id) {
 		if (id.value) {
 			last_committed_state = *(id.value);
+			HOTSTUFF_INFO("VM: confirmed up to %lu", last_committed_state);
 		}
 	}
 };

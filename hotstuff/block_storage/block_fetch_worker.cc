@@ -122,7 +122,7 @@ BlockFetchWorker::run() {
 		{
 			network_event_queue.validate_and_add_event(
 				NetEvent(
-					BlockReceiveNetEvent(std::make_shared<HotstuffBlock>(std::move(response)), info.id)));
+					BlockReceiveNetEvent(std::make_shared<HotstuffBlock>(std::move(response), info.id), info.id)));
 		}
 	}
 }

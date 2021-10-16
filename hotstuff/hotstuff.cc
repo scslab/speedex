@@ -39,11 +39,13 @@ HotstuffAppBase::do_propose()
 
 	uint64_t new_block_height = b_leaf -> get_height() + 1;
 
-	auto body = get_next_vm_block(b_leaf -> supports_nonempty_child_proposal(), new_block_height);
+	HOTSTUFF_INFO("PROPOSE: new height %lu", new_block_height);
 
-	auto newly_minted_block = HotstuffBlock::mint_block(std::move(body), hqc.second, b_leaf->get_hash());
+	auto body = get_next_vm_block(b_leaf -> supports_nonempty_child_proposal(self_id), new_block_height);
 
-	if (!block_store.insert_block(newly_minted_block)) {
+	auto newly_minted_block = HotstuffBlock::mint_block(std::move(body), hqc.second, b_leaf->get_hash(), self_id);
+
+	if (block_store.insert_block(newly_minted_block)) {
 		throw std::runtime_error("failed to insert newly minted block?");
 	}
 

@@ -31,6 +31,8 @@ class HotstuffBlock {
 	//genesis_block lacks this
 	std::optional<QuorumCertificate> parsed_qc;
 
+	ReplicaID proposer;  //0 (starting proposer) for genesis block
+
 	//delayed parse
 	//std::optional<HeaderDataPair> parsed_block_body;
 
@@ -48,11 +50,11 @@ class HotstuffBlock {
 
 	//TODO if you get qc on block that's not self produced, leader knows it was demoted.
 	// State machine recovery to be done in that case.
-	bool self_produced;
+	//bool self_produced;
 
 public:
 
-	HotstuffBlock(HotstuffBlockWire&& _wire_block);
+	HotstuffBlock(HotstuffBlockWire&& _wire_block, ReplicaID proposer);
 
 	//make genesis block
 	HotstuffBlock();
@@ -72,19 +74,23 @@ public:
 		decided = true;
 	}
 
-	bool is_self_produced() const {
+	ReplicaID get_proposer() const {
+		return proposer;
+	}
+
+/*	bool is_self_produced() const {
 		return self_produced;
 	}
 
 	void set_self_produced() {
 		self_produced = true;
-	}
+	} */
 
 	uint64_t get_height() const {
 		return block_height;
 	}
 
-	bool supports_nonempty_child_proposal(int depth = 3) const;
+	bool supports_nonempty_child_proposal(const ReplicaID self_id, int depth = 3) const;
 
 	/*
 	 * Checks that the block passes basic Hotstuff validity checks.
@@ -157,7 +163,7 @@ public:
 	void write_to_disk();
 
 	static block_ptr_t 
-	mint_block(xdr::opaque_vec<>&& body, QuorumCertificateWire const& qc_wire, speedex::Hash const& parent_hash);
+	mint_block(xdr::opaque_vec<>&& body, QuorumCertificateWire const& qc_wire, speedex::Hash const& parent_hash, ReplicaID proposer);
 };
 
 

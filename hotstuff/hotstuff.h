@@ -38,6 +38,8 @@ protected:
 
 	virtual xdr::opaque_vec<> get_next_vm_block(bool nonempty_proposal, uint64_t hotstuff_height) = 0;
 
+	void on_new_qc(speedex::Hash const& hash) override final;
+
 public:
 
 	HotstuffAppBase(const ReplicaConfig& config_, ReplicaID self_id, speedex::SecretKey sk);
@@ -45,7 +47,6 @@ public:
 	void do_vote(block_ptr_t block, ReplicaID proposer) override final;
 	speedex::Hash do_propose();
 
-	void on_new_qc(speedex::Hash const& hash) override final;
 	bool wait_for_new_qc(speedex::Hash const& expected_next_qc);
 	void cancel_wait_for_new_qc();
 
@@ -82,6 +83,10 @@ public:
 		: HotstuffAppBase(config, self_id, sk)
 		, vm_bridge(vm)
 		{}
+
+	void put_vm_in_proposer_mode() {
+		vm_bridge.put_vm_in_proposer_mode();
+	}
 };
 
 } /* hotstuff */

@@ -44,7 +44,7 @@ protected:
     ReplicaConfig config;	                 				/**< replica configuration */
     block_ptr_t b_leaf;										/**< highest tail block.  Build on this block */
 
-	std::mutex proposal_mutex; 								/**< lock access to b_leaf and hqc */
+	mutable std::mutex proposal_mutex; 						/**< lock access to b_leaf and hqc */
 
 	block_ptr_t get_genesis() const {
 		return genesis_block;
@@ -72,6 +72,15 @@ public:
 
 	void 
 	on_receive_proposal(block_ptr_t bnew, ReplicaID proposer);
+
+	ReplicaID get_last_proposer() const {
+		std::lock_guard lock(proposal_mutex);
+		return hqc.first -> get_proposer();
+	}
+
+	ReplicaID get_self_id() const {
+		return self_id;
+	}
 
 protected:
 

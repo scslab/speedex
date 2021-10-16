@@ -54,6 +54,7 @@ public:
 	// (1) we can safely throw away, (2) is a bug we should fix (if it happens),
 	// and (3) should not happen if we request parent on reception of proposal.
 	// Sets the height of the new block and parent block ptr.
+	// Note: casts to TRUE if insertion failed (True if there are missing dependencies)
 	MissingDependencies
 	insert_block(block_ptr_t block);
 

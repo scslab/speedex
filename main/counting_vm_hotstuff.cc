@@ -1,4 +1,5 @@
 #include "hotstuff/hotstuff.h"
+#include "hotstuff/liveness.h"
 #include "hotstuff/replica_config.h"
 #include "hotstuff/vm/counting_vm.h"
 #include "xdr/hotstuff.h"
@@ -9,6 +10,8 @@
 #include <libfyaml.h>
 
 using namespace hotstuff;
+
+using namespace std::chrono_literals;
 
 [[noreturn]]
 static void usage() {
@@ -72,4 +75,14 @@ int main(int argc, char **argv)
 	auto vm = std::make_shared<CountingVM>();
 
 	HotstuffApp app(config, *self_id, sk, vm);
+
+	PaceMakerWaitQC pmaker(app);
+
+	while (true) {
+		if (pmaker.should_propose()) {
+			app.put_vm_in_proposer_mode();
+			pmaker.do_propose();
+		}
+		std::this_thread::sleep_for(1000ms);
+	}
 }

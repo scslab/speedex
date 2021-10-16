@@ -6,28 +6,30 @@
 
 namespace hotstuff {
 
-HotstuffBlock::HotstuffBlock(HotstuffBlockWire&& _wire_block)
+HotstuffBlock::HotstuffBlock(HotstuffBlockWire&& _wire_block, ReplicaID proposer)
 	: wire_block(std::move(_wire_block))
 	, parsed_qc(wire_block.header.qc)
+	, proposer(proposer)
 //	, parsed_block_body(std::nullopt)
 	, block_height(0)
 	, parent_block_ptr(nullptr)
 	, self_qc(speedex::hash_xdr(wire_block.header))
 	, decided(false)
 	, written_to_disk()
-	, self_produced(false)
+	//, self_produced(false)
 	{}
 
 HotstuffBlock::HotstuffBlock()
 	: wire_block()
 	, parsed_qc(std::nullopt)
+	, proposer(0)
 	//, parsed_block_body(std::nullopt)
 	, block_height(0)
 	, parent_block_ptr(nullptr)
 	, self_qc(speedex::Hash())
 	, decided(true)
 	, written_to_disk()
-	, self_produced(false)
+	//, self_produced(false)
 	{
 		written_to_disk.test_and_set();
 	}
@@ -51,13 +53,13 @@ HotstuffBlock::has_body() const {
 }
 
 bool
-HotstuffBlock::supports_nonempty_child_proposal(int depth) const {
+HotstuffBlock::supports_nonempty_child_proposal(const ReplicaID self_id, int depth) const {
 	if (depth <= 0) return true;
-	if (!is_self_produced()) return false;
+	if (self_id != proposer) return false;
 	if (!justify_block_ptr) return false;
 	if (!parent_block_ptr) return false;
 	if (get_justify_hash() != get_parent_hash()) return false;
-	return parent_block_ptr -> supports_nonempty_child_proposal(depth - 1);
+	return parent_block_ptr -> supports_nonempty_child_proposal(self_id, depth - 1);
 }
 
 bool 
@@ -70,26 +72,6 @@ HotstuffBlock::validate_hotstuff(const ReplicaConfig& config) const {
 
 	return parsed_qc->verify(config);
 }
-
-/*
-bool 
-HotstuffBlock::try_delayed_parse() 
-{
-	if (!has_body()) {
-		parsed_block_body = std::nullopt;
-		return true;
-	}
-	parsed_block_body = std::make_optional<HeaderDataPair>();
-
-	try {
-		xdr::xdr_from_opaque(wire_block.body, *parsed_block_body);
-	} catch(...) {
-		HOTSTUFF_INFO("speedex block parse failed");
-		parsed_block_body = std::nullopt;
-		return false;
-	}
-	return true;
-} */
 
 void
 HotstuffBlock::write_to_disk() {
@@ -106,7 +88,7 @@ HotstuffBlock::write_to_disk() {
 }
 
 block_ptr_t 
-HotstuffBlock::mint_block(xdr::opaque_vec<>&& body, QuorumCertificateWire const& qc_wire, speedex::Hash const& parent_hash)
+HotstuffBlock::mint_block(xdr::opaque_vec<>&& body, QuorumCertificateWire const& qc_wire, speedex::Hash const& parent_hash, ReplicaID self_id)
 {
 	HotstuffBlockWire wire_block;
 	wire_block.header.parent_hash = parent_hash;
@@ -114,9 +96,9 @@ HotstuffBlock::mint_block(xdr::opaque_vec<>&& body, QuorumCertificateWire const&
 	wire_block.header.body_hash = speedex::hash_xdr(body);
 	wire_block.body = std::move(body);
 
-	auto out = std::make_shared<HotstuffBlock>(std::move(wire_block));
+	auto out = std::make_shared<HotstuffBlock>(std::move(wire_block), self_id);
 
-	out -> set_self_produced();
+	//out -> set_self_produced();
 
 	return out;
 }

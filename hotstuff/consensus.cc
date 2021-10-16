@@ -24,7 +24,7 @@ HotstuffCore::update_hqc(block_ptr_t const& qc_block, const QuorumCertificate& q
 		hqc = {qc_block, qc.serialize()};
 		b_leaf = qc_block;
 
-		if (!b_leaf -> is_self_produced()) {
+		if (b_leaf -> get_proposer() != self_id) {
 			notify_vm_of_qc_on_nonself_block(qc_block);
 		}
 	}
