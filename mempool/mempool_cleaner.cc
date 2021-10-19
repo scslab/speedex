@@ -18,7 +18,7 @@ MempoolCleaner::run() {
 			auto timestamp = init_time_measurement();
 			mempool.remove_confirmed_txs();
 			mempool.join_small_chunks();
-			*output_measurement = measure_time(timestamp);
+			output_measurement = measure_time(timestamp);
 
 			do_cleaning = false;
 		}
@@ -27,10 +27,9 @@ MempoolCleaner::run() {
 }
 
 void 
-MempoolCleaner::do_mempool_cleaning(float* measurement_out) {
+MempoolCleaner::do_mempool_cleaning() {
 	wait_for_async_task();
 	std::lock_guard lock(mtx);
-	output_measurement = measurement_out;
 	do_cleaning=true;
 	cv.notify_all();
 }

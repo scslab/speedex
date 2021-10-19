@@ -68,8 +68,7 @@ SpeedexNode::produce_block() {
 			current_measurements.block_creation_measurements.block_building_time);
 	}
 
-	mempool_worker.do_mempool_cleaning(
-		&current_measurements.block_creation_measurements.mempool_clearing_time);
+	mempool_worker.do_mempool_cleaning();
 
 	current_measurements.total_block_build_time = measure_time_from_basept(start_time);
 
@@ -122,7 +121,7 @@ SpeedexNode::produce_block() {
 
 	auto mempool_wait_ts = init_time_measurement();
 
-	mempool_worker.wait_for_mempool_cleaning_done();
+	current_measurements.block_creation_measurements.mempool_clearing_time = mempool_worker.wait_for_mempool_cleaning_done();
 	current_measurements.mempool_wait_time = measure_time(mempool_wait_ts);
 	
 	current_measurements.total_time_from_basept = measure_time_from_basept(start_time);

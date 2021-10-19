@@ -22,7 +22,8 @@ class MempoolCleaner : public AsyncWorker {
 
 	Mempool& mempool;
 	bool do_cleaning = false;
-	float* output_measurement;
+	float output_measurement;
+	//float* output_measurement;
 
 	bool exists_work_to_do() override final {
 		return do_cleaning;
@@ -45,11 +46,15 @@ public:
 
 	//! Object will write the time it took to clean the mempool
 	//! in the background to the measurement_out pointer.
-	void do_mempool_cleaning(float* measurement_out);
+	void do_mempool_cleaning();//float* measurement_out);
 
 	//! Wait for background task to complete.
-	void wait_for_mempool_cleaning_done() {
+	//! Returns time it took for this call to mempool_cleaning
+	float wait_for_mempool_cleaning_done() {
 		wait_for_async_task();
+		std::lock_guard lock(mtx);
+		float out = output_measurement;
+		return out;
 	}
 };
 

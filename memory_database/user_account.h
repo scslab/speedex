@@ -161,6 +161,11 @@ public:
 		return owner;
 	}
 
+	//! NOT threadsafe with commit.
+	uint64_t get_last_committed_seq_number() const {
+		return last_committed_id;
+	}
+
 
 	//! Transfer amount of asset to the account's (unescrowed) balance.
 	//! Negative amounts mean a withdrawal.

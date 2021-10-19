@@ -225,6 +225,7 @@ private:
 	MemoryDatabase& operator=(const MemoryDatabase&) = delete;
 
 	UserAccount& find_account(account_db_idx user_index);
+	const UserAccount& find_account(account_db_idx user_index) const;
 
 	friend class MemoryDatabaseView;
 
@@ -398,6 +399,9 @@ public:
 
 	void commit_sequence_number(
 		account_db_idx user_index, uint64_t sequence_number);
+
+	//! should not be used concurrently with commit on a UserAccount
+	uint64_t get_last_committed_seq_number(uint64_t sequence_number) const;
 
 	//! Get the public key associated with an account.
 	//! Returns nullopt if no such account exists.

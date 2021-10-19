@@ -19,6 +19,15 @@ UserAccount& MemoryDatabase::find_account(account_db_idx user_index) {
 	return database[user_index];
 }
 
+const UserAccount& MemoryDatabase::find_account(account_db_idx user_index) const {
+	uint64_t db_size = database.size();
+	if (user_index >= db_size) {
+		std::printf("invalid db access: %lu of %lu\n", user_index, db_size);
+		throw std::runtime_error("invalid db idx access");
+	}
+	return database[user_index];
+}
+
 void MemoryDatabase::transfer_available(
 	account_db_idx user_index, AssetID asset_type, int64_t change) {
 	find_account(user_index).transfer_available(asset_type, change);
@@ -54,6 +63,13 @@ void MemoryDatabase::commit_sequence_number(
 	account_db_idx user_index, uint64_t sequence_number) {
 	find_account(user_index).commit_sequence_number(sequence_number);
 }
+
+uint64_t 
+MemoryDatabase::get_last_committed_seq_number(account_db_idx idx)
+{
+	return find_account(idx).get_last_committed_seq_number();
+}
+
 
 
 //TODO this is not used in normal block processing, but seems generally useful

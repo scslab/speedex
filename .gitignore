@@ -19,6 +19,7 @@ doc/
 depcomp
 test
 test_runner.cc
+README
 
 #binaries
 counting_vm_hotstuff

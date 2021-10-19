@@ -22,6 +22,8 @@ larger chunks.
 
 namespace speedex {
 
+class MempoolTransactionFilter;
+
 /*! A chunk of transactions in the mempool.
 Individual chunks have no synchronization primitives.  The larger mempool 
 manages synchronization.
@@ -41,6 +43,8 @@ struct MempoolChunk {
 		: txs(std::move(txs_input))
 		, confirmed_txs_to_remove()
 		{}
+
+	uint64_t filter(MempoolTransactionFilter const& filter);
 
 	//! Clear txs that were marked as finished.
 	//! Returns the number of txs removed.
@@ -95,6 +99,11 @@ class Mempool {
 	std::mutex buffer_mtx;
 
 
+	friend class MempoolFilterExecutor;
+
+	//! update removed tx count
+	void log_tx_removal(uint64_t removed_count);
+
 public:
 
 	const size_t TARGET_CHUNK_SIZE;
@@ -141,7 +150,6 @@ public:
 	//! block production.  Threadsafe (can be done by background worker).
 	//! Internally acquires the mempool lock.
 	void remove_confirmed_txs();
-
 
 	//! Get the number of mempool chunks (for iterating over the pool).
 	size_t num_chunks() const {

@@ -1,5 +1,7 @@
 #include "mempool/mempool.h"
 
+#include "mempool/mempool_transaction_filter.h"
+
 #include <tbb/parallel_for.h>
 namespace speedex {
 
@@ -20,6 +22,21 @@ uint64_t MempoolChunk::remove_confirmed_txs() {
 	return num_removed;
 }
 
+uint64_t
+MempoolChunk::filter(MempoolTransactionFilter const& filter) {
+	uint64_t num_removed = 0;
+
+	for (size_t i = 0; i < txs.size();) {
+		if (filter.check_transaction(txs[i])) {
+			txs[i] = std::move(txs.back());
+			txs.pop_back();
+			num_removed++;
+		} else {
+			i++;
+		}
+	}
+	return num_removed;
+}
 
 void Mempool::add_to_mempool_buffer(std::vector<SignedTransaction>&& chunk) {
 	MempoolChunk to_add(std::move(chunk));
@@ -53,6 +70,10 @@ void Mempool::join_small_chunks() {
 	}
 }
 
+void Mempool::log_tx_removal(uint64_t removed_count) {
+	mempool_size.fetch_sub(removed_count, std::memory_ordered_relaxed);
+}
+
 void Mempool::remove_confirmed_txs() {
 	std::lock_guard lock(mtx);
 
@@ -63,7 +84,8 @@ void Mempool::remove_confirmed_txs() {
 			for (auto i = r.begin(); i < r.end(); i++) {
 				deleted += mempool[i].remove_confirmed_txs();
 			}
-			mempool_size.fetch_sub(deleted, std::memory_order_release);
+			log_tx_removal(deleted);
+			//mempool_size.fetch_sub(deleted, std::memory_order_release);
 
 		});
 }
