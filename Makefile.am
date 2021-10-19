@@ -111,7 +111,9 @@ SPEEDEX_SRCS = \
 	speedex/speedex_node.cc \
 	speedex/speedex_operation.cc \
 	speedex/speedex_options.cc \
-	speedex/speedex_persistence.cc
+	speedex/speedex_persistence.cc \
+	speedex/speedex_vm.cc \
+	speedex/speedex_vm_block_id.cc
 
 SYNTHETIC_DATA_GEN_SRCS = \
 	synthetic_data_generator/synthetic_data_gen.cc \

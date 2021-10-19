@@ -18,21 +18,10 @@ SpeedexNode::produce_block() {
 	
 	BLOCK_INFO("Starting production on block %lu", prev_block_number + 1);
 
-	auto tagged_measurements = new_measurements();
-	/*set_current_measurements_type();
-	auto& current_measurements
-		= measurement_results
-			.block_results
-			.at(prev_block_number % MEASUREMENT_PERSIST_FREQUENCY)
-			.results
-			.productionResults();
-	measurement_results
-		.block_results
-		.at(prev_block_number % MEASUREMENT_PERSIST_FREQUENCY)
-		.blockNumber = prev_block_number + 1; */
+	auto measurements_base = new_measurements();
 
-	tagged_measurements.blockNumber = prev_block_number + 1;
-	auto& current_measurements = tagged_measurements.results.productionResults();
+	measurements_base.blockNumber = prev_block_number + 1;
+	auto& current_measurements = measurements_base.results.productionResults();
 	
 	auto mempool_push_ts = init_time_measurement();
 	mempool.push_mempool_buffer_to_mempool();
@@ -92,6 +81,7 @@ SpeedexNode::produce_block() {
 		management_structures, 
 		prev_block, 
 		current_measurements.data_persistence_measurements, 
+		true,
 		true);
 	current_measurements.data_persistence_measurements.total_critical_persist_time = measure_time(timestamp);
 
@@ -109,15 +99,12 @@ SpeedexNode::produce_block() {
 	if (prev_block.block.blockNumber % PERSIST_BATCH == 0) {
 		async_persister.do_async_persist(
 			std::make_unique<PersistenceMeasurementLogCallback>(measurements_log, prev_block.block.blockNumber));
-			//prev_block.block.blockNumber, 
-			//get_persistence_measurements(prev_block.block.blockNumber));
 	}
 	current_measurements.data_persistence_measurements.async_persist_wait_time = measure_time(async_ts);
 
 	current_measurements.total_block_persist_time = measure_time_from_basept(start_time);
 
 	current_measurements.state_update_stats = state_update_stats.get_xdr();
-	//get_state_update_stats(prev_block.block.blockNumber) = state_update_stats.get_xdr();
 
 	auto mempool_wait_ts = init_time_measurement();
 
@@ -127,6 +114,9 @@ SpeedexNode::produce_block() {
 	current_measurements.total_time_from_basept = measure_time_from_basept(start_time);
 
 	current_measurements.total_time = measure_time(start_time);
+
+	measurements_log.add_measurement(measurements_base);
+
 
 	return block_size > 1000;
 }
@@ -142,21 +132,8 @@ bool SpeedexNode::validate_block(const HashedBlock& header, std::unique_ptr<TxLi
 
 	assert_state(BLOCK_VALIDATOR);
 
-	//set_current_measurements_type();
-
-	//prev number is current - 1, so this indexing is ok (first block is 1, measurement location 0)
-	/*auto& current_measurements 
-		= measurement_results
-			.block_results
-			.at(prev_block_number % MEASUREMENT_PERSIST_FREQUENCY)
-			.results
-			.validationResults(); */
 	auto measurements_base = new_measurements();
 	measurements_base.blockNumber = prev_block_number + 1;
-/*	measurement_results
-		.block_results
-		.at(prev_block_number % MEASUREMENT_PERSIST_FREQUENCY)
-		.blockNumber = prev_block_number + 1; */
 
 	auto& current_measurements = measurements_base.results.validationResults();
 
@@ -182,7 +159,9 @@ bool SpeedexNode::validate_block(const HashedBlock& header, std::unique_ptr<TxLi
 	
 	persist_critical_round_data(
 		management_structures, header, 
-		current_measurements.data_persistence_measurements, 
+		current_measurements.data_persistence_measurements,
+		false,
+		true,
 		1000000);
 
 	current_measurements.total_persistence_time = measure_time(persistence_start);
@@ -197,9 +176,10 @@ bool SpeedexNode::validate_block(const HashedBlock& header, std::unique_ptr<TxLi
 	if (prev_block.block.blockNumber % PERSIST_BATCH == 0) {
 		async_persister.do_async_persist(
 			std::make_unique<PersistenceMeasurementLogCallback>(measurements_log, prev_block.block.blockNumber));
-			//prev_block.block.blockNumber, 
-			//get_persistence_measurements(prev_block.block.blockNumber));
 	}
+
+	measurements_log.add_measurement(measurements_base);
+
 	return true;
 }
 

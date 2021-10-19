@@ -55,7 +55,7 @@ class MempoolFilterExecutor : public AsyncWorker {
 
 public:
 
-	MempoolFilterExecutor(SpeedexManagementStructures& management_structures, Mempool& mempool);
+	MempoolFilterExecutor(SpeedexManagementStructures const& management_structures, Mempool& mempool);
 
 	void start_filter();
 

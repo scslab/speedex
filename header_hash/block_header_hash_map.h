@@ -108,6 +108,8 @@ public:
 	//! Persist block hashes to LMDB, up to current block number.
 	void persist_lmdb(uint64_t current_block_number);
 
+	void rollback_to_committed_round(uint64_t committed_block_number);
+
 	//! Get the block number reflected in disk state.
 	uint64_t get_persisted_round_number() {
 		return lmdb_instance.get_persisted_round_number();

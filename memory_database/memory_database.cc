@@ -65,7 +65,7 @@ void MemoryDatabase::commit_sequence_number(
 }
 
 uint64_t 
-MemoryDatabase::get_last_committed_seq_number(account_db_idx idx)
+MemoryDatabase::get_last_committed_seq_number(account_db_idx idx) const
 {
 	return find_account(idx).get_last_committed_seq_number();
 }

@@ -132,7 +132,7 @@ public:
 	//! Save account block to disk.  Optionally returns the log (for e.g.
 	//! forwarding to another node).
 	std::unique_ptr<AccountModificationBlock>
-	persist_block(uint64_t block_number, bool return_block);
+	persist_block(uint64_t block_number, bool return_block, bool write_block);
 
 	void diff_with_prev_log(uint64_t block_number);
 };

@@ -5,6 +5,8 @@
 namespace speedex {
 
 
+
+//Commits everything up to and including current_block_number
 ThunkGarbage
 __attribute__((warn_unused_result)) 
 OrderbookLMDB::write_thunks(const uint64_t current_block_number, bool debug) {

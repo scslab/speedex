@@ -16,7 +16,7 @@ MempoolTransactionFilter::check_transaction(const SignedTransaction& tx) const {
 	return (last_committed_seq_num >= tx.transaction.metadata.sequenceNumber);
 }
 
-MempoolFilterExecutor::MempoolFilterExecutor(SpeedexManagementStructures& management_structures, Mempool& mempool)
+MempoolFilterExecutor::MempoolFilterExecutor(SpeedexManagementStructures const& management_structures, Mempool& mempool)
 	: AsyncWorker()
 	, cancel_background_filter(false)
 	, do_work(false)

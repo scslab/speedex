@@ -34,7 +34,8 @@ persist_critical_round_data(
 	SpeedexManagementStructures& management_structures,
 	const HashedBlock& header,
 	BlockDataPersistenceMeasurements& measurements,
-	bool get_block = false,
+	bool get_block,
+	bool write_block,
 	uint64_t log_offset = 0);
 
 //! Memory database loads persistence thunk into lmdb

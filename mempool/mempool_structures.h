@@ -1,5 +1,9 @@
 #pragma once
 
+#include "mempool/mempool.h"
+#include "mempool/mempool_cleaner.h"
+#include "mempool/mempool_transaction_filter.h"
+
 namespace speedex {
 
 class MempoolStructures {

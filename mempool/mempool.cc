@@ -71,7 +71,7 @@ void Mempool::join_small_chunks() {
 }
 
 void Mempool::log_tx_removal(uint64_t removed_count) {
-	mempool_size.fetch_sub(removed_count, std::memory_ordered_relaxed);
+	mempool_size.fetch_sub(removed_count, std::memory_order_relaxed);
 }
 
 void Mempool::remove_confirmed_txs() {

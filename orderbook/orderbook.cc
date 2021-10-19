@@ -796,7 +796,7 @@ void Orderbook::process_clear_offers(
 
 void Orderbook::rollback_thunks(uint64_t current_block_number) {
 	std::lock_guard lock(*lmdb_instance.mtx);
-	if (current_block_number <= lmdb_instance.get_persisted_round_number()) {
+	if (current_block_number < lmdb_instance.get_persisted_round_number()) {
 		throw std::runtime_error("can't rollback persisted objects");
 	}
 

@@ -336,7 +336,7 @@ void debug_hash_discrepancy(
 		BLOCK_INFO("mod log discrepancy");
 		mod_log.diff_with_prev_log(current_block_number);
 		// persist anyways for now, for comparison purposes later 
-		mod_log.persist_block(current_block_number + 1000000, false); 
+		mod_log.persist_block(current_block_number + 1000000, false, true); 
 	}
 	if (memcmp(
 			comparison_next_block.internalHashes.blockMapHash.data(), 

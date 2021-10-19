@@ -65,6 +65,11 @@ struct HashedBlock {
 	Hash hash;
 };
 
+struct HashedBlockTransactionDataPair {
+	HashedBlock hashedBlock;
+	TransactionData txData;
+};
+
 
 struct TatonnementMeasurements {
 	float runtime;
@@ -201,6 +206,7 @@ struct OverallBlockProductionMeasurements {
 	float total_block_send_time;
 	float total_self_confirm_time;
 	float total_critical_persist_time;
+	float serialize_time;
 };
 
 struct OverallBlockValidationMeasurements {

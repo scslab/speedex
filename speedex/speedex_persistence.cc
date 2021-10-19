@@ -10,6 +10,7 @@ persist_critical_round_data(
 	const HashedBlock& header,
 	BlockDataPersistenceMeasurements& measurements,
 	bool get_block,
+	bool write_block,
 	uint64_t log_offset) {
 
 	auto timestamp = init_time_measurement();
@@ -22,7 +23,7 @@ persist_critical_round_data(
 
 	auto block_out = management_structures
 		.account_modification_log
-		.persist_block(current_block_number + log_offset, get_block);
+		.persist_block(current_block_number + log_offset, get_block, write_block);
 
 	BLOCK_INFO("done writing account log");
 	measurements.account_log_write_time = measure_time(timestamp);

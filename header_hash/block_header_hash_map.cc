@@ -68,6 +68,27 @@ void BlockHeaderHashMap::persist_lmdb(uint64_t current_block_number) {
 	lmdb_instance.commit_wtxn(wtx, current_block_number);
 }
 
+// LMDB committed to round X contains entries 1 through X-1.
+// To sync back with LMDB, we need to remove all entries X and higher.
+
+void 
+BlockHeaderHashMap::rollback_to_committed_round(uint64_t committed_block_number)
+{
+	if (committed_block_number < lmdb_instance.get_persisted_round_number()) {
+		throw std::runtime_error("can't rollback beyond lmdb persist");
+	}
+	for (uint64_t i = committed_block_number; i <= last_committed_block_number; i++) {
+		if (i == 0) continue;
+		TrieT::prefix_t round_buf;
+		write_unsigned_big_endian(round_buf, i);
+
+		if (!block_map.perform_deletion(round_buf)) {
+			throw std::runtime_error("error when deleting from header hash map");
+		}
+	}
+	last_committed_block_number = (committed_block_number == 0) ? 0 : committed_block_number - 1;
+}
+
 
 
 bool 

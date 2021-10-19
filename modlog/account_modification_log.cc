@@ -51,7 +51,7 @@ void AccountModificationLog::detached_clear() {
 
 std::unique_ptr<AccountModificationBlock>
 AccountModificationLog::persist_block(
-	uint64_t block_number, bool return_block) {
+	uint64_t block_number, bool return_block, bool persist_block) {
 	
 	std::lock_guard lock(mtx);
 
@@ -61,34 +61,38 @@ AccountModificationLog::persist_block(
 		throw std::runtime_error("null write buffer");
 	}
 
-	if ((persistable_block->size() == 0) && (modification_log.size() > 0)) {
-		std::printf("forming log in persist_block\n");
-		*persistable_block 
-			= modification_log
-				.template accumulate_values_parallel<AccountModificationBlock>();
+	if (persist_block || return_block) {
+		if ((persistable_block->size() == 0) && (modification_log.size() > 0)) {
+			std::printf("forming log in persist_block\n");
+			*persistable_block 
+				= modification_log
+					.template accumulate_values_parallel<AccountModificationBlock>();
+		}
 	}
 
-	auto& block_fd = file_preallocator.wait_for_prealloc();
-	if (!block_fd) {
-		throw std::runtime_error("block wasn't preallocated!!!");
+	if (persist_block) {
+		auto& block_fd = file_preallocator.wait_for_prealloc();
+		if (!block_fd) {
+			throw std::runtime_error("block wasn't preallocated!!!");
+		}
+
+		BLOCK_INFO("persist_block size: %lu\n", persistable_block->size());
+		if (persistable_block->size() != modification_log.size()) {
+			throw std::runtime_error(
+				"must be error in accumulate_values_parallel");
+		}
+
+		if (DIFF_LOGS_ENABLED) {
+			save_xdr_to_file_fast(
+				*persistable_block, block_fd, write_buffer, BUF_SIZE);
+		} else {
+			save_account_block_fast(
+				*persistable_block, block_fd, write_buffer, BUF_SIZE);
+		}
+		block_fd.clear();
+
 	}
 
-	BLOCK_INFO("persist_block size: %lu\n", persistable_block->size());
-	if (persistable_block->size() != modification_log.size()) {
-		throw std::runtime_error(
-			"must be error in accumulate_values_parallel");
-	}
-
-	if (DIFF_LOGS_ENABLED) {
-		save_xdr_to_file_fast(
-			*persistable_block, block_fd, write_buffer, BUF_SIZE);
-	} else {
-		save_account_block_fast(
-			*persistable_block, block_fd, write_buffer, BUF_SIZE);
-	}
-	//
-
-	block_fd.clear();
 
 	if (return_block) {
 		std::unique_ptr<AccountModificationBlock> out{persistable_block.release()};
