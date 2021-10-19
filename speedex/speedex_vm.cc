@@ -2,6 +2,8 @@
 
 #include "speedex/speedex_operation.h"
 
+#include "utils/save_load_xdr.h"
+
 namespace speedex {
 
 SpeedexVM::SpeedexVM(
@@ -248,6 +250,44 @@ SpeedexVM::propose()
 
 
 	return out;
+}
+
+ExperimentResultsUnion 
+SpeedexVM::get_measurements() {
+	std::lock_guard lock(confirmation_mtx);
+	return get_measurements_nolock();
+}
+
+// should own confirmation_mtx before calling.
+ExperimentResultsUnion
+SpeedexVM::get_measurements_nolock() {
+
+	async_persister.wait_for_async_persist();
+	ExperimentResultsUnion out = measurements_log.get_measurements();
+
+	if (out.block_results.size() == 0) {
+		BLOCK_INFO("returned no measurements.  Is this ok?");
+	}
+
+	return out;
+}
+
+void 
+SpeedexVM::write_measurements() {
+	std::lock_guard lock(confirmation_mtx);
+	BLOCK_INFO("write measurements called");
+
+	auto filename = overall_measurement_filename();
+
+	auto out = get_measurements_nolock();
+
+	if (save_xdr_to_file(out, filename.c_str())) {
+		BLOCK_INFO("failed to save measurements file %s", filename.c_str());
+	}
+
+	BLOCK_INFO(
+		"Wrote %lu measurements entries (make sure this is correct)",
+		out.block_results.size());
 }
 
 

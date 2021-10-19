@@ -54,6 +54,9 @@ class SpeedexVM {
 	void rewind_structs_to_committed_height();
 	size_t assemble_block(TaggedSingleBlockResults& measurements_base, BlockStateUpdateStatsWrapper& state_update_stats);
 
+	ExperimentResultsUnion 
+	get_measurements_nolock();
+
 public:
 	using block_type = HashedBlockTransactionDataPair;
 	using block_id = SpeedexVMBlockID;
@@ -75,6 +78,18 @@ public:
 	void exec_block(const block_type& blk);
 
 	void log_commitment(const block_id& id);
+
+	void write_measurements();
+	ExperimentResultsUnion get_measurements();
+
+	std::string 
+	overall_measurement_filename() const {
+		return measurement_output_prefix + "results";
+	}
+
+	~SpeedexVM() {
+		write_measurements();
+	}
 };
 
 } /* speedex */

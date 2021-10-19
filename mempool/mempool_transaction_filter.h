@@ -60,6 +60,12 @@ public:
 	void start_filter();
 
 	void stop_filter();
+
+	~MempoolFilterExecutor() {
+		stop_filter();
+		wait_for_async_task();
+		end_async_thread();
+	}
 };
 
 
