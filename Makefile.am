@@ -45,6 +45,7 @@ HOTSTUFF_SRCS = \
 	hotstuff/block_storage/block_fetch_manager.cc \
 	hotstuff/block_storage/block_fetch_worker.cc \
 	hotstuff/block_storage/block_store.cc \
+	hotstuff/block_storage/garbage_collector.cc \
 	hotstuff/consensus.cc \
 	hotstuff/crypto.cc \
 	hotstuff/event.cc \

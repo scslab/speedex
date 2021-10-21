@@ -4,6 +4,7 @@
 #include "xdr/hotstuff.h"
 
 #include "hotstuff/block.h"
+#include "hotstuff/block_storage/garbage_collector.h"
 
 #include <map>
 #include <mutex>
@@ -23,11 +24,14 @@ class BlockStore {
 
 	std::mutex mtx;
 
+	BlockGarbageCollector gc_collector;
+
 public:
 
 	BlockStore(block_ptr_t genesis_block) 
 		: block_cache()
 		, mtx()
+		, gc_collector()
 		{
 			block_cache.emplace(genesis_block->get_hash(), genesis_block);
 		}

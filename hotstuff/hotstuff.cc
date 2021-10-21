@@ -32,6 +32,12 @@ HotstuffAppBase::do_vote(block_ptr_t block, ReplicaID proposer)
 	protocol_manager.send_vote_to(block, cert, proposer);
 }
 
+void
+HotstuffAppBase::notify_ok_to_prune_blocks(uint64_t committed_hotstuff_height) {
+	const uint64_t keep_depth = 100;
+	block_store.prune_below_height(committed_hotstuff_height > keep_depth ? committed_hotstuff_height - keep_depth : 0);
+}
+
 speedex::Hash
 HotstuffAppBase::do_propose()
 {

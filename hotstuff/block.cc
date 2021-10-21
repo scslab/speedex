@@ -10,26 +10,25 @@ HotstuffBlock::HotstuffBlock(HotstuffBlockWire&& _wire_block, ReplicaID proposer
 	: wire_block(std::move(_wire_block))
 	, parsed_qc(wire_block.header.qc)
 	, proposer(proposer)
-//	, parsed_block_body(std::nullopt)
 	, block_height(0)
 	, parent_block_ptr(nullptr)
 	, self_qc(speedex::hash_xdr(wire_block.header))
 	, decided(false)
 	, written_to_disk()
-	//, self_produced(false)
+	, flushed_from_memory(false)
 	{}
 
+// genesis block
 HotstuffBlock::HotstuffBlock()
 	: wire_block()
 	, parsed_qc(std::nullopt)
 	, proposer(0)
-	//, parsed_block_body(std::nullopt)
 	, block_height(0)
 	, parent_block_ptr(nullptr)
 	, self_qc(speedex::Hash())
 	, decided(true)
 	, written_to_disk()
-	//, self_produced(false)
+	, flushed_from_memory(true)
 	{
 		written_to_disk.test_and_set();
 	}
@@ -87,6 +86,14 @@ HotstuffBlock::write_to_disk() {
 	}
 }
 
+void
+HotstuffBlock::flush_from_memory() {
+	if (flushed_from_memory) return;
+	flushed_from_memory = true;
+
+	wire_block.body.clear();
+}
+
 block_ptr_t 
 HotstuffBlock::mint_block(xdr::opaque_vec<>&& body, QuorumCertificateWire const& qc_wire, speedex::Hash const& parent_hash, ReplicaID self_id)
 {
@@ -97,8 +104,6 @@ HotstuffBlock::mint_block(xdr::opaque_vec<>&& body, QuorumCertificateWire const&
 	wire_block.body = std::move(body);
 
 	auto out = std::make_shared<HotstuffBlock>(std::move(wire_block), self_id);
-
-	//out -> set_self_produced();
 
 	return out;
 }

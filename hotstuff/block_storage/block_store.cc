@@ -53,6 +53,7 @@ BlockStore::insert_block(block_ptr_t block)
 	block -> set_justify(justify_it -> second.block);
 
 	block_cache.emplace(block -> get_hash(), BlockContext{.block = block});
+	gc_collector.add_block(block);
 	return missing_dependencies;
 }
 
@@ -69,6 +70,12 @@ BlockStore::get_block(const Hash& block_hash)
 
 	return it -> second.block;
 }
+
+void 
+BlockStore::prune_below_height(const uint64_t prune_height) {
+	gc_collector.invoke_gc(prune_height);	
+}
+
 
 
 

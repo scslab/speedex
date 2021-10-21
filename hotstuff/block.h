@@ -33,9 +33,6 @@ class HotstuffBlock {
 
 	ReplicaID proposer;  //0 (starting proposer) for genesis block
 
-	//delayed parse
-	//std::optional<HeaderDataPair> parsed_block_body;
-
 	//derived from header, with help of block store
 	uint64_t block_height;
 	block_ptr_t parent_block_ptr;
@@ -48,9 +45,8 @@ class HotstuffBlock {
 	bool decided;
 	std::atomic_flag written_to_disk;
 
-	//TODO if you get qc on block that's not self produced, leader knows it was demoted.
-	// State machine recovery to be done in that case.
-	//bool self_produced;
+	// garbage collection
+	bool flushed_from_memory;
 
 public:
 
@@ -77,14 +73,6 @@ public:
 	ReplicaID get_proposer() const {
 		return proposer;
 	}
-
-/*	bool is_self_produced() const {
-		return self_produced;
-	}
-
-	void set_self_produced() {
-		self_produced = true;
-	} */
 
 	uint64_t get_height() const {
 		return block_height;
@@ -161,6 +149,13 @@ public:
 	void set_justify(block_ptr_t justify_block);
 
 	void write_to_disk();
+
+	void flush_from_memory();
+
+	bool
+	is_flushed_from_memory() const {
+		return flushed_from_memory;
+	}
 
 	static block_ptr_t 
 	mint_block(xdr::opaque_vec<>&& body, QuorumCertificateWire const& qc_wire, speedex::Hash const& parent_hash, ReplicaID proposer);

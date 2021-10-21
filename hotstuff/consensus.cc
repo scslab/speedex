@@ -88,9 +88,9 @@ HotstuffCore::update(const block_ptr_t& nblk) {
         apply_block(blk);
 
         notify_vm_of_commitment(blk);
-
     }
     b_exec = blk;
+    notify_ok_to_prune_blocks(b_exec -> get_height());
 }
 
 void HotstuffCore::on_receive_vote(const PartialCertificate& partial_cert, block_ptr_t certified_block, ReplicaID voterid) {
@@ -108,7 +108,6 @@ void HotstuffCore::on_receive_vote(const PartialCertificate& partial_cert, block
     	update_hqc(certified_block, self_qc);
 
     	on_new_qc(certified_block -> get_hash());
-    	//callback here to pacemaker
     }
 }
 

@@ -33,12 +33,16 @@ class HotstuffAppBase : public HotstuffCore {
 	std::condition_variable qc_wait_cv;
 	std::optional<speedex::Hash> latest_new_qc;
 	bool cancel_wait;
+
+	void notify_ok_to_prune_blocks(uint64_t committed_hotstuff_height) override final;
+
 	
 protected:
 
 	virtual xdr::opaque_vec<> get_next_vm_block(bool nonempty_proposal, uint64_t hotstuff_height) = 0;
 
 	void on_new_qc(speedex::Hash const& hash) override final;
+
 
 public:
 

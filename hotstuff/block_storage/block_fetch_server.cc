@@ -15,7 +15,9 @@ BlockFetchHandler::fetch(std::unique_ptr<BlockFetchRequest> req)
 	{
 		auto resp_block = block_store.get_block(hash);
 		if (resp_block) {
-			response->responses.push_back(resp_block->to_wire());
+			if (!(resp_block -> is_flushed_from_memory())) {
+				response->responses.push_back(resp_block->to_wire());
+			}
 		}
 	}
 	return response;

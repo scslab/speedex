@@ -95,6 +95,8 @@ protected:
 	virtual void notify_vm_of_commitment(block_ptr_t blk) = 0;
 
 	virtual void notify_vm_of_qc_on_nonself_block(block_ptr_t b_other) = 0;
+
+	virtual void notify_ok_to_prune_blocks(uint64_t committed_hotstuff_height) = 0;
 };
 
 
