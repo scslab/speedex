@@ -12,13 +12,14 @@ for arg in sys.argv:
 		make_flags = arguments.split(" ")
 		to_remove.append(arg)
 		maxjobs = 12
-		newflagcnt = 0
 		for flag in make_flags:
 			if "-j" in flag and "-jobserver" not in flag:
-				newflagcnt += 1
-				sys.argv.append(flag)
-		if (newflagcnt == 1):
-			sys.argv.append(maxjobs)
+				if (len(flag) > 2):
+					sys.argv.append(flag)
+				else:
+					sys.argv.append(flag + str(maxjobs))
+
+print (sys.argv)
 
 for arg in to_remove:
 	sys.argv.remove(arg)
