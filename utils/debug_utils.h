@@ -3,6 +3,8 @@
 Miscellaneous debug utility functions.
 */
 
+#include "xdr/types.h"
+
 #include <sstream>
 #include <iomanip>
 
@@ -15,6 +17,11 @@ static std::string array_to_str(const unsigned char* array, const int len) {
 		s<< std::setw(2) << std::hex << (unsigned short)array[i];
 	}
 	return s.str();
+}
+
+[[maybe_unused]]
+static std::string hash_to_str(const speedex::Hash& hash) {
+	return array_to_str(hash.data(), hash.size());
 }
 
 } /* debug */

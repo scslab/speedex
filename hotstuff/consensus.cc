@@ -1,5 +1,8 @@
 #include "hotstuff/consensus.h"
 
+#include "hotstuff/hotstuff_debug_macros.h"
+#include "utils/debug_utils.h"
+
 namespace hotstuff {
 
 
@@ -79,7 +82,7 @@ HotstuffCore::update(const block_ptr_t& nblk) {
         commit_queue.push_back(b);
     }
     if (b != b_exec)
-        throw std::runtime_error("safety breached :( ");
+        throw std::runtime_error("safety breached");
     for (auto it = commit_queue.rbegin(); it != commit_queue.rend(); it++)
     {
         block_ptr_t blk = *it;
@@ -95,6 +98,8 @@ HotstuffCore::update(const block_ptr_t& nblk) {
 
 void HotstuffCore::on_receive_vote(const PartialCertificate& partial_cert, block_ptr_t certified_block, ReplicaID voterid) {
 
+	HSC_INFO("recv vote on %s", debug::hash_to_str(certified_block -> get_hash()).c_str());
+
     auto& self_qc = certified_block -> get_self_qc();
 
     bool had_quorum_before = self_qc.has_quorum(config);
@@ -105,6 +110,7 @@ void HotstuffCore::on_receive_vote(const PartialCertificate& partial_cert, block
 
     if (has_quorum_after && !had_quorum_before)
     {
+    	HSC_INFO("got new quorum on %s", debug::hash_to_str(certified_block -> get_hash()).c_str());
     	update_hqc(certified_block, self_qc);
 
     	on_new_qc(certified_block -> get_hash());
@@ -117,7 +123,6 @@ void HotstuffCore::on_receive_vote(const PartialCertificate& partial_cert, block
 void
 HotstuffCore::on_receive_proposal(block_ptr_t bnew, ReplicaID proposer)
 {
-
 	bool opinion = false;
 	if (bnew -> get_height() > vheight)
 	{
@@ -130,14 +135,16 @@ HotstuffCore::on_receive_proposal(block_ptr_t bnew, ReplicaID proposer)
 		{
 			block_ptr_t b;
 			uint64_t b_lock_height = b_lock -> get_height();
-			for (b = bnew; b->get_height() > b_lock_height; b = b -> get_parent())
-			{
-				if (b == b_lock) {
-					opinion = true;
-				}
+			for (b = bnew; b->get_height() > b_lock_height; b = b -> get_parent());
+			
+			if (b == b_lock) {
+				opinion = true;
 			}
+			
 		}
 	}
+	
+	HSC_INFO("recv proposal from %u at height %lu, opinion %d", proposer, bnew->get_height(), opinion);
 
 	if (opinion)
 	{

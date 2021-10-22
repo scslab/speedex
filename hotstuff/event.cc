@@ -2,6 +2,8 @@
 
 #include "hotstuff/consensus.h"
 
+#include "hotstuff/hotstuff_debug_macros.h"
+
 namespace hotstuff {
 
 
@@ -42,6 +44,7 @@ bool
 ProposalEvent::validate(const ReplicaConfig& config) const {
 	if (block -> get_height() == 0) {
 		// has not been entered into block storage yet
+		EVENT_INFO("proposal event validation fail");
 		return false;
 	}
 

@@ -37,7 +37,7 @@ public:
 
 	xdr::opaque_vec<> make_empty_proposal(uint64_t proposal_height) {
 		auto lock = speculation_map.lock();
-		VM_BRIDGE_INFO("make empty proposal at height %lu", proposal_height);
+		VM_BRIDGE_INFO("made empty proposal at height %lu", proposal_height);
 		speculation_map.add_height_pair(proposal_height, VMType::empty_block_id());
 		return xdr::opaque_vec<>();
 	}
@@ -52,7 +52,7 @@ public:
 			speculation_map.add_height_pair(proposal_height, VMType::empty_block_id());
 			return xdr::opaque_vec<>();
 		}
-		VM_BRIDGE_INFO("make nonempty proposal at height %lu", proposal_height);
+		VM_BRIDGE_INFO("made nonempty proposal at height %lu", proposal_height);
 		speculation_map.add_height_pair(proposal_height, VMType::nonempty_block_id(*proposal));
 		return xdr::xdr_to_opaque(*proposal);
 	}
