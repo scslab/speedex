@@ -2,4 +2,4 @@ num_replicas: 1
 
 replica_0:
   sk_seed: 1
-  hostname: "10.0.0.1"
+  hostname: "10.10.1.1"
