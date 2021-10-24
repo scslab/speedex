@@ -20,7 +20,9 @@ HotstuffAppBase::HotstuffAppBase(const ReplicaConfig& config_, ReplicaID self_id
 	, qc_wait_cv()
 	, latest_new_qc(std::nullopt)
 	, cancel_wait(false)
-	{}
+	{
+		block_fetch_manager.init_configs(config);
+	}
 
 void
 HotstuffAppBase::do_vote(block_ptr_t block, ReplicaID proposer) 
