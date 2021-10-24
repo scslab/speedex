@@ -61,8 +61,9 @@ class HotstuffApp : public HotstuffAppBase {
 
 	HotstuffVMBridge<VMType> vm_bridge;
 
-	xdr::opaque_vec<> get_next_vm_block(bool nonempty_proposal, uint64_t hotstuff_height) override final {
-		if (nonempty_proposal) {
+	xdr::opaque_vec<> 
+	get_next_vm_block(bool nonempty_proposal, uint64_t hotstuff_height) override final {
+		if (!nonempty_proposal) {
 			return vm_bridge.make_empty_proposal(hotstuff_height);
 		}
 		return vm_bridge.get_and_apply_next_proposal(hotstuff_height);

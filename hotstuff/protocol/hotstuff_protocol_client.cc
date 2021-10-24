@@ -42,6 +42,7 @@ void HotstuffProtocolClient::do_work(std::vector<msg_t> const& todo)
 				success = true;
 			} catch(...) {
 				HOTSTUFF_INFO("error when sending nonblocking rpc");
+				clear_connection();
 			}
 
 			if (!success) {

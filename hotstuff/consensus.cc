@@ -151,6 +151,8 @@ HotstuffCore::on_receive_proposal(block_ptr_t bnew, ReplicaID proposer)
 		vheight = bnew -> get_height();
 		do_vote(bnew, proposer);
 	}
+
+	update(bnew);
 }
 
 } /* hotstuff */

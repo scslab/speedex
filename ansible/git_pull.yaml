@@ -3,4 +3,4 @@
   hosts: all
   tasks:
           - name: git pull
-            shell: "cd ~/xfs/speedex && git pull"
+            shell: "cd ~/xfs/speedex && git config core.fileMode false && git pull"
