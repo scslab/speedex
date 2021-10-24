@@ -67,6 +67,7 @@ public:
 	proposal_buffer_t get_proposal();
 	void submit_block_for_exec(submission_t submission);
 	void log_commitment(typename VMType::block_id block_id);
+	void finish_work_and_force_rewind();
 };
 
 template<typename VMType>
