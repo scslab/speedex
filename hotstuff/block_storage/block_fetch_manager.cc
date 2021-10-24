@@ -63,19 +63,23 @@ BlockFetchManager::add_replica(ReplicaInfo const& info) {
 void
 BlockFetchManager::add_fetch_request(speedex::Hash const& requested_block, ReplicaID request_target, std::vector<NetEvent> const& dependent_events)
 {
+	if (config.is_valid_replica(request_target)) {
+		return;
+	}
+
 	auto it = outstanding_reqs.find(requested_block);
 	
 	request_ctx_ptr ctx;
 
 	if (it == outstanding_reqs.end()) {
-		auto ctx = std::make_shared<RequestContext>(requested_block);
+		ctx = std::make_shared<RequestContext>(requested_block);
 		outstanding_reqs.emplace(requested_block, ctx);
 	} else {
 		ctx = it -> second;
 	}
 
 	if (!ctx -> was_requested_from(request_target)) {
-		queues[request_target]->add_request(ctx);
+		queues.at(request_target)->add_request(ctx);
 	}
 
 	ctx -> add_network_events(dependent_events);

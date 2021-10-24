@@ -87,13 +87,23 @@ class BlockFetchManager {
 
 	BlockStore& block_store;
 
+	const ReplicaConfig& config;
+
+	void add_replica(ReplicaInfo const& info);
+
 public:
 
-	BlockFetchManager(BlockStore& block_store)
+	BlockFetchManager(BlockStore& block_store, const ReplicaConfig& config)
 		: queues()
 		, outstanding_reqs()
 		, block_store(block_store)
-		{}
+		, config(config)
+		{
+			auto reps = config.list_info();
+			for (auto& replica : reps) {
+				add_replica(replica);
+			}
+		}
 
 	// add_fetch_request and deliver_block are ONLY called by
 	// the network event queue processor thread.  
@@ -103,8 +113,6 @@ public:
 		speedex::Hash const& requested_block, 
 		ReplicaID request_target, 
 		std::vector<NetEvent> const& dependent_events);
-
-	void add_replica(ReplicaInfo const& info);
 
 	//returns network events to execute
 	std::vector<NetEvent> deliver_block(block_ptr_t blk);

@@ -9,7 +9,7 @@ using xdr::operator==;
 HotstuffAppBase::HotstuffAppBase(const ReplicaConfig& config_, ReplicaID self_id, speedex::SecretKey sk)
 	: HotstuffCore(config_, self_id)
 	, block_store(get_genesis())
-	, block_fetch_manager(block_store)
+	, block_fetch_manager(block_store, config)
 	, block_fetch_server(block_store)
 	, event_queue(*this)
 	, network_event_queue(event_queue, block_fetch_manager, block_store, config)
