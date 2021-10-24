@@ -38,16 +38,17 @@ RequestContext::add_network_events(std::vector<NetEvent> events)
 void
 ReplicaFetchQueue::do_gc() {
 
-	for (auto it = outstanding_reqs.before_begin(); it != outstanding_reqs.end();)
-	{
-		if ((*it) -> is_received())
+	for (auto i = 0u; i < outstanding_reqs.size();) {
+
+		auto& req = outstanding_reqs[i];
+		if (req -> is_received())
 		{
-			it = outstanding_reqs.erase_after(it);
-			num_reqs--;
+			req = outstanding_reqs.back();
+			outstanding_reqs.pop_back();
 		} 
 		else
 		{
-			it++;
+			i++;
 		}
 	}
 }
@@ -55,10 +56,9 @@ ReplicaFetchQueue::do_gc() {
 void 
 ReplicaFetchQueue::add_request(request_ctx_ptr req) {
 	std::lock_guard lock(mtx);
-	outstanding_reqs.insert_after(outstanding_reqs.before_begin(), req);
+	outstanding_reqs.push_back(req);
 	worker.add_request(req -> get_requested_hash());
-	num_reqs++;
-	if (num_reqs > GC_FREQ) {
+	if (outstanding_reqs.size() > GC_FREQ) {
 		do_gc();
 	}
 }
@@ -73,7 +73,7 @@ BlockFetchManager::add_replica(ReplicaInfo const& info, NetworkEventQueue& net_q
 void
 BlockFetchManager::add_fetch_request(speedex::Hash const& requested_block, ReplicaID request_target, std::vector<NetEvent> const& dependent_events)
 {
-	if (config.is_valid_replica(request_target)) {
+	if (!config.is_valid_replica(request_target)) {
 		return;
 	}
 

@@ -9,7 +9,6 @@
 #include "xdr/hotstuff.h"
 
 #include <atomic>
-#include <forward_list>
 #include <map>
 #include <mutex>
 #include <unordered_map>
@@ -65,8 +64,7 @@ class ReplicaFetchQueue {
 
 	const ReplicaInfo info;
 
-	std::forward_list<request_ctx_ptr> outstanding_reqs;
-	size_t num_reqs;
+	std::vector<request_ctx_ptr> outstanding_reqs;
 
 	BlockFetchWorker worker;
 
@@ -80,7 +78,6 @@ public:
 		: mtx()
 		, info(info)
 		, outstanding_reqs()
-		, num_reqs(0)
 		, worker(info, net_queue)
 		{}
 

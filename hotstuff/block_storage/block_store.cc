@@ -33,7 +33,7 @@ BlockStore::insert_block(block_ptr_t block)
 	auto parent_it = block_cache.find(parent);
 	
 	if (parent_it == block_cache.end()) {
-		HOTSTUFF_INFO("failed to find parent for %s", debug::array_to_str(parent.data(), parent.size()));
+		HOTSTUFF_INFO("failed to find parent for %s", debug::array_to_str(parent.data(), parent.size()).c_str());
 		missing_dependencies.parent_hash = parent;
 	}
 
@@ -41,7 +41,7 @@ BlockStore::insert_block(block_ptr_t block)
 	auto justify_it = block_cache.find(justify_hash);
 
 	if (justify_it == block_cache.end()) {
-		HOTSTUFF_INFO("failed to find justify for %s", debug::array_to_str(justify_hash.data(), justify_hash.size()));
+		HOTSTUFF_INFO("failed to find justify for %s", debug::array_to_str(justify_hash.data(), justify_hash.size()).c_str());
 		missing_dependencies.justify_hash = justify_hash;
 	}
 

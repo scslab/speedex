@@ -61,7 +61,7 @@ BlockFetchWorker::run() {
 
 		std::unique_ptr<BlockFetchResponse> res = nullptr;
 		try {
-			std::unique_ptr<BlockFetchResponse> res = client->fetch(req);
+			res = client->fetch(req);
 		} catch(...) {
 			readd_request(req);
 			res = nullptr;
@@ -73,7 +73,9 @@ BlockFetchWorker::run() {
 		{
 			network_event_queue.validate_and_add_event(
 				NetEvent(
-					BlockReceiveNetEvent(std::make_shared<HotstuffBlock>(std::move(response), info.id), info.id)));
+					BlockReceiveNetEvent(
+						std::make_shared<HotstuffBlock>(
+							std::move(response), info.id), info.id)));
 		}
 	}
 }
