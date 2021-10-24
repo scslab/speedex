@@ -11,6 +11,8 @@
 
 #include <xdrpp/srpc.h>
 
+#include <set>
+
 namespace hotstuff {
 
 class NetworkEventQueue;
@@ -28,13 +30,7 @@ class BlockFetchWorker : public NonblockingRpcClient<xdr::srpc_client<FetchBlock
 
 	using client_t = xdr::srpc_client<FetchBlocksV1>;
 
-
-	//xdr::unique_sock socket;
-	//std::unique_ptr<client_t> fetch_client;
-
-	xdr::xvector<speedex::Hash> reqs;
-
-	//ReplicaInfo info;
+	std::set<speedex::Hash> reqs;
 
 	NetworkEventQueue& network_event_queue;
 
@@ -44,16 +40,11 @@ class BlockFetchWorker : public NonblockingRpcClient<xdr::srpc_client<FetchBlock
 
 	void readd_request(BlockFetchRequest const& req);
 
-	/*void wait_for_try_open_connection();
-
-	void open_connection();
-	void try_open_connection();
-	bool connection_is_open();
-	void clear_connection();*/
-
 	const char* get_service() const override final {
 		return HOTSTUFF_BLOCK_FETCH_PORT;
 	}
+
+	xdr::xvector<speedex::Hash> extract_reqs();
 
 
 public:
@@ -61,9 +52,6 @@ public:
 	BlockFetchWorker(const ReplicaInfo& info, NetworkEventQueue& network_event_queue);
 
 	void add_request(speedex::Hash const& request);
-
-	// wakes requester thread, if sleeping.  Sends any pending request.
-	//void send_requests();
 
 };
 

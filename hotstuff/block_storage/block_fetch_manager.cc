@@ -2,6 +2,8 @@
 
 #include "hotstuff/block_storage/block_store.h"
 
+#include "hotstuff/network_event_queue.h"
+
 #include "utils/debug_macros.h"
 
 namespace hotstuff {
@@ -33,30 +35,38 @@ RequestContext::add_network_events(std::vector<NetEvent> events)
 		events.end());
 }
 
-std::vector<speedex::Hash> 
-ReplicaFetchQueue::get_next_reqs() {
-	std::lock_guard lock(mtx);
-
-	std::vector<speedex::Hash> out;
+void
+ReplicaFetchQueue::do_gc() {
 
 	for (auto it = outstanding_reqs.before_begin(); it != outstanding_reqs.end();)
 	{
 		if ((*it) -> is_received())
 		{
 			it = outstanding_reqs.erase_after(it);
+			num_reqs--;
 		} 
 		else
 		{
-			out.push_back((*it) -> get_requested_hash());
+			it++;
 		}
 	}
-	return out;
+}
+
+void 
+ReplicaFetchQueue::add_request(request_ctx_ptr req) {
+	std::lock_guard lock(mtx);
+	outstanding_reqs.insert_after(outstanding_reqs.before_begin(), req);
+	worker.add_request(req -> get_requested_hash());
+	num_reqs++;
+	if (num_reqs > GC_FREQ) {
+		do_gc();
+	}
 }
 
 
 void
-BlockFetchManager::add_replica(ReplicaInfo const& info) {
-	queues.emplace(info.id, std::make_unique<ReplicaFetchQueue>(info));
+BlockFetchManager::add_replica(ReplicaInfo const& info, NetworkEventQueue& net_queue) {
+	queues.emplace(info.id, std::make_unique<ReplicaFetchQueue>(info, net_queue));
 }
 
 

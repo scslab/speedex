@@ -4,6 +4,8 @@
 #include "hotstuff/network_event.h"
 #include "hotstuff/replica_config.h"
 
+#include "hotstuff/block_storage/block_fetch_worker.h"
+
 #include "xdr/hotstuff.h"
 
 #include <atomic>
@@ -54,6 +56,8 @@ public:
 
 typedef std::shared_ptr<RequestContext> request_ctx_ptr;
 
+class NetworkEventQueue;
+
 class ReplicaFetchQueue {
 
 	// CAS on an iterator (ptr to iterator) could eliminate this mtx.
@@ -62,22 +66,26 @@ class ReplicaFetchQueue {
 	const ReplicaInfo info;
 
 	std::forward_list<request_ctx_ptr> outstanding_reqs;
+	size_t num_reqs;
 
+	BlockFetchWorker worker;
+
+	void do_gc();
+
+	constexpr static size_t GC_FREQ = 10;
 
 public:
 
-	ReplicaFetchQueue(const ReplicaInfo& info)
+	ReplicaFetchQueue(const ReplicaInfo& info, NetworkEventQueue& net_queue)
 		: mtx()
 		, info(info)
 		, outstanding_reqs()
+		, num_reqs(0)
+		, worker(info, net_queue)
 		{}
 
-	std::vector<speedex::Hash> get_next_reqs();
 
-	void add_request(request_ctx_ptr req) {
-		std::lock_guard lock(mtx);
-		outstanding_reqs.insert_after(outstanding_reqs.before_begin(), req);
-	}
+	void add_request(request_ctx_ptr req);
 };
 
 class BlockFetchManager {
@@ -89,7 +97,7 @@ class BlockFetchManager {
 
 	const ReplicaConfig& config;
 
-	void add_replica(ReplicaInfo const& info);
+	void add_replica(ReplicaInfo const& info, NetworkEventQueue& net_queue);
 
 public:
 
@@ -98,12 +106,15 @@ public:
 		, outstanding_reqs()
 		, block_store(block_store)
 		, config(config)
-		{
+		{}
+
+	void init_configs(NetworkEventQueue& net_queue)
+	{
 			auto reps = config.list_info();
 			for (auto& replica : reps) {
-				add_replica(replica);
+				add_replica(replica, net_queue);
 			}
-		}
+	}
 
 	// add_fetch_request and deliver_block are ONLY called by
 	// the network event queue processor thread.  
