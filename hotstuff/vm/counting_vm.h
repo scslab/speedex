@@ -47,6 +47,8 @@ public:
 	void exec_block(const block_type& blk);
 
 	void log_commitment(const block_id& id);
+
+	void rewind_to_last_commit();
 };
 
 } /* hotstuff */

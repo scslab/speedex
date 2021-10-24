@@ -71,11 +71,16 @@ BlockFetchWorker::run() {
 
 		for (auto& response : res->responses)
 		{
+			auto blk = std::make_shared<HotstuffBlock>(std::move(response), info.id);
+
+			if (blk -> validate_hash()) {
+
+			}
+
 			network_event_queue.validate_and_add_event(
 				NetEvent(
 					BlockReceiveNetEvent(
-						std::make_shared<HotstuffBlock>(
-							std::move(response), info.id), info.id)));
+						blk, info.id)));
 		}
 	}
 }

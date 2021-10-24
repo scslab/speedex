@@ -74,6 +74,7 @@ public:
 			}
 
 			revert_to_last_commitment();
+			vm_interface.finish_work_and_force_rewind();
 		}
 
 		speculation_map.add_height_pair(blk -> get_height(), blk_id);

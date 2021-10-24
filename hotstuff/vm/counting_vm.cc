@@ -18,7 +18,6 @@ CountingVMBlockID::operator<=>(const CountingVMBlockID& other) const {
 
 void 
 CountingVM::exec_block(const block_type& blk) {
-	state = last_committed_state;
 	if (blk == state + 1) {
 		state ++;
 		HOTSTUFF_INFO("VM: applied update, now at %lu", state);
@@ -33,6 +32,12 @@ CountingVM::log_commitment(const block_id& id) {
 		last_committed_state = *(id.value);
 		HOTSTUFF_INFO("VM: confirmed up to %lu", last_committed_state);
 	}
+}
+
+void
+CountingVM::rewind_to_last_commit() {
+	HOTSTUFF_INFO("VM: rewind to %lu", last_committed_state);
+	state = last_committed_state;
 }
 
 } /* hotstuff */

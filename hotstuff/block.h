@@ -45,6 +45,10 @@ class HotstuffBlock {
 	bool decided;
 	std::atomic_flag written_to_disk;
 
+	//caching hash of body == header.body_hash
+	mutable bool hash_checked;
+	mutable bool hash_valid;
+
 	// garbage collection
 	bool flushed_from_memory;
 
@@ -79,6 +83,8 @@ public:
 	}
 
 	bool supports_nonempty_child_proposal(const ReplicaID self_id, int depth = 3) const;
+
+	bool validate_hash() const;
 
 	/*
 	 * Checks that the block passes basic Hotstuff validity checks.

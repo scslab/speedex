@@ -194,5 +194,12 @@ VMControlInterface<VMType>::run() {
 	}
 }
 
+template<typename VMType>
+void
+VMControlInterface<VMType>::finish_work_and_force_rewind() {
+	wait_for_async_task();
+	vm_instance -> rewind_to_last_commit();
+}
+
 
 } /* hotstuff */

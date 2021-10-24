@@ -15,6 +15,8 @@ HotstuffBlock::HotstuffBlock(HotstuffBlockWire&& _wire_block, ReplicaID proposer
 	, self_qc(speedex::hash_xdr(wire_block.header))
 	, decided(false)
 	, written_to_disk()
+	, hash_checked(false)
+	, hash_valid(false)
 	, flushed_from_memory(false)
 	{}
 
@@ -28,6 +30,8 @@ HotstuffBlock::HotstuffBlock()
 	, self_qc(speedex::Hash())
 	, decided(true)
 	, written_to_disk()
+	, hash_checked(true)
+	, hash_valid(true)
 	, flushed_from_memory(true)
 	{
 		written_to_disk.test_and_set();
@@ -61,11 +65,23 @@ HotstuffBlock::supports_nonempty_child_proposal(const ReplicaID self_id, int dep
 	return parent_block_ptr -> supports_nonempty_child_proposal(self_id, depth - 1);
 }
 
-bool 
-HotstuffBlock::validate_hotstuff(const ReplicaConfig& config) const {
+bool
+HotstuffBlock::validate_hash() const {
+	if (hash_checked) return hash_valid;
 	auto hash = speedex::hash_xdr(wire_block.body);
+	hash_checked = true;
 	if (hash != wire_block.header.body_hash) {
 		HOTSTUFF_INFO("mismatch between hash(wire_block.body) and wire_block.body_hash");
+		hash_valid = false;
+		return false;
+	}
+	hash_valid = true;
+	return true;
+}
+
+bool 
+HotstuffBlock::validate_hotstuff(const ReplicaConfig& config) const {
+	if  (!validate_hash()) {
 		return false;
 	}
 
