@@ -21,7 +21,7 @@ HotstuffAppBase::HotstuffAppBase(const ReplicaConfig& config_, ReplicaID self_id
 	, latest_new_qc(std::nullopt)
 	, cancel_wait(false)
 	{
-		block_fetch_manager.init_configs(config);
+		block_fetch_manager.init_configs(network_event_queue);
 	}
 
 void
