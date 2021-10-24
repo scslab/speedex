@@ -46,10 +46,6 @@ class SpeculativeExecGadget {
 
 	uint64_t highest_committed_height;
 
-	bool empty() const {
-		return last_elt_iter == height_map.end();
-	}
-
 public:
 
 	SpeculativeExecGadget()
@@ -75,6 +71,10 @@ public:
 			throw std::runtime_error("can't access from empty list!");
 		}
 		return *height_map.begin();
+	}
+
+	bool empty() const {
+		return last_elt_iter == height_map.end();
 	}
 };
 

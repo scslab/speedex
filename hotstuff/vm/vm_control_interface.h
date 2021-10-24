@@ -171,9 +171,13 @@ VMControlInterface<VMType>::run() {
 
 			lock.unlock();
 
-			// exec_block is responsible for reverting any speculative state
-			// left over from calls to propose()
-			vm_instance -> exec_block(*block_to_validate);
+			//block_to_validate is nullptr iff parsing failed.
+			//In this case, vm doesn't do anything.
+			if (block_to_validate) {
+				// exec_block is responsible for reverting any speculative state
+				// left over from calls to propose()
+				vm_instance -> exec_block(*block_to_validate);
+			}
 		} else if (highest_committed_id) {
 			vm_instance -> log_commitment(*highest_committed_id);
 			highest_committed_id = std::nullopt;

@@ -9,6 +9,19 @@
 
 namespace hotstuff {
 
+std::string storage_folder = "hotstuff_produced_blocks/";
+
+void
+clear_block_folder() {
+	//TODO
+}
+
+void
+make_block_folder() {
+	speedex::mkdir_safe(storage_folder.c_str());
+}
+
+
 std::string array_to_str(speedex::Hash const& hash) {
 	std::stringstream s;
 	s.fill('0');
@@ -33,7 +46,7 @@ block_filename(const speedex::Hash& header_hash)
 {
 	auto strname = array_to_str(header_hash);
 
-	return std::string("TODOblock_storage/") + strname + std::string(".block");
+	return storage_folder + strname + std::string(".block");
 }
 
 void save_block(const HotstuffBlockWire& block) {

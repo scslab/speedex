@@ -15,4 +15,8 @@ void save_block(const HotstuffBlockWire& block);
 std::optional<HotstuffBlockWire>
 load_block(const speedex::Hash& req_header_hash);
 
+void make_block_folder();
+
+void clear_block_folder();
+
 } /* hotstuff */

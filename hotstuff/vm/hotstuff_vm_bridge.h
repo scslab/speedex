@@ -60,17 +60,21 @@ public:
 	void apply_block(block_ptr_t blk) {
 
 		auto lock = speculation_map.lock();
-
-		auto const& [lowest_speculative_exec_hs_height, speculative_block_id] = speculation_map.get_lowest_speculative_hotstuff_height();
-
+		
 		auto blk_value = blk -> template try_vm_parse<vm_block_type>();
 		auto blk_id = get_block_id(blk_value);
 
-		if (blk_id == speculative_block_id) {
-			return;
-		}
+		if (!speculation_map.empty()) {
 
-		revert_to_last_commitment();
+			auto const& [lowest_speculative_exec_hs_height, speculative_block_id] = speculation_map.get_lowest_speculative_hotstuff_height();
+
+
+			if (blk_id == speculative_block_id) {
+				return;
+			}
+
+			revert_to_last_commitment();
+		}
 
 		speculation_map.add_height_pair(blk -> get_height(), blk_id);
 

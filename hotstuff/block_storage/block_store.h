@@ -5,6 +5,7 @@
 
 #include "hotstuff/block.h"
 #include "hotstuff/block_storage/garbage_collector.h"
+#include "hotstuff/block_storage/io_utils.h"
 
 #include <map>
 #include <mutex>
@@ -34,6 +35,7 @@ public:
 		, gc_collector()
 		{
 			block_cache.emplace(genesis_block->get_hash(), genesis_block);
+			make_block_folder();
 		}
 
 	// Call before committing to any block (and executing it).
