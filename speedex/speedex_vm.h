@@ -90,6 +90,8 @@ public:
 	~SpeedexVM() {
 		write_measurements();
 	}
+
+	void rewind_to_last_commit();
 };
 
 } /* speedex */

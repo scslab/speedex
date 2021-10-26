@@ -80,7 +80,8 @@ SpeedexVM::exec_block(const block_type& blk) {
 	std::lock_guard lock2(confirmation_mtx);
 
 	if (last_committed_block.block.blockNumber + 1 != blk.hashedBlock.block.blockNumber) {
-		rewind_structs_to_committed_height();
+		BLOCK_INFO("incorrect block height appended to speedex vm chain -- no-op")
+		return;
 	}
 
 	auto const& new_header = blk.hashedBlock;
@@ -290,7 +291,11 @@ SpeedexVM::write_measurements() {
 		out.block_results.size());
 }
 
-
-
+void 
+SpeedexVM::rewind_to_last_commit() {
+	std::lock_guard lock(operation_mtx);
+	std::lock_guard lock2(confirmation_mtx);
+	rewind_structs_to_committed_height();
+}
 
 } /* speedex */
