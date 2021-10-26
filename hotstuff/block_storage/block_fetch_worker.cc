@@ -59,15 +59,14 @@ BlockFetchWorker::run() {
 		}
 		wait_for_try_open_connection();
 
-		std::unique_ptr<BlockFetchResponse> res = nullptr;
-		try {
-			res = client->fetch(req);
-		} catch(...) {
+		std::unique_ptr<BlockFetchResponse> res = try_action<BlockFetchResponse>(
+			[this, &req] {
+				return client -> fetch(req);
+			});
+		if (res == nullptr) {
 			readd_request(req);
-			res = nullptr;
-			clear_connection();
+			continue;
 		}
-		if (res == nullptr) continue;
 
 		for (auto& response : res->responses)
 		{

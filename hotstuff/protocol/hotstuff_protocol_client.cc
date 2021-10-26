@@ -27,9 +27,10 @@ void HotstuffProtocolClient::do_work(std::vector<msg_t> const& todo)
 	{
 		bool success = false;
 		while (!success) {
-			try {
-				// with ptr types, compiler had trouble getting an invoke_result on std::visit
-				switch(work.index()) {
+
+			success = try_action_void(
+				[this, &work]{
+					switch(work.index()) {
 					case 0: // vote
 						client -> vote(*std::get<0>(work));
 						break;
@@ -39,11 +40,7 @@ void HotstuffProtocolClient::do_work(std::vector<msg_t> const& todo)
 					default:
 						throw std::runtime_error("unknown call type");
 				}
-				success = true;
-			} catch(...) {
-				HOTSTUFF_INFO("error when sending nonblocking rpc");
-				clear_connection();
-			}
+			});
 
 			if (!success) {
 				wait_for_try_open_connection();

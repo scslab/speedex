@@ -39,6 +39,10 @@ protected:
 		, info(info)
 		, client(nullptr)
 		{}
+
+	template<typename ReturnType>
+	std::unique_ptr<ReturnType> try_action(auto lambda);
+	bool try_action_void(auto lambda);
 };
 
 
@@ -101,5 +105,33 @@ NonblockingRpcClient<client_t>::open_connection()
 	client = std::make_unique<client_t>(socket.get());
 }
 
+template<typename client_t>
+template<typename ReturnType>
+std::unique_ptr<ReturnType>
+NonblockingRpcClient<client_t>::try_action(auto lambda)
+{
+	std::unique_ptr<ReturnType> out = nullptr;
+	try {
+		out = lambda();
+	} catch (...) {
+		out = nullptr;
+		clear_connection();
+	}
+	return out;
+}
+
+template<typename client_t>
+bool
+NonblockingRpcClient<client_t>::try_action_void(auto lambda)
+{
+	bool res = true;
+	try {
+		lambda();
+	} catch(...) {
+		res = false;
+		clear_connection();
+	}
+	return res;
+}
 
 } /* hotstuff */
