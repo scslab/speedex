@@ -75,6 +75,8 @@ class SpeedexNode {
 
 	constexpr static size_t MEMPOOL_CHUNK_SIZE = small ? 1'000: 10'000;
 
+	constexpr static size_t MEMPOOL_TARGET_SIZE = 2'000'000;
+
 	TatonnementManagementStructures tatonnement_structs;
 	std::vector<Price> prices;
 	Mempool mempool;
@@ -120,7 +122,7 @@ public:
 	, block_forwarder()
 	, log_merge_worker(management_structures.account_modification_log)
 	, tatonnement_structs(management_structures)
-	, mempool(MEMPOOL_CHUNK_SIZE)
+	, mempool(MEMPOOL_CHUNK_SIZE, MEMPOOL_TARGET_SIZE)
 	, mempool_worker(mempool)
 	, block_producer(management_structures, log_merge_worker)
 	, block_validator(management_structures, log_merge_worker)

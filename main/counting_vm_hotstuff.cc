@@ -1,7 +1,9 @@
+#include "config/replica_config.h"
+
 #include "hotstuff/hotstuff.h"
 #include "hotstuff/liveness.h"
-#include "hotstuff/replica_config.h"
 #include "hotstuff/vm/counting_vm.h"
+
 #include "xdr/hotstuff.h"
 
 #include <optional>
@@ -10,6 +12,7 @@
 #include <libfyaml.h>
 
 using namespace hotstuff;
+using namespace speedex;
 
 using namespace std::chrono_literals;
 

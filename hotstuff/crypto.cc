@@ -23,10 +23,13 @@
 
 namespace hotstuff {
 
-using Hash = speedex::Hash;
-using SecretKey = speedex::SecretKey;
-using PublicKey = speedex::PublicKey;
-using Signature = speedex::Signature;
+using speedex::Hash;
+using speedex::SecretKey;
+using speedex::PublicKey;
+using speedex::Signature;
+using speedex::ReplicaConfig;
+using speedex::ReplicaInfo;
+using speedex::ReplicaID;
 
 using xdr::operator==;
 

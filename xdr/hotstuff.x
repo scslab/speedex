@@ -6,10 +6,8 @@
 
 namespace hotstuff {
 
-typedef speedex::uint32 ReplicaID;
-typedef speedex::uint32 ReplicaIDBitMap;
-
 const MAX_REPLICAS = 32; // max length of bitmap.  More replicas => longer bitmap
+typedef speedex::uint32 ReplicaIDBitMap;
 
 struct PartialCertificateWire {
 	speedex::Hash hash;
@@ -56,12 +54,12 @@ program FetchBlocks {
 
 struct VoteMessage {
 	PartialCertificateWire vote;
-	ReplicaID voter;
+	speedex::ReplicaID voter;
 };
 
 struct ProposeMessage {
 	HotstuffBlockWire proposal;
-	ReplicaID proposer;
+	speedex::ReplicaID proposer;
 };
 
 program HotstuffProtocol {

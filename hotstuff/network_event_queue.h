@@ -1,5 +1,7 @@
 #pragma once
 
+#include "config/replica_config.h"
+
 #include "hotstuff/generic_event_queue.h"
 #include "hotstuff/network_event.h"
 
@@ -15,13 +17,13 @@ class NetworkEventQueue : public GenericEventQueue<NetEvent>
 	BlockFetchManager& block_fetch_manager;
 	BlockStore& block_store;
 
-	ReplicaConfig const& config;
+	speedex::ReplicaConfig const& config;
 
 	void on_event(NetEvent& e) override final;
 
 public:
 
-	NetworkEventQueue(EventQueue& hotstuff_event_queue, BlockFetchManager& block_fetch_manager, BlockStore& block_store, ReplicaConfig const& config);
+	NetworkEventQueue(EventQueue& hotstuff_event_queue, BlockFetchManager& block_fetch_manager, BlockStore& block_store, speedex::ReplicaConfig const& config);
 
 	void validate_and_add_event(NetEvent const& e);
 };

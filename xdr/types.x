@@ -32,6 +32,8 @@ typedef opaque PublicKey[32]; //ed25519 key len is 256 bits
 typedef opaque Hash[32]; // 256 bit hash, i.e. output of sha256
 typedef opaque SecretKey[64]; //ed25519 secret key len is 64 bytes, at least on libsodium
 
+typedef uint32 ReplicaID;
+
 enum OfferType
 {
 	SELL = 0

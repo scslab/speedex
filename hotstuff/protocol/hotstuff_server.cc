@@ -1,9 +1,10 @@
 #include "hotstuff/protocol/hotstuff_server.h"
 
 #include "hotstuff/network_event_queue.h"
-#include "hotstuff/replica_config.h"
 
 namespace hotstuff {
+
+using speedex::ReplicaConfig;
 
 void
 HotstuffProtocolHandler::vote(std::unique_ptr<VoteMessage> v)

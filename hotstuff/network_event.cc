@@ -2,6 +2,9 @@
 
 namespace hotstuff {
 
+using speedex::ReplicaConfig;
+using speedex::ReplicaID;
+
 VoteNetEvent::VoteNetEvent(std::unique_ptr<VoteMessage> v)
 	: cert(std::move(v -> vote))
 	, voter(v -> voter)

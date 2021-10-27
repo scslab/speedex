@@ -1,11 +1,10 @@
 #pragma once
 
-#include "hotstuff/nonblocking_rpc_client.h"
-#include "hotstuff/replica_config.h"
+#include "config/replica_config.h"
 
 #include "rpc/rpcconfig.h"
 
-#include "utils/async_worker.h"
+#include "utils/nonblocking_rpc_client.h"
 
 #include "xdr/hotstuff.h"
 
@@ -18,12 +17,11 @@ namespace hotstuff {
 class NetworkEventQueue;
 
 /*!
-
 	Manages one peer connection.
 
 	Requests a set of blocks, then awaits the response, parses, and validates response (checks sigs).
 */ 
-class BlockFetchWorker : public NonblockingRpcClient<xdr::srpc_client<FetchBlocksV1>> {
+class BlockFetchWorker : public speedex::NonblockingRpcClient<xdr::srpc_client<FetchBlocksV1>> {
 
 	using speedex::AsyncWorker::mtx;
 	using speedex::AsyncWorker::cv;
@@ -49,7 +47,7 @@ class BlockFetchWorker : public NonblockingRpcClient<xdr::srpc_client<FetchBlock
 
 public:
 
-	BlockFetchWorker(const ReplicaInfo& info, NetworkEventQueue& network_event_queue);
+	BlockFetchWorker(const speedex::ReplicaInfo& info, NetworkEventQueue& network_event_queue);
 
 	void add_request(speedex::Hash const& request);
 

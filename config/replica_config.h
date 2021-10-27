@@ -19,7 +19,6 @@
  * limitations under the License.
  */
 
-#include "xdr/hotstuff.h"
 #include "xdr/types.h"
 
 #include <xdrpp/socket.h>
@@ -28,19 +27,19 @@
 
 #include <libfyaml.h>
 
-namespace hotstuff {
+namespace speedex {
 
 struct ReplicaInfo {
 
     ReplicaID id;
     std::string hostname;
-    speedex::PublicKey pk;
+    PublicKey pk;
 
     ReplicaInfo(ReplicaID id)
         : id(id)
         {}
 
-    speedex::SecretKey parse(fy_node* info_yaml);
+    SecretKey parse(fy_node* info_yaml);
 
     xdr::unique_sock tcp_connect(const char* service) const;
 };
@@ -59,11 +58,11 @@ public:
 
     ReplicaConfig();
 
-    speedex::SecretKey parse(fy_document* config_yaml, ReplicaID self_id);
+    SecretKey parse(fy_document* config_yaml, ReplicaID self_id);
 
     const ReplicaInfo& get_info(ReplicaID rid) const;
 
-    const speedex::PublicKey& 
+    const PublicKey& 
     get_publickey(ReplicaID rid) const;
 
     std::vector<ReplicaInfo> list_info() const {

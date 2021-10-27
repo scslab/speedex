@@ -1,9 +1,10 @@
 #pragma once
 
+#include "config/replica_config.h"
+
 #include "hotstuff/block.h"
 #include "hotstuff/crypto.h"
 #include "hotstuff/event.h"
-#include "hotstuff/replica_config.h"
 
 #include "xdr/hotstuff.h"
 
@@ -12,19 +13,19 @@ namespace hotstuff {
 class VoteNetEvent {
 
 	PartialCertificate cert;
-	ReplicaID voter;
+	speedex::ReplicaID voter;
 
 public:
 
 	VoteNetEvent(std::unique_ptr<VoteMessage> v);
 
-	bool validate(const ReplicaConfig& config) const;
+	bool validate(const speedex::ReplicaConfig& config) const;
 
 	speedex::Hash const& get_block_hash() const {
 		return cert.hash;
 	}
 
-	ReplicaID get_voter() const {
+	speedex::ReplicaID get_voter() const {
 		return voter;
 	}
 
@@ -33,19 +34,19 @@ public:
 
 class ProposalNetEvent {
 	block_ptr_t proposed_block;
-	ReplicaID proposer;
+	speedex::ReplicaID proposer;
 
 public:
 
 	ProposalNetEvent(std::unique_ptr<ProposeMessage> p);
 
-	bool validate(const ReplicaConfig& config) const;
+	bool validate(const speedex::ReplicaConfig& config) const;
 
 	speedex::Hash const& get_parent_hash() const {
 		return proposed_block->get_parent_hash();
 	}
 
-	ReplicaID get_proposer() const {
+	speedex::ReplicaID get_proposer() const {
 		return proposer;
 	}
 
@@ -59,11 +60,11 @@ public:
 
 class BlockReceiveNetEvent {
 	block_ptr_t received_block;
-	ReplicaID sender;
+	speedex::ReplicaID sender;
 
 public:
 
-	BlockReceiveNetEvent(block_ptr_t blk, ReplicaID sender)
+	BlockReceiveNetEvent(block_ptr_t blk, speedex::ReplicaID sender)
 		: received_block(blk)
 		, sender(sender)
 		{}
@@ -72,11 +73,11 @@ public:
 		return received_block;
 	}
 
-	ReplicaID get_sender() const {
+	speedex::ReplicaID get_sender() const {
 		return sender;
 	}
 
-	bool validate(const ReplicaConfig& config) const;
+	bool validate(const speedex::ReplicaConfig& config) const;
 };
 
 struct NetEvent {
@@ -87,7 +88,7 @@ struct NetEvent {
 		: net_event(event)
 		{}
 
-	bool validate(const ReplicaConfig& config) const;
+	bool validate(const speedex::ReplicaConfig& config) const;
 };
 
 } /* hotstuff */

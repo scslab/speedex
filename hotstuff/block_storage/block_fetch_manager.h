@@ -1,8 +1,9 @@
 #pragma once
 
+#include "config/replica_config.h"
+
 #include "hotstuff/block.h"
 #include "hotstuff/network_event.h"
-#include "hotstuff/replica_config.h"
 
 #include "hotstuff/block_storage/block_fetch_worker.h"
 
@@ -15,8 +16,6 @@
 #include <vector>
 
 namespace hotstuff {
-
-//using xdr::operator==;
 
 class BlockStore;
 
@@ -48,7 +47,7 @@ public:
 		return request;
 	}
 
-	bool was_requested_from(ReplicaID rid) const {
+	bool was_requested_from(speedex::ReplicaID rid) const {
 		return (requested_from >> rid) & 1;
 	}
 };
@@ -62,7 +61,7 @@ class ReplicaFetchQueue {
 	// CAS on an iterator (ptr to iterator) could eliminate this mtx.
 	std::mutex mtx;
 
-	const ReplicaInfo info;
+	const speedex::ReplicaInfo info;
 
 	std::vector<request_ctx_ptr> outstanding_reqs;
 
@@ -74,7 +73,7 @@ class ReplicaFetchQueue {
 
 public:
 
-	ReplicaFetchQueue(const ReplicaInfo& info, NetworkEventQueue& net_queue)
+	ReplicaFetchQueue(const speedex::ReplicaInfo& info, NetworkEventQueue& net_queue)
 		: mtx()
 		, info(info)
 		, outstanding_reqs()
@@ -87,18 +86,18 @@ public:
 
 class BlockFetchManager {
 
-	std::unordered_map<ReplicaID, std::unique_ptr<ReplicaFetchQueue>> queues;
+	std::unordered_map<speedex::ReplicaID, std::unique_ptr<ReplicaFetchQueue>> queues;
 	std::map<speedex::Hash, request_ctx_ptr> outstanding_reqs;
 
 	BlockStore& block_store;
 
-	const ReplicaConfig& config;
+	const speedex::ReplicaConfig& config;
 
-	void add_replica(ReplicaInfo const& info, NetworkEventQueue& net_queue);
+	void add_replica(speedex::ReplicaInfo const& info, NetworkEventQueue& net_queue);
 
 public:
 
-	BlockFetchManager(BlockStore& block_store, const ReplicaConfig& config)
+	BlockFetchManager(BlockStore& block_store, const speedex::ReplicaConfig& config)
 		: queues()
 		, outstanding_reqs()
 		, block_store(block_store)
@@ -119,7 +118,7 @@ public:
 	void
 	add_fetch_request(
 		speedex::Hash const& requested_block, 
-		ReplicaID request_target, 
+		speedex::ReplicaID request_target, 
 		std::vector<NetEvent> const& dependent_events);
 
 	//returns network events to execute

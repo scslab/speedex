@@ -38,19 +38,53 @@ MempoolChunk::filter(MempoolTransactionFilter const& filter) {
 	return num_removed;
 }
 
-void Mempool::add_to_mempool_buffer(std::vector<SignedTransaction>&& chunk) {
+void 
+Mempool::add_to_mempool_buffer(std::vector<SignedTransaction>&& chunk) {
+	buffer_size.fetch_add(chunk.size(), std::memory_order_relaxed);
 	MempoolChunk to_add(std::move(chunk));
 	std::lock_guard lock(buffer_mtx);
-	buffered_mempool.push_back(std::move(to_add));
+	buffered_mempool.emplace_back(std::move(to_add));
+}
+
+void 
+Mempool::add_to_mempool_buffer_nolock(std::vector<SignedTransaction>&& chunk) {
+	buffer_size.fetch_add(chunk.size(), std::memory_order_relaxed);
+	MempoolChunk to_add(std::move(chunk));
+	buffered_mempool.emplace_back(std::move(to_add));
+}
+
+void 
+Mempool::chunkify_and_add_to_mempool_buffer(std::vector<SignedTransaction>&& txs) {
+	std::lock_guard lock(buffer_mtx);
+	for(size_t i = 0; i <= txs.size() / TARGET_CHUNK_SIZE; i++) {
+		std::vector<SignedTransaction> chunk;
+		size_t min_idx = i * TARGET_CHUNK_SIZE;
+		size_t max_idx = std::min(txs.size(), (i + 1) * TARGET_CHUNK_SIZE);
+		chunk.insert(
+			chunk.end(),
+			std::make_move_iterator(txs.begin() + min_idx),
+			std::make_move_iterator(txs.begin() + max_idx));
+		add_to_mempool_buffer_nolock(std::move(chunk));
+	}
 }
 
 void Mempool::push_mempool_buffer_to_mempool() {
 	std::lock_guard lock (buffer_mtx);
 	std::lock_guard lock2 (mtx);
+	//TODO consider limiting number of chunks or total number of txs in mempool
 
 	for (size_t i = 0; i < buffered_mempool.size(); i++) {
-		mempool_size.fetch_add(buffered_mempool[i].size(), std::memory_order_release);
+		auto cur_sz = mempool_size.fetch_add(buffered_mempool[i].size(), std::memory_order_release);
+		buffer_size.fetch_sub(buffered_mempool[i].size(), std::memory_order_relaxed);
+
 		mempool.emplace_back(std::move(buffered_mempool[i]));
+		buffered_mempool[i] = std::move(buffered_mempool.back());
+		buffered_mempool.pop_back();
+		//TODO determine if strict ordering matters or not on the buffer
+
+		if (cur_sz > MAX_MEMPOOL_SIZE) {
+			return;
+		}
 	}
 	buffered_mempool.clear();
 }
@@ -85,8 +119,6 @@ void Mempool::remove_confirmed_txs() {
 				deleted += mempool[i].remove_confirmed_txs();
 			}
 			log_tx_removal(deleted);
-			//mempool_size.fetch_sub(deleted, std::memory_order_release);
-
 		});
 }
 

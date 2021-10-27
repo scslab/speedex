@@ -13,11 +13,11 @@ class EventQueue;
 
 class MockClientForSelf {
 	EventQueue& hotstuff_event_queue;
-	ReplicaID self_id;
+	speedex::ReplicaID self_id;
 
 
 public:
-	MockClientForSelf(EventQueue& heq, ReplicaID self_id);
+	MockClientForSelf(EventQueue& heq, speedex::ReplicaID self_id);
 
 	void vote(block_ptr_t block, PartialCertificate const& pc);
 	void propose(block_ptr_t block);
@@ -25,21 +25,21 @@ public:
 
 class HotstuffProtocolManager {
 
-	const ReplicaConfig& config;
+	const speedex::ReplicaConfig& config;
 
-	ReplicaID self_id;
+	speedex::ReplicaID self_id;
 
 	MockClientForSelf self_client;
 
 	using client_t = std::unique_ptr<HotstuffProtocolClient>;
 
-	std::unordered_map<ReplicaID, client_t> other_clients;
+	std::unordered_map<speedex::ReplicaID, client_t> other_clients;
 
 public:
 
-	HotstuffProtocolManager(EventQueue& heq, ReplicaConfig const& config, ReplicaID self_id);
+	HotstuffProtocolManager(EventQueue& heq, speedex::ReplicaConfig const& config, speedex::ReplicaID self_id);
 
-	void send_vote_to(block_ptr_t block, PartialCertificate const& pc, ReplicaID target);
+	void send_vote_to(block_ptr_t block, PartialCertificate const& pc, speedex::ReplicaID target);
 	void broadcast_proposal(block_ptr_t block);
 
 };

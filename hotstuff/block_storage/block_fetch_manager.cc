@@ -8,6 +8,10 @@
 
 namespace hotstuff {
 
+using speedex::ReplicaID;
+using speedex::ReplicaConfig;
+using speedex::ReplicaInfo;
+using speedex::Hash;
 
 RequestContext::RequestContext(speedex::Hash const& request)
 	: request(request)

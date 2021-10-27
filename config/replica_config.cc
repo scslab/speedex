@@ -1,12 +1,10 @@
-#include "hotstuff/replica_config.h"
+#include "config/replica_config.h"
 
 #include "crypto/crypto_utils.h"
 
 #include "utils/debug_macros.h"
 
-namespace hotstuff {
-
-using PublicKey = speedex::PublicKey;
+namespace speedex {
 
 xdr::unique_sock
 ReplicaInfo::tcp_connect(const char* service) const
@@ -14,7 +12,7 @@ ReplicaInfo::tcp_connect(const char* service) const
 	return xdr::tcp_connect(hostname.c_str(), service);
 }
 
-speedex::SecretKey
+SecretKey
 ReplicaInfo::parse(fy_node* info_yaml) {
 	char hostname_buf[1024];
 	memset(hostname_buf, 0, 1024);
@@ -32,7 +30,7 @@ ReplicaInfo::parse(fy_node* info_yaml) {
 		throw std::runtime_error("failed to parse yaml");
 	}
 
-	speedex::DeterministicKeyGenerator key_gen;
+	DeterministicKeyGenerator key_gen;
 	auto [sk_, pk_] = key_gen.deterministic_key_gen(sk_seed);
 
 	hostname = std::string(hostname_buf);
@@ -46,7 +44,7 @@ ReplicaConfig::ReplicaConfig()
 	, nreplicas(0)
 	, nmajority(0) {}
 
-speedex::SecretKey 
+SecretKey 
 ReplicaConfig::parse(fy_document* config_yaml, ReplicaID self_id)
 {
 	if (config_yaml == NULL) {

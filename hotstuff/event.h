@@ -1,9 +1,11 @@
 #pragma once
 
-#include "xdr/hotstuff.h"
+#include "config/replica_config.h"
 
 #include "hotstuff/block.h"
 #include "hotstuff/crypto.h"
+
+#include "xdr/hotstuff.h"
 
 #include <variant>
 
@@ -23,28 +25,28 @@ class HotstuffCore;
  */
 class VoteEvent {
 
-	ReplicaID rid;
+	speedex::ReplicaID rid;
 	PartialCertificate cert;
 	block_ptr_t block;
 
 public:
-	VoteEvent(PartialCertificate const& cert, block_ptr_t blk, ReplicaID rid);
+	VoteEvent(PartialCertificate const& cert, block_ptr_t blk, speedex::ReplicaID rid);
 
-	bool validate(ReplicaConfig const& config) const;
+	bool validate(speedex::ReplicaConfig const& config) const;
 	void operator() (HotstuffCore& core) const;
 };
 
 class ProposalEvent {
 
-	ReplicaID rid;
+	speedex::ReplicaID rid;
 	// block must exist in BlockStorage cache (i.e. must have a height)
 	block_ptr_t block;
 
 public:
 
-	ProposalEvent(block_ptr_t block, ReplicaID rid);
+	ProposalEvent(block_ptr_t block, speedex::ReplicaID rid);
 
-	bool validate(ReplicaConfig const& config) const;
+	bool validate(speedex::ReplicaConfig const& config) const;
 	void operator() (HotstuffCore& core) const;
 };
 
@@ -60,7 +62,7 @@ public:
 		: e(std::move(p))
 		{}
 
-	bool validate(ReplicaConfig const& config) const;
+	bool validate(speedex::ReplicaConfig const& config) const;
 	void operator() (HotstuffCore& core) const;
 };
 

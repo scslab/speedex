@@ -1,5 +1,7 @@
 #pragma once
 
+#include "config/replica_config.h"
+
 #include "hotstuff/block_storage/block_fetch_manager.h"
 #include "hotstuff/block_storage/block_fetch_server.h"
 #include "hotstuff/block_storage/block_store.h"
@@ -8,7 +10,6 @@
 #include "hotstuff/network_event_queue.h"
 #include "hotstuff/protocol/hotstuff_protocol_manager.h"
 #include "hotstuff/protocol/hotstuff_server.h"
-#include "hotstuff/replica_config.h"
 #include "hotstuff/vm/hotstuff_vm_bridge.h"
 
 #include <xdrpp/types.h>
@@ -46,9 +47,9 @@ protected:
 
 public:
 
-	HotstuffAppBase(const ReplicaConfig& config_, ReplicaID self_id, speedex::SecretKey sk);
+	HotstuffAppBase(const speedex::ReplicaConfig& config_, speedex::ReplicaID self_id, speedex::SecretKey sk);
 
-	void do_vote(block_ptr_t block, ReplicaID proposer) override final;
+	void do_vote(block_ptr_t block, speedex::ReplicaID proposer) override final;
 	speedex::Hash do_propose();
 
 	bool wait_for_new_qc(speedex::Hash const& expected_next_qc);
@@ -84,7 +85,7 @@ class HotstuffApp : public HotstuffAppBase {
 
 public:
 
-	HotstuffApp(const ReplicaConfig& config, ReplicaID self_id, speedex::SecretKey sk, std::shared_ptr<VMType> vm)
+	HotstuffApp(const speedex::ReplicaConfig& config, speedex::ReplicaID self_id, speedex::SecretKey sk, std::shared_ptr<VMType> vm)
 		: HotstuffAppBase(config, self_id, sk)
 		, vm_bridge(vm)
 		{}

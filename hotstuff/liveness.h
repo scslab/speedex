@@ -35,7 +35,7 @@ class PaceMakerWaitQC {
         proposer = (proposer + 1) % hotstuff_app.get_config().nreplicas;
     }
     
-    ReplicaID proposer;
+    speedex::ReplicaID proposer;
 
 public:
 

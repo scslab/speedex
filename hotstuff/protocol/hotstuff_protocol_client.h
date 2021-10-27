@@ -1,9 +1,12 @@
 #pragma once
 
-#include "hotstuff/nonblocking_rpc_client.h"
-#include "hotstuff/replica_config.h"
+#include "config/replica_config.h"
 
 #include "rpc/rpcconfig.h"
+
+#include "utils/nonblocking_rpc_client.h"
+
+#include "xdr/hotstuff.h"
 
 #include <memory>
 #include <variant>
@@ -13,7 +16,7 @@
 
 namespace hotstuff {
 
-class HotstuffProtocolClient : public NonblockingRpcClient<xdr::srpc_client<HotstuffProtocolV1>> {
+class HotstuffProtocolClient : public speedex::NonblockingRpcClient<xdr::srpc_client<HotstuffProtocolV1>> {
 
 	using speedex::AsyncWorker::mtx;
 	using speedex::AsyncWorker::cv;
@@ -35,7 +38,7 @@ class HotstuffProtocolClient : public NonblockingRpcClient<xdr::srpc_client<Hots
 
 public:
 
-	HotstuffProtocolClient (ReplicaInfo const& info)
+	HotstuffProtocolClient (speedex::ReplicaInfo const& info)
 		: NonblockingRpcClient<xdr::srpc_client<HotstuffProtocolV1>>(info)
 		, work()
 		{

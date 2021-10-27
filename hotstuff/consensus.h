@@ -40,8 +40,8 @@ private:
 
 protected:
     /* === auxilliary variables === */
-    ReplicaID self_id;           							/**< replica id of self in ReplicaConfig */
-    ReplicaConfig config;	                 				/**< replica configuration */
+    speedex::ReplicaID self_id;           					/**< replica id of self in ReplicaConfig */
+    speedex::ReplicaConfig config;	                 		/**< replica configuration */
     block_ptr_t b_leaf;										/**< highest tail block.  Build on this block */
 
 	mutable std::mutex proposal_mutex; 						/**< lock access to b_leaf and hqc */
@@ -58,9 +58,9 @@ private:
 
 public:
 
-	HotstuffCore(const ReplicaConfig& config, ReplicaID self_id);
+	HotstuffCore(const speedex::ReplicaConfig& config, speedex::ReplicaID self_id);
 
-	const ReplicaConfig& get_config() {
+	const speedex::ReplicaConfig& get_config() {
 		return config;
 	}
 
@@ -68,24 +68,26 @@ public:
 	on_receive_vote(
 		const PartialCertificate& partial_cert, 
 		block_ptr_t certified_block, 
-		ReplicaID voterid);
+		speedex::ReplicaID voterid);
 
 	void 
-	on_receive_proposal(block_ptr_t bnew, ReplicaID proposer);
+	on_receive_proposal(block_ptr_t bnew, speedex::ReplicaID proposer);
 
-	ReplicaID get_last_proposer() const {
+	speedex::ReplicaID 
+	get_last_proposer() const {
 		std::lock_guard lock(proposal_mutex);
 		return hqc.first -> get_proposer();
 	}
 
-	ReplicaID get_self_id() const {
+	speedex::ReplicaID 
+	get_self_id() const {
 		return self_id;
 	}
 
 protected:
 
 	// should send vote to block proposer
-	virtual void do_vote(block_ptr_t block, ReplicaID proposer) = 0;
+	virtual void do_vote(block_ptr_t block, speedex::ReplicaID proposer) = 0;
 
 	// called on getting a new qc.  Input is hash of qc'd obj.
 	virtual void on_new_qc(speedex::Hash const& hash) = 0;

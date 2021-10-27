@@ -1,5 +1,7 @@
 #pragma once
 
+#include "config/replica_config.h"
+
 #include "rpc/rpcconfig.h"
 
 #include "xdr/hotstuff.h"
@@ -9,20 +11,19 @@
 
 namespace hotstuff {
 
-class ReplicaConfig;
 class NetworkEventQueue;
 
 class HotstuffProtocolHandler {
 
 	NetworkEventQueue& queue;
 
-	const ReplicaConfig& config;
+	const speedex::ReplicaConfig& config;
 
 public:
 
 	using rpc_interface_type = HotstuffProtocolV1;
 
-	HotstuffProtocolHandler(NetworkEventQueue& queue, const ReplicaConfig& config)
+	HotstuffProtocolHandler(NetworkEventQueue& queue, const speedex::ReplicaConfig& config)
 		: queue(queue)
 		, config(config)
 		{}
@@ -42,7 +43,7 @@ class HotstuffProtocolServer {
 
 public:
 
-	HotstuffProtocolServer(NetworkEventQueue& queue, const ReplicaConfig& config);
+	HotstuffProtocolServer(NetworkEventQueue& queue, const speedex::ReplicaConfig& config);
 };
 
 

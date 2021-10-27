@@ -6,6 +6,9 @@ namespace hotstuff {
 
 using xdr::operator==;
 
+using speedex::ReplicaConfig;
+using speedex::ReplicaID;
+
 HotstuffAppBase::HotstuffAppBase(const ReplicaConfig& config_, ReplicaID self_id, speedex::SecretKey sk)
 	: HotstuffCore(config_, self_id)
 	, block_store(get_genesis())

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "hotstuff/replica_config.h"
+#include "config/replica_config.h"
 
 #include "utils/async_worker.h"
 #include "utils/debug_macros.h"
@@ -10,16 +10,17 @@
 #include <xdrpp/socket.h>
 #include <xdrpp/srpc.h>
 
-namespace hotstuff {
+namespace speedex {
 
 template<typename client_t>
-class NonblockingRpcClient : public speedex::AsyncWorker {
+class NonblockingRpcClient : public AsyncWorker {
 
 	xdr::unique_sock socket;
 
 protected:
-	using speedex::AsyncWorker::mtx;
-	using speedex::AsyncWorker::cv;
+
+	using AsyncWorker::mtx;
+	using AsyncWorker::cv;
 
 	ReplicaInfo info;
 
@@ -29,13 +30,14 @@ protected:
 	void try_open_connection();
 	void wait_for_try_open_connection();
 	bool connection_is_open();
-	void clear_connection();
+	virtual void clear_connection();
 	void wait();
 
 	virtual const char* get_service() const = 0;
 
 	NonblockingRpcClient(ReplicaInfo const& info)
-		: socket()
+		: AsyncWorker()
+		, socket()
 		, info(info)
 		, client(nullptr)
 		{}
@@ -54,7 +56,7 @@ NonblockingRpcClient<client_t>::try_open_connection()
 		open_connection();
 	} catch (...)
 	{
-		HOTSTUFF_INFO("failed to open connection on rid=%d", info.id);
+		INFO("failed to open connection on rid=%d", info.id);
 		clear_connection();
 	}
 }
@@ -134,4 +136,4 @@ NonblockingRpcClient<client_t>::try_action_void(auto lambda)
 	return res;
 }
 
-} /* hotstuff */
+} /* speedex */

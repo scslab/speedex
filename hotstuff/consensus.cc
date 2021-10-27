@@ -5,6 +5,8 @@
 
 namespace hotstuff {
 
+using speedex::ReplicaConfig;
+using speedex::ReplicaID;
 
 HotstuffCore::HotstuffCore(const ReplicaConfig& config, ReplicaID self_id)
 	: genesis_block(std::make_shared<HotstuffBlock>())

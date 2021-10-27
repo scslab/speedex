@@ -11,6 +11,10 @@
 
 namespace hotstuff {
 
+using speedex::ReplicaInfo;
+using speedex::ReplicaID;
+using speedex::Hash;
+
 BlockFetchWorker::BlockFetchWorker(const ReplicaInfo& info, NetworkEventQueue& network_event_queue)
 	: NonblockingRpcClient<client_t>(info)
 	, reqs()
@@ -28,9 +32,9 @@ BlockFetchWorker::readd_request(BlockFetchRequest const& req)
 		req.reqs.end());
 }
 
-xdr::xvector<speedex::Hash>
+xdr::xvector<Hash>
 BlockFetchWorker::extract_reqs() {
-	xdr::xvector<speedex::Hash> out;
+	xdr::xvector<Hash> out;
 	for (auto const& hash : reqs) {
 		out.push_back(hash);
 	}
@@ -90,7 +94,7 @@ BlockFetchWorker::exists_work_to_do() {
 }
 
 void 
-BlockFetchWorker::add_request(speedex::Hash const& request) {
+BlockFetchWorker::add_request(Hash const& request) {
 	std::lock_guard lock(mtx);
 	reqs.insert(request);
 	cv.notify_all();

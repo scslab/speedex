@@ -40,6 +40,7 @@ class SpeedexVM {
 	constexpr static bool small = false;
 	constexpr static size_t TARGET_BLOCK_SIZE = small ? 60'000 : 600'000;
 	constexpr static size_t MEMPOOL_CHUNK_SIZE = small ? 1'000: 10'000;
+	constexpr static size_t MEMPOOL_TARGET_SIZE = 2'000'000;
 
 	TatonnementManagementStructures tatonnement_structs;
 	std::vector<Price> prices;

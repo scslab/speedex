@@ -21,7 +21,7 @@
 
 #include <sodium.h>
 
-#include "hotstuff/replica_config.h"
+#include "config/replica_config.h"
 
 #include "xdr/types.h"
 #include "xdr/hotstuff.h"
@@ -36,13 +36,13 @@ struct PartialCertificate : public PartialCertificateWire {
 
     PartialCertificate(PartialCertificateWire&& wire_cert);
 
-    bool validate(const ReplicaInfo& info) const;
+    bool validate(const speedex::ReplicaInfo& info) const;
 };
 
 class QuorumCertificate {
 
     speedex::Hash obj_hash;
-    std::map<ReplicaID, speedex::Signature> sigs;
+    std::map<speedex::ReplicaID, speedex::Signature> sigs;
 
 public:
 
@@ -50,11 +50,11 @@ public:
     QuorumCertificate(QuorumCertificateWire const& qc_wire);
 
     // for building
-    void add_partial_certificate(ReplicaID rid, const PartialCertificate& pc);
-    bool has_quorum(const ReplicaConfig& config) const; // assumes all certs inserted by add_partial_certificate are valid.
+    void add_partial_certificate(speedex::ReplicaID rid, const PartialCertificate& pc);
+    bool has_quorum(const speedex::ReplicaConfig& config) const; // assumes all certs inserted by add_partial_certificate are valid.
 
     // for verifying qc from another node
-    bool verify(const ReplicaConfig &config) const;
+    bool verify(const speedex::ReplicaConfig &config) const;
 
     const speedex::Hash &get_obj_hash() const {
         return obj_hash;

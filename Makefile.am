@@ -16,7 +16,8 @@ X_FILES = \
 	xdr/cryptocoin_experiment.x \
 	xdr/header_summary.x \
 	xdr/experiments.x \
-	xdr/hotstuff.x
+	xdr/hotstuff.x \
+	xdr/overlay.x
 
 XH_FILES = $(X_FILES:.x=.h)
 
@@ -26,6 +27,9 @@ BLOCK_PROCESSING_SRCS = \
 	block_processing/block_producer.cc \
 	block_processing/block_validator.cc \
 	block_processing/serial_transaction_processor.cc
+
+CONFIG_SRCS = \
+	config/replica_config.cc
 
 CRYPTO_SRCS = \
 	crypto/crypto_utils.cc
@@ -56,7 +60,6 @@ HOTSTUFF_SRCS = \
 	hotstuff/protocol/hotstuff_protocol_client.cc \
 	hotstuff/protocol/hotstuff_protocol_manager.cc \
 	hotstuff/protocol/hotstuff_server.cc \
-	hotstuff/replica_config.cc \
 	hotstuff/vm/counting_vm.cc
 
 HOTSTUFF_TEST_SRCS = \
@@ -88,6 +91,9 @@ ORDERBOOK_SRCS = \
 	orderbook/offer_clearing_params.cc \
 	orderbook/orderbook.cc \
 	orderbook/orderbook_manager.cc
+
+OVERLAY_SRCS = \
+	overlay/overlay_server.cc
 
 PRICE_COMPUTATION_SRCS = \
 	price_computation/lp_solver.cc \
@@ -129,6 +135,7 @@ UTILS_SRCS = \
 
 SRCS = \
 	$(BLOCK_PROCESSING_SRCS) \
+	$(CONFIG_SRCS) \
 	$(CRYPTO_SRCS) \
 	$(EXPERIMENTS_SRCS) \
 	$(HEADER_HASH_SRCS) \
@@ -138,6 +145,7 @@ SRCS = \
 	$(MEMPOOL_SRCS) \
 	$(MODLOG_SRCS) \
 	$(ORDERBOOK_SRCS) \
+	$(OVERLAY_SRCS) \
 	$(PRICE_COMPUTATION_SRCS) \
 	$(RPC_SRCS) \
 	$(SIMPLEX_SRCS) \

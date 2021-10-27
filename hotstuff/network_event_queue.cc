@@ -6,6 +6,10 @@
 
 namespace hotstuff {
 
+using speedex::ReplicaConfig;
+using speedex::ReplicaID;
+using speedex::ReplicaInfo;
+
 NetworkEventQueue::NetworkEventQueue(
 	EventQueue& hotstuff_event_queue,
 	BlockFetchManager& block_fetch_manager, 

@@ -1,7 +1,8 @@
 #pragma once
 
+#include "config/replica_config.h"
+
 #include "hotstuff/crypto.h"
-#include "hotstuff/replica_config.h"
 
 #include "utils/debug_macros.h"
 
@@ -15,7 +16,7 @@ namespace hotstuff {
 
 class HotstuffBlock;
 
-using block_ptr_t = std::shared_ptr<HotstuffBlock>;
+using block_ptr_t = std::shared_ptr<HotstuffBlock>;	
 
 
 /*
@@ -31,7 +32,7 @@ class HotstuffBlock {
 	//genesis_block lacks this
 	std::optional<QuorumCertificate> parsed_qc;
 
-	ReplicaID proposer;  //0 (starting proposer) for genesis block
+	speedex::ReplicaID proposer;  //0 (starting proposer) for genesis block
 
 	//derived from header, with help of block store
 	uint64_t block_height;
@@ -54,7 +55,7 @@ class HotstuffBlock {
 
 public:
 
-	HotstuffBlock(HotstuffBlockWire&& _wire_block, ReplicaID proposer);
+	HotstuffBlock(HotstuffBlockWire&& _wire_block, speedex::ReplicaID proposer);
 
 	//make genesis block
 	HotstuffBlock();
@@ -74,7 +75,8 @@ public:
 		decided = true;
 	}
 
-	ReplicaID get_proposer() const {
+	speedex::ReplicaID 
+	get_proposer() const {
 		return proposer;
 	}
 
@@ -82,7 +84,7 @@ public:
 		return block_height;
 	}
 
-	bool supports_nonempty_child_proposal(const ReplicaID self_id, int depth = 3) const;
+	bool supports_nonempty_child_proposal(const speedex::ReplicaID self_id, int depth = 3) const;
 
 	bool validate_hash() const;
 
@@ -91,7 +93,7 @@ public:
 	 * (1) hash(wire_block.body) == wire_block.body_hash
 	 * (2) quorum cert is valid
 	 */
-	bool validate_hotstuff(const ReplicaConfig& config) const;
+	bool validate_hotstuff(const speedex::ReplicaConfig& config) const;
 
 	/*
 	 * Try to parse body into a speedex (header, txs) pair.
@@ -164,7 +166,7 @@ public:
 	}
 
 	static block_ptr_t 
-	mint_block(xdr::opaque_vec<>&& body, QuorumCertificateWire const& qc_wire, speedex::Hash const& parent_hash, ReplicaID proposer);
+	mint_block(xdr::opaque_vec<>&& body, QuorumCertificateWire const& qc_wire, speedex::Hash const& parent_hash, speedex::ReplicaID proposer);
 };
 
 

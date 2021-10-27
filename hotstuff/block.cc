@@ -6,6 +6,9 @@
 
 namespace hotstuff {
 
+using speedex::ReplicaID;
+using speedex::ReplicaConfig;
+
 HotstuffBlock::HotstuffBlock(HotstuffBlockWire&& _wire_block, ReplicaID proposer)
 	: wire_block(std::move(_wire_block))
 	, parsed_qc(wire_block.header.qc)

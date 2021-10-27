@@ -4,6 +4,9 @@
 
 namespace hotstuff {
 
+using speedex::ReplicaID;
+using speedex::ReplicaConfig;
+
 MockClientForSelf::MockClientForSelf(EventQueue& heq, ReplicaID self_id)
 	: hotstuff_event_queue(heq)
 	, self_id(self_id)

@@ -95,6 +95,8 @@ class Mempool {
 
 	std::atomic<uint64_t> mempool_size;
 
+	std::atomic<uint64_t> buffer_size;
+
 	mutable std::mutex mtx;
 	std::mutex buffer_mtx;
 
@@ -104,27 +106,35 @@ class Mempool {
 	//! update removed tx count
 	void log_tx_removal(uint64_t removed_count);
 
+	void add_to_mempool_buffer_nolock(std::vector<SignedTransaction>&& chunk);
+
 public:
 
 	const size_t TARGET_CHUNK_SIZE;
+
+	const size_t MAX_MEMPOOL_SIZE;
 
 	//! The number of the most recent batch of transactions added to the mempool
 	//! Used in experiments - txs are streamed in batches from disk.
 	std::atomic<uint64_t> latest_block_added_to_mempool = 0;
 
-	Mempool(size_t target_chunk_size)
+	Mempool(size_t target_chunk_size, size_t max_mempool_size)
 		: mempool()
 		, buffered_mempool()
 		, mempool_size(0)
+		, buffer_size(0)
 		, mtx()
 		, buffer_mtx()
-       	, TARGET_CHUNK_SIZE(target_chunk_size) {}
+       	, TARGET_CHUNK_SIZE(target_chunk_size)
+       	, MAX_MEMPOOL_SIZE(max_mempool_size) {}
 
     //! Add a set of transactions to the mempool
     //! These transactions do not go directly into the mempool, but instead
     //! into an internal buffer.  This buffer is merged into the main mempool
     //! by push_mempool_buffer_to_mempool().
 	void add_to_mempool_buffer(std::vector<SignedTransaction>&& chunk);
+
+	void chunkify_and_add_to_mempool_buffer(std::vector<SignedTransaction>&& txs);
 
 	//! Pushes the internal tx buffer to the mempool.
 	//! Requires acquiring the mempool lock.
@@ -136,6 +146,10 @@ public:
 
 	uint64_t size() const {
 		return mempool_size.load(std::memory_order_acquire);
+	}
+
+	uint64_t total_size() const {
+		return buffer_size.load(std::memory_order_relaxed) + size();
 	}
 
 	//! Returns a lock on the mempool.  This lock should be held
