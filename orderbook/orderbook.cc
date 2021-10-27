@@ -56,7 +56,8 @@ public:
 
 void Orderbook::tentative_commit_for_validation(uint64_t current_block_number) {
 	{
-		std::lock_guard lock(*lmdb_instance.mtx);
+		auto lock = lmdb_instance.lock();
+		//std::lock_guard lock(*lmdb_instance.mtx);
 		auto& thunk = lmdb_instance.add_new_thunk_nolock(current_block_number);
 		thunk.uncommitted_offers_vec 
 			= uncommitted_offers.accumulate_values<std::vector<Offer>>();
@@ -112,7 +113,8 @@ void Orderbook::rollback_validation() {
 	uncommitted_offers.clear();
 	committed_offers.do_rollback(); // takes care of new round's uncommitted offers, so we can safely clear them from the thunk.
 
-	std::lock_guard(*lmdb_instance.mtx);
+	auto lock = lmdb_instance.lock();
+	//std::lock_guard lock(*lmdb_instance.mtx);
 
 	auto& thunk = lmdb_instance.get_top_thunk_nolock();
 
@@ -596,7 +598,9 @@ bool Orderbook::tentative_clear_offers_for_validation(
 		state_update_stats.fully_clear_offer_count += committed_offers.size();
 
 		{
-			std::lock_guard lock(*lmdb_instance.mtx);
+
+			auto lock = lmdb_instance.lock();
+			//std::lock_guard lock(*lmdb_instance.mtx);
 			auto& thunk = lmdb_instance.get_top_thunk_nolock();
 			thunk.set_no_partial_exec();
 			thunk.cleared_offers = std::move(committed_offers);
@@ -640,7 +644,8 @@ bool Orderbook::tentative_clear_offers_for_validation(
 	}
 
 	{
-		std::lock_guard lock(*lmdb_instance.mtx);
+		auto lock = lmdb_instance.lock();
+		//std::lock_guard lock(*lmdb_instance.mtx);
 		auto& thunk = lmdb_instance.get_top_thunk_nolock();
 
 		thunk.set_partial_exec(
@@ -715,7 +720,8 @@ void Orderbook::process_clear_offers(
 		- FractionalAsset::from_integral(fully_cleared_trie.get_root_metadata().endow);
 
 	{
-		std::lock_guard lock(*lmdb_instance.mtx);
+		auto lock = lmdb_instance.lock();
+		//std::lock_guard lock(*lmdb_instance.mtx);
 		lmdb_instance.get_top_thunk_nolock().cleared_offers = std::move(fully_cleared_trie);
 		fully_cleared_trie.clear();
 	}
@@ -732,7 +738,8 @@ void Orderbook::process_clear_offers(
 		INFO("partial exec key is nullptr");
 		INTEGRITY_CHECK("remaining offers size: %d", committed_offers.size());
 		//no committed offers remain
-		std::lock_guard lock(*lmdb_instance.mtx);
+		auto lock = lmdb_instance.lock();
+		//std::lock_guard lock(*lmdb_instance.mtx);
 		lmdb_instance.get_top_thunk_nolock().set_no_partial_exec();
 		clearing_commitment_log.partialExecThresholdKey.fill(0);
 		clearing_commitment_log.thresholdKeyIsNull = 1;
@@ -769,7 +776,8 @@ void Orderbook::process_clear_offers(
 			"should not have been partially clearing this offer");
 	}
 
-	std::lock_guard lock(*lmdb_instance.mtx);
+	auto lock = lmdb_instance.lock();
+	//std::lock_guard lock(*lmdb_instance.mtx);
 	lmdb_instance.get_top_thunk_nolock().set_partial_exec(
 		*partial_exec_key, sell_amount, partial_exec_offer);
 	
@@ -795,7 +803,8 @@ void Orderbook::process_clear_offers(
 }
 
 void Orderbook::rollback_thunks(uint64_t current_block_number) {
-	std::lock_guard lock(*lmdb_instance.mtx);
+	//std::lock_guard lock(*lmdb_instance.mtx);
+	auto lock = lmdb_instance.lock();
 	if (current_block_number < lmdb_instance.get_persisted_round_number()) {
 		throw std::runtime_error("can't rollback persisted objects");
 	}

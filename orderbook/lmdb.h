@@ -10,6 +10,8 @@ LMDB instance and related methods for persisting orderbook data.
 #include <mutex>
 #include <vector>
 
+#include "config.h"
+
 #include "lmdb/lmdb_wrapper.h"
 
 #include "orderbook/thunk.h"
@@ -62,10 +64,39 @@ public:
 	}
 };
 
+class OrderbookManagerLMDB {
+
+	//TODO can introduce limited sharding here
+	BaseLMDBInstance base_instance;
+
+	std::string get_lmdb_env_name() {
+		return std::string(ROOT_DB_DIRECTORY) 
+		+ std::string(OFFER_DB);
+	}
+
+public:
+
+	/*! Initialize lmdb with mapsize of 2^30 (somewhat arbitrary choice)
+	Roughly 1 billion.
+	*/
+	OrderbookManagerLMDB()
+		: base_instance{0x40000000}
+		{}
+
+	BaseLMDBInstance& get_base_instance(OfferCategory const& category) {
+		return base_instance;
+	}
+
+	void open_lmdb_env() {
+		auto name = get_lmdb_env_name();
+		base_instance.open_env(name.c_str());
+	}
+};
+
 /*! Wrapper around lmdb instance.  Also includes 
 persistence thunks (and manages those thunks).
 */
-class OrderbookLMDB : public LMDBInstance {
+class OrderbookLMDB : public SharedLMDBInstance {
 	using thunk_t = OrderbookLMDBCommitmentThunk;
 	using prefix_t = OrderbookTriePrefix;
 
@@ -73,18 +104,21 @@ class OrderbookLMDB : public LMDBInstance {
 
 	using trie_t = OrderbookTrie::TrieT;
 
-public:
-	
 	//! Use lock to make sure that during normal processing/validation,
 	//! async flushes to lmdb don't conflict with operations of new blocks.
 	std::unique_ptr<std::mutex> mtx;
 
-	/*! Initialize lmdb with mapsize of 2^30 (somewhat arbitrary choice)
-	Roughly 1 billion.
-	*/
-	OrderbookLMDB() 
-		: LMDBInstance{0x40000000}
-		, mtx(std::make_unique<std::mutex>()) {}
+public:
+	
+	OrderbookLMDB(OfferCategory category, OrderbookManagerLMDB& manager_lmdb) 
+		: SharedLMDBInstance(manager_lmdb.get_base_instance(category))
+		, thunks()
+		, mtx(std::make_unique<std::mutex>())
+	{}
+
+	std::lock_guard<std::mutex> lock() {
+		return {*mtx, std::adopt_lock};
+	}
 
 	/*! Persist accumulated thunks to disk, up to current_block_number.
 		Take care to not migrate wtx across threads.

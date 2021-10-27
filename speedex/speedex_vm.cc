@@ -80,7 +80,7 @@ SpeedexVM::exec_block(const block_type& blk) {
 	std::lock_guard lock2(confirmation_mtx);
 
 	if (last_committed_block.block.blockNumber + 1 != blk.hashedBlock.block.blockNumber) {
-		BLOCK_INFO("incorrect block height appended to speedex vm chain -- no-op")
+		BLOCK_INFO("incorrect block height appended to speedex vm chain -- no-op");
 		return;
 	}
 

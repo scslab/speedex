@@ -565,7 +565,7 @@ void MemoryDatabase::commit_persistence_thunks(uint64_t max_round_number) {
 			dbval val = dbval{kv.msg.data(), kv.msg.size()};
 			
 			if (account_lmdb_instance) {
-				write_txn.put(account_lmdb_instance.dbi, key, val);
+				write_txn.put(account_lmdb_instance.get_data_dbi(), key, val);
 			}
 		}
 		current_block_number = thunk.current_block_number;
@@ -620,7 +620,7 @@ void MemoryDatabase::persist_lmdb(uint64_t current_block_number) {
 		dbval key = UserAccount::produce_lmdb_key(database[i].get_owner());
 
 
-		write_txn.put(account_lmdb_instance.dbi, key, val);
+		write_txn.put(account_lmdb_instance.get_data_dbi(), key, val);
 
 	}
 

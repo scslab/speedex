@@ -35,30 +35,33 @@ namespace speedex {
     Beyond dbenv, tracks persisted round number and MDB_dbi for object data and metadata
     databases.
 */
-struct LMDBInstance {
+class BaseLMDBInstance {
 
   dbenv env;
-  //! Data DBI
-  MDB_dbi dbi;
   bool env_open;
 
   //! Metadata DBI (currently just round number).
   MDB_dbi metadata_dbi;
+  bool metadata_dbi_open;
 
-  uint64_t persisted_round_number; // state up to and including persisted_round_number has been persisted.
+  //uint64_t persisted_round_number; // state up to and including persisted_round_number has been persisted.
   //Starts at 0 - means that we can't have a block number 0, except as a base/bot instance
+
+  void write_persisted_round_number(dbenv::wtxn& wtx, uint64_t round_number);
+
+public:
+
+  BaseLMDBInstance(size_t mapsize) 
+    : env{mapsize}
+    , env_open{false}
+    , metadata_dbi{0}
+    , metadata_dbi_open{false}
+   // , persisted_round_number(0)
+    {};
 
   //! Get the most recent round number 
   //! reflected on disk.
-  const uint64_t get_persisted_round_number() const {
-    return persisted_round_number;
-  }
-
-  LMDBInstance(size_t mapsize = 0x1000000000) 
-    : env{mapsize}
-    , dbi{0}
-    , env_open{false}
-    , persisted_round_number(0) {};
+  uint64_t get_persisted_round_number() const;
 
   //! Open lmdb environment at a specified path.
   void open_env(const std::string path, unsigned flags = DEFAULT_LMDB_FLAGS, mdb_mode_t mode = 0666) {
@@ -66,15 +69,8 @@ struct LMDBInstance {
     env_open = true;
   }
 
-  void create_db(const char* name);
-  void open_db(const char* name);
-
-  MDB_stat stat() {
-    auto rtx = env.rbegin();
-    auto stat = rtx.stat(dbi);
-    rtx.abort();
-    return stat;
-  }
+  MDB_dbi create_db(const char* name);
+  MDB_dbi open_db(const char* name);
 
   operator bool() {
     return env_open;
@@ -88,10 +84,6 @@ struct LMDBInstance {
     return env.rbegin();
   }
 
-  const MDB_dbi& get_data_dbi() {
-    return dbi;
-  }
-
   void sync() {
     env.sync();
   }
@@ -99,6 +91,89 @@ struct LMDBInstance {
   //! Commits a write transaction to the database.
   //! Optionally performs an msync.  Updates persisted_round counter.
   void commit_wtxn(dbenv::wtxn& txn, uint64_t persisted_round, bool do_sync = true);
+};
+
+class LMDBInstance : public BaseLMDBInstance {
+
+  //! Data DBI
+  MDB_dbi dbi;
+
+public:
+
+  LMDBInstance(size_t mapsize = 0x1000000000)
+    : BaseLMDBInstance(mapsize)
+    {}
+
+  const MDB_dbi& get_data_dbi() {
+    return dbi;
+  }
+
+  MDB_stat stat() {
+    auto rtx = rbegin();
+    auto stat = rtx.stat(dbi);
+    rtx.abort();
+    return stat;
+  }
+
+  void create_db(const char* name) {
+    dbi = BaseLMDBInstance::create_db(name);
+  }
+
+  void open_db(const char* name) {
+    dbi = BaseLMDBInstance::open_db(name);
+  }
+};
+
+class SharedLMDBInstance {
+
+  BaseLMDBInstance& base_lmdb;
+
+  MDB_dbi local_dbi;
+
+public:
+
+  SharedLMDBInstance(BaseLMDBInstance& base_lmdb)
+    : base_lmdb(base_lmdb)
+    , local_dbi{0}
+    {}
+
+  const MDB_dbi& get_data_dbi() {
+    return local_dbi;
+  }
+
+  void create_db(const char* name) {
+    if (base_lmdb.get_persisted_round_number() != 0) {
+      throw std::runtime_error("cannot create db on already open base lmdb");
+    }
+    local_dbi = base_lmdb.create_db(name);
+  }
+
+  void open_db(const char* name) {
+    local_dbi = base_lmdb.open_db(name);
+  }
+
+  uint64_t get_persisted_round_number() const {
+    return base_lmdb.get_persisted_round_number();
+  }
+
+  operator bool() {
+    return (bool)base_lmdb;
+  }
+
+  dbenv::wtxn wbegin() {
+    return base_lmdb.wbegin();
+  }
+
+  dbenv::txn rbegin() {
+    return base_lmdb.rbegin();
+  }
+
+  void commit_wtxn(dbenv::wtxn& txn, uint64_t persisted_round, bool do_sync = true)
+  {
+    base_lmdb.commit_wtxn(txn, persisted_round, do_sync);
+  }
+
+
 };
 
 namespace {

@@ -6,6 +6,7 @@
 
 #include "modlog/account_modification_log.h"
 
+#include "orderbook/lmdb.h"
 #include "orderbook/offer_clearing_params.h"
 #include "orderbook/orderbook.h"
 #include "orderbook/utils.h"
@@ -79,6 +80,8 @@ class OrderbookManager {
 	using trie_t = OrderbookTrie::TrieT;
 
 	BackgroundDeleter<trie_t> thunk_garbage_deleter;
+
+	OrderbookManagerLMDB lmdb;
 
 public:
 

@@ -18,7 +18,7 @@ void OrderbookManager::increase_num_traded_assets(
 			int old_idx = category_to_idx(category, num_assets);
 			new_orderbooks.push_back(std::move(orderbooks[old_idx]));
 		} else {
-			new_orderbooks.emplace_back(category);
+			new_orderbooks.emplace_back(category, lmdb);
 		}
 	}
 	orderbooks = std::move(new_orderbooks);
@@ -118,7 +118,8 @@ void OrderbookManager::persist_lmdb(uint64_t current_block_number) {
 }
 
 void OrderbookManager::open_lmdb_env() {
-	generic_map_serial<&Orderbook::open_lmdb_env>();
+	lmdb.open_lmdb_env();
+	//generic_map_serial<&Orderbook::open_lmdb_env>();
 }
 
 

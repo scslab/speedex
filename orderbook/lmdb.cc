@@ -74,16 +74,13 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, bool debug) {
 			auto& delete_key = delete_kv.first;
 			auto bytes = delete_key.get_bytes_array();
 			dbval key = dbval{bytes};
-			wtx.del(dbi, key);
+			wtx.del(get_data_dbi(), key);
 		}
 
 		if (thunk.get_exists_partial_exec()) {
 			key_set = true;
 			if (key_buf < thunk.partial_exec_key) {
-			//auto res = memcmp(key_buf, thunk.partial_exec_key.data(), MerkleWorkUnit::WORKUNIT_KEY_LEN);
-			//if (res < 0) {
 				key_buf = thunk.partial_exec_key;
-//				memcpy(key_buf, thunk.partial_exec_key.data(), MerkleWorkUnit::WORKUNIT_KEY_LEN);
 			}
 			INTEGRITY_CHECK("thunk threshold key: %s", DebugUtils::__array_to_str(thunk.partial_exec_key, MerkleWorkUnit::WORKUNIT_KEY_LEN).c_str());
 
@@ -91,13 +88,11 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, bool debug) {
 	}
 
 	INTEGRITY_CHECK("final max key: %s", DebugUtils::__array_to_str(key_buf, MerkleWorkUnit::WORKUNIT_KEY_LEN).c_str());
-
-	//auto& wtx = wtxn();
 	
 	if (print)
 		std::printf("phase 2\n");
 
-	auto cursor = wtx.cursor_open(dbi);
+	auto cursor = wtx.cursor_open(get_data_dbi());
 
 	//auto begin_cursor = wtx.cursor_open(dbi).begin();
 
@@ -150,11 +145,7 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, bool debug) {
 		}
 	);
 
-	//std::printf("num deleted first pass = %d\n", num_deleted);
-
 	key_buf.clear();
-//	memset(key_buf, 0, MerkleWorkUnit::WORKUNIT_KEY_LEN);
-
 
 	if (print) 
 		std::printf("phase 3\n");
@@ -167,9 +158,7 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, bool debug) {
 
 		if (print)
 			std::printf("phase 3 i %d %lu\n", i, relevant_thunks[i].current_block_number);
-		//std::printf("processing thunk %u\n", i);
-		//auto res = memcmp(key_buf, relevant_thunks[i].partial_exec_key.data(), MerkleWorkUnit::WORKUNIT_KEY_LEN);
-		//if (res < 0) {
+
 		if (key_buf < relevant_thunks[i].partial_exec_key) {
 			key_buf = relevant_thunks[i].partial_exec_key;
 		
@@ -209,7 +198,7 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, bool debug) {
 
 					auto value_buf = xdr::xdr_to_opaque(cur_offer);
 					dbval value = dbval{value_buf.data(), value_buf.size()};
-					wtx.put(dbi, db_key, value);
+					wtx.put(get_data_dbi(), db_key, value);
 				} else {
 					break;
 				}
@@ -253,7 +242,7 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, bool debug) {
 		auto partial_exec_key_bytes = relevant_thunks[i].partial_exec_key.get_bytes_array();
 		dbval partial_exec_key{partial_exec_key_bytes};//(relevant_thunks[i].partial_exec_key.data(), MerkleWorkUnit::WORKUNIT_KEY_LEN);
 
-		auto get_res = wtx.get(dbi, partial_exec_key);
+		auto get_res = wtx.get(get_data_dbi(), partial_exec_key);
 
 		if (!get_res) {
 			INTEGRITY_CHECK("didn't find partial exec key because of preemptive clearing");
@@ -297,10 +286,10 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, bool debug) {
 		if (partial_exec_offer.amount > 0) {
 			auto modified_offer_buf = xdr::xdr_to_opaque(partial_exec_offer);
 			dbval modified_offer = dbval{modified_offer_buf.data(), modified_offer_buf.size()};//xdr_to_dbval(partial_exec_offer);
-			wtx.put(dbi, partial_exec_key, modified_offer);
+			wtx.put(get_data_dbi(), partial_exec_key, modified_offer);
 		} else {
 			//partial_exec_offer.amount = 0
-			wtx.del(dbi, partial_exec_key);
+			wtx.del(get_data_dbi(), partial_exec_key);
 		}
 
 	}
@@ -326,7 +315,6 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, bool debug) {
 		for (size_t future = i + 1; future < relevant_thunks.size(); future++) {
 			if (relevant_thunks[future].current_block_number > current_block_number) {
 				throw std::runtime_error("impossible!!!");
-				continue;
 			}
 
 			if (print)
@@ -337,7 +325,7 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, bool debug) {
 				// We already took care of the 0 case in the preceding loop.
 				auto partial_exec_key_bytes = relevant_thunks[i].partial_exec_key.get_bytes_array();
 				dbval partial_exec_key{partial_exec_key_bytes};//(relevant_thunks[i].partial_exec_key.data(), MerkleWorkUnit::WORKUNIT_KEY_LEN);
-				wtx.del(dbi, partial_exec_key);
+				wtx.del(get_data_dbi(), partial_exec_key);
 			}
 		}
 	}
