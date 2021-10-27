@@ -4,17 +4,14 @@
 #include "utils/hash.h"
 #include "utils/save_load_xdr.h"
 
+#include "config.h"
+
 #include <iomanip>
 #include <sstream>
 
 namespace hotstuff {
 
-std::string storage_folder = "hotstuff_produced_blocks/";
-
-void
-clear_block_folder() {
-	//TODO
-}
+std::string storage_folder = std::string(ROOT_DB_DIRECTORY) + std::string(HOTSTUFF_BLOCKS);
 
 void
 make_block_folder() {
