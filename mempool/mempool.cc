@@ -126,7 +126,7 @@ void Mempool::drop_txs(size_t num_to_drop) {
 	std::lock_guard lock(mtx);
 
 	size_t dropped = 0;
-	while (dropped < num_to_drop) {
+	while (dropped < num_to_drop && mempool.size() > 0) {
 		dropped += mempool.front().size();
 		mempool.erase(mempool.begin());
 	}

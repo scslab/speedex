@@ -88,8 +88,8 @@ int main(int argc, char **argv)
 
 	while (true) {
 		std::cin.get();
-		auto lock = mp.lock_mempool();
 		std::printf("mempool size: %lu\n", mp.total_size());
 		mp.push_mempool_buffer_to_mempool();
+		mp.drop_txs(550'000);
 	}
 }

@@ -137,7 +137,7 @@ public:
 	void chunkify_and_add_to_mempool_buffer(std::vector<SignedTransaction>&& txs);
 
 	//! Pushes the internal tx buffer to the mempool.
-	//! Requires acquiring the mempool lock.
+	//! Internally acquires all relevant locks
 	void push_mempool_buffer_to_mempool();
 
 	//! Defragment the mempool.
