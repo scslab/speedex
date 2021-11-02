@@ -62,6 +62,7 @@ public:
 	void clear();
 
 	std::lock_guard<std::mutex> lock() {
+		mtx.lock();
 		return {mtx, std::adopt_lock};
 	}
 

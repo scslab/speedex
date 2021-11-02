@@ -35,6 +35,7 @@ class OverlayServer {
 public:
 
 	OverlayServer(Mempool& mempool);
+
 };
 
 

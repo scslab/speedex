@@ -175,6 +175,11 @@ public:
 	MempoolChunk& operator[](size_t idx) {
 		return mempool.at(idx);
 	}
+
+
+	//! For overlay mock tests
+	//! Rounds up to nearest chunk
+	void drop_txs(size_t num_to_drop);
 };
 
 } /* speedex */

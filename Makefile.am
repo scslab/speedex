@@ -93,6 +93,9 @@ ORDERBOOK_SRCS = \
 	orderbook/orderbook_manager.cc
 
 OVERLAY_SRCS = \
+	overlay/overlay_client.cc \
+	overlay/overlay_client_manager.cc \
+	overlay/overlay_flooder.cc \
 	overlay/overlay_server.cc
 
 PRICE_COMPUTATION_SRCS = \
@@ -124,7 +127,8 @@ SPEEDEX_SRCS = \
 
 SYNTHETIC_DATA_GEN_SRCS = \
 	synthetic_data_generator/synthetic_data_gen.cc \
-	synthetic_data_generator/synthetic_data_gen_options.cc
+	synthetic_data_generator/synthetic_data_gen_options.cc \
+	synthetic_data_generator/synthetic_data_stream.cc
 
 TRIE_TEST_SRCS = \
 	trie/tests/test_prefix.h
@@ -155,6 +159,7 @@ SRCS = \
 
 MAIN_CCS = \
 	main/counting_vm_hotstuff.cc \
+	main/overlay_sim.cc \
 	main/simple.cc \
 	main/replicated_simulation_experiment_controller.cc \
 	main/speedex_producer_experiment.cc \
@@ -178,6 +183,7 @@ test_runner.cc : $(TEST_SRCS) $(XHFILES)
 
 bin_PROGRAMS = \
 	counting_vm_hotstuff \
+	overlay_sim \
 	simple \
 	replicated_simulation_experiment_controller \
 	speedex_producer_experiment \
@@ -187,6 +193,7 @@ bin_PROGRAMS = \
 	test
 
 counting_vm_hotstuff_SOURCES = $(SRCS) main/counting_vm_hotstuff.cc
+overlay_sim_SOURCES = $(SRCS) main/overlay_sim.cc
 simple_SOURCES = $(SRCS) main/simple.cc
 replicated_simulation_experiment_controller_SOURCES = $(SRCS) main/replicated_simulation_experiment_controller.cc
 speedex_producer_experiment_SOURCES = $(SRCS) main/speedex_producer_experiment.cc

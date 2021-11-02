@@ -1,5 +1,7 @@
 #pragma once
 
+#include "synthetic_data_generator/data_stream.h"
+
 #include "utils/save_load_xdr.h"
 
 #include <cstdint>
@@ -17,7 +19,7 @@ class BufferManager {
 
 };*/
 
-class SyntheticDataStream {
+class SyntheticDataStream : public DataStream {
 	constexpr static size_t BUFFER_SIZE = 100'000'000;
 
 	std::string folder;
@@ -28,7 +30,8 @@ class SyntheticDataStream {
 public:
 
 	SyntheticDataStream(std::string root_folder)
-		: folder(root_folder)
+		: DataStream()
+		, folder(root_folder)
 		, cur_block_number{1}
 		, buffer(new unsigned char[BUFFER_SIZE])
 		{}
@@ -38,7 +41,7 @@ public:
 		delete buffer;
 	}
 
-	std::shared_ptr<xdr::opaque_vec<>> load_txs_unparsed();
+	std::pair<uint32_t, std::shared_ptr<xdr::opaque_vec<>>> load_txs_unparsed() override final;
 
 };
 

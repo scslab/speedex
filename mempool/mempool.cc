@@ -122,4 +122,14 @@ void Mempool::remove_confirmed_txs() {
 		});
 }
 
+void Mempool::drop_txs(size_t num_to_drop) {
+	std::lock_guard lock(mtx);
+
+	size_t dropped = 0;
+	while (dropped < num_to_drop) {
+		dropped += mempool.front().size();
+		mempool.erase(mempool.begin());
+	}
+}
+
 } /* speedex */

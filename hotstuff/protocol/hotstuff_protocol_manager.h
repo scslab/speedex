@@ -15,7 +15,6 @@ class MockClientForSelf {
 	EventQueue& hotstuff_event_queue;
 	speedex::ReplicaID self_id;
 
-
 public:
 	MockClientForSelf(EventQueue& heq, speedex::ReplicaID self_id);
 

@@ -6,6 +6,8 @@
 
 #include "xdr/transaction.h"
 
+#include "utils/debug_macros.h"
+
 namespace speedex {
 
 std::unique_ptr<uint64_t> 
@@ -21,6 +23,8 @@ OverlayHandler::forward_txs(std::unique_ptr<ForwardingTxs> txs) {
 	} catch (...) {
 		return;
 	}
+
+	MEMPOOL_INFO("got %lu new txs for mempool", blk.size());
 
 	mempool.chunkify_and_add_to_mempool_buffer(std::move(blk));
 }
