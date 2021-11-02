@@ -17,6 +17,9 @@ SelfOverlayClient::send_txs(std::pair<uint32_t, std::shared_ptr<xdr::opaque_vec<
 	} catch (...) {
 		return;
 	}
+
+	MEMPOOL_INFO(" (self) got %lu new txs for mempool, cur size %lu", blk.size(), mempool.total_size());
+
 	mempool.chunkify_and_add_to_mempool_buffer(std::move(blk));
 }
 
