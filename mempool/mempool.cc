@@ -73,20 +73,15 @@ void Mempool::push_mempool_buffer_to_mempool() {
 	std::lock_guard lock2 (mtx);
 	//TODO consider limiting number of chunks or total number of txs in mempool
 
-	for (size_t i = 0; i < buffered_mempool.size(); i++) {
-		auto cur_sz = mempool_size.fetch_add(buffered_mempool[i].size(), std::memory_order_release);
-		buffer_size.fetch_sub(buffered_mempool[i].size(), std::memory_order_relaxed);
-
-		mempool.emplace_back(std::move(buffered_mempool[i]));
-		buffered_mempool[i] = std::move(buffered_mempool.back());
-		buffered_mempool.pop_back();
-		//TODO determine if strict ordering matters or not on the buffer
+	while (buffered_mempool.size() > 0) {
+		auto cur_sz = mempool_size.fetch_add(buffered_mempool.front().size(), std::memory_order_relaxed);
+		mempool.emplace_back(std::move(buffered_mempool.front()));
+		buffered_mempool.pop_front();
 
 		if (cur_sz > MAX_MEMPOOL_SIZE) {
 			return;
 		}
 	}
-	buffered_mempool.clear();
 }
 
 void Mempool::join_small_chunks() {

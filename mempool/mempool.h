@@ -12,6 +12,7 @@ larger chunks.
 
 #include <atomic>
 #include <cstdint>
+#include <deque>
 #include <mutex>
 #include <vector>
 
@@ -91,7 +92,7 @@ class Mempool {
 
 	std::vector<MempoolChunk> mempool;
 
-	std::vector<MempoolChunk> buffered_mempool;
+	std::deque<MempoolChunk> buffered_mempool;
 
 	std::atomic<uint64_t> mempool_size;
 
