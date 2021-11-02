@@ -75,6 +75,7 @@ void Mempool::push_mempool_buffer_to_mempool() {
 
 	while (buffered_mempool.size() > 0) {
 		auto cur_sz = mempool_size.fetch_add(buffered_mempool.front().size(), std::memory_order_relaxed);
+		buffer_size.fetch_sub(buffered_mempool.front().size(), std::memory_order_relaxed);
 		mempool.emplace_back(std::move(buffered_mempool.front()));
 		buffered_mempool.pop_front();
 
