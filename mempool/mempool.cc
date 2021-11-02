@@ -130,6 +130,7 @@ void Mempool::drop_txs(size_t num_to_drop) {
 		dropped += mempool.front().size();
 		mempool.erase(mempool.begin());
 	}
+	log_tx_removal(dropped);
 }
 
 } /* speedex */
