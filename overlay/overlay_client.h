@@ -32,9 +32,12 @@ class OverlayClient : public NonblockingRpcClient<xdr::srpc_client<OverlayV1>> {
 
 	void run();
 
-	void clear_connection() override {
+	void on_connection_clear() override {
 		connected_to_foreign_mempool = false;
-		do_clear_connection();
+	}
+
+	void on_connection_open() override {
+		connected_to_foreign_mempool = true;
 	}
 
 public:

@@ -52,8 +52,6 @@ OverlayClient::run()
 			to_forward = std::move(txs_to_forward);
 		}
 
-		wait_for_try_open_connection();
-
 		while (to_forward.size() > 0) {
 			bool success = try_action_void(
 				[this, &to_forward] {

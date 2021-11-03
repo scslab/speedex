@@ -61,7 +61,7 @@ BlockFetchWorker::run() {
 			// used for shutdown wait
 			cv.notify_one();
 		}
-		wait_for_try_open_connection();
+		//wait_for_try_open_connection();
 
 		std::unique_ptr<BlockFetchResponse> res = try_action<BlockFetchResponse>(
 			[this, &req] {

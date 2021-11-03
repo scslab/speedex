@@ -24,14 +24,22 @@ protected:
 
 	ReplicaInfo info;
 
+	//not threadsafe to access outside of a try_action call
 	std::unique_ptr<client_t> client;
 
+private:
+	//not threadsafe
 	void open_connection();
 	void try_open_connection();
 	void wait_for_try_open_connection();
 	bool connection_is_open();
-	void do_clear_connection();
-	virtual void clear_connection();
+	void clear_connection();
+
+protected:
+	//override to call event handlers
+	virtual void on_connection_clear() {}
+	virtual void on_connection_open() {}
+
 	void wait();
 
 	virtual const char* get_service() const = 0;
@@ -43,6 +51,7 @@ protected:
 		, client(nullptr)
 		{}
 
+	// These calls are NOT threadsafe
 	template<typename ReturnType>
 	std::unique_ptr<ReturnType> try_action(auto lambda);
 	bool try_action_void(auto lambda);
@@ -60,6 +69,7 @@ NonblockingRpcClient<client_t>::try_open_connection()
 		INFO("failed to open connection on rid=%d", info.id);
 		clear_connection();
 	}
+	on_connection_open();
 }
  
 template<typename client_t>
@@ -95,15 +105,9 @@ NonblockingRpcClient<client_t>::connection_is_open() {
 
 template<typename client_t>
 void
-NonblockingRpcClient<client_t>::do_clear_connection() {
+NonblockingRpcClient<client_t>::clear_connection() {
 	client = nullptr;
 	socket.clear();
-}
-
-template<typename client_t>
-void
-NonblockingRpcClient<client_t>::clear_connection() {
-	do_clear_connection();
 }
 
 template<typename client_t>

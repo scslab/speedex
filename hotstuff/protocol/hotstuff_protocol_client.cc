@@ -20,7 +20,7 @@ HotstuffProtocolClient::vote(vote_t vote)
 
 void HotstuffProtocolClient::do_work(std::vector<msg_t> const& todo)
 {
-	wait_for_try_open_connection();
+	//wait_for_try_open_connection();
 	if (done_flag) return;
 
 	for (auto const& work : todo)
@@ -43,7 +43,7 @@ void HotstuffProtocolClient::do_work(std::vector<msg_t> const& todo)
 			});
 
 			if (!success) {
-				wait_for_try_open_connection();
+				//wait_for_try_open_connection();
 				if (done_flag) return;
 			}
 		}
@@ -70,7 +70,7 @@ HotstuffProtocolClient::run()
 			// used for shutdown wait
 			cv.notify_one();
 		}
-		wait_for_try_open_connection();
+		//wait_for_try_open_connection();
 
 		do_work(todo);
 	}
