@@ -47,6 +47,7 @@ OverlayClientManager::get_min_mempool_size() const {
 			minimum = std::min(minimum, *res);
 		}
 	}
+	MEMPOOL_INFO("poll result: min size is %lu", minimum);
 	return minimum;
 }
 

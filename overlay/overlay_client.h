@@ -32,6 +32,11 @@ class OverlayClient : public NonblockingRpcClient<xdr::srpc_client<OverlayV1>> {
 
 	void run();
 
+	void clear_connection() override {
+		connected_to_foreign_mempool = false;
+		do_clear_connection();
+	}
+
 public:
 
 	OverlayClient(const ReplicaInfo& info)

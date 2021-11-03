@@ -30,6 +30,7 @@ protected:
 	void try_open_connection();
 	void wait_for_try_open_connection();
 	bool connection_is_open();
+	void do_clear_connection();
 	virtual void clear_connection();
 	void wait();
 
@@ -94,9 +95,15 @@ NonblockingRpcClient<client_t>::connection_is_open() {
 
 template<typename client_t>
 void
-NonblockingRpcClient<client_t>::clear_connection() {
+NonblockingRpcClient<client_t>::do_clear_connection() {
 	client = nullptr;
 	socket.clear();
+}
+
+template<typename client_t>
+void
+NonblockingRpcClient<client_t>::clear_connection() {
+	do_clear_connection();
 }
 
 template<typename client_t>
@@ -112,6 +119,7 @@ template<typename ReturnType>
 std::unique_ptr<ReturnType>
 NonblockingRpcClient<client_t>::try_action(auto lambda)
 {
+	wait_for_try_open_connection();
 	std::unique_ptr<ReturnType> out = nullptr;
 	try {
 		out = lambda();
@@ -126,6 +134,7 @@ template<typename client_t>
 bool
 NonblockingRpcClient<client_t>::try_action_void(auto lambda)
 {
+	wait_for_try_open_connection();
 	bool res = true;
 	try {
 		lambda();
