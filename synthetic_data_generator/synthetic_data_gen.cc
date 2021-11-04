@@ -1,10 +1,39 @@
 #include "synthetic_data_gen.h"
 
-
+#include <algorithm>
 
 namespace speedex {
 
 template class GeneratorState<std::minstd_rand>;
+
+void
+SyntheticDataGenSigner::sign_block(ExperimentBlock& txs) {
+
+	Signature s;
+	if (s.size() != crypto_sign_BYTES) {
+		throw std::runtime_error("sign len mismatch!!!");
+	}
+
+	tbb::parallel_for(
+		tbb::blocked_range<size_t>(0, txs.size()),
+		[&txs, this] (auto r) {
+
+
+			for (auto i = r.begin(); i < r.end(); i++) {
+				auto msg = xdr::xdr_to_opaque(txs[i].transaction);
+				AccountID sender = txs[i].transaction.metadata.sourceAccount;
+				if (crypto_sign_detached(
+					txs[i].signature.data(), //signature
+					nullptr, //optional siglen ptr
+					msg.data(), //msg
+					msg.size(), //msg len
+					key_map.at(sender).data())) //sk
+				{
+					throw std::runtime_error("failed to sign!");
+				}
+			}
+		});
+}
 
 template<typename random_generator>
 void 
@@ -163,6 +192,37 @@ GeneratorState<random_generator>::gen_new_op_type() {
 	}
 	std::printf("invalid tx_type_res %lf\n", tx_type_res);
 	throw std::runtime_error("invalid tx_type_res");
+}
+
+template<typename random_generator>
+void 
+GeneratorState<random_generator>::add_account_mapping(uint64_t new_idx) {
+	std::uniform_int_distribution<uint64_t> account_gen_dist(0, UINT64_MAX);
+	while(true) {
+		AccountID new_acct = account_gen_dist(gen);
+		if (existing_accounts_set.find(new_acct) != existing_accounts_set.end()) {
+			continue;
+		}
+
+		existing_accounts_set.insert(new_acct);
+		if (existing_accounts_map.size() != new_idx) {
+			throw std::runtime_error("bad usage of add_account_mapping");
+		}
+		existing_accounts_map.push_back(new_acct);
+		return;
+	}
+}
+
+template<typename random_generator>
+AccountID 
+GeneratorState<random_generator>::allocate_new_account_id() {
+	uint64_t new_idx = num_active_accounts;
+	add_account_mapping(new_idx);
+
+	AccountID out = existing_accounts_map[new_idx];
+	num_active_accounts ++;
+	signer.add_account(out);
+	return out;
 }
 
 template<typename random_generator>
@@ -471,6 +531,18 @@ GeneratorState<random_generator>::gen_transactions(size_t num_txs, const std::ve
 }
 
 template<typename random_generator>
+void
+GeneratorState<random_generator>::filter_by_replica_id(ExperimentBlock& block) {
+	if (!conf_pair) {
+		return;
+	}
+
+	std::remove_if(block.begin(), block.end(), [this] (SignedTransaction const& tx) -> bool {
+		return tx.transaction.metadata.sourceAccount % (conf_pair -> second.nreplicas) != conf_pair -> first;
+	});
+}
+
+template<typename random_generator>
 void GeneratorState<random_generator>::make_block(const std::vector<double>& prices) {
 	normalize_asset_probabilities();
 
@@ -512,6 +584,7 @@ void GeneratorState<random_generator>::make_block(const std::vector<double>& pri
 
 	ExperimentBlock output;
 	output.insert(output.end(), txs.begin(), txs.begin() + options.block_size);
+	filter_by_replica_id(output);
 	
 	std::printf("writing block %lu\n", block_state.block_number);
 

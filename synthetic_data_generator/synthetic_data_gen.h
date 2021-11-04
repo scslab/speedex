@@ -1,11 +1,14 @@
 #pragma once 
 
 #include <cstdint>
+#include <optional>
 #include <random>
 #include <unordered_map>
 
 #include <tbb/parallel_for.h>
 #include <xdrpp/marshal.h>
+
+#include "config/replica_config.h"
 
 #include "crypto/crypto_utils.h"
 
@@ -41,33 +44,7 @@ public:
 		return pk;
 	}
 
-	void sign_block(ExperimentBlock& txs) {
-
-		Signature s;
-		if (s.size() != crypto_sign_BYTES) {
-			throw std::runtime_error("sign len mismatch!!!");
-		}
-
-		tbb::parallel_for(
-			tbb::blocked_range<size_t>(0, txs.size()),
-			[&txs, this] (auto r) {
-
-
-				for (auto i = r.begin(); i < r.end(); i++) {
-					auto msg = xdr::xdr_to_opaque(txs[i].transaction);
-					AccountID sender = txs[i].transaction.metadata.sourceAccount;
-					if (crypto_sign_detached(
-						txs[i].signature.data(), //signature
-						nullptr, //optional siglen ptr
-						msg.data(), //msg
-						msg.size(), //msg len
-						key_map.at(sender).data())) //sk
-					{
-						throw std::runtime_error("failed to sign!");
-					}
-				}
-			});
-	}
+	void sign_block(ExperimentBlock& txs);
 };
 
 struct BlockState {
@@ -109,6 +86,8 @@ struct GeneratorState {
 
 	BlockState block_state;
 
+	std::optional<std::pair<ReplicaID, ReplicaConfig>> conf_pair;
+
 	std::string output_directory;
 
 	std::vector<AccountID> existing_accounts_map; // map from index [0, num_accounts) to accountID
@@ -121,33 +100,8 @@ struct GeneratorState {
 
 	void normalize_asset_probabilities();
 
-	void add_account_mapping(uint64_t new_idx) {
-		std::uniform_int_distribution<uint64_t> account_gen_dist(0, UINT64_MAX);
-		while(true) {
-			AccountID new_acct = account_gen_dist(gen);
-			if (existing_accounts_set.find(new_acct) != existing_accounts_set.end()) {
-				continue;
-			}
-
-			existing_accounts_set.insert(new_acct);
-			if (existing_accounts_map.size() != new_idx) {
-				throw std::runtime_error("bad usage of add_account_mapping");
-			}
-			existing_accounts_map.push_back(new_acct);
-			return;
-		}
-	}
-
-
-	AccountID allocate_new_account_id() {
-		uint64_t new_idx = num_active_accounts;
-		add_account_mapping(new_idx);
-
-		AccountID out = existing_accounts_map[new_idx];
-		num_active_accounts ++;
-		signer.add_account(out);
-		return out;
-	}
+	void add_account_mapping(uint64_t new_idx);
+	AccountID allocate_new_account_id();
 
 	OperationType gen_new_op_type();
 
@@ -209,27 +163,29 @@ struct GeneratorState {
 	void gen_new_accounts(uint64_t num_new_accounts);
 	void dump_account_list();
 
+	void filter_by_replica_id(ExperimentBlock& block);
+
 public:
 
-	GeneratorState(random_generator& gen, const GenerationOptions& options, std::string output_directory) 
+	GeneratorState(
+		random_generator& gen, 
+		const GenerationOptions& options, 
+		std::string output_directory, 
+		std::optional<std::pair<ReplicaID, ReplicaConfig>> conf_pair = std::nullopt) 
 		: type_dist(0.0, 1.0) 
 		, num_active_accounts(0)
 		, gen(gen)
 		, options(options) 
 		, signer()
+		, conf_pair(conf_pair)
 		, output_directory(output_directory) {
 			gen_new_accounts(options.num_accounts);
 			dump_account_list();
 		}
 
-
-
 	void make_block(const std::vector<double>& prices);
 
 	void make_blocks();
-
-
-
 };
 
 }
