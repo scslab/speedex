@@ -70,6 +70,8 @@ struct EmptyMetadata {
 
 	EmptyMetadata operator-() { return EmptyMetadata(); }
 
+	bool operator==(const EmptyMetadata& other) { return true; }
+
 	EmptyMetadata unsafe_substitute(EmptyMetadata other) { 
 		return EmptyMetadata(); 
 	}

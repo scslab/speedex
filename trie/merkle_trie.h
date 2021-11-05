@@ -688,13 +688,13 @@ public:
 	perform_deletion(const prefix_t key);
 
 
-	template<bool x = METADATA_DELETABLE>
-	typename std::enable_if<x, MetadataType>::type
-	mark_subtree_lt_key_for_deletion(const prefix_t max_key);
+//	template<bool x = METADATA_DELETABLE>
+//	typename std::enable_if<x, MetadataType>::type
+//	mark_subtree_lt_key_for_deletion(const prefix_t max_key);
 
-	template<bool x = METADATA_DELETABLE>
-	typename std::enable_if<x, MetadataType>::type
-	mark_subtree_for_deletion();
+//	template<bool x = METADATA_DELETABLE>
+//	typename std::enable_if<x, MetadataType>::type
+//	mark_subtree_for_deletion();
 
 	bool contains_key(const prefix_t key);
 
@@ -1337,19 +1337,19 @@ public:
 		root -> clear_marked_deletions();
 	}
 
-	template<bool x = METADATA_DELETABLE>
-	typename std::enable_if<x, void>::type
-	mark_subtree_lt_key_for_deletion(const prefix_t max_key) {
-		std::shared_lock lock(*hash_modify_mtx);
-		root -> mark_subtree_lt_key_for_deletion(max_key);
-	}
+//	template<bool x = METADATA_DELETABLE>
+//	typename std::enable_if<x, void>::type
+//	mark_subtree_lt_key_for_deletion(const prefix_t max_key) {
+//		std::shared_lock lock(*hash_modify_mtx);
+//		root -> mark_subtree_lt_key_for_deletion(max_key);
+//	}
 
-	template<bool x = METADATA_DELETABLE>
-	typename std::enable_if<x, void>::type
-	mark_entire_tree_for_deletion() {
-		std::shared_lock lock(*hash_modify_mtx);
-		root -> mark_subtree_for_deletion();
-	}
+//	template<bool x = METADATA_DELETABLE>
+//	typename std::enable_if<x, void>::type
+//	mark_entire_tree_for_deletion() {
+//		std::shared_lock lock(*hash_modify_mtx);
+//		root -> mark_subtree_for_deletion();
+//	}
 
 	template<bool x = HAS_VALUE>
 	typename std::conditional<x, std::optional<ValueType>, bool>::type
@@ -3584,6 +3584,7 @@ void TrieNode<TEMPLATE_PARAMS>::apply_lt_key(
 	}
 }
 
+/*
 TEMPLATE_SIGNATURE
 template<bool x>
 typename std::enable_if<x, MetadataType>::type
@@ -3724,6 +3725,7 @@ TrieNode<TEMPLATE_PARAMS>::mark_subtree_lt_key_for_deletion(
 	}
 	return meta_delta;
 }
+*/
 
 TEMPLATE_SIGNATURE
 int64_t 

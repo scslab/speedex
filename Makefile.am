@@ -132,7 +132,8 @@ SYNTHETIC_DATA_GEN_SRCS = \
 
 TRIE_TEST_SRCS = \
 	trie/tests/test_prefix.h \
-	trie/tests/test_merkle_trie.h
+	trie/tests/test_merkle_trie.h \
+	trie/tests/test_merkle_trie_metadata.h
 
 UTILS_SRCS = \
 	utils/cleanup.cc \
