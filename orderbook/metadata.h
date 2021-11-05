@@ -38,6 +38,10 @@ struct OrderbookMetadata {
 		return *this;
 	}
 
+	bool operator==(const OrderbookMetadata& other) {
+		return endow == other.endow;
+	}
+
 	std::string to_string() const {
 		std::stringstream s;
 		s << "endow:"<<endow<<" ";
@@ -53,6 +57,9 @@ struct OrderbookMetadata {
 
 
 struct AtomicOrderbookMetadata {
+
+	using BaseT = OrderbookMetadata;
+
 	std::atomic_int64_t endow;
 
 	AtomicOrderbookMetadata(const Offer& offer) : endow(offer.amount) {}

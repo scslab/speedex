@@ -131,7 +131,8 @@ SYNTHETIC_DATA_GEN_SRCS = \
 	synthetic_data_generator/synthetic_data_stream.cc
 
 TRIE_TEST_SRCS = \
-	trie/tests/test_prefix.h
+	trie/tests/test_prefix.h \
+	trie/tests/test_merkle_trie.h
 
 UTILS_SRCS = \
 	utils/cleanup.cc \

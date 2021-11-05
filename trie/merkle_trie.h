@@ -2948,6 +2948,7 @@ TrieNode<TEMPLATE_PARAMS>::endow_split(
 	invalidate_hash();
 
 	children_map_t new_node_children;
+	new_node_children.clear(); // set map as active union member
 
 	for(unsigned char branch_bits = 0; 
 		branch_bits <= MAX_BRANCH_VALUE; 

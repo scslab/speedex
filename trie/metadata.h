@@ -190,6 +190,10 @@ struct SizeMixin {
 		return *this;
 	}
 
+	bool operator==(const SizeMixin& other) {
+		return size == other.size;
+	}
+
 	std::string to_string() const {
 		std::stringstream s;
 		s << "size:"<<size<<" ";
@@ -281,6 +285,10 @@ struct RollbackMixin {
 		return *this;
 	}
 
+	bool operator==(const RollbackMixin& other) {
+		return num_rollback_subnodes == other.num_rollback_subnodes;
+	}
+
 	std::string to_string() const {
 		std::stringstream s;
 		s << "num_rollback_subnodes:"<<num_rollback_subnodes<<" ";
@@ -360,14 +368,13 @@ struct CombinedMetadata : public MetadataComponents... {
 		return out;
 	}
 
+	bool operator==(const CombinedMetadata& other) {
+		return (MetadataComponents::operator==(other)&&...);
+	}
+
 	void clear() {
 		*this = CombinedMetadata();
 	}
-
-	/*CombinedMetadata clone() const {
-		CombinedMetadata output = *this;
-		return output;
-	}*/
 
 	CombinedMetadata substitute(const CombinedMetadata& other) {
 		CombinedMetadata output = *this;

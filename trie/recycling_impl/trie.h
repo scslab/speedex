@@ -836,8 +836,6 @@ compute_hash_branch_node_v2(
 		digest_bytes.clear();
 	}
 
-	//std::vector<unsigned char> digest_bytes_local;
-
 	write_node_header(digest_bytes, prefix, prefix_len);
 
 	bv.write(digest_bytes);
