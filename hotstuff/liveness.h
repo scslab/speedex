@@ -57,6 +57,10 @@ public:
         return proposer == hotstuff_app.get_self_id();
     }
 
+    void set_self_as_proposer() {
+        proposer = hotstuff_app.get_self_id();
+    }
+
     void do_propose() {
         proposer = hotstuff_app.get_self_id();
         expected_hash = hotstuff_app.do_propose();
