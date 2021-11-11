@@ -38,10 +38,10 @@ class HotstuffAppBase : public HotstuffCore {
 
 	void notify_ok_to_prune_blocks(uint64_t committed_hotstuff_height) override final;
 
+	block_ptr_t find_block_by_hash(speedex::Hash const& hash) override final;
+
 protected:
 	
-	HotstuffLMDB decided_hash_index;
-
 	virtual xdr::opaque_vec<> get_next_vm_block(bool nonempty_proposal, uint64_t hotstuff_height) = 0;
 
 	void on_new_qc(speedex::Hash const& hash) override final;
@@ -73,8 +73,8 @@ class HotstuffApp : public HotstuffAppBase {
 		return vm_bridge.get_and_apply_next_proposal(hotstuff_height);
 	}
 
-	void apply_block(block_ptr_t blk) override final {
-		vm_bridge.apply_block(blk, decided_hash_index);
+	void apply_block(block_ptr_t blk, HotstuffLMDB::txn& tx) override final {
+		vm_bridge.apply_block(blk, tx);
 	}
 
 	void notify_vm_of_commitment(block_ptr_t blk) override final {
@@ -99,6 +99,7 @@ public:
 
 	void init_from_disk() {
 		decided_hash_index.open_db();
+		reload_decided_blocks();
 		vm_bridge.init_from_disk(decided_hash_index);
 	}
 

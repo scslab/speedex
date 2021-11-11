@@ -1,7 +1,18 @@
 #include "hotstuff/vm/counting_vm.h"
 
+#include "hotstuff/lmdb.h"
+
 namespace hotstuff {
 
+
+CountingVMBlockID::CountingVMBlockID(std::vector<uint8_t> const& bytes) 
+	: value(std::nullopt)
+{
+	if (bytes.size() > 0) {
+		value = std::make_optional<uint64_t>();
+		xdr::xdr_from_opaque(bytes, *value);
+	}
+}
 /*
 std::strong_ordering 
 CountingVMBlockID::operator<=>(const CountingVMBlockID& other) const {
@@ -16,6 +27,20 @@ CountingVMBlockID::operator<=>(const CountingVMBlockID& other) const {
 	}
 	return (*value) <=> (*other.value);
 }*/
+
+void 
+CountingVM::init_from_disk(HotstuffLMDB const& lmdb) {
+	auto cursor = lmdb.forward_cursor();
+	for (auto iter = cursor.begin(); iter != cursor.end(); ++iter) {
+		auto [hash, id] = iter.template get_hs_hash_and_vm_data<block_id>();
+
+		if (id) {
+			auto loaded_block = lmdb.template load_vm_block<block_type>(hash);
+			exec_block(loaded_block);
+			log_commitment(id);
+		}
+	}
+}
 
 void 
 CountingVM::exec_block(const block_type& blk) {

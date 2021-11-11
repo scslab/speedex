@@ -3,13 +3,13 @@
 #include "config/replica_config.h"
 
 #include "hotstuff/generic_event_queue.h"
-#include "hotstuff/network_event.h"
 
 namespace hotstuff {
 
 class BlockFetchManager;
 class BlockStore;
 class EventQueue;
+class NetEvent;
 
 class NetworkEventQueue : public GenericEventQueue<NetEvent>
 {

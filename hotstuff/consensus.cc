@@ -17,6 +17,7 @@ HotstuffCore::HotstuffCore(const ReplicaConfig& config, ReplicaID self_id)
 	, self_id(self_id)
 	, config(config)
 	, b_leaf(genesis_block)
+	, decided_hash_index()
 	{}
 
 //qc_block is the block pointed to by qc
@@ -83,18 +84,26 @@ HotstuffCore::update(const block_ptr_t& nblk) {
     { 
         commit_queue.push_back(b);
     }
-    if (b != b_exec)
+    if (b != b_exec) {
         throw std::runtime_error("safety breached");
+    }
+
+   	auto txn = decided_hash_index.open_txn();
+
     for (auto it = commit_queue.rbegin(); it != commit_queue.rend(); it++)
     {
         block_ptr_t blk = *it;
         blk -> decide();
 
-        apply_block(blk);
+        apply_block(blk, txn);
 
         notify_vm_of_commitment(blk);
     }
     b_exec = blk;
+
+    txn.set_qc_on_top_block(blk1 -> get_justify_qc());
+    decided_hash_index.commit(txn);
+
     notify_ok_to_prune_blocks(b_exec -> get_height());
 }
 
@@ -156,5 +165,19 @@ HotstuffCore::on_receive_proposal(block_ptr_t bnew, ReplicaID proposer)
 
 	update(bnew);
 }
+
+void
+HotstuffCore::reload_state_from_index()
+{
+	auto highest_qc_wire = decided_hash_index.get_highest_qc();
+	auto highest_block_ptr = find_block_by_hash(highest_qc_wire.justify);
+	//sets all the relevant state vars except for vheight, b_exec, and b_lock
+	update_hqc(highest_block_ptr, highest_qc_wire);
+
+	vheight = highest_block_ptr->get_height();
+	b_exec = highest_block_ptr;
+	b_lock = highest_block_ptr;
+}
+
 
 } /* hotstuff */

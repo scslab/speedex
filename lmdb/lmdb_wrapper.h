@@ -88,6 +88,10 @@ public:
     env.sync();
   }
 
+  const MDB_dbi get_metadata_dbi() const {
+    return metadata_dbi;
+  }
+
   //! Commits a write transaction to the database.
   //! Optionally performs an msync.  Updates persisted_round counter.
   void commit_wtxn(dbenv::wtxn& txn, uint64_t persisted_round, bool do_sync = true);

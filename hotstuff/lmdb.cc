@@ -1,5 +1,7 @@
 #include "hotstuff/lmdb.h"
 
+#include "hotstuff/crypto.h"
+
 #include "utils/big_endian.h"
 
 namespace hotstuff {
@@ -25,13 +27,28 @@ HotstuffLMDB::cursor::iterator::operator*() {
 	return {key_parsed, hash};
 }
 
+
+HotstuffLMDB::txn 
+HotstuffLMDB::open_txn() {
+	return txn(wbegin(), get_data_dbi(), get_metadata_dbi());
+}
+
 void 
-HotstuffLMDB::add_decided_block_(block_ptr_t blk, std::vector<uint8_t> const& serialized_vm_blk_id) {
+HotstuffLMDB::commit(HotstuffLMDB::txn& tx) {
+	commit_wtxn(tx.tx, get_persisted_round_number() + 1);
+}
+
+HotstuffLMDB::txn::txn(speedex::dbenv::wtxn&& tx, MDB_dbi data_dbi, MDB_dbi meta_dbi)
+	: tx(std::move(tx))
+	, data_dbi(data_dbi)
+	, meta_dbi(meta_dbi)
+	{}
+
+void 
+HotstuffLMDB::txn::add_decided_block_(block_ptr_t blk, std::vector<uint8_t> const& serialized_vm_blk_id) {
 
 	uint64_t height = blk->get_height();
 	Hash const& hash = blk->get_hash();
-
-	auto wtx = wbegin();
 
 	std::array<uint8_t, 8> key_bytes;
 	speedex::write_unsigned_big_endian(key_bytes, height);
@@ -43,8 +60,8 @@ HotstuffLMDB::add_decided_block_(block_ptr_t blk, std::vector<uint8_t> const& se
 	dbval value_val{value_bytes};
 	dbval key_val{key_bytes};
 
-	wtx.put(get_data_dbi(), key_val, value_val);
-	commit_wtxn(wtx, blk -> get_height());
+	tx.put(data_dbi, key_val, value_val);
+	//commit_wtxn(wtx, blk -> get_height());
 }
 
 std::optional<std::pair<Hash, std::vector<uint8_t>>>
@@ -70,6 +87,28 @@ HotstuffLMDB::get_decided_hash_id_pair_(uint64_t height) const {
 	hash_bytes.insert(hash_bytes.end(), value_bytes.begin(), value_bytes.begin() + hash.size());
 	xdr::xdr_from_opaque(hash_bytes, hash);
 	return {{hash, value_bytes}};
+}
+
+void
+HotstuffLMDB::txn::set_qc_on_top_block(QuorumCertificate const& qc) {
+	auto bytes = xdr::xdr_to_opaque(qc.serialize());
+
+	dbval qc_dbval = dbval{bytes};
+
+	tx.put(meta_dbi, dbval{"qc"}, qc_dbval);
+}
+
+QuorumCertificateWire 
+HotstuffLMDB::get_highest_qc() const {
+	auto rtxn = rbegin();
+	auto value = rtxn.get(get_metadata_dbi(), dbval{"qc"});
+	if (!value) {
+		throw std::runtime_error("failed to get highest qc when loading from db");
+	}
+
+	QuorumCertificateWire out;
+	xdr::xdr_from_opaque(value -> bytes(), out);
+	return out;
 }
 
 } /* hotstuff */

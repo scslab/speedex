@@ -1,5 +1,6 @@
 #include "hotstuff/hotstuff.h"
 
+#include "hotstuff/block.h"
 #include "hotstuff/crypto.h"
 
 namespace hotstuff {
@@ -24,7 +25,6 @@ HotstuffAppBase::HotstuffAppBase(const ReplicaConfig& config_, ReplicaID self_id
 	, qc_wait_cv()
 	, latest_new_qc(std::nullopt)
 	, cancel_wait(false)
-	, decided_hash_index()
 	{
 		block_fetch_manager.init_configs(network_event_queue);
 	}
@@ -44,6 +44,17 @@ HotstuffAppBase::notify_ok_to_prune_blocks(uint64_t committed_hotstuff_height) {
 	const uint64_t keep_depth = 100;
 	block_store.prune_below_height(committed_hotstuff_height > keep_depth ? committed_hotstuff_height - keep_depth : 0);
 }
+
+block_ptr_t 
+HotstuffAppBase::find_block_by_hash(speedex::Hash const& hash) 
+{
+	auto out = block_store.get_block(hash);
+	if (!out) {
+		throw std::runtime_error("Failed to find block during initialization");
+	}
+	return out;
+}
+
 
 speedex::Hash
 HotstuffAppBase::do_propose()
@@ -108,10 +119,15 @@ void
 HotstuffAppBase::reload_decided_blocks() {
 	auto cursor = decided_hash_index.forward_cursor();
 
-	for (auto [height, hash] : cursor)
+	for (auto [_, hash] : cursor)
 	{
-		//block_ptr_t blk = Block::
+		block_ptr_t blk = HotstuffBlock::load_decided_block(hash);
+		auto res = block_store.insert_block(blk);
+		if (res) {
+			throw std::runtime_error("unable to properly load data into block store");
+		}
 	}
+	reload_state_from_index();
 }
 
 

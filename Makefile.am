@@ -165,6 +165,7 @@ SRCS = \
 	$(UTILS_SRCS)
 
 MAIN_CCS = \
+	main/clean_lmdbs.cc \
 	main/counting_vm_hotstuff.cc \
 	main/overlay_sim.cc \
 	main/simple.cc \
@@ -190,6 +191,7 @@ test_runner.cc : $(TEST_SRCS) $(XHFILES)
 	cxxtestgen --error-printer -o test_runner.cc $(TEST_SRCS)
 
 bin_PROGRAMS = \
+	clean_lmdbs \
 	counting_vm_hotstuff \
 	overlay_sim \
 	simple \
@@ -200,6 +202,7 @@ bin_PROGRAMS = \
 	trie_comparison \
 	test
 
+clean_lmdbs_SOURCES = $(SRCS) main/clean_lmdbs.cc
 counting_vm_hotstuff_SOURCES = $(SRCS) main/counting_vm_hotstuff.cc
 overlay_sim_SOURCES = $(SRCS) main/overlay_sim.cc
 simple_SOURCES = $(SRCS) main/simple.cc

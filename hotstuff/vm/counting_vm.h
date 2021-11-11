@@ -11,8 +11,15 @@
 
 namespace hotstuff {
 
+class HotstuffLMDB;
+
 struct CountingVMBlockID {
 	std::optional<uint64_t> value;
+
+	CountingVMBlockID() : value(std::nullopt) {}
+	CountingVMBlockID(uint64_t value) : value(value) {}
+
+	CountingVMBlockID(std::vector<uint8_t> const& bytes);
 
 	//std::strong_ordering operator<=>(const CountingVMBlockID& other) const;
 
@@ -45,13 +52,15 @@ public:
 		return CountingVMBlockID{blk};
 	}
 	static block_id empty_block_id() {
-		return CountingVMBlockID{std::nullopt};
+		return CountingVMBlockID{};
 	}
 
 	void init_clean() {
 		state = 0;
 		last_committed_state = 0;
 	}
+
+	void init_from_disk(HotstuffLMDB const& lmdb);
 
 	std::unique_ptr<block_type> propose() {
 		state++;

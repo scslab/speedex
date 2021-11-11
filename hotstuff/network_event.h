@@ -2,13 +2,14 @@
 
 #include "config/replica_config.h"
 
-#include "hotstuff/block.h"
 #include "hotstuff/crypto.h"
 #include "hotstuff/event.h"
 
 #include "xdr/hotstuff.h"
 
 namespace hotstuff {
+
+class HotstuffBlock;
 
 class VoteNetEvent {
 

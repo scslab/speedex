@@ -1,5 +1,7 @@
 #include "hotstuff/network_event.h"
 
+#include "hotstuff/block.h"
+
 namespace hotstuff {
 
 using speedex::ReplicaConfig;

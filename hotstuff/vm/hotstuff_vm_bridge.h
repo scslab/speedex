@@ -45,13 +45,13 @@ public:
 		{}
 
 	void init_clean() {
-		vm_interface -> init_clean();
+		vm_interface.init_clean();
 		initialized = true;
 	}
 
 	void init_from_disk(HotstuffLMDB const& decided_block_index) {
+		vm_interface.init_from_disk(decided_block_index);
 		initialized = true;
-		throw std::runtime_error("unimpl");
 	}
 
 	xdr::opaque_vec<> make_empty_proposal(uint64_t proposal_height) {
@@ -78,7 +78,7 @@ public:
 		return xdr::xdr_to_opaque(*proposal);
 	}
 
-	void apply_block(block_ptr_t blk, HotstuffLMDB& decided_block_index) {
+	void apply_block(block_ptr_t blk, HotstuffLMDB::txn& txn) {
 
 		init_guard();
 
@@ -87,7 +87,7 @@ public:
 		auto blk_value = blk -> template try_vm_parse<vm_block_type>();
 		auto blk_id = get_block_id(blk_value);
 
-		decided_block_index.add_decided_block(blk, blk_id);
+		txn.add_decided_block(blk, blk_id);
 
 		if (!speculation_map.empty()) {
 

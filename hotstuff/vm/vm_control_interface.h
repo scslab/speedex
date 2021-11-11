@@ -11,6 +11,8 @@
 
 namespace hotstuff {
 
+class HotstuffLMDB;
+
 template<typename VMType>
 class VMControlInterface : public speedex::AsyncWorker {
 	std::shared_ptr<VMType> vm_instance;
@@ -68,6 +70,14 @@ public:
 	void submit_block_for_exec(submission_t submission);
 	void log_commitment(typename VMType::block_id block_id);
 	void finish_work_and_force_rewind();
+
+	//call before any usage
+	void init_clean() {
+		vm_instance -> init_clean();
+	}
+	void init_from_disk(HotstuffLMDB const& decided_block_cache) {
+		vm_instance -> init_from_disk(decided_block_cache);
+	}
 };
 
 template<typename VMType>

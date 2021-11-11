@@ -22,6 +22,7 @@
 
 #include "hotstuff/block.h"
 #include "hotstuff/crypto.h"
+#include "hotstuff/lmdb.h"
 
 #include <mutex>
 
@@ -46,9 +47,15 @@ protected:
 
 	mutable std::mutex proposal_mutex; 						/**< lock access to b_leaf and hqc */
 
+	HotstuffLMDB decided_hash_index;
+
 	block_ptr_t get_genesis() const {
 		return genesis_block;
 	}
+
+	// only for initialization from lmdb
+	void reload_state_from_index();
+	virtual block_ptr_t find_block_by_hash(speedex::Hash const& hash) = 0;
 
 private:
 	//qc_block is the block pointed to by qc
@@ -92,7 +99,7 @@ protected:
 	// called on getting a new qc.  Input is hash of qc'd obj.
 	virtual void on_new_qc(speedex::Hash const& hash) = 0;
 
-	virtual void apply_block(block_ptr_t block) = 0;
+	virtual void apply_block(block_ptr_t block, HotstuffLMDB::txn& tx) = 0;
 
 	virtual void notify_vm_of_commitment(block_ptr_t blk) = 0;
 

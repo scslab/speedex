@@ -1,5 +1,6 @@
 #include "hotstuff/protocol/hotstuff_server.h"
 
+#include "hotstuff/network_event.h"
 #include "hotstuff/network_event_queue.h"
 
 namespace hotstuff {

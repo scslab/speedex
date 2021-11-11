@@ -3,6 +3,7 @@
 #include "hotstuff/block_storage/block_store.h"
 #include "hotstuff/block_storage/block_fetch_manager.h"
 #include "hotstuff/event_queue.h"
+#include "hotstuff/network_event.h"
 
 namespace hotstuff {
 

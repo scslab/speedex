@@ -24,7 +24,7 @@ HotstuffBlock::HotstuffBlock(HotstuffBlockWire&& _wire_block, ReplicaID proposer
 	, flushed_from_memory(false)
 	{}
 
-HotstuffBlock::HotstuffBlock(HotstuffBlockWire&& _wire_block, load_from_disk_block_t x)
+HotstuffBlock::HotstuffBlock(HotstuffBlockWire&& _wire_block, load_from_disk_block_t _)
 	: wire_block(std::move(_wire_block))
 	, parsed_qc(wire_block.header.qc)
 	, proposer(speedex::UNKNOWN_REPLICA)
