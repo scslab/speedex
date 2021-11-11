@@ -44,9 +44,22 @@ MDB_dbi BaseLMDBInstance::create_db(const char* name) {
   }
   auto wtx = env.wbegin();
   MDB_dbi dbi = wtx.open(name, MDB_CREATE);
-  if (!metadata_dbi_open) {
-    metadata_dbi = wtx.open("metadata", MDB_CREATE);
-    metadata_dbi_open = true;
+
+  if (metadata_dbi_open) {
+    throw std::runtime_error("double open");
+  }
+
+  //if (!metadata_dbi_open) {
+  metadata_dbi = wtx.open("metadata", MDB_CREATE);
+  metadata_dbi_open = true;
+  //}
+
+  auto preexist_check = wtx.get(metadata_dbi, dbval("persisted block"));
+
+  if (preexist_check) {
+    if (preexist_check -> uint64() != 0) {
+      throw std::runtime_error("database already existed, can't create new");
+    }
   }
 
   write_persisted_round_number(wtx, 0);

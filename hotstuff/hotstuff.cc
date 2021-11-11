@@ -117,14 +117,16 @@ HotstuffAppBase::cancel_wait_for_new_qc() {
 
 void
 HotstuffAppBase::reload_decided_blocks() {
-	auto cursor = decided_hash_index.forward_cursor();
-
-	for (auto [_, hash] : cursor)
 	{
-		block_ptr_t blk = HotstuffBlock::load_decided_block(hash);
-		auto res = block_store.insert_block(blk);
-		if (res) {
-			throw std::runtime_error("unable to properly load data into block store");
+		auto cursor = decided_hash_index.forward_cursor();
+
+		for (auto [_, hash] : cursor)
+		{
+			block_ptr_t blk = HotstuffBlock::load_decided_block(hash);
+			auto res = block_store.insert_block(blk);
+			if (res) {
+				throw std::runtime_error("unable to properly load data into block store");
+			}
 		}
 	}
 	reload_state_from_index();
