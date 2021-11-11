@@ -112,7 +112,7 @@ public:
     return dbi;
   }
 
-  MDB_stat stat() {
+  MDB_stat stat() const {
     auto rtx = rbegin();
     auto stat = rtx.stat(dbi);
     rtx.abort();

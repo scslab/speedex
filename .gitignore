@@ -20,10 +20,12 @@ depcomp
 test
 test_runner.cc
 README
+databases/
 
 #binaries
 clean_lmdbs
 counting_vm_hotstuff
 overlay_sim
 synthetic_data_gen
+trie_comparison
 

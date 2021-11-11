@@ -64,7 +64,7 @@ BlockStore::get_block(const Hash& block_hash)
 
 	auto it = block_cache.find(block_hash);
 	if (it == block_cache.end()) {
-		HOTSTUFF_INFO("failed to find block %s", debug::array_to_str(block_hash.data(), block_hash.size()));
+		HOTSTUFF_INFO("failed to find block %s", debug::hash_to_str(block_hash).c_str());
 		return nullptr;
 	}
 

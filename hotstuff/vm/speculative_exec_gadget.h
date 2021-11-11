@@ -11,7 +11,7 @@ namespace hotstuff {
 
 /**
  * Acquire lock before use to make threadsafe
- * (on_commit_hotstuff acquires lock internally,
+ * (on_commit_hotstuff and clear acquire lock internally,
  * other methods do not).
  * Additionally, take care to ensure
  * that VM stays in sync with these commands.
@@ -61,6 +61,11 @@ public:
 
 	void clear();
 
+	void init_from_disk(uint64_t highest_decided_height) {
+		highest_committed_height = highest_decided_height;
+		clear(); // set everything else
+	}
+
 	std::lock_guard<std::mutex> lock() {
 		mtx.lock();
 		return {mtx, std::adopt_lock};
@@ -84,6 +89,7 @@ void
 SpeculativeExecGadget<VMValueType>::add_height_pair(uint64_t hotstuff_height, VMValueType vm_value)
 {
 	if (speculation_head_hotstuff_height != hotstuff_height) {
+		std::printf("WARN: speculation_head_hotstuff_height != hotstuff_height\n");
 		return;
 	}
 	speculation_head_hotstuff_height ++ ;
@@ -102,7 +108,7 @@ SpeculativeExecGadget<VMValueType>::on_commit_hotstuff(uint64_t hotstuff_height)
 	std::lock_guard lock(mtx);
 
 	if (empty()) {
-		throw std::runtime_error("committing on empty map");
+		throw std::runtime_error(std::string("committing on empty map at hs height " + std::to_string(hotstuff_height)));
 	}
 
 	auto const& front = height_map.front();
@@ -124,6 +130,7 @@ template<typename VMValueType>
 void
 SpeculativeExecGadget<VMValueType>::clear()
 {
+	std::lock_guard lock(mtx);
 	height_map.clear();
 	last_elt_iter = height_map.end();
 

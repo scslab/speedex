@@ -46,7 +46,8 @@ protected:
 
 	void on_new_qc(speedex::Hash const& hash) override final;
 
-	void reload_decided_blocks();
+	//returns highest decision height
+	uint64_t reload_decided_blocks();
 
 public:
 
@@ -99,8 +100,8 @@ public:
 
 	void init_from_disk() {
 		decided_hash_index.open_db();
-		reload_decided_blocks();
-		vm_bridge.init_from_disk(decided_hash_index);
+		uint64_t highest_decision_height = reload_decided_blocks();
+		vm_bridge.init_from_disk(decided_hash_index, highest_decision_height);
 	}
 
 	void put_vm_in_proposer_mode() {

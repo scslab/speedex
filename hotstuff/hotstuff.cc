@@ -3,6 +3,8 @@
 #include "hotstuff/block.h"
 #include "hotstuff/crypto.h"
 
+#include "utils/debug_utils.h"
+
 namespace hotstuff {
 
 using xdr::operator==;
@@ -115,22 +117,26 @@ HotstuffAppBase::cancel_wait_for_new_qc() {
 	qc_wait_cv.notify_all();
 }
 
-void
+uint64_t
 HotstuffAppBase::reload_decided_blocks() {
+	
+	uint64_t highest_decision = 0;
 	{
 		auto cursor = decided_hash_index.forward_cursor();
 
 		for (auto [_, hash] : cursor)
 		{
+			HOTSTUFF_INFO("LOADING: block hash %s", debug::hash_to_str(hash).c_str());
 			block_ptr_t blk = HotstuffBlock::load_decided_block(hash);
 			auto res = block_store.insert_block(blk);
 			if (res) {
 				throw std::runtime_error("unable to properly load data into block store");
 			}
+			highest_decision = blk -> get_height();
 		}
 	}
 	reload_state_from_index();
+	return highest_decision;
 }
-
 
 } /* hotstuff */

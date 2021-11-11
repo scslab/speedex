@@ -103,6 +103,7 @@ public:
 		};
 
 		iterator begin() {
+			c.get(MDB_FIRST);
 			return iterator(c);
 		}
 
@@ -114,7 +115,7 @@ public:
 	cursor forward_cursor() const {
 		return cursor{*this};
 	}
-
+	
 	template<typename vm_block_type>
 	vm_block_type
 	static load_vm_block(speedex::Hash const& hash);

@@ -194,7 +194,7 @@ struct dbenv : unique_destructor_t<mdb_env_close> {
       check(err, "mdb_txn_commit");
     }
 
-    MDB_stat stat(MDB_dbi dbi) {
+    MDB_stat stat(MDB_dbi dbi) const {
       MDB_stat out;
       check(mdb_stat(tx_, dbi, &out), "mdb_stat");
       return out;

@@ -20,6 +20,7 @@ class HotstuffVMBridge {
 	bool initialized;
 
 	void revert_to_last_commitment() {
+		VM_BRIDGE_INFO("revert to last commitment: clearing speculation map");
 		speculation_map.clear();
 	}
 
@@ -49,8 +50,9 @@ public:
 		initialized = true;
 	}
 
-	void init_from_disk(HotstuffLMDB const& decided_block_index) {
+	void init_from_disk(HotstuffLMDB const& decided_block_index, uint64_t decided_hotstuff_height) {
 		vm_interface.init_from_disk(decided_block_index);
+		speculation_map.init_from_disk(decided_hotstuff_height);
 		initialized = true;
 	}
 
@@ -101,6 +103,7 @@ public:
 			vm_interface.finish_work_and_force_rewind();
 		}
 
+		VM_BRIDGE_INFO("adding height entry for %lu", blk -> get_height());
 		speculation_map.add_height_pair(blk -> get_height(), blk_id);
 
 		vm_interface.submit_block_for_exec(std::move(blk_value));
@@ -109,6 +112,7 @@ public:
 	void notify_vm_of_commitment(block_ptr_t blk) {
 		init_guard();
 
+		VM_BRIDGE_INFO("consuming height entry for %lu", blk -> get_height());
 		auto committed_block_id = speculation_map.on_commit_hotstuff(blk->get_height());
 
 		vm_interface.log_commitment(committed_block_id);
