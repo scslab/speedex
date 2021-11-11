@@ -23,9 +23,9 @@ struct EmptyValue {
 
 	constexpr static void copy_data(std::vector<uint8_t>& buf) {}
 
-	constexpr static bool modified_since_last_hash() {
-		return false;
-	}
+	//constexpr static bool modified_since_last_hash() {
+	//	return false;
+	//}
 	//void append_to_proof(std::vector<unsigned char>& buf) const {}
 };
 
@@ -137,8 +137,7 @@ struct XdrTypeWrapper : public xdr_type {
 		{}
 	XdrTypeWrapper(const xdr_type& x) 
 		: xdr_type(x)
-		//, serialization()
-       		{}
+       	{}
 
 	XdrTypeWrapper& operator=(const XdrTypeWrapper& other) {
 		xdr_type::operator=(other);

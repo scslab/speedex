@@ -70,7 +70,6 @@ struct HashedBlockTransactionDataPair {
 	TransactionData txData;
 };
 
-
 struct TatonnementMeasurements {
 	float runtime;
 	uint32 step_radix;

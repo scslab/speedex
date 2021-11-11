@@ -6,6 +6,7 @@
 
 namespace hotstuff {
 
+using speedex::Hash;
 using speedex::ReplicaID;
 using speedex::ReplicaConfig;
 
@@ -23,11 +24,28 @@ HotstuffBlock::HotstuffBlock(HotstuffBlockWire&& _wire_block, ReplicaID proposer
 	, flushed_from_memory(false)
 	{}
 
+HotstuffBlock::HotstuffBlock(HotstuffBlockWire&& _wire_block, load_from_disk_block_t x)
+	: wire_block(std::move(_wire_block))
+	, parsed_qc(wire_block.header.qc)
+	, proposer(speedex::UNKNOWN_REPLICA)
+	, block_height(0)
+	, parent_block_ptr(nullptr)
+	, self_qc(speedex::hash_xdr(wire_block.header))
+	, decided(true)
+	, written_to_disk()
+	, hash_checked(true)
+	, hash_valid(true)
+	, flushed_from_memory(false)
+	{
+		written_to_disk.test_and_set();
+	}
+
+
 // genesis block
-HotstuffBlock::HotstuffBlock()
+HotstuffBlock::HotstuffBlock(genesis_block_t)
 	: wire_block()
 	, parsed_qc(std::nullopt)
-	, proposer(0)
+	, proposer(speedex::UNKNOWN_REPLICA)
 	, block_height(0)
 	, parent_block_ptr(nullptr)
 	, self_qc(speedex::Hash())
@@ -55,6 +73,9 @@ HotstuffBlock::set_justify(block_ptr_t justify_block) {
 
 bool
 HotstuffBlock::has_body() const {
+	if (flushed_from_memory) {
+		throw std::runtime_error("can't query body if flushed from memory");
+	}
 	return wire_block.body.size() > 0;
 }
 
@@ -99,6 +120,8 @@ HotstuffBlock::write_to_disk() {
 		return;
 	}
 
+	// output filename (should be) equal to get_hash()
+	// or equivalently, hash(wire_block.header)
 	save_block(wire_block);
 	if (parent_block_ptr != nullptr) {
 		parent_block_ptr -> write_to_disk();
@@ -113,8 +136,21 @@ HotstuffBlock::flush_from_memory() {
 	wire_block.body.clear();
 }
 
+
+block_ptr_t
+HotstuffBlock::genesis_block()
+{
+	return std::shared_ptr<HotstuffBlock>(new HotstuffBlock(genesis_block_t{}));
+}
+
+block_ptr_t
+HotstuffBlock::receive_block(HotstuffBlockWire&& body, ReplicaID source_id)
+{
+	return std::shared_ptr<HotstuffBlock>(new HotstuffBlock(std::move(body), source_id));
+}
+
 block_ptr_t 
-HotstuffBlock::mint_block(xdr::opaque_vec<>&& body, QuorumCertificateWire const& qc_wire, speedex::Hash const& parent_hash, ReplicaID self_id)
+HotstuffBlock::mint_block(xdr::opaque_vec<>&& body, QuorumCertificateWire const& qc_wire, Hash const& parent_hash, ReplicaID self_id)
 {
 	HotstuffBlockWire wire_block;
 	wire_block.header.parent_hash = parent_hash;
@@ -122,9 +158,17 @@ HotstuffBlock::mint_block(xdr::opaque_vec<>&& body, QuorumCertificateWire const&
 	wire_block.header.body_hash = speedex::hash_xdr(body);
 	wire_block.body = std::move(body);
 
-	auto out = std::make_shared<HotstuffBlock>(std::move(wire_block), self_id);
-
-	return out;
+	return std::shared_ptr<HotstuffBlock>(new HotstuffBlock(std::move(wire_block), self_id));
 }
+
+block_ptr_t
+HotstuffBlock::load_decided_block(Hash const& hash) {
+	auto loaded = load_block(hash);
+	if (!loaded) {
+		throw std::runtime_error("failed to load an expected block!");
+	}
+
+	return std::shared_ptr<HotstuffBlock>(new HotstuffBlock(std::move(*loaded), load_from_disk_block_t{}));
+} 
 
 } /* hotstuff */

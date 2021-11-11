@@ -112,6 +112,9 @@ VMControlInterface<VMType>::get_proposal()
 		= (proposal_buffer.size() > PROPOSAL_BUFFER_TARGET)
 			? 0 
 			: PROPOSAL_BUFFER_TARGET - proposal_buffer.size();
+	if (additional_proposal_requests > 0) {
+		cv.notify_all();
+	}
 	return out;
 }
 
@@ -127,7 +130,7 @@ template<typename VMType>
 void
 VMControlInterface<VMType>::submit_block_for_exec(submission_t submission)
 {
-	std::unique_lock lock(mtx);
+	std::lock_guard lock(mtx);
 	
 	clear_proposal_settings();
 
@@ -136,16 +139,24 @@ VMControlInterface<VMType>::submit_block_for_exec(submission_t submission)
 	cv.notify_all();
 }
 
+//! log_commitment should be called in order in which things are committed
 template<typename VMType>
 void
 VMControlInterface<VMType>::log_commitment(typename VMType::block_id block_id) {
-	std::unique_lock lock(mtx);
+	std::lock_guard lock(mtx);
 
+	if (block_id) {
+		highest_committed_id = block_id;
+	}
 	if (highest_committed_id) {
+		cv.notify_all();
+	}
+
+	/*if (highest_committed_id) {
 		*highest_committed_id = std::max(*highest_committed_id, block_id);
 	} else {
 		highest_committed_id = std::make_optional(block_id);
-	}
+	}*/
 }
 
 
@@ -183,6 +194,7 @@ VMControlInterface<VMType>::run() {
 			vm_instance -> log_commitment(*highest_committed_id);
 			highest_committed_id = std::nullopt;
 		} else {
+			//get additional proposals
 			if (!is_proposer) {
 				throw std::runtime_error("vm thread woke up early");
 			}

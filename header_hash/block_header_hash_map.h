@@ -9,8 +9,6 @@ to load that data into memory.  Would only be relevant if Speedex runs for
 millions of blocks.
 */
 
-#include <cstdint>
-
 #include "config.h"
 
 #include "lmdb/lmdb_wrapper.h"
@@ -21,8 +19,13 @@ millions of blocks.
 
 #include "xdr/types.h"
 
+#include <cstdint>
+#include <optional>
+
 namespace speedex {
 
+
+// After commitment of block N, contains hashes of rounds 1 to N, *inclusive*
 
 /*! LMDB instance for persisting block header hashes to disk
 */
@@ -31,10 +34,7 @@ struct BlockHeaderHashMapLMDB : public LMDBInstance {
 
 	BlockHeaderHashMapLMDB() : LMDBInstance() {}
 
-	void open_env() {
-		LMDBInstance::open_env(
-			std::string(ROOT_DB_DIRECTORY) + std::string(HEADER_HASH_DB));
-	}
+	void open_env();
 
 	void create_db() {
 		LMDBInstance::create_db(DB_NAME);
@@ -75,8 +75,9 @@ public:
 		[0, last_committed_block_number) and block_number input is 
 		prev_block = last_committed_block_number
 	*/
-	void insert_for_production(uint64_t block_number, const Hash& block_hash);
+	void insert(uint64_t block_number, const Hash& block_hash);
 
+/*
 	//! Insert hash of a block when validating a block.
 	//! Difference with production is some minor accounting related to rolling
 	//! back an insertion.
@@ -89,6 +90,7 @@ public:
 	void rollback_validation();
 	//! Finalize the insertion of a block hash (when validating a block).
 	void finalize_validation(uint64_t finalized_block_number);
+*/
 
 	//! Hash the merkle trie.
 	void hash(Hash& hash) {
@@ -111,12 +113,14 @@ public:
 	void rollback_to_committed_round(uint64_t committed_block_number);
 
 	//! Get the block number reflected in disk state.
-	uint64_t get_persisted_round_number() {
+	uint64_t get_persisted_round_number() const {
 		return lmdb_instance.get_persisted_round_number();
 	}
 
 	//! Read in trie contents from disk.
 	void load_lmdb_contents_to_memory();
+
+	std::optional<Hash> get_hash(uint64_t round_number) const;
 };
 
 //! Mock around BlockHeaderHashMap that makes calls into no-ops when replaying
@@ -132,7 +136,7 @@ public:
 
 	//! Insert a block hash when replaying trusted blocks.
 	void insert_for_loading(uint64_t block_number, const Hash& block_hash) {
-		return generic_do<&BlockHeaderHashMap::insert_for_production>(
+		return generic_do<&BlockHeaderHashMap::insert>(
 			block_number, block_hash);
 	}
 };

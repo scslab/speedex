@@ -5,6 +5,7 @@
 #include <compare>
 #include <cstdint>
 #include <optional>
+#include <vector>
 
 #include <xdrpp/marshal.h>
 
@@ -13,9 +14,21 @@ namespace hotstuff {
 struct CountingVMBlockID {
 	std::optional<uint64_t> value;
 
-	std::strong_ordering operator<=>(const CountingVMBlockID& other) const;
+	//std::strong_ordering operator<=>(const CountingVMBlockID& other) const;
 
 	bool operator==(const CountingVMBlockID&) const = default;
+
+	std::vector<uint8_t>
+	serialize() const {
+		if (!value) {
+			return {};
+		}
+		return xdr::xdr_to_opaque(*value);
+	}
+
+	operator bool() const {
+		return value.has_value();
+	}
 };
 
 
@@ -33,6 +46,11 @@ public:
 	}
 	static block_id empty_block_id() {
 		return CountingVMBlockID{std::nullopt};
+	}
+
+	void init_clean() {
+		state = 0;
+		last_committed_state = 0;
 	}
 
 	std::unique_ptr<block_type> propose() {

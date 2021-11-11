@@ -165,12 +165,12 @@ struct BlockHeaderHashMapAutoRollback {
 	BlockHeaderHashMapAutoRollback(BlockHeaderHashMap& map) : map(map) {}
 
 	~BlockHeaderHashMapAutoRollback() {
-		if (do_rollback) {
-			map.rollback_validation();
-		}
+	//	if (do_rollback) {
+	//		map.rollback_validation();
+	//	}
 	}
 
-	//! Insert hash into map, logs that this action should be undone later.
+/*	//! Insert hash into map, logs that this action should be undone later.
 	bool tentative_insert_for_validation(
 		uint64_t current_block_number, const Hash& hash) {
 		do_rollback = true;
@@ -181,7 +181,7 @@ struct BlockHeaderHashMapAutoRollback {
 	void finalize_commit(uint64_t finalized_block_number) {
 		do_rollback = false;
 		map.finalize_validation(finalized_block_number);
-	}
+	} */
 };
 
 //! Automatically undoes all changes to speedex structures, unless
@@ -223,7 +223,7 @@ struct SpeedexManagementStructuresAutoRollback {
 		orderbook_manager.finalize_commit();
 		stats.workunit_finalization_time = measure_time(timestamp);
 
-		block_header_hash_map.finalize_commit(finalized_block_number);
+		//block_header_hash_map.finalize_commit(finalized_block_number);
 		stats.header_map_finalization_time = measure_time(timestamp);
 
 	}

@@ -18,6 +18,8 @@ class HotstuffBlock;
 
 using block_ptr_t = std::shared_ptr<HotstuffBlock>;	
 
+struct load_from_disk_block_t {};
+struct genesis_block_t {};
 
 /*
  * Typical workflow:
@@ -53,12 +55,14 @@ class HotstuffBlock {
 	// garbage collection
 	bool flushed_from_memory;
 
-public:
+	HotstuffBlock(genesis_block_t);
+
+	//load block
+	HotstuffBlock(HotstuffBlockWire&& _wire_block, load_from_disk_block_t);
 
 	HotstuffBlock(HotstuffBlockWire&& _wire_block, speedex::ReplicaID proposer);
 
-	//make genesis block
-	HotstuffBlock();
+public:
 
 	// copies wire_block, unfortunately
 	HotstuffBlockWire to_wire() const {
@@ -165,10 +169,24 @@ public:
 		return flushed_from_memory;
 	}
 
+	static block_ptr_t
+	genesis_block();
+
+	static block_ptr_t
+	receive_block(
+		HotstuffBlockWire&& body,
+		speedex::ReplicaID source);
+
 	static block_ptr_t 
-	mint_block(xdr::opaque_vec<>&& body, QuorumCertificateWire const& qc_wire, speedex::Hash const& parent_hash, speedex::ReplicaID proposer);
+	mint_block(
+		xdr::opaque_vec<>&& body, 
+		QuorumCertificateWire const& qc_wire, 
+		speedex::Hash const& parent_hash, 
+		speedex::ReplicaID proposer);
+
+	static block_ptr_t
+	load_decided_block(
+		speedex::Hash const& hash); 
 };
-
-
 
 } /* hotstuff */

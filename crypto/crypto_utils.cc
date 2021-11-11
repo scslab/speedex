@@ -1,5 +1,7 @@
 #include "crypto/crypto_utils.h"
 
+#include "speedex/speedex_management_structures.h"
+
 #include <tbb/parallel_reduce.h>
 #include <xdrpp/marshal.h>
 

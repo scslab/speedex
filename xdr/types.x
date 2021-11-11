@@ -33,6 +33,10 @@ typedef opaque Hash[32]; // 256 bit hash, i.e. output of sha256
 typedef opaque SecretKey[64]; //ed25519 secret key len is 64 bytes, at least on libsodium
 
 typedef uint32 ReplicaID;
+const MAX_REPLICAS = 32; // max length of bitmap.  More replicas => longer bitmap
+
+//Valid replicas have IDs 0-31, inclusive
+const UNKNOWN_REPLICA = 32;
 
 enum OfferType
 {

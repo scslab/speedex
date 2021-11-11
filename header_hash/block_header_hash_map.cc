@@ -4,20 +4,32 @@
 
 namespace speedex {
 
-void BlockHeaderHashMap::insert_for_production(uint64_t block_number, const Hash& block_hash) {
+using xdr::operator==;
+
+void 
+BlockHeaderHashMapLMDB::open_env() {
+	LMDBInstance::open_env(
+		std::string(ROOT_DB_DIRECTORY) + std::string(HEADER_HASH_DB),
+		DEFAULT_LMDB_FLAGS | MDB_NOLOCK); // need NOLOCK for commit/reload tests
+}
+
+void BlockHeaderHashMap::insert(uint64_t block_number, const Hash& block_hash) {
 
 	if (block_number == 0) {
+		throw std::runtime_error("should never insert genesis hash!");
+/*
 		if (last_committed_block_number != 0 || block_map.size() != 0) {
 			throw std::runtime_error(
 				"can't insert prev block 0 if we already have elements in block hash map");
 		}
 		Hash zero_hash;
 		zero_hash.fill(0);
-		if (memcmp(block_hash.data(), zero_hash.data(), zero_hash.size()) != 0) {
+		if (zero_hash != block_hash) {
+		//if (memcmp(block_hash.data(), zero_hash.data(), zero_hash.size()) != 0) {
 			throw std::runtime_error("can't have genesis block with nonzero hash");
 		}
 		//prev block is genesis block, do nothing
-		return;
+		return;*/
 	}
 
 	if (block_number != last_committed_block_number + 1) {
@@ -45,11 +57,10 @@ void BlockHeaderHashMap::persist_lmdb(uint64_t current_block_number) {
 
 	auto wtx = lmdb_instance.wbegin();
 
-	//We don't commit current block's hash because we don't have it yet.
-	for (uint64_t i = persisted_round_number; i < current_block_number; i++) { 
+	//changed: we commit current_block_number because we've already inserted it.
+	for (uint64_t i = persisted_round_number; i <= current_block_number; i++) { 
 		if (i == 0) continue;
 		TrieT::prefix_t round_buf;
-
 
 		write_unsigned_big_endian(round_buf, i);
 		auto round_bytes = round_buf.get_bytes_array();
@@ -68,8 +79,8 @@ void BlockHeaderHashMap::persist_lmdb(uint64_t current_block_number) {
 	lmdb_instance.commit_wtxn(wtx, current_block_number);
 }
 
-// LMDB committed to round X contains entries 1 through X-1.
-// To sync back with LMDB, we need to remove all entries X and higher.
+// LMDB committed to round X contains entries 1 through X.
+// To sync back with LMDB, we need to remove all entries X+1 and higher.
 
 void 
 BlockHeaderHashMap::rollback_to_committed_round(uint64_t committed_block_number)
@@ -77,7 +88,7 @@ BlockHeaderHashMap::rollback_to_committed_round(uint64_t committed_block_number)
 	if (committed_block_number < lmdb_instance.get_persisted_round_number()) {
 		throw std::runtime_error("can't rollback beyond lmdb persist");
 	}
-	for (uint64_t i = committed_block_number; i <= last_committed_block_number; i++) {
+	for (uint64_t i = committed_block_number + 1; i <= last_committed_block_number; i++) {
 		if (i == 0) continue;
 		TrieT::prefix_t round_buf;
 		write_unsigned_big_endian(round_buf, i);
@@ -86,10 +97,10 @@ BlockHeaderHashMap::rollback_to_committed_round(uint64_t committed_block_number)
 			throw std::runtime_error("error when deleting from header hash map");
 		}
 	}
-	last_committed_block_number = (committed_block_number == 0) ? 0 : committed_block_number - 1;
+	last_committed_block_number = committed_block_number;//(committed_block_number == 0) ? 0 : committed_block_number - 1;
 }
 
-
+/*
 
 bool 
 BlockHeaderHashMap::tentative_insert_for_validation(
@@ -140,7 +151,7 @@ void BlockHeaderHashMap::finalize_validation(uint64_t finalized_block_number) {
 		throw std::runtime_error("can't finalize prior block");
 	}
 	last_committed_block_number = finalized_block_number;
-}
+} */
 
 void BlockHeaderHashMap::load_lmdb_contents_to_memory() {
 	auto rtx = lmdb_instance.rbegin();
@@ -179,6 +190,21 @@ void BlockHeaderHashMap::load_lmdb_contents_to_memory() {
 	rtx.commit();
 }
 
+std::optional<Hash>
+BlockHeaderHashMap::get_hash(uint64_t round_number) const {
+	if (round_number > get_persisted_round_number()) {
+		return std::nullopt;
+	}
 
+	prefix_t round_buf;
+	write_unsigned_big_endian(round_buf, round_number);
+	auto hash_opt = block_map.get_value(round_buf);
+
+	if (!hash_opt) {
+		throw std::runtime_error("failed to load hash that lmdb should have");
+	}
+
+	return hash_opt;
+}
 
 } /* speedex */

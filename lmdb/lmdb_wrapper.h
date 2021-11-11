@@ -72,15 +72,15 @@ public:
   MDB_dbi create_db(const char* name);
   MDB_dbi open_db(const char* name);
 
-  operator bool() {
+  operator bool() const {
     return env_open;
   }
 
-  dbenv::wtxn wbegin() {
+  dbenv::wtxn wbegin() const {
     return env.wbegin();
   }
 
-  dbenv::txn rbegin() {
+  dbenv::txn rbegin() const {
     return env.rbegin();
   }
 
@@ -104,7 +104,7 @@ public:
     : BaseLMDBInstance(mapsize)
     {}
 
-  const MDB_dbi& get_data_dbi() {
+  const MDB_dbi& get_data_dbi() const {
     return dbi;
   }
 

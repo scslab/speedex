@@ -24,8 +24,6 @@
 #include "xdr/types.h"
 #include "xdr/trie_proof.h"
 
-
-
 namespace speedex {
 
 template<typename ValueType, typename NodeType>

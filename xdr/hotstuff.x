@@ -6,7 +6,6 @@
 
 namespace hotstuff {
 
-const MAX_REPLICAS = 32; // max length of bitmap.  More replicas => longer bitmap
 typedef speedex::uint32 ReplicaIDBitMap;
 
 struct PartialCertificateWire {
@@ -17,7 +16,7 @@ struct PartialCertificateWire {
 struct QuorumCertificateWire {
 	speedex::Hash justify;
 	ReplicaIDBitMap bmp;
-	speedex::Signature sigs<MAX_REPLICAS>;
+	speedex::Signature sigs<speedex::MAX_REPLICAS>;
 };
 
 struct HeaderDataPair {

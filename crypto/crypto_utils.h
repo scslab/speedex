@@ -13,9 +13,9 @@ keys makes setup vastly simpler)
 #include <sodium.h>
 #include <array>
 
-#include "speedex/speedex_management_structures.h"
-
 namespace speedex {
+
+class SpeedexManagementStructures;
 
 class BlockSignatureChecker {
 

@@ -4,6 +4,7 @@
 #include <optional>
 #include <random>
 #include <unordered_map>
+#include <unordered_set>
 
 #include <tbb/parallel_for.h>
 #include <xdrpp/marshal.h>

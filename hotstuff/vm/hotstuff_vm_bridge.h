@@ -17,6 +17,8 @@ class HotstuffVMBridge {
 
 	VMControlInterface<VMType> vm_interface;
 
+	bool initialized;
+
 	void revert_to_last_commitment() {
 		speculation_map.clear();
 	}
@@ -28,14 +30,32 @@ class HotstuffVMBridge {
 		return VMType::empty_block_id();
 	}
 
+	void init_guard() const {
+		if (!initialized) {
+			throw std::runtime_error("uninitialized vm!");
+		}
+	}
+
 public:
 
 	HotstuffVMBridge(std::shared_ptr<VMType> vm)
 		: speculation_map()
 		, vm_interface(vm)
+		, initialized(false)
 		{}
 
+	void init_clean() {
+		vm_interface -> init_clean();
+		initialized = true;
+	}
+
+	void init_from_disk(HotstuffLMDB const& decided_block_index) {
+		initialized = true;
+		throw std::runtime_error("unimpl");
+	}
+
 	xdr::opaque_vec<> make_empty_proposal(uint64_t proposal_height) {
+		init_guard();
 		auto lock = speculation_map.lock();
 		VM_BRIDGE_INFO("made empty proposal at height %lu", proposal_height);
 		speculation_map.add_height_pair(proposal_height, VMType::empty_block_id());
@@ -44,6 +64,7 @@ public:
 	
 	xdr::opaque_vec<> 
 	get_and_apply_next_proposal(uint64_t proposal_height) {
+		init_guard();
 		VM_BRIDGE_INFO("start get_and_apply_next_proposal for height %lu", proposal_height);
 		auto lock = speculation_map.lock();
 		auto proposal = vm_interface.get_proposal();
@@ -57,17 +78,20 @@ public:
 		return xdr::xdr_to_opaque(*proposal);
 	}
 
-	void apply_block(block_ptr_t blk) {
+	void apply_block(block_ptr_t blk, HotstuffLMDB& decided_block_index) {
+
+		init_guard();
 
 		auto lock = speculation_map.lock();
 		
 		auto blk_value = blk -> template try_vm_parse<vm_block_type>();
 		auto blk_id = get_block_id(blk_value);
 
+		decided_block_index.add_decided_block(blk, blk_id);
+
 		if (!speculation_map.empty()) {
 
 			auto const& [lowest_speculative_exec_hs_height, speculative_block_id] = speculation_map.get_lowest_speculative_hotstuff_height();
-
 
 			if (blk_id == speculative_block_id) {
 				return;
@@ -83,12 +107,16 @@ public:
 	}
 
 	void notify_vm_of_commitment(block_ptr_t blk) {
+		init_guard();
+
 		auto committed_block_id = speculation_map.on_commit_hotstuff(blk->get_height());
 
 		vm_interface.log_commitment(committed_block_id);
 	}
 
 	void put_vm_in_proposer_mode() {
+		init_guard();
+		
 		vm_interface.set_proposer();
 	}
 

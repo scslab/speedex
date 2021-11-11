@@ -42,6 +42,9 @@ EXPERIMENTS_SRCS = \
 HEADER_HASH_SRCS = \
 	header_hash/block_header_hash_map.cc
 
+HEADER_HASH_TEST_SRCS = \
+	header_hash/tests/test_header_hash_map.h
+
 HOTSTUFF_SRCS = \
 	hotstuff/block.cc \
 	hotstuff/block_storage/io_utils.cc \
@@ -55,6 +58,7 @@ HOTSTUFF_SRCS = \
 	hotstuff/event.cc \
 	hotstuff/event_queue.cc \
 	hotstuff/hotstuff.cc \
+	hotstuff/lmdb.cc \
 	hotstuff/network_event.cc \
 	hotstuff/network_event_queue.cc \
 	hotstuff/protocol/hotstuff_protocol_client.cc \
@@ -137,7 +141,8 @@ TRIE_TEST_SRCS = \
 
 UTILS_SRCS = \
 	utils/cleanup.cc \
-	utils/header_persistence.cc
+	utils/header_persistence.cc \
+	utils/manage_data_dirs.cc
 
 SRCS = \
 	$(BLOCK_PROCESSING_SRCS) \
@@ -176,6 +181,7 @@ $(SRCS:.cc=.o) : $(XH_FILES)
 $(MAIN_CCS:.cc=.o) : $(XH_FILES)
 
 TEST_SRCS = \
+	$(HEADER_HASH_TEST_SRCS) \
 	$(HOTSTUFF_TEST_SRCS) \
 	$(SIMPLEX_TEST_SRCS) \
 	$(TRIE_TEST_SRCS)

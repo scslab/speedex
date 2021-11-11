@@ -26,8 +26,6 @@ constexpr static auto load_store_order = std::memory_order_relaxed;//acq_rel;
 
 namespace {
 
-
-
 template<class T>
 concept Metadata_arithmetic
 	= requires(

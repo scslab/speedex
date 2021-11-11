@@ -7,6 +7,7 @@
 #include "hotstuff/block_storage/block_store.h"
 #include "hotstuff/consensus.h"
 #include "hotstuff/event_queue.h"
+#include "hotstuff/lmdb.h"
 #include "hotstuff/network_event_queue.h"
 #include "hotstuff/protocol/hotstuff_protocol_manager.h"
 #include "hotstuff/protocol/hotstuff_server.h"
@@ -37,13 +38,15 @@ class HotstuffAppBase : public HotstuffCore {
 
 	void notify_ok_to_prune_blocks(uint64_t committed_hotstuff_height) override final;
 
-	
 protected:
+	
+	HotstuffLMDB decided_hash_index;
 
 	virtual xdr::opaque_vec<> get_next_vm_block(bool nonempty_proposal, uint64_t hotstuff_height) = 0;
 
 	void on_new_qc(speedex::Hash const& hash) override final;
 
+	void reload_decided_blocks();
 
 public:
 
@@ -71,9 +74,8 @@ class HotstuffApp : public HotstuffAppBase {
 	}
 
 	void apply_block(block_ptr_t blk) override final {
-		vm_bridge.apply_block(blk);
+		vm_bridge.apply_block(blk, decided_hash_index);
 	}
-
 
 	void notify_vm_of_commitment(block_ptr_t blk) override final {
 		vm_bridge.notify_vm_of_commitment(blk);
@@ -89,6 +91,16 @@ public:
 		: HotstuffAppBase(config, self_id, sk)
 		, vm_bridge(vm)
 		{}
+
+	void init_clean() {
+		decided_hash_index.create_db();
+		vm_bridge.init_clean();
+	}
+
+	void init_from_disk() {
+		decided_hash_index.open_db();
+		vm_bridge.init_from_disk(decided_hash_index);
+	}
 
 	void put_vm_in_proposer_mode() {
 		vm_bridge.put_vm_in_proposer_mode();

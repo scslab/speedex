@@ -6,6 +6,7 @@ namespace hotstuff {
 
 using xdr::operator==;
 
+using speedex::Hash;
 using speedex::ReplicaConfig;
 using speedex::ReplicaID;
 
@@ -23,6 +24,7 @@ HotstuffAppBase::HotstuffAppBase(const ReplicaConfig& config_, ReplicaID self_id
 	, qc_wait_cv()
 	, latest_new_qc(std::nullopt)
 	, cancel_wait(false)
+	, decided_hash_index()
 	{
 		block_fetch_manager.init_configs(network_event_queue);
 	}
@@ -100,6 +102,16 @@ HotstuffAppBase::cancel_wait_for_new_qc() {
 	std::lock_guard lock(qc_wait_mtx);
 	cancel_wait = true;
 	qc_wait_cv.notify_all();
+}
+
+void
+HotstuffAppBase::reload_decided_blocks() {
+	auto cursor = decided_hash_index.forward_cursor();
+
+	for (auto [height, hash] : cursor)
+	{
+		//block_ptr_t blk = Block::
+	}
 }
 
 

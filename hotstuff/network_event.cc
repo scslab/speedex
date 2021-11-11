@@ -25,7 +25,7 @@ VoteNetEvent::to_hotstuff_event(block_ptr_t voted_block)
 }
 
 ProposalNetEvent::ProposalNetEvent(std::unique_ptr<ProposeMessage> p)
-	: proposed_block(std::make_shared<HotstuffBlock>(std::move(p->proposal), p -> proposer))
+	: proposed_block(HotstuffBlock::receive_block(std::move(p->proposal), p -> proposer))
 	, proposer(p -> proposer)
 	{}
 

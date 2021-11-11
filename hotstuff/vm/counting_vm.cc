@@ -2,6 +2,7 @@
 
 namespace hotstuff {
 
+/*
 std::strong_ordering 
 CountingVMBlockID::operator<=>(const CountingVMBlockID& other) const {
 	if ((!value) && (!other.value)) {
@@ -14,7 +15,7 @@ CountingVMBlockID::operator<=>(const CountingVMBlockID& other) const {
 		return std::strong_ordering::greater;
 	}
 	return (*value) <=> (*other.value);
-}
+}*/
 
 void 
 CountingVM::exec_block(const block_type& blk) {

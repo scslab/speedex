@@ -110,7 +110,7 @@ QuorumCertificate::add_partial_certificate(ReplicaID rid, const PartialCertifica
     if (pc.hash != obj_hash) {
         throw std::invalid_argument("partial certificate merged into different quorum certificate");
     }
-    if (rid >= MAX_REPLICAS) {
+    if (rid >= speedex::MAX_REPLICAS) {
         throw std::invalid_argument("invalid replica id");
     }
     sigs.emplace(rid, pc.sig);

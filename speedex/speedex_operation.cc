@@ -233,8 +233,8 @@ speedex_block_creation_logic(
 	BLOCK_INFO("final commit took %fs", stats.final_commit_time);
 	BLOCK_INFO("finished block creation");
 
-	management_structures.block_header_hash_map.insert_for_production(
-		prev_block_number, prev_block.hash);
+	//management_structures.block_header_hash_map.insert_for_production(
+	//	prev_block_number, prev_block.hash);
 	
 	uint8_t achieved_feerate = lp_results.tax_rate;
 	
@@ -272,6 +272,8 @@ speedex_block_creation_logic(
 
 	tatonnement.oracle.wait_for_all_tatonnement_threads();
 	timeout_th.join();
+
+	management_structures.block_header_hash_map.insert(new_block.block.blockNumber, new_block.hash);
 
 	return new_block;
 }
@@ -424,8 +426,8 @@ bool speedex_block_validation_logic(
 
 	auto& db_autorollback = autorollback_structures.db;
 	auto& manager_autorollback = autorollback_structures.orderbook_manager;
-	auto& header_map_autorollback 
-		= autorollback_structures.block_header_hash_map;
+	//auto& header_map_autorollback 
+	//	= autorollback_structures.block_header_hash_map;
 
 	auto timestamp = init_time_measurement();
 
@@ -489,11 +491,11 @@ bool speedex_block_validation_logic(
 
 	//TODO check optimality of LP solution ?
 
-	if (!header_map_autorollback.tentative_insert_for_validation(
-		prev_block.block.blockNumber, prev_block.hash)) {
-		BLOCK_INFO("couldn't insert block hash");
-		return false;
-	}
+	//if (!header_map_autorollback.tentative_insert_for_validation(
+	//	prev_block.block.blockNumber, prev_block.hash)) {
+	//	BLOCK_INFO("couldn't insert block hash");
+	//	return false;
+	//}
 
 	//TODO currently ignoring header map mod times, which should be basically 0.
 	measure_time(timestamp);
@@ -545,6 +547,8 @@ bool speedex_block_validation_logic(
 	}
 
 	autorollback_structures.finalize_commit(current_block_number, stats);
+
+	management_structures.block_header_hash_map.insert(expected_next_block.block.blockNumber, expected_next_block.hash);
 
 	overall_validation_stats.state_update_stats = state_update_stats.get_xdr();
 

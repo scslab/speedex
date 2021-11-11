@@ -1,5 +1,7 @@
 #include "speedex/speedex_persistence.h"
 
+#include "speedex/speedex_management_structures.h"
+
 #include "utils/header_persistence.h"
 
 namespace speedex {

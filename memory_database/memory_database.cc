@@ -355,7 +355,6 @@ struct ProduceValueModifyLambda {
 
 		account_db_idx idx = user_id_to_idx_map.at(owner);
 		value = database.at(idx).produce_commitment();
-
 	}
 };
 

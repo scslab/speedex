@@ -129,7 +129,7 @@ private:
 
 	AtomicMetadataType metadata;
 	
-	OptionalLock<USE_LOCKS> locks;
+	mutable OptionalLock<USE_LOCKS> locks;
 
 	hash_t hash;
 
@@ -389,7 +389,7 @@ public:
 	}
 
 	//! Returns value at node.  Throws error if not a leaf.
-	ValueType& get_value() {
+	ValueType& get_value() const {
 		if (!is_leaf()) {
 			throw std::runtime_error("can't get value from non leaf");
 		}
@@ -432,7 +432,7 @@ public:
 	//! Get the value associated with a given key.
 	template<bool x = HAS_VALUE>
 	std::optional<ValueType> 
-	get_value(typename std::enable_if<x, const prefix_t&>::type query_key);
+	get_value(typename std::enable_if<x, const prefix_t&>::type query_key) const;
 
 	void append_hash_to_vec(std::vector<unsigned char>& buf) {
 		[[maybe_unused]]
@@ -809,7 +809,7 @@ protected:
 	using hash_t = typename TrieT::hash_t;
 
 	typename TrieT::trie_ptr_t root;
-	std::unique_ptr<std::shared_mutex> hash_modify_mtx;
+	mutable std::unique_ptr<std::shared_mutex> hash_modify_mtx;
 
 	std::atomic<bool> hash_valid = false;
 	hash_t root_hash;
@@ -1117,7 +1117,7 @@ public:
 
 	template<bool x = HAS_VALUE>
 	std::optional<ValueType> get_value(
-		typename std::enable_if<x, const prefix_t&>::type query_key) {
+		typename std::enable_if<x, const prefix_t&>::type query_key) const {
 		static_assert(x == HAS_VALUE, "no funny business");
 
 		std::shared_lock lock(*hash_modify_mtx);
@@ -3809,7 +3809,7 @@ TEMPLATE_SIGNATURE
 template<bool x>
 std::optional<ValueType> 
 TrieNode<TEMPLATE_PARAMS>::get_value(
-	typename std::enable_if<x, const prefix_t&>::type query_key) {
+	typename std::enable_if<x, const prefix_t&>::type query_key) const {
 	
 	[[maybe_unused]]
 	auto lock = locks.template lock<TrieNode::shared_lock_t> ();

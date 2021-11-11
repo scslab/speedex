@@ -15,15 +15,17 @@ Phase 3: Everything else (orderbooks, header hash)
 
 #include <cstdint>
 
-#include "speedex/speedex_management_structures.h"
 #include "speedex/speedex_measurements.h"
 
 #include "utils/async_worker.h"
 
 #include "xdr/block.h"
+#include "xdr/database_commitments.h"
 
 
 namespace speedex {
+
+class SpeedexManagementStructures;
 
 /*! Call before sending transaction block to a validator.
 Persists account block + header, and prepares memory database with a persistence
