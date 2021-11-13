@@ -21,8 +21,6 @@ struct CountingVMBlockID {
 
 	CountingVMBlockID(std::vector<uint8_t> const& bytes);
 
-	//std::strong_ordering operator<=>(const CountingVMBlockID& other) const;
-
 	bool operator==(const CountingVMBlockID&) const = default;
 
 	std::vector<uint8_t>

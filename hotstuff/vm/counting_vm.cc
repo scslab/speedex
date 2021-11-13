@@ -13,20 +13,6 @@ CountingVMBlockID::CountingVMBlockID(std::vector<uint8_t> const& bytes)
 		xdr::xdr_from_opaque(bytes, *value);
 	}
 }
-/*
-std::strong_ordering 
-CountingVMBlockID::operator<=>(const CountingVMBlockID& other) const {
-	if ((!value) && (!other.value)) {
-		return std::strong_ordering::equal;
-	}
-	if ((!value) && (other.value)) {
-		return std::strong_ordering::less;
-	}
-	if ((value) && (!other.value)) {
-		return std::strong_ordering::greater;
-	}
-	return (*value) <=> (*other.value);
-}*/
 
 void 
 CountingVM::init_from_disk(HotstuffLMDB const& lmdb) {

@@ -21,6 +21,9 @@ namespace hotstuff {
  * The main race condition would be if we cancel
  * gadget contents while the VM is producing a block
  * based off the canceled contents.
+ * ==Note== this race condtion is accounted for
+ * by the explicit rewind condition in apply_block
+ * ========
  * This motivates the strict sequentiality and
  * the tracking of speculation_head_hotstuff_height.
  * The check for hotstuff_height == speculation_head_hotstuff_height
@@ -29,6 +32,12 @@ namespace hotstuff {
  * to only propose nonempty blocks on self-proposals.
  * That say, the VM doesn't stack a proposal on top of a
  * conflicting proposal.
+ * ==Note== this last bit is not required from the VM's pov
+ * but from hotstuff's.  It'd be incorrect to interleave
+ * proposals from different VM's, without synchronizing the VMs
+ * between proposals (i.e. VM1 proposes X on Z, VM2 proposes Y on Z,
+ * and then hotstuff on machine 1 proposes X on Y).
+ * ========
 */
 template<typename VMValueType>
 class SpeculativeExecGadget {
