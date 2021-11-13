@@ -9,9 +9,9 @@ namespace speedex {
 //Commits everything up to and including current_block_number
 ThunkGarbage
 __attribute__((warn_unused_result)) 
-OrderbookLMDB::write_thunks(const uint64_t current_block_number, bool debug) {
+OrderbookLMDB::write_thunks(const uint64_t current_block_number, dbenv::wtxn& wtx bool debug) {
 
-	dbenv::wtxn wtx = wbegin();
+	//dbenv::wtxn wtx = wbegin();
 
 	std::vector<thunk_t> relevant_thunks;
 	{
@@ -341,7 +341,7 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, bool debug) {
 				.dump_contents_for_detached_deletion_and_clear());
 	}
 
-	commit_wtxn(wtx, current_block_number);
+	//commit_wtxn(wtx, current_block_number);
 
 	return output;
 }

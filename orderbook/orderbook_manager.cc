@@ -47,16 +47,20 @@ void OrderbookManager::generic_map_serial(Args... args) {
 
 template<auto func, typename... Args>
 void OrderbookManager::generic_map_loading(uint64_t current_block_number, Args... args) {
-	auto num_orderbooks = orderbooks.size();
-	tbb::parallel_for(
-		tbb::blocked_range<size_t>(0, num_orderbooks),
-		[this, current_block_number, &args...] (auto r) {
-			for (unsigned int i = r.begin(); i < r.end(); i++) {
-				if (orderbooks[i].get_persisted_round_number() < current_block_number) {
+	if (lmdb.get_persisted_round_number() < current_block_number) {
+		auto num_orderbooks = orderbooks.size();
+		tbb::parallel_for(
+			tbb::blocked_range<size_t>(0, num_orderbooks),
+			[this, current_block_number, &args...] (auto r) {
+				for (unsigned int i = r.begin(); i < r.end(); i++) {
+				//	if (orderbooks[i].get_persisted_round_number() < current_block_number) {
 					(orderbooks[i].*func)(current_block_number, args...);
+				//	}
 				}
-			}
-		});
+			});
+	}
+
+	
 }
 
 void OrderbookManager::commit_for_loading(uint64_t current_block_number) {
@@ -70,8 +74,27 @@ void OrderbookManager::finalize_for_loading(uint64_t current_block_number) {
 }
 
 void OrderbookManager::persist_lmdb_for_loading(uint64_t current_block_number) {
-	generic_map_loading<&Orderbook::persist_lmdb>(
-		current_block_number);
+
+	if (lmdb.get_persisted_round_number() < current_block_number) {
+
+		ThunkGarbage garbage;
+
+		auto wtx = lmdb.wbegin();
+
+		for (unsigned int i = 0; i < num_orderbooks; i++) {
+			auto orderbook_garbage 
+				= orderbooks[i].persist_lmdb(current_block_number, wtx);
+			garbage.add(orderbook_garbage.release());
+		}
+
+		//generic_map_loading<&Orderbook::persist_lmdb>(
+		//	current_block_number, wtx);
+
+		thunk_garbage_deleter.call_delete(garbage.release());
+
+		lmdb.commit_wtxn(wtx, current_block_number);
+	}
+
 }
 
 void OrderbookManager::clear_() {
@@ -107,21 +130,23 @@ void OrderbookManager::rollback_thunks(uint64_t current_block_number) {
 void OrderbookManager::persist_lmdb(uint64_t current_block_number) {
 	//orderbooks manage their own thunk threadsafety for persistence thunks
 	ThunkGarbage garbage;
+
+	auto wtx = lmdb.wbegin();
+
 	auto num_orderbooks = orderbooks.size();
 	for (unsigned int i = 0; i < num_orderbooks; i++) {
 		auto orderbook_garbage 
-			= orderbooks[i].persist_lmdb(current_block_number);
+			= orderbooks[i].persist_lmdb(current_block_number, wtx);
 		garbage.add(orderbook_garbage.release());
 	}
+	lmdb.commit_wtxn(wtx, current_block_number);
+
 	thunk_garbage_deleter.call_delete(garbage.release());
-	//generic_map_serial<&Orderbook::persist_lmdb>(current_block_number);
 }
 
 void OrderbookManager::open_lmdb_env() {
 	lmdb.open_lmdb_env();
-	//generic_map_serial<&Orderbook::open_lmdb_env>();
 }
-
 
 void OrderbookManager::finalize_validation() {
 	std::lock_guard lock(mtx);

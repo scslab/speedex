@@ -140,12 +140,12 @@ void Orderbook::generate_metadata_index() {
 
 ThunkGarbage
 __attribute__((warn_unused_result))
-Orderbook::persist_lmdb(uint64_t current_block_number) {
+Orderbook::persist_lmdb(uint64_t current_block_number, dbenv::wtxn& wtx) {
 
 	if (!lmdb_instance) {
 		return ThunkGarbage();
 	}
-	return lmdb_instance.write_thunks(current_block_number);
+	return lmdb_instance.write_thunks(current_block_number, wtx);
 }
 
 /*

@@ -131,6 +131,7 @@ public:
 	ThunkGarbage
 	__attribute__((warn_unused_result)) write_thunks(
 		const uint64_t current_block_number,
+		dbenv::wtxn& wtx,
 		bool debug = false);
 
 	//used for testing only, particularly wrt tatonnement_sim
