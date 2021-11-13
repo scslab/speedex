@@ -133,9 +133,11 @@ int main(int argc, char* const* argv)
 		return 1;
 	}
 
+	std::string output_root = options.output_prefix + experiment_name + std::string("/");
+
 	ExperimentParameters params;
 	params.num_assets = options.num_assets;
-	params.num_accounts = options.num_accounts;
+	params.account_list_filename = output_root + "accounts";
 
 	SpeedexOptions speedex_options;
 	speedex_options.parse_options(speedex_options_file.c_str());
@@ -145,7 +147,6 @@ int main(int argc, char* const* argv)
 	params.persistence_frequency = speedex_options.persistence_frequency;
 	params.num_blocks = options.num_blocks;
 
-	std::string output_root = options.output_prefix + experiment_name + std::string("/");
 
 	if (mkdir_safe(options.output_prefix.c_str())) {
 		std::printf("directory %s already exists, continuing\n", options.output_prefix.c_str());
@@ -164,6 +165,7 @@ int main(int argc, char* const* argv)
 	}
 
 	GeneratorState generator (gen, options, output_root, conf_pair);
+	generator.dump_account_list(params.account_list_filename);
 
 	if (!just_params) {
 		generator.make_blocks();
