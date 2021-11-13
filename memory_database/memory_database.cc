@@ -713,4 +713,49 @@ DBPersistenceThunk::operator[](size_t idx) {
 	return KVAssignment{kvs->at(idx), *db};
 }
 
+void
+MemoryDatabase::install_initial_accounts_and_commit(MemoryDatabaseGenesisData const& genesis_data, auto account_init_lambda)
+{
+	if (database.size()) {
+		throw std::runtime_error("database reinitialization attempted");
+	}
+
+	database.resize(genesis_data.id_list.size());
+
+	auto insert_lambda = [&database, &account_init_lambda] (
+		AccountID const& id, 
+		PublicKey const& pk, 
+		account_db_idx next_idx, 
+		index_map_t& local_id_map, 
+		DBStateCommitmentTrie& local_commitment_trie) -> void 
+	{
+		local_id_map.insert(id, next_idx);
+		database[next_idx].set_owner(id, pk, 0);
+
+		account_init_lambda(database[next_idx]);
+
+		DBStateCommitmentTrie::prefix_t key_buf;
+		MemoryDatabase::write_trie_key(key_buf, owner);
+
+		local_commitment_trie.insert(key_buf, DBStateCommitmentValueT(database[next_idx].produce_commitment()));
+	};
+
+	tbb::parallel_for(
+		tbb::blocked_range<size_t>(0, genesis_data.id_list.size(), 100'000),
+		[this, &genesis_data] (auto r) {
+			index_map_t local_id_map;
+			DBStateCommitmentTrie local_commitment_trie;
+
+			for (auto idx = r.begin(); idx < r.end(); idx++) {
+				auto const& acct = genesis_data.id_list[idx];
+				auto const& pk = genesis_data.pk_list[idx];
+				insert_lambda(acct, pk, idx, local_id_map, local_commitment_trie);
+			}
+
+			std::lock_guard lock(commitment_mtx);
+			commitment_trie.merge_in(std::move(local_commitment_trie));
+			user_id_to_idx_map.merge(std::move(local_id_map));
+		});
+}
+
 } /* speedex */

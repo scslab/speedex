@@ -155,4 +155,12 @@ AccountID UserAccount::read_lmdb_key(const dbval& key) {
 	return key.uint64(); // don't copy the database across systems with diff endianness
 }
 
+void 
+UserAccount::set_owner(AccountID _owner, PublicKey const& _pk, uint64_t _last_committed_id)
+{
+	owner = _owner;
+	pk = _pk;
+	last_committed_id = _last_committed_id;
+}
+
 } /* speedex */

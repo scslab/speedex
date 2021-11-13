@@ -162,6 +162,11 @@ struct AccountCreationThunk {
 	uint64_t num_accounts_created;
 };
 
+struct MemoryDatabaseGenesisData {
+	xdr::xvector<AccountID> id_list;
+	std::vector<PublicKey> pk_list;
+};
+
 /*!
 An in memory datastore mapping AccountIDs to account balances.
 
@@ -210,7 +215,6 @@ private:
 	std::shared_mutex uncommitted_mtx;
 
 	std::mutex db_thunks_mtx;
-
 
 	DBStateCommitmentTrie commitment_trie;
 
@@ -295,7 +299,7 @@ public:
 	//Be careful with creating new accounts.  If we have to rearrange database/resize vector, we'll break any pointers we export, probably.
 	//We use integer indexes so that we can enforce the invariant that these indices never change.  We could reuse indices if we delete accounts.
 
-	account_db_idx add_account_to_db(AccountID account, const PublicKey pk = PublicKey{});
+	//account_db_idx add_account_to_db(AccountID account, const PublicKey& pk);
 
 	// Obviously not threadsafe with value modification
 
@@ -451,6 +455,8 @@ public:
 	void clear_persistence_thunks_and_reload(
 		uint64_t expected_persisted_round_number);
 
+	void 
+	install_initial_accounts_and_commit(MemoryDatabaseGenesisData const& genesis_data, auto account_init_lambda);
 };
 
 } /* speedex */
