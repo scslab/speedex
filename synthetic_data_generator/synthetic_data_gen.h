@@ -161,8 +161,8 @@ struct GeneratorState {
 	>
 	gen_transactions(size_t num_txs, const std::vector<double>& prices);
 
+	// needs to be called in ctor to ensure rand gen always starts from consistent seed
 	void gen_new_accounts(uint64_t num_new_accounts);
-	void dump_account_list();
 
 	void filter_by_replica_id(ExperimentBlock& block);
 
@@ -181,12 +181,13 @@ public:
 		, conf_pair(conf_pair)
 		, output_directory(output_directory) {
 			gen_new_accounts(options.num_accounts);
-			dump_account_list();
 		}
 
 	void make_block(const std::vector<double>& prices);
 
 	void make_blocks();
+
+	void dump_account_list(std::string accounts_filename);
 };
 
 }

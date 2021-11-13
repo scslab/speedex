@@ -23,11 +23,9 @@
 namespace speedex {
 
 struct ExperimentParameters {
-	unsigned int tax_rate;
-	unsigned int smooth_mult;
 	unsigned int num_threads;
 	unsigned int num_assets;
-	unsigned int num_accounts;
+	string account_list_filename<200>;
 	unsigned int persistence_frequency;
 	unsigned int num_blocks;
 };

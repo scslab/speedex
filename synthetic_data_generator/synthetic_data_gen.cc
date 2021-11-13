@@ -45,10 +45,9 @@ GeneratorState<random_generator>::gen_new_accounts(uint64_t num_new_accounts) {
 
 template<typename random_generator>
 void
-GeneratorState<random_generator>::dump_account_list() {
+GeneratorState<random_generator>::dump_account_list(std::string accounts_filename) {
 	AccountIDList list;
 	list.reserve(num_active_accounts);
-	std::string accounts_filename = output_directory + "accounts";
 
 	for (AccountID acct : existing_accounts_set) {
 		list.push_back(acct);
