@@ -164,18 +164,18 @@ public:
     return (bool)base_lmdb;
   }
 
-  dbenv::wtxn wbegin() {
-    return base_lmdb.wbegin();
-  }
+  //dbenv::wtxn wbegin() {
+  //  return base_lmdb.wbegin();
+  //}
 
   dbenv::txn rbegin() {
     return base_lmdb.rbegin();
   }
 
-  void commit_wtxn(dbenv::wtxn& txn, uint64_t persisted_round, bool do_sync = true)
-  {
-    base_lmdb.commit_wtxn(txn, persisted_round, do_sync);
-  }
+  //void commit_wtxn(dbenv::wtxn& txn, uint64_t persisted_round, bool do_sync = true)
+  //{
+  //  base_lmdb.commit_wtxn(txn, persisted_round, do_sync);
+  //}
 
 
 };
