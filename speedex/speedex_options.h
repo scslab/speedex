@@ -16,6 +16,13 @@ struct SpeedexOptions {
 	void parse_options(const char* configfile);
 
 	void print_options();
+
+	ApproximationParameters get_approx_params() const {
+		return ApproximationParameters {
+			.tax_rate = tax_rate,
+			.smooth_mult = smooth_mult
+		};
+	}
 };
 
 
