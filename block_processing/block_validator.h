@@ -20,9 +20,11 @@ offer clearing/validation checks.
 
 #include "xdr/transaction.h"
 #include "xdr/ledger.h"
-#include "xdr/block.h"
 
 namespace speedex {
+
+struct SignedTransactionList;
+
 /*! 
 Interface for producing valid block of transactions.
 
@@ -59,13 +61,6 @@ public:
 		BlockStateUpdateStatsWrapper& state_update_stats);
 
 	bool validate_transaction_block(
-		const TransactionData& transactions,
-		const OrderbookStateCommitmentChecker& clearing_commitment,
-		ThreadsafeValidationStatistics& main_stats,
-		BlockValidationMeasurements& measurements,
-		BlockStateUpdateStatsWrapper& state_update_stats);
-
-	bool validate_transaction_block(
 		const SignedTransactionList& transactions,
 		const OrderbookStateCommitmentChecker& clearing_commitment,
 		ThreadsafeValidationStatistics& main_stats,
@@ -85,7 +80,7 @@ public:
 // TODO alternate fn calls depending on save format
 void replay_trusted_block(
 	SpeedexManagementStructures& management_structures,
-	const AccountModificationBlock& block,
+	const SignedTransactionList& block,
 	const HashedBlock& header);
 
 

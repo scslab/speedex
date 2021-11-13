@@ -1,5 +1,7 @@
 #include "block_processing/block_validator.h"
 
+#include "xdr/block.h"
+
 #include <atomic>
 #include <cstdint>
 
@@ -8,19 +10,6 @@
 namespace speedex {
 
 const unsigned int VALIDATION_BATCH_SIZE = 1000;
-
-struct TransactionDataWrapper {
-	const TransactionData& data;
-
-	template<typename ValidatorType>
-	bool operator() (ValidatorType& tx_validator, size_t i, BlockStateUpdateStatsWrapper& stats, SerialAccountModificationLog& serial_account_log) const {
-		return tx_validator.validate_transaction(data.transactions[i], stats, serial_account_log);
-	}
-
-	size_t size() const {
-		return data.transactions.size();
-	}
-};
 
 struct SignedTransactionListWrapper {
 	const SignedTransactionList& data;
@@ -172,10 +161,6 @@ BlockValidator::validate_transaction_block_(
 	measurements.tx_validation_processing_time = measure_time(timestamp);
 
 	worker.do_merge();
-	//std::thread th([&management_structures] () {
-	//	management_structures.account_modification_log.merge_in_log_batch();
-	//});
-
 
 	auto offer_timestamp = init_time_measurement();
 
@@ -231,21 +216,6 @@ BlockValidator::validate_transaction_block(
 		wrapper, clearing_commitment, main_stats, measurements, stats);
 }
 
-
-bool 
-BlockValidator::validate_transaction_block(
-	const TransactionData& transactions,
-	const OrderbookStateCommitmentChecker& clearing_commitment,
-	ThreadsafeValidationStatistics& main_stats,
-	BlockValidationMeasurements& measurements,
-	BlockStateUpdateStatsWrapper& stats) {
-
-	TransactionDataWrapper wrapper{transactions};
-
-	return validate_transaction_block_(
-		wrapper, clearing_commitment, main_stats, measurements, stats);
-}
-
 bool 
 BlockValidator::validate_transaction_block(
 	const SignedTransactionList& transactions,
@@ -279,7 +249,7 @@ BlockValidator::validate_transaction_block(
 }
 
 class ParallelTrustedReplay {
-	const AccountModificationBlock& txs;
+	const SignedTransactionList& txs;
 	SpeedexManagementStructures& management_structures;
 	const OrderbookStateCommitmentChecker& clearing_commitment;
 	ThreadsafeValidationStatistics& main_stats;
@@ -300,14 +270,12 @@ public:
 			management_structures.account_modification_log);
 		
 		for (size_t i = r.begin(); i < r.end(); i++) {
-			for (size_t j = 0; j < txs[i].new_transactions_self.size(); j++) {
 
-				tx_validator.validate_transaction(
-					txs[i].new_transactions_self[j], 
-					stats, 
-					serial_account_log, 
-					current_round_number);
-			}
+			tx_validator.validate_transaction(
+				txs[i], 
+				stats, 
+				serial_account_log, 
+				current_round_number);
 		}
 		tx_validator.extract_manager_view().finish_merge();
 	}
@@ -322,7 +290,7 @@ public:
 	void join(const ParallelTrustedReplay& other) {}
 
 	ParallelTrustedReplay(
-		const AccountModificationBlock& txs,
+		const SignedTransactionList& txs,
 		SpeedexManagementStructures& management_structures,
 		const OrderbookStateCommitmentChecker& clearing_commitment,
 		ThreadsafeValidationStatistics& main_stats,
@@ -337,7 +305,7 @@ public:
 void
 replay_trusted_block(
 	SpeedexManagementStructures& management_structures,
-	const AccountModificationBlock& block,
+	const SignedTransactionList& block,
 	const HashedBlock& header) {
 
 	ThreadsafeValidationStatistics validation_stats(
@@ -358,7 +326,7 @@ replay_trusted_block(
 		validation_stats, 
 		header.block.blockNumber);
 
-	tbb::parallel_reduce(tbb::blocked_range<size_t>(0, block.size()), replayer);
+	tbb::parallel_reduce(tbb::blocked_range<size_t>(0, block.transactions.size()), replayer);
 
 	// No need to merge in account modification logs when replaying a trusted block. 
 	// No need to export validation stats either.

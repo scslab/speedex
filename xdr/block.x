@@ -21,14 +21,7 @@ namespace speedex {
 const MAX_TRANSACTIONS_PER_BLOCK = 1000000;
 const MAX_NUM_ASSETS = 1000;
 
-const TRANSACTIONS_PER_MINIBLOCK = 10000;
-const MINIBLOCK_SELECTOR_BYTES = 1250; //tx/miniblock over 8
-
 const MAX_NUM_WORK_UNITS = 1000000; //NUM_OFFER_TYPES * (MAX_NUM_ASSETS * MAX_NUM_ASSETS);
-	
-struct TransactionData {
-	SignedTransaction transactions<MAX_TRANSACTIONS_PER_BLOCK>;
-};
 
 typedef SignedTransaction SignedTransactionList<MAX_TRANSACTIONS_PER_BLOCK>;
 
@@ -65,9 +58,9 @@ struct HashedBlock {
 	Hash hash;
 };
 
-struct HashedBlockTransactionDataPair {
+struct HashedBlockTransactionListPair {
 	HashedBlock hashedBlock;
-	TransactionData txData;
+	SignedTransactionList txList;
 };
 
 struct TatonnementMeasurements {

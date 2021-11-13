@@ -19,11 +19,6 @@ struct QuorumCertificateWire {
 	speedex::Signature sigs<speedex::MAX_REPLICAS>;
 };
 
-struct HeaderDataPair {
-	speedex::HashedBlock header;
-	speedex::TransactionData body;
-};
-
 struct HotstuffBlockHeader {
 	speedex::Hash parent_hash;
 	QuorumCertificateWire qc; // qc.justify need not be the direct parent
@@ -34,7 +29,7 @@ struct HotstuffBlockHeader {
 struct HotstuffBlockWire {
 	HotstuffBlockHeader header;
 	
-	opaque body<>; // serialized HeaderDataPair
+	opaque body<>; // serialized vm block (for speedex, HashedBlockTransactionListPair)
 };
 
 struct BlockFetchRequest {
