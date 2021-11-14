@@ -29,6 +29,13 @@ load_xdr_from_file_fast(
 	unsigned char* buffer, 
 	size_t BUF_SIZE)
 {
+
+	#ifdef __APPLE__
+
+		return load_xdr_from_file(output, filename);
+
+	#elif
+
 	void* buf_head = static_cast<void*>(buffer);
 	size_t aligned_buf_size = BUF_SIZE;
 	unsigned char* aligned_buf = reinterpret_cast<unsigned char*>(std::align(512, sizeof(unsigned char), buf_head, aligned_buf_size));
@@ -55,6 +62,8 @@ load_xdr_from_file_fast(
  	xdr::xdr_argpack_archive(g, output);
  	g.done();
  	return 0;
+ 	
+ 	#endif
 }
 
 /*! Load an xdr object from disk, dynamically allocating buffer for deserialization
@@ -108,6 +117,13 @@ constexpr static auto FILE_PERMISSIONS = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP |
 unique_fd static inline
 preallocate_file(const char* filename, size_t size = 0) {
 
+	#ifdef __APPLE__
+
+	unique_fd fd{open(filename, O_CREAT | O_RDONLY, FILE_PERMISSIONS)};
+	return fd;
+
+	#else
+
 	unique_fd fd{open(filename, O_CREAT | O_WRONLY | O_DIRECT, FILE_PERMISSIONS)};
 
 	if (size == 0) {
@@ -118,6 +134,8 @@ preallocate_file(const char* filename, size_t size = 0) {
 		threrror("fallocate");
 	}
 	return fd;
+
+	#endif
 }
 
 /*! Save xdr object to disk.

@@ -2,6 +2,8 @@
 
 #include "xdr/hotstuff.h"
 
+#include <optional>
+
 namespace hotstuff {
 
 std::string

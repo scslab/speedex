@@ -9,6 +9,7 @@
 #include "xdr/hotstuff.h"
 
 #include <cstdint>
+#include <optional>
 
 #include <xdrpp/marshal.h>
 

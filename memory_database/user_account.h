@@ -273,7 +273,7 @@ public:
 	void log() {
 		for (unsigned int i = 0; i < owned_assets.size(); i++) {
 			std::printf (
-				"%u=%ld ", i, owned_assets[i].lookup_available_balance());
+				"%u=%lld ", i, owned_assets[i].lookup_available_balance());
 		}
 		std::printf("\n");
 	}

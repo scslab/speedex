@@ -4,6 +4,8 @@
 
 #include "utils/debug_macros.h"
 
+#include <optional>
+
 namespace speedex {
 
 xdr::unique_sock

@@ -415,7 +415,7 @@ struct AccountBatchMergeRange {
 		}
 
 		template<typename MergeFn>
-		void execute() {
+		void execute() const {
 			for (auto iter = entry_points.begin(); iter != entry_points.end(); iter++) {
 				int32_t sz_delta = 0;
 				ptr_t entry_pt = iter -> first;
@@ -438,7 +438,7 @@ template<typename MergeFn>
 struct AccountBatchMergeReduction {
 
 	template<typename TrieT>
-	void operator()(AccountBatchMergeRange<TrieT>& range) {
+	void operator()(AccountBatchMergeRange<TrieT> const& range) {
 		range.template execute<MergeFn>();
 	}
 
