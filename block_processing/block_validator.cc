@@ -1,7 +1,5 @@
 #include "block_processing/block_validator.h"
 
-#include "xdr/block.h"
-
 #include <atomic>
 #include <cstdint>
 
@@ -326,7 +324,7 @@ replay_trusted_block(
 		validation_stats, 
 		header.block.blockNumber);
 
-	tbb::parallel_reduce(tbb::blocked_range<size_t>(0, block.transactions.size()), replayer);
+	tbb::parallel_reduce(tbb::blocked_range<size_t>(0, block.size()), replayer);
 
 	// No need to merge in account modification logs when replaying a trusted block. 
 	// No need to export validation stats either.

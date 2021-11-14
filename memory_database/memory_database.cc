@@ -71,7 +71,7 @@ MemoryDatabase::get_last_committed_seq_number(account_db_idx idx) const
 }
 
 
-
+/*
 //TODO this is not used in normal block processing, but seems generally useful
 account_db_idx MemoryDatabase::add_account_to_db(AccountID user_id, const PublicKey pk) {
 	auto idx_itr = user_id_to_idx_map.find(user_id);
@@ -88,7 +88,7 @@ account_db_idx MemoryDatabase::add_account_to_db(AccountID user_id, const Public
 	uncommitted_idx_map[user_id] = idx;
 	uncommitted_db.emplace_back(user_id, pk);
 	return idx;
-}
+} */
 
 int64_t MemoryDatabase::lookup_available_balance(
 	account_db_idx user_index, AssetID asset_type) {
@@ -543,7 +543,9 @@ void MemoryDatabase::commit_persistence_thunks(uint64_t max_round_number) {
 			continue;
 		}
 
-		if (thunk.current_block_number != current_block_number + 1) {
+		// Used to require strict sequentiality, now gaps allowed in case of validation failures
+		// due to byzantine proposers.
+		if (thunk.current_block_number < current_block_number + 1) {
 			std::printf("i = %lu thunks[i].current_block_number= %lu current_block_number = %lu\n", i, thunk.current_block_number, current_block_number);
 			throw std::runtime_error("can't persist blocks in wrong order!!!");
 		}
@@ -586,10 +588,11 @@ void MemoryDatabase::commit_persistence_thunks(uint64_t max_round_number) {
 
 	background_thunk_clearer.clear_batch(std::move(thunks_to_commit));
 
-	if (current_block_number != max_round_number) {
-		std::printf("Missing a round commitment!\n");
-		throw std::runtime_error("missing commitment");
-	}
+	// this check no longer valid if gaps in thunks are allowed
+	//if (current_block_number != max_round_number) {
+	//	std::printf("Missing a round commitment!\n");
+	//	throw std::runtime_error("missing commitment");
+	//}
 	if (account_lmdb_instance) {
 		auto stats = account_lmdb_instance.stat();
 		BLOCK_INFO("db size: %lu", stats.ms_entries);
@@ -722,7 +725,7 @@ MemoryDatabase::install_initial_accounts_and_commit(MemoryDatabaseGenesisData co
 
 	database.resize(genesis_data.id_list.size());
 
-	auto insert_lambda = [&database, &account_init_lambda] (
+	auto insert_lambda = [this, &account_init_lambda] (
 		AccountID const& id, 
 		PublicKey const& pk, 
 		account_db_idx next_idx, 
@@ -735,14 +738,14 @@ MemoryDatabase::install_initial_accounts_and_commit(MemoryDatabaseGenesisData co
 		account_init_lambda(database[next_idx]);
 
 		DBStateCommitmentTrie::prefix_t key_buf;
-		MemoryDatabase::write_trie_key(key_buf, owner);
+		MemoryDatabase::write_trie_key(key_buf, id);
 
 		local_commitment_trie.insert(key_buf, DBStateCommitmentValueT(database[next_idx].produce_commitment()));
 	};
 
 	tbb::parallel_for(
 		tbb::blocked_range<size_t>(0, genesis_data.id_list.size(), 100'000),
-		[this, &genesis_data] (auto r) {
+		[this, &genesis_data, &insert_lambda] (auto r) {
 			index_map_t local_id_map;
 			DBStateCommitmentTrie local_commitment_trie;
 
@@ -752,7 +755,7 @@ MemoryDatabase::install_initial_accounts_and_commit(MemoryDatabaseGenesisData co
 				insert_lambda(acct, pk, idx, local_id_map, local_commitment_trie);
 			}
 
-			std::lock_guard lock(commitment_mtx);
+			std::lock_guard lock(committed_mtx);
 			commitment_trie.merge_in(std::move(local_commitment_trie));
 			user_id_to_idx_map.merge(std::move(local_id_map));
 		});

@@ -273,7 +273,7 @@ speedex_block_creation_logic(
 	tatonnement.oracle.wait_for_all_tatonnement_threads();
 	timeout_th.join();
 
-	management_structures.block_header_hash_map.insert(new_block.block.blockNumber, new_block.hash);
+	management_structures.block_header_hash_map.insert(new_block.block, true);//new_block.block.blockNumber, new_block.hash);
 
 	return new_block;
 }
@@ -348,15 +348,13 @@ void debug_hash_discrepancy(
 	}
 }
 
-
-template<typename TxLogType>
-bool speedex_block_validation_logic( 
+bool _speedex_block_validation_logic( 
 	SpeedexManagementStructures& management_structures,
 	BlockValidator& validator,
 	OverallBlockValidationMeasurements& overall_validation_stats,
 	const HashedBlock& prev_block,
 	const HashedBlock& expected_next_block,
-	const TxLogType& transactions) {
+	const SignedTransactionList& transactions) {
 	
 	uint64_t current_block_number = prev_block.block.blockNumber + 1;
 	BLOCK_INFO("starting block validation for block %lu", current_block_number);
@@ -544,17 +542,46 @@ bool speedex_block_validation_logic(
 
 	autorollback_structures.finalize_commit(current_block_number, stats);
 
-	management_structures.block_header_hash_map.insert(expected_next_block.block.blockNumber, expected_next_block.hash);
-
 	overall_validation_stats.state_update_stats = state_update_stats.get_xdr();
 
 	return true;
 }
 
+Block ensure_sequential_block_numbers(const HashedBlock& prev_block, const HashedBlock& expected_next_block) {
+	Block out = expected_next_block.block;
+	out.blockNumber = prev_block + 1;
+	return out;
+}
+
+std::pair<Block, bool>
+speedex_block_validation_logic( 
+	SpeedexManagementStructures& management_structures,
+	BlockValidator& validator,
+	OverallBlockValidationMeasurements& overall_validation_stats,
+	const HashedBlock& prev_block,
+	const HashedBlock& expected_next_block,
+	const SignedTransactionList& transactions) {
+
+	bool res = _speedex_block_validation_logic(
+		management_structures,
+		validator,
+		overall_validation_stats,
+		prev_block,
+		expected_next_block,
+		transactions);
+
+	Block corrected_block = ensure_sequential_block_numbers(expected_next_block);
+
+	management_structures.block_header_hash_map.insert(corrected_block, res);
+
+	return {corrected_block, res};
+} 
+
 /*
 If successful, returns true and all state is committed to next block.
 If fails, no-op.
 */
+/*
 template bool speedex_block_validation_logic( 
 	SpeedexManagementStructures& management_structures,
 	BlockValidator& validator,
@@ -578,5 +605,7 @@ template bool speedex_block_validation_logic(
 	const HashedBlock& prev_block,
 	const HashedBlock& expected_next_block,
 	const SignedTransactionList& transactions);
+
+*/
 
 } /* speedex */

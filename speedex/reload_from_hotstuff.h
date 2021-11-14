@@ -1,9 +1,12 @@
 #pragma once
 
-class hotstuff::HotstuffLMDB;
+namespace hotstuff {
+	class HotstuffLMDB;
+}
 
 namespace speedex {
 
+struct HashedBlock;
 struct SpeedexManagementStructures;
 
 //! loads persisted data, repairing lmdbs if necessary.

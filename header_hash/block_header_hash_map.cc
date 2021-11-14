@@ -1,6 +1,7 @@
 #include "block_header_hash_map.h"
 
 #include "utils/big_endian.h"
+#include "utils/hash.h"
 
 namespace speedex {
 
@@ -13,8 +14,9 @@ BlockHeaderHashMapLMDB::open_env() {
 		DEFAULT_LMDB_FLAGS | MDB_NOLOCK); // need NOLOCK for commit/reload tests
 }
 
-void BlockHeaderHashMap::insert(uint64_t block_number, const Hash& block_hash) {
+void BlockHeaderHashMap::insert(const Block& block, bool res) {
 
+	uint64_t block_number = block.blockNumber;
 	if (block_number == 0) {
 		throw std::runtime_error("should never insert genesis hash!");
 /*
@@ -32,6 +34,7 @@ void BlockHeaderHashMap::insert(uint64_t block_number, const Hash& block_hash) {
 		return;*/
 	}
 
+	// block header hash map requires strict sequentiality, unlike memdb thunks & orderbook thunks
 	if (block_number != last_committed_block_number + 1) {
 		throw std::runtime_error("inserting wrong block number");
 	}
@@ -40,7 +43,11 @@ void BlockHeaderHashMap::insert(uint64_t block_number, const Hash& block_hash) {
 
 	write_unsigned_big_endian(key_buf, block_number);
 
-	block_map.insert(key_buf, HashWrapper(block_hash));
+	BlockHeaderHashValue value;
+	value.hash = hash_xdr(block);
+	value.validation_success = res ? 1 : 0;
+
+	block_map.insert(key_buf, ValueT(value));
 	
 	// Difference between production and validation is here.
 	last_committed_block_number = block_number;
@@ -72,7 +79,11 @@ void BlockHeaderHashMap::persist_lmdb(uint64_t current_block_number) {
 			throw std::runtime_error("did not find hash in hash_map!");
 		}
 
-		dbval hash_val{*hash_opt};
+		BlockHeaderHashValue unwrapped_value = *hash_opt;
+
+		auto cur_bytes = xdr::xdr_to_opaque(unwrapped_value);
+
+		dbval hash_val{cur_bytes};
 		wtx.put(lmdb_instance.get_data_dbi(), key, hash_val);
 	}
 
@@ -179,32 +190,42 @@ void BlockHeaderHashMap::load_lmdb_contents_to_memory() {
 		prefix_t round_buf;
 		write_unsigned_big_endian(round_buf, round_number);
 
-		auto value = HashWrapper();
-		if (kv.second.mv_size != 32) {
-			throw std::runtime_error("invalid value size");
-		}
-		memcpy(value.data(), kv.second.mv_data, 32);
-		block_map.insert(round_buf, value);
+		BlockHeaderHashValue block;
+		//if (kv.second.mv_size != 32) {
+		//	throw std::runtime_error("invalid value size");
+		//}
+
+		auto db_value_bytes = kv.second.bytes();
+		xdr::xdr_from_opaque(db_value_bytes, block);
+
+		//memcpy(value.data(), kv.second.mv_data, 32);
+		block_map.insert(round_buf, ValueT(block));
 	}
 	last_committed_block_number = lmdb_instance.get_persisted_round_number();
 	rtx.commit();
 }
 
-std::optional<Hash>
-BlockHeaderHashMap::get_hash(uint64_t round_number) const {
+std::optional<BlockHeaderHashValue>
+BlockHeaderHashMap::get(uint64_t round_number) const {
 	if (round_number > get_persisted_round_number()) {
 		return std::nullopt;
 	}
 
 	prefix_t round_buf;
 	write_unsigned_big_endian(round_buf, round_number);
-	auto hash_opt = block_map.get_value(round_buf);
+	auto out_opt = block_map.get_value(round_buf);
 
-	if (!hash_opt) {
+	if (!out_opt) {
 		throw std::runtime_error("failed to load hash that lmdb should have");
 	}
 
-	return hash_opt;
+	return out_opt;
+}
+
+void 
+LoadLMDBHeaderMap::insert_for_loading(Block const& block, bool validation_success) {
+	return generic_do<&BlockHeaderHashMap::insert>(
+		block, validation_success);
 }
 
 } /* speedex */

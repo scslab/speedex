@@ -63,6 +63,11 @@ struct HashedBlockTransactionListPair {
 	SignedTransactionList txList;
 };
 
+struct BlockHeaderHashValue {
+	Hash hash;
+	uint32 validation_success;
+};
+
 struct TatonnementMeasurements {
 	float runtime;
 	uint32 step_radix;

@@ -85,7 +85,7 @@ SpeedexVM::exec_block(const block_type& blk) {
 	std::lock_guard lock2(confirmation_mtx);
 
 	if (last_committed_block.block.blockNumber + 1 != blk.hashedBlock.block.blockNumber) {
-		BLOCK_INFO("incorrect block height appended to speedex vm chain -- no-op");
+		BLOCK_INFO("incorrect block height appended to speedex vm chain -- no-op, except incrementing blockNumber");
 		return;
 	}
 
@@ -104,14 +104,18 @@ SpeedexVM::exec_block(const block_type& blk) {
 
 	auto logic_timestamp = init_time_measurement();
 
-	auto res =  speedex_block_validation_logic( 
+	auto [corrected_next_block, res] =  speedex_block_validation_logic( 
 		management_structures,
 		block_validator,
 		current_measurements,
 		last_committed_block,
 		new_header,
 		blk.txData);
+	
 
+	last_committed_block.block = corrected_next_block;
+	last_committed_block.hash = hash_xdr(corrected_next_block);
+	
 	if (!res) {
 		mempool_structs.post_validation_cleanup();
 		return;
@@ -132,7 +136,7 @@ SpeedexVM::exec_block(const block_type& blk) {
 
 	current_measurements.total_time = measure_time(timestamp);
 
-	last_committed_block = new_header;
+	//last_committed_block = new_header;
 
 	measurements_log.add_measurement(measurements_base);
 

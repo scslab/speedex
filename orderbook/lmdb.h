@@ -66,8 +66,10 @@ public:
 
 class OrderbookManagerLMDB {
 
-	//TODO can introduce limited sharding here
+	//External iface is set up so that we could introduce limited sharding here
 	BaseLMDBInstance base_instance;
+
+	const size_t num_orderbooks;
 
 	std::string get_lmdb_env_name() {
 		return std::string(ROOT_DB_DIRECTORY) 
@@ -79,11 +81,24 @@ public:
 	/*! Initialize lmdb with mapsize of 2^30 (somewhat arbitrary choice)
 	Roughly 1 billion.
 	*/
-	OrderbookManagerLMDB()
+	OrderbookManagerLMDB(size_t num_orderbooks)
 		: base_instance{0x40000000}
+		, num_orderbooks(num_orderbooks)
 		{}
 
 	BaseLMDBInstance& get_base_instance(OfferCategory const& category) {
+		return base_instance;
+	}
+
+	size_t get_num_base_instances() {
+		return 1;
+	}
+
+	std::pair<size_t, size_t> get_base_instance_range(size_t instance_number) {
+		return {0, num_orderbooks};
+	}
+
+	BaseLMDBInstance& get_base_instance_by_index(size_t idx) {
 		return base_instance;
 	}
 
@@ -110,12 +125,8 @@ class OrderbookLMDB : public SharedLMDBInstance {
 
 public:
 	
-	OrderbookLMDB(OfferCategory category, OrderbookManagerLMDB& manager_lmdb) 
-		: SharedLMDBInstance(manager_lmdb.get_base_instance(category))
-		, thunks()
-		, mtx(std::make_unique<std::mutex>())
-	{}
-
+	OrderbookLMDB(OfferCategory const& category, OrderbookManagerLMDB& manager_lmdb);
+	
 	std::lock_guard<std::mutex> lock() {
 		mtx -> lock();
 		return {*mtx, std::adopt_lock};
@@ -149,17 +160,8 @@ public:
 		(via e.g. a vector resize).
 	*/	
 	thunk_t& 
-	add_new_thunk_nolock(uint64_t current_block_number) {
-		if (thunks.size()) {
-			if (thunks.back().current_block_number + 1 
-				!= current_block_number)
-			{
-				throw std::runtime_error("thunks in the wrong order!");
-			}
-		}
-		thunks.emplace_back(current_block_number);
-		return thunks.back();
-	}
+	add_new_thunk_nolock(uint64_t current_block_number);
+
 	/*! Get the most recent thunk 
 		(typically, the thunk currently being created).
 		

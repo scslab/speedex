@@ -1,9 +1,13 @@
 #include "speedex/reload_from_hotstuff.h"
 
+#include "block_processing/block_validator.h"
+
 #include "hotstuff/lmdb.h"
 
 #include "speedex/speedex_management_structures.h"
+#include "speedex/speedex_operation.h"
 #include "speedex/speedex_persistence.h"
+#include "speedex/vm/speedex_vm_block_id.h"
 
 #include "utils/debug_macros.h"
 #include "utils/hash.h"
@@ -18,12 +22,14 @@ using xdr::operator==;
 //! Used for catch up on data from trusted sources
 //! or from data logged on disk (i.e. if db crashed
 //! before fsync)
-void speedex_replay_trusted_round(
+void speedex_replay_trusted_round_success(
 	SpeedexManagementStructures& management_structures,
 	HashedBlockTransactionListPair const& replay_data) {
 
-	auto const& header = replay_data.header;
+	auto const& header = replay_data.hashedBlock;
 	auto const& tx_block = replay_data.txList;
+
+	uint64_t round_number = header.block.blockNumber;
 
 	BLOCK_INFO("starting to replay transactions of round %lu", round_number);
 	replay_trusted_block(management_structures, tx_block, header);
@@ -53,7 +59,7 @@ void speedex_replay_trusted_round(
 	management_structures.orderbook_manager.finalize_for_loading(round_number);
 
 	auto header_hash_map = LoadLMDBHeaderMap(round_number, management_structures.block_header_hash_map);
-	header_hash_map.insert_for_loading(round_number, header.hash);
+	header_hash_map.insert_for_loading(header.block, true);
 
 	//persist data
 	if (management_structures.db.get_persisted_round_number() < round_number) {
@@ -68,40 +74,50 @@ void speedex_replay_trusted_round(
 	}
 }
 
-bool
+void speedex_replay_trusted_round_failed(
+	SpeedexManagementStructures& management_structures,
+	HashedBlock const & prev_block,
+	HashedBlock const& next_block)
+{
+	uint64_t round_number = prev_block.block.blockNumber + 1;
+
+	Block correction = ensure_sequential_block_numbers(prev_block, next_block);
+
+	auto header_hash_map = LoadLMDBHeaderMap(round_number, management_structures.block_header_hash_map);
+	header_hash_map.insert_for_loading(correction, false);
+}
+
+std::pair<Block, bool>
 try_replay_saved_block(
 	SpeedexManagementStructures& management_structures,
 	BlockValidator& validator,
 	HashedBlock const& prev_block,
-	HashedBlockTransactionPair const& replay_data) {
+	HashedBlockTransactionListPair const& replay_data) {
 
 	OverallBlockValidationMeasurements measurements; //unused
 
-	bool validation_res = speedex_block_validation_logic(
+	auto[corrected_next_block, validation_res] = speedex_block_validation_logic(
 		management_structures,
 		validator,
-		measurements
-		prev_block
+		measurements,
+		prev_block,
 		replay_data.hashedBlock,
 		replay_data.txList);
 
 	if (validation_res) {
 
-		uint64_t current_round_number = replay_data.hashedBlock.block.blockNumber;
-
 		//clears account mod log & creates memory database persistence thunk
 		persist_critical_round_data(
 			management_structures, 
 			replay_data.hashedBlock, 
-			current_measurements.data_persistence_measurements, 
+			measurements.data_persistence_measurements, 
 			false, 
 			false);
 
-		return true;
+		return {corrected_next_block, true};
 	}
 
-	return false;
-
+	return {corrected_next_block, false};
 }
 
 HashedBlock
@@ -130,7 +146,7 @@ speedex_load_persisted_data(
 
 	auto start_round = std::min(
 		{
-			1,
+			static_cast<uint64_t>(1),
 			db_round, 
 			min_orderbook_round, 
 			management_structures.block_header_hash_map.get_persisted_round_number()
@@ -152,32 +168,39 @@ speedex_load_persisted_data(
 
 	auto iter = cursor.begin();
 
+	uint64_t nonempty_block_index = 0; // speedex vm height
+
 	for (; iter != cursor.end(); ++iter) {
-		auto [hs_hash, block_id] = iter.get_hash_and_vm_data();
+		auto [hs_hash, block_id] = iter.template get_hs_hash_and_vm_data<SpeedexVMBlockID>();
 
 		if (block_id) {
-			auto blockNumber = (*(block_id.value)).block.blockNumber;
-			if (blockNumber != cur_block) {
+			nonempty_block_index ++;
+
+			if (nonempty_block_index != cur_block) {
 				continue;
 			}
 
-			auto correct_hash = management_structures.block_header_hash_map.get_hash(blockNumber);
-			if (!correct_hash) {
+			auto correct_header = management_structures.block_header_hash_map.get(nonempty_block_index);
+			if (!correct_header) {
 				throw std::runtime_error("failed to load expected hash from header hash map");
 			}
 
-			auto hs_supplied_hash = hash_xdr(*(block_id.value));
-			if (hs_supplied_hash != *correct_hash) {
-				continue;
-			}
-
 			HashedBlockTransactionListPair speedex_data = decided_block_cache.template load_vm_block<HashedBlockTransactionListPair>(hs_hash);
-			top_block = speedex_data.hashedBlock;
-			
-			speedex_replay_trusted_round(management_structures, speedex_data);
-			cur_round++;
 
-			if (cur_round > end_round) {
+			if (correct_header->validation_success) {
+				speedex_replay_trusted_round_success(management_structures, speedex_data);
+
+				top_block = speedex_data.hashedBlock;	
+			} else {
+				speedex_replay_trusted_round_failed(management_structures, top_block, speedex_data.hashedBlock);
+
+				auto new_block = ensure_sequential_block_numbers(top_block, speedex_data.hashedBlock);
+				top_block.block = new_block;
+				top_block.hash = hash_xdr(new_block);
+			}
+			cur_block++;
+
+			if (cur_block > end_round) {
 				break;
 			}
 		}
@@ -185,17 +208,16 @@ speedex_load_persisted_data(
 
 	//replay remaining blocks, untrusted
 
-	while (iter != cursor.end()) {
-		auto [hs_hash, block_id] = iter.get_hash_and_vm_data();
+	for (;iter != cursor.end(); ++iter) {
+		auto [hs_hash, block_id] = iter.template get_hs_hash_and_vm_data<SpeedexVMBlockID>();
 
 		if (block_id) {
 			auto speedex_data = decided_block_cache.template load_vm_block<HashedBlockTransactionListPair>(hs_hash);
 
-			if (try_replay_saved_block(management_structures, speedex_data)) {
-				top_block = speedex_data.hashedBlock;
-			}
+			auto [corrected_next_block, _] = try_replay_saved_block(management_structures, validator, top_block, speedex_data);
+			top_block.block = corrected_next_block;
+			top_block.hash = hash_xdr(corrected_next_block);
 		}
-		++iter;
 	}
 
 	persist_after_loading(management_structures, top_block.block.blockNumber);

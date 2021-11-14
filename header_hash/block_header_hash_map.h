@@ -18,12 +18,13 @@ millions of blocks.
 #include "trie/prefix.h"
 
 #include "xdr/types.h"
+#include "xdr/block.h"
 
 #include <cstdint>
+#include <map>
 #include <optional>
 
 namespace speedex {
-
 
 // After commitment of block N, contains hashes of rounds 1 to N, *inclusive*
 
@@ -48,12 +49,11 @@ struct BlockHeaderHashMapLMDB : public LMDBInstance {
 /*! Stores a merkle trie mapping block numbers to block root hashes.
 */
 struct BlockHeaderHashMap {
-	using HashWrapper = XdrTypeWrapper<Hash>;
+	using ValueT = XdrTypeWrapper<BlockHeaderHashValue>;
 	constexpr static unsigned int KEY_LEN = sizeof(uint64_t);
 
 	using prefix_t = ByteArrayPrefix<KEY_LEN>;
 
-	using ValueT = HashWrapper;
 	using MetadataT = CombinedMetadata<SizeMixin>;
 
 	using TrieT = MerkleTrie<prefix_t, ValueT, MetadataT>;
@@ -75,7 +75,7 @@ public:
 		[0, last_committed_block_number) and block_number input is 
 		prev_block = last_committed_block_number
 	*/
-	void insert(uint64_t block_number, const Hash& block_hash);
+	void insert(const Block& block, bool validation_success);
 
 /*
 	//! Insert hash of a block when validating a block.
@@ -120,7 +120,7 @@ public:
 	//! Read in trie contents from disk.
 	void load_lmdb_contents_to_memory();
 
-	std::optional<Hash> get_hash(uint64_t round_number) const;
+	std::optional<BlockHeaderHashValue> get(uint64_t round_number) const;
 };
 
 //! Mock around BlockHeaderHashMap that makes calls into no-ops when replaying
@@ -135,10 +135,7 @@ public:
 	: LMDBLoadingWrapper<BlockHeaderHashMap&>(current_block_number, main_db) {}
 
 	//! Insert a block hash when replaying trusted blocks.
-	void insert_for_loading(uint64_t block_number, const Hash& block_hash) {
-		return generic_do<&BlockHeaderHashMap::insert>(
-			block_number, block_hash);
-	}
+	void insert_for_loading(Block const& block, bool validation_success);
 };
 
 } /* speedex */

@@ -87,13 +87,7 @@ public:
 
 	using prefix_t = OrderbookTriePrefix;
 
-	OrderbookManager(
-		uint16_t num_new_assets)
-		: orderbooks()
-		, num_assets(0) {
-		increase_num_traded_assets(num_new_assets);
-		num_assets = num_new_assets;
-	}
+	OrderbookManager(uint16_t num_new_assets);
 
 	OrderbookManager(const OrderbookManager& other) = delete;
 	OrderbookManager(OrderbookManager&& other) = delete;
@@ -123,22 +117,10 @@ public:
 	}
 
 	//! Get the lowest persistence round of all orderbooks.
-	uint64_t get_min_persisted_round_number() {
-		uint64_t min = UINT64_MAX;
-		for (const auto& orderbook : orderbooks) {
-			min = std::min(min, orderbook.get_persisted_round_number());
-		}
-		return min;
-	}
+	uint64_t get_min_persisted_round_number();
 
 	//! Get the highest persistence round of all orderbooks.
-	uint64_t get_max_persisted_round_number() {
-		uint64_t max = 0;
-		for (const auto& orderbook : orderbooks) {
-			max = std::max(max, orderbook.get_persisted_round_number());
-		}
-		return max;
-	}
+	uint64_t get_max_persisted_round_number();
 
 	//! Change the number of assets traded by the orderbooks managed here.
 	void increase_num_traded_assets(uint16_t new_asset_count);

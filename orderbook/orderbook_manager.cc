@@ -2,6 +2,16 @@
 
 namespace speedex {
 
+OrderbookManager::OrderbookManager(
+		uint16_t num_new_assets)
+		: orderbooks()
+		, num_assets(0)
+		, lmdb(get_num_orderbooks_by_asset_count(num_new_assets))
+	{	
+		increase_num_traded_assets(num_new_assets);
+		num_assets = num_new_assets;
+	}
+
 void OrderbookManager::increase_num_traded_assets(
 	uint16_t new_asset_count) 
 {
@@ -47,20 +57,21 @@ void OrderbookManager::generic_map_serial(Args... args) {
 
 template<auto func, typename... Args>
 void OrderbookManager::generic_map_loading(uint64_t current_block_number, Args... args) {
-	if (lmdb.get_persisted_round_number() < current_block_number) {
-		auto num_orderbooks = orderbooks.size();
-		tbb::parallel_for(
-			tbb::blocked_range<size_t>(0, num_orderbooks),
-			[this, current_block_number, &args...] (auto r) {
-				for (unsigned int i = r.begin(); i < r.end(); i++) {
-				//	if (orderbooks[i].get_persisted_round_number() < current_block_number) {
-					(orderbooks[i].*func)(current_block_number, args...);
-				//	}
-				}
-			});
-	}
 
-	
+	//TODO parallelize loop if this ever is necessary.
+	for (auto i = 0u; i < lmdb.get_num_base_instances(); i++) {
+		auto [start, end] = lmdb.get_base_instance_range(i);
+		auto& local_lmdb = lmdb.get_base_instance_by_index(i);
+		if (local_lmdb.get_persisted_round_number() < current_block_number) {
+			tbb::parallel_for(
+				tbb::blocked_range<size_t>(start, end),
+					[this, current_block_number, &args...] (auto r) {
+						for (unsigned int j = r.begin(); j < r.end(); j++) {
+							(orderbooks[j].*func)(current_block_number, args...);
+						}
+				});
+		}
+	}
 }
 
 void OrderbookManager::commit_for_loading(uint64_t current_block_number) {
@@ -75,26 +86,26 @@ void OrderbookManager::finalize_for_loading(uint64_t current_block_number) {
 
 void OrderbookManager::persist_lmdb_for_loading(uint64_t current_block_number) {
 
-	if (lmdb.get_persisted_round_number() < current_block_number) {
+	for (auto i = 0u; i < lmdb.get_num_base_instances(); i++) {
+		auto [start, end] = lmdb.get_base_instance_range(i);
+		auto& local_lmdb = lmdb.get_base_instance_by_index(i);
 
-		ThunkGarbage garbage;
+		if (local_lmdb.get_persisted_round_number() < current_block_number) {
+			ThunkGarbage garbage;
 
-		auto wtx = lmdb.wbegin();
+			auto wtx = local_lmdb.wbegin();
 
-		for (unsigned int i = 0; i < num_orderbooks; i++) {
-			auto orderbook_garbage 
-				= orderbooks[i].persist_lmdb(current_block_number, wtx);
-			garbage.add(orderbook_garbage.release());
+			for (auto j = start; j < end; j++) {
+				auto orderbook_garbage 
+					= orderbooks[j].persist_lmdb(current_block_number, wtx);
+				garbage.add(orderbook_garbage.release());
+			}
+
+			thunk_garbage_deleter.call_delete(garbage.release());
+
+			local_lmdb.commit_wtxn(wtx, current_block_number);
 		}
-
-		//generic_map_loading<&Orderbook::persist_lmdb>(
-		//	current_block_number, wtx);
-
-		thunk_garbage_deleter.call_delete(garbage.release());
-
-		lmdb.commit_wtxn(wtx, current_block_number);
 	}
-
 }
 
 void OrderbookManager::clear_() {
@@ -129,19 +140,43 @@ void OrderbookManager::rollback_thunks(uint64_t current_block_number) {
 
 void OrderbookManager::persist_lmdb(uint64_t current_block_number) {
 	//orderbooks manage their own thunk threadsafety for persistence thunks
-	ThunkGarbage garbage;
 
-	auto wtx = lmdb.wbegin();
+	for (auto i = 0u; i < lmdb.get_num_base_instances(); i++) {
+		auto [start, end] = lmdb.get_base_instance_range(i);
+		auto& local_lmdb = lmdb.get_base_instance_by_index(i);
+		ThunkGarbage garbage;
 
-	auto num_orderbooks = orderbooks.size();
-	for (unsigned int i = 0; i < num_orderbooks; i++) {
-		auto orderbook_garbage 
-			= orderbooks[i].persist_lmdb(current_block_number, wtx);
-		garbage.add(orderbook_garbage.release());
+		auto wtx = local_lmdb.wbegin();
+
+		for (auto j = start; j < end; j++) {
+
+			auto orderbook_garbage 
+				= orderbooks[j].persist_lmdb(current_block_number, wtx);
+
+			garbage.add(orderbook_garbage.release());
+		}
+		local_lmdb.commit_wtxn(wtx, current_block_number);
+
+		thunk_garbage_deleter.call_delete(garbage.release());
 	}
-	lmdb.commit_wtxn(wtx, current_block_number);
+}
 
-	thunk_garbage_deleter.call_delete(garbage.release());
+uint64_t 
+OrderbookManager::get_min_persisted_round_number() {
+	uint64_t min = UINT64_MAX;
+	for (const auto& orderbook : orderbooks) {
+		min = std::min(min, orderbook.get_persisted_round_number());
+	}
+	return min;
+}
+
+uint64_t 
+OrderbookManager::get_max_persisted_round_number() {
+	uint64_t max = 0;
+	for (const auto& orderbook : orderbooks) {
+		max = std::max(max, orderbook.get_persisted_round_number());
+	}
+	return max;
 }
 
 void OrderbookManager::open_lmdb_env() {

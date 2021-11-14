@@ -121,13 +121,15 @@ SIMPLEX_TEST_SRCS = \
 	simplex/tests/test_simplex.h
 
 SPEEDEX_SRCS = \
+	speedex/reload_from_hotstuff.cc \
 	speedex/speedex_measurements.cc \
 	speedex/speedex_node.cc \
 	speedex/speedex_operation.cc \
 	speedex/speedex_options.cc \
 	speedex/speedex_persistence.cc \
-	speedex/speedex_vm.cc \
-	speedex/speedex_vm_block_id.cc
+	speedex/vm/speedex_vm.cc \
+	speedex/vm/speedex_vm_block_id.cc \
+	speedex/vm/speedex_vm_init.cc
 
 SYNTHETIC_DATA_GEN_SRCS = \
 	synthetic_data_generator/synthetic_data_gen.cc \

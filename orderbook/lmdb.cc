@@ -9,7 +9,7 @@ namespace speedex {
 //Commits everything up to and including current_block_number
 ThunkGarbage
 __attribute__((warn_unused_result)) 
-OrderbookLMDB::write_thunks(const uint64_t current_block_number, dbenv::wtxn& wtx bool debug) {
+OrderbookLMDB::write_thunks(const uint64_t current_block_number, dbenv::wtxn& wtx, bool debug) {
 
 	//dbenv::wtxn wtx = wbegin();
 
@@ -39,16 +39,18 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, dbenv::wtxn& wt
 
 	bool key_set = false;
 
-	if (relevant_thunks.size() == 0 && get_persisted_round_number() != current_block_number) {
-		throw std::runtime_error("can't persist without thunks");
-	}
+// not valid if thunk gaps are allowed
+//	if (relevant_thunks.size() == 0 && get_persisted_round_number() != current_block_number) {
+//		throw std::runtime_error("can't persist without thunks");
+//	}
 
 	if (relevant_thunks.size() == 0) {
 		return ThunkGarbage{};
 	}
 
-	if (relevant_thunks[0].current_block_number != get_persisted_round_number() + 1) {
-		throw std::runtime_error("invalid current_block_number");
+// changed to inequality when thunk gaps were added
+	if (relevant_thunks[0].current_block_number < get_persisted_round_number() + 1) {
+		throw std::runtime_error("too small current_block_number");
 	}
 
 
@@ -82,12 +84,12 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, dbenv::wtxn& wt
 			if (key_buf < thunk.partial_exec_key) {
 				key_buf = thunk.partial_exec_key;
 			}
-			INTEGRITY_CHECK("thunk threshold key: %s", DebugUtils::__array_to_str(thunk.partial_exec_key, MerkleWorkUnit::WORKUNIT_KEY_LEN).c_str());
+			INTEGRITY_CHECK("thunk threshold key: %s", debug::array_to_str(thunk.partial_exec_key, MerkleWorkUnit::WORKUNIT_KEY_LEN).c_str());
 
 		}
 	}
 
-	INTEGRITY_CHECK("final max key: %s", DebugUtils::__array_to_str(key_buf, MerkleWorkUnit::WORKUNIT_KEY_LEN).c_str());
+	INTEGRITY_CHECK("final max key: %s", debug::array_to_str(key_buf, MerkleWorkUnit::WORKUNIT_KEY_LEN).c_str());
 	
 	if (print)
 		std::printf("phase 2\n");
@@ -149,10 +151,13 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, dbenv::wtxn& wt
 
 	if (print) 
 		std::printf("phase 3\n");
+
+	// signed int is important for this for loop
 	for (int i = relevant_thunks.size() - 1; i>= 0; i--) {
 
 		if (relevant_thunks.at(i).current_block_number > current_block_number) {
 			// again ignore inflight thunks
+			throw std::runtime_error("impossible");
 			continue;
 		}
 
@@ -346,6 +351,24 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, dbenv::wtxn& wt
 	return output;
 }
 
+OrderbookLMDB::OrderbookLMDB(OfferCategory const& category, OrderbookManagerLMDB& manager_lmdb) 
+	: SharedLMDBInstance(manager_lmdb.get_base_instance(category))
+	, thunks()
+	, mtx(std::make_unique<std::mutex>())
+{}
 
+OrderbookLMDB::thunk_t&
+OrderbookLMDB::add_new_thunk_nolock(uint64_t current_block_number) {
+	if (thunks.size()) {
+		// changed to drop strict sequentiality requirement
+		if (thunks.back().current_block_number + 1 
+			> current_block_number)
+		{
+			throw std::runtime_error("thunks in the wrong order!");
+		}
+	}
+	thunks.emplace_back(current_block_number);
+	return thunks.back();
+}
 
 } /* speedex */

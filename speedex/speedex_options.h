@@ -1,14 +1,18 @@
 #pragma once
+
 #include <cstddef>
+#include <cstdint>
+
+#include "speedex/approximation_parameters.h"
 
 namespace speedex {
 
 struct SpeedexOptions {
 
 	// protocol parameters
-	unsigned int tax_rate;
-	unsigned int smooth_mult;
-	unsigned int num_assets;
+	uint8_t tax_rate;
+	uint8_t smooth_mult;
+	uint16_t num_assets;
 
 	// operational parameters
 	size_t persistence_frequency;

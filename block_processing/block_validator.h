@@ -18,12 +18,11 @@ offer clearing/validation checks.
 
 #include "stats/block_update_stats.h"
 
+#include "xdr/block.h"
 #include "xdr/transaction.h"
 #include "xdr/ledger.h"
 
 namespace speedex {
-
-struct SignedTransactionList;
 
 /*! 
 Interface for producing valid block of transactions.

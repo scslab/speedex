@@ -4,15 +4,19 @@ namespace speedex {
 
 uint64_t init_management_structures_from_lmdb(SpeedexManagementStructures& management_structures) {
 
-	management_structures.open_lmdb_env();
+	throw std::runtime_error("unimpl");
+	/*management_structures.open_lmdb_env();
 	management_structures.open_lmdb();
 	auto start_blk = speedex_load_persisted_data(management_structures);
 
-	return start_blk + 1;
+	return start_blk + 1; */
 }
 
 void init_management_structures_no_lmdb(SpeedexManagementStructures& management_structures, AccountID num_accounts, int num_assets, uint64_t default_amount) {
 
+
+	throw std::runtime_error("unimpl");
+	/*
 	auto& db = management_structures.db;
 
 	for (AccountID i = 0; i < num_accounts; i++) {
@@ -36,7 +40,7 @@ void init_management_structures_no_lmdb(SpeedexManagementStructures& management_
 		});
 	db.commit_values();
 
-	db.produce_state_commitment();
+	db.produce_state_commitment(); */
 }
 
 } /* speedex */
