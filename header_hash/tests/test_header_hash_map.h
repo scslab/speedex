@@ -4,6 +4,7 @@
 
 #include "utils/big_endian.h"
 #include "utils/manage_data_dirs.h"
+#include "utils/hash.h"
 
 #include "header_hash/block_header_hash_map.h"
 
@@ -25,22 +26,23 @@ public:
 		clear_header_hash_lmdb_dir();
 	}
 
+	Block make_block(uint64_t value, uint64_t block_number) {
+		Block buf;
+		write_unsigned_big_endian(buf.prevBlockHash, value);
+		buf.blockNumber = block_number;
+		return buf;
+	}
+
 	void test_good_insert() {
 		BlockHeaderHashMap map;
 
-		Hash buf;
-
-		uint64_t value = 0x1234;
-		write_unsigned_big_endian(buf, value);
-
-		map.insert(1, buf);
+		map.insert(make_block(0x1234, 1), true);
 
 		Hash hash1;
 		map.hash(hash1);
 
-		value = 0x2341;
-		write_unsigned_big_endian(buf, value);
-		map.insert(2, buf);
+		map.insert(make_block(0x2341, 2), true);
+		
 		Hash hash2;
 		map.hash(hash2);
 
@@ -51,38 +53,30 @@ public:
 		BlockHeaderHashMap map;
 		Hash hash;
 
-		TS_ASSERT_THROWS_ANYTHING(map.insert(2, hash));
+		TS_ASSERT_THROWS_ANYTHING(map.insert(make_block(0, 2), true));
 	}
 
 	void test_mixed_inserts() {
 
 		BlockHeaderHashMap map;
-		Hash buf;
 
-		uint64_t value = 0x1234;
-		write_unsigned_big_endian(buf, value);
-		map.insert(1, buf);
+		map.insert(make_block(0x1234, 1), true);
 
 		Hash hash1;
 		map.hash(hash1);
 
-		TS_ASSERT_THROWS_ANYTHING(map.insert(1, buf));
+		TS_ASSERT_THROWS_ANYTHING(map.insert(make_block(0x2341, 1), true));
 	}
 
 	void test_lmdb_persist() {
 		BlockHeaderHashMap map;
-		Hash buf;
 
 		map.open_lmdb_env();
 		map.create_lmdb();
 
-		uint64_t value = 0x1234;
-		write_unsigned_big_endian(buf, value);
-		map.insert(1, buf);
+		map.insert(make_block(0x1234, 1), true);
 
-		value = 0x1235;
-		write_unsigned_big_endian(buf, value);
-		map.insert(2, buf);
+		map.insert(make_block(0x1235, 2), true);
 
 		map.persist_lmdb(0);
 		map.persist_lmdb(1);
@@ -93,21 +87,16 @@ public:
 
 	void test_lmdb_rollback() {
 		BlockHeaderHashMap map;
-		Hash buf;
 
 		map.open_lmdb_env();
 		map.create_lmdb();
 
-		uint64_t value = 0x1234;
-		write_unsigned_big_endian(buf, value);
-		map.insert(1, buf);
+		map.insert(make_block(0x1234, 1), true);
 
 		Hash hash1;
 		map.hash(hash1);
 
-		value = 0x1235;
-		write_unsigned_big_endian(buf, value);
-		map.insert(2, buf);
+		map.insert(make_block(0x1235, 2), true);
 
 		Hash hash3;
 		map.hash(hash3);
@@ -124,23 +113,24 @@ public:
 
 	void test_lmdb_reload() {
 		Hash first_hash;
+
+		Hash round2_recall_hash;
 		{
 			BlockHeaderHashMap map;
-			Hash buf;
-
+			
 			map.open_lmdb_env();
 			map.create_lmdb();
 
-			uint64_t value = 0x1234;
-			write_unsigned_big_endian(buf, value);
-			map.insert(1, buf);
+			map.insert(make_block(0x1234, 1), true);
 
 			Hash hash1;
 			map.hash(hash1);
 
-			value = 0x1235;
-			write_unsigned_big_endian(buf, value);
-			map.insert(2, buf);
+			Block block2 = make_block(0x1235, 2);
+
+			round2_recall_hash = hash_xdr(block2);
+
+			map.insert(block2, true);
 
 			map.persist_lmdb(2);
 
@@ -158,15 +148,15 @@ public:
 
 		TS_ASSERT_EQUALS(first_hash, second_hash);
 
-		uint64_t recalled_value = 0x1235;
-		Hash buf;
-		write_unsigned_big_endian(buf, recalled_value);
+		Block expected_block = make_block(0x1235, 2);
+		Hash expected_hash = hash_xdr(expected_block);
 
-		auto test_recall = map.get_hash(2);
+		auto test_recall = map.get(2);
 
 		TS_ASSERT((bool)test_recall);
-		TS_ASSERT_EQUALS(*test_recall, buf);
+		TS_ASSERT_EQUALS(test_recall -> hash, expected_hash);
 
-		TS_ASSERT_THROWS_ANYTHING(map.insert(2, first_hash));
+		// ensure we don't overwrite persisted data post reload
+		TS_ASSERT_THROWS_ANYTHING(map.insert(expected_block, true));
 	}
 };

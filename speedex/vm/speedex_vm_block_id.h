@@ -2,6 +2,9 @@
 
 #include "xdr/block.h"
 
+#include <cstdint>
+#include <optional>
+
 namespace speedex {
 
 struct SpeedexVMBlockID {

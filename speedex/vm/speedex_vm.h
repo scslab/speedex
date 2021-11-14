@@ -16,11 +16,14 @@
 
 #include <mutex>
 
-class hotstuff::HotstuffLMDB;
+
+namespace hotstuff {
+class HotstuffLMDB;
+} /* hotstuff */
 
 namespace speedex {
 
-class ExperimentParams;
+class ExperimentParameters;
 
 class SpeedexVM {
 	constexpr static size_t PERSIST_BATCH = 5;
@@ -40,7 +43,7 @@ class SpeedexVM {
 	std::string measurement_output_prefix;
 
 	const SpeedexOptions& options;
-	const ExperimentParams& params;
+	const ExperimentParameters& params;
 
 	constexpr static bool small = false;
 	constexpr static size_t TARGET_BLOCK_SIZE = small ? 60'000 : 600'000;

@@ -138,11 +138,11 @@ int main(int argc, char* const* argv)
 	ExperimentParameters params;
 	params.num_assets = options.num_assets;
 	params.account_list_filename = output_root + "accounts";
+	params.default_amount = 100'000'000;
 
 	SpeedexOptions speedex_options;
 	speedex_options.parse_options(speedex_options_file.c_str());
-	params.tax_rate = speedex_options.tax_rate;
-	params.smooth_mult = speedex_options.smooth_mult;
+	
 	params.num_threads = 0; // SET LATER
 	params.persistence_frequency = speedex_options.persistence_frequency;
 	params.num_blocks = options.num_blocks;

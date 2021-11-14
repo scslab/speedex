@@ -1,5 +1,11 @@
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <unordered_set>
+#include <vector>
+
 /*! \file ranges.h 
 A collection of TBB Range objects, useful for 
 iterating over tries for different purposes.
@@ -29,11 +35,11 @@ public:
 		return num_children > 1000;
 	}
 
-	std::size_t num_nodes() const {
+	size_t num_nodes() const {
 		return nodes.size();
 	}
 
-	TrieT* operator[](std::size_t idx) const {
+	TrieT* operator[](size_t idx) const {
 		return nodes.at(idx);
 	}
 

@@ -123,7 +123,6 @@ SIMPLEX_TEST_SRCS = \
 SPEEDEX_SRCS = \
 	speedex/reload_from_hotstuff.cc \
 	speedex/speedex_measurements.cc \
-	speedex/speedex_node.cc \
 	speedex/speedex_operation.cc \
 	speedex/speedex_options.cc \
 	speedex/speedex_persistence.cc \
@@ -150,7 +149,6 @@ SRCS = \
 	$(BLOCK_PROCESSING_SRCS) \
 	$(CONFIG_SRCS) \
 	$(CRYPTO_SRCS) \
-	$(EXPERIMENTS_SRCS) \
 	$(HEADER_HASH_SRCS) \
 	$(HOTSTUFF_SRCS) \
 	$(LMDB_SRCS) \
@@ -160,7 +158,6 @@ SRCS = \
 	$(ORDERBOOK_SRCS) \
 	$(OVERLAY_SRCS) \
 	$(PRICE_COMPUTATION_SRCS) \
-	$(RPC_SRCS) \
 	$(SIMPLEX_SRCS) \
 	$(SPEEDEX_SRCS) \
 	$(SYNTHETIC_DATA_GEN_SRCS) \
@@ -172,8 +169,6 @@ MAIN_CCS = \
 	main/overlay_sim.cc \
 	main/simple.cc \
 	main/replicated_simulation_experiment_controller.cc \
-	main/speedex_producer_experiment.cc \
-	main/speedex_validator_experiment.cc \
 	main/synthetic_data_gen_from_params.cc \
 	main/trie_comparison.cc 
 
@@ -198,8 +193,6 @@ bin_PROGRAMS = \
 	overlay_sim \
 	simple \
 	replicated_simulation_experiment_controller \
-	speedex_producer_experiment \
-	speedex_validator_experiment \
 	synthetic_data_gen \
 	trie_comparison \
 	test
@@ -209,8 +202,6 @@ counting_vm_hotstuff_SOURCES = $(SRCS) main/counting_vm_hotstuff.cc
 overlay_sim_SOURCES = $(SRCS) main/overlay_sim.cc
 simple_SOURCES = $(SRCS) main/simple.cc
 replicated_simulation_experiment_controller_SOURCES = $(SRCS) main/replicated_simulation_experiment_controller.cc
-speedex_producer_experiment_SOURCES = $(SRCS) main/speedex_producer_experiment.cc
-speedex_validator_experiment_SOURCES = $(SRCS) main/speedex_validator_experiment.cc
 synthetic_data_gen_SOURCES = $(SRCS) main/synthetic_data_gen_from_params.cc
 trie_comparison_SOURCES = $(SRCS) main/trie_comparison.cc
 

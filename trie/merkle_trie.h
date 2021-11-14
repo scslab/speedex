@@ -13,23 +13,6 @@ In this implementation, children pointers are standard 8-byte pointers (i.e.
 virtual addresses).
 */
 
-
-#include <unordered_map>
-#include <memory>
-#include <mutex>
-#include <shared_mutex>
-#include <vector>
-#include <cstring>
-#include <execution>
-#include <cstdint>
-#include <type_traits>
-#include <cstdio>
-#include <iostream>
-#include <atomic>
-#include <tuple>
-#include <thread>
-#include <unordered_set>
-
 #include "trie/children_map.h"
 #include "trie/metadata.h"
 #include "trie/prefix.h"
@@ -44,6 +27,22 @@ virtual addresses).
 
 #include <sodium.h>
 
+#include <atomic>
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <execution>
+#include <iostream>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <shared_mutex>
+#include <thread>
+#include <tuple>
+#include <type_traits>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 namespace speedex {
 

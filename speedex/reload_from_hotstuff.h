@@ -6,6 +6,7 @@ namespace hotstuff {
 
 namespace speedex {
 
+class BlockValidator;
 struct HashedBlock;
 struct SpeedexManagementStructures;
 
@@ -14,6 +15,7 @@ struct SpeedexManagementStructures;
 HashedBlock 
 speedex_load_persisted_data(
 	SpeedexManagementStructures& management_structures,
+	BlockValidator& validator,
 	hotstuff::HotstuffLMDB const& decided_block_cache);
 
 } /* speedex */

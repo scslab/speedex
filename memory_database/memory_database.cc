@@ -13,7 +13,7 @@ namespace speedex {
 UserAccount& MemoryDatabase::find_account(account_db_idx user_index) {
 	uint64_t db_size = database.size();
 	if (user_index >= db_size) {
-		std::printf("invalid db access: %lu of %lu\n", user_index, db_size);
+		std::printf("invalid db access: %llu of %llu\n", user_index, db_size);
 		throw std::runtime_error("invalid db idx access");
 	}
 	return database[user_index];
@@ -22,7 +22,7 @@ UserAccount& MemoryDatabase::find_account(account_db_idx user_index) {
 const UserAccount& MemoryDatabase::find_account(account_db_idx user_index) const {
 	uint64_t db_size = database.size();
 	if (user_index >= db_size) {
-		std::printf("invalid db access: %lu of %lu\n", user_index, db_size);
+		std::printf("invalid db access: %llu of %llu\n", user_index, db_size);
 		throw std::runtime_error("invalid db idx access");
 	}
 	return database[user_index];
@@ -546,7 +546,7 @@ void MemoryDatabase::commit_persistence_thunks(uint64_t max_round_number) {
 		// Used to require strict sequentiality, now gaps allowed in case of validation failures
 		// due to byzantine proposers.
 		if (thunk.current_block_number < current_block_number + 1) {
-			std::printf("i = %lu thunks[i].current_block_number= %lu current_block_number = %lu\n", i, thunk.current_block_number, current_block_number);
+			std::printf("i = %lu thunks[i].current_block_number= %llu current_block_number = %llu\n", i, thunk.current_block_number, current_block_number);
 			throw std::runtime_error("can't persist blocks in wrong order!!!");
 		}
 
@@ -558,7 +558,7 @@ void MemoryDatabase::commit_persistence_thunks(uint64_t max_round_number) {
 			dbval key = UserAccount::produce_lmdb_key(kv.key);
 
 			if (!(kv.msg.size())) {
-				std::printf("missing value for kv %lu\n", kv.key);
+				std::printf("missing value for kv %llu\n", kv.key);
 				std::printf("thunk.kvs.size() = %lu\n", thunk.kvs->size());
 				throw std::runtime_error("failed to accumulate value in persistence thunk");
 			}
@@ -610,7 +610,7 @@ void MemoryDatabase::persist_lmdb(uint64_t current_block_number) {
 	int modified_count = 0;
 	for (account_db_idx i = 0; i < database.size(); i++) {
 		if (i % 100000 == 0) {
-			std::printf("%lu\n", i);
+			std::printf("%lld\n", i);
 		}
 
 		modified_count++;
@@ -717,7 +717,7 @@ DBPersistenceThunk::operator[](size_t idx) {
 }
 
 void
-MemoryDatabase::install_initial_accounts_and_commit(MemoryDatabaseGenesisData const& genesis_data, auto account_init_lambda)
+MemoryDatabase::install_initial_accounts_and_commit(MemoryDatabaseGenesisData const& genesis_data, std::function<void(UserAccount&)> account_init_lambda)
 {
 	if (database.size()) {
 		throw std::runtime_error("database reinitialization attempted");
@@ -732,7 +732,7 @@ MemoryDatabase::install_initial_accounts_and_commit(MemoryDatabaseGenesisData co
 		index_map_t& local_id_map, 
 		DBStateCommitmentTrie& local_commitment_trie) -> void 
 	{
-		local_id_map.insert(id, next_idx);
+		local_id_map.emplace(id, next_idx);
 		database[next_idx].set_owner(id, pk, 0);
 
 		account_init_lambda(database[next_idx]);

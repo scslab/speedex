@@ -1,4 +1,4 @@
-#include "speedex/speedex_vm_block_id.h"
+#include "speedex/vm/speedex_vm_block_id.h"
 
 #include <xdrpp/marshal.h>
 

@@ -5,6 +5,7 @@
 #include "speedex/speedex_management_structures.h"
 #include "speedex/speedex_operation.h"
 
+#include "utils/hash.h"
 #include "utils/save_load_xdr.h"
 
 #include "xdr/experiments.h"
@@ -110,7 +111,7 @@ SpeedexVM::exec_block(const block_type& blk) {
 		current_measurements,
 		last_committed_block,
 		new_header,
-		blk.txData);
+		blk.txList);
 	
 
 	last_committed_block.block = corrected_next_block;
@@ -246,7 +247,7 @@ SpeedexVM::propose()
 	
 	auto out = std::make_unique<block_type>();
 	out->hashedBlock = proposal_base_block;
-	out -> txList.transactions.reserve(block_size);
+	out -> txList.reserve(block_size);
 	write_tx_data(out->txList, *output_tx_block);
 
 	current_measurements.serialize_time = measure_time(mempool_wait_ts);

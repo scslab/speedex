@@ -5,7 +5,28 @@
 
 */
 
+#include "config.h"
+
+#include "lmdb/lmdb_wrapper.h"
+
+#include "memory_database/background_thunk_clearer.h"
+#include "memory_database/typedefs.h"
+#include "memory_database/user_account.h"
+
+#include "modlog/account_modification_log.h"		
+
+#include "trie/merkle_trie.h"
+#include "trie/prefix.h"
+
+#include "utils/big_endian.h"
+#include "utils/time.h"
+
+#include "xdr/database_commitments.h"
+#include "xdr/types.h"
+#include "xdr/transaction.h"
+
 #include <atomic>
+#include <functional>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -16,26 +37,6 @@
 #include <vector>
 
 #include <xdrpp/marshal.h>
-
-#include "memory_database/background_thunk_clearer.h"
-#include "memory_database/typedefs.h"
-#include "memory_database/user_account.h"
-
-#include "trie/merkle_trie.h"
-#include "trie/prefix.h"
-
-#include "utils/big_endian.h"
-
-#include "xdr/database_commitments.h"
-#include "xdr/types.h"
-#include "xdr/transaction.h"
-
-#include "lmdb/lmdb_wrapper.h"
-#include "utils/time.h"
-
-#include "config.h"
-#include "modlog/account_modification_log.h"		
-
 
 /*
 //TODO the commit model might be unnecessary for block production?  specifically the loading atomic vals into regular vals.  Maybe gives faster access though.
@@ -456,7 +457,7 @@ public:
 		uint64_t expected_persisted_round_number);
 
 	void 
-	install_initial_accounts_and_commit(MemoryDatabaseGenesisData const& genesis_data, auto account_init_lambda);
+	install_initial_accounts_and_commit(MemoryDatabaseGenesisData const& genesis_data, std::function<void(UserAccount&)> account_init_lambda);
 };
 
 } /* speedex */

@@ -549,7 +549,7 @@ bool _speedex_block_validation_logic(
 
 Block ensure_sequential_block_numbers(const HashedBlock& prev_block, const HashedBlock& expected_next_block) {
 	Block out = expected_next_block.block;
-	out.blockNumber = prev_block + 1;
+	out.blockNumber = prev_block.block.blockNumber + 1;
 	return out;
 }
 
@@ -570,7 +570,7 @@ speedex_block_validation_logic(
 		expected_next_block,
 		transactions);
 
-	Block corrected_block = ensure_sequential_block_numbers(expected_next_block);
+	Block corrected_block = ensure_sequential_block_numbers(prev_block, expected_next_block);
 
 	management_structures.block_header_hash_map.insert(corrected_block, res);
 

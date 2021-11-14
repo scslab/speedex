@@ -7,6 +7,9 @@
 
 #include "xdr/types.h"
 
+#include <optional>
+#include <vector>
+
 namespace speedex {
 
 

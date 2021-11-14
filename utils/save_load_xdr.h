@@ -18,6 +18,35 @@ Utilities for saving and loading xdr objects to disk
 
 namespace speedex {
 
+/*! Load an xdr object from disk, dynamically allocating buffer for deserialization
+  Can be somewhat slower than  load_xdr_from_file_fast(), but easier to use.
+*/
+template<typename xdr_type>
+int __attribute__((warn_unused_result)) 
+load_xdr_from_file(xdr_type& output, const char* filename)  {
+	FILE* f = std::fopen(filename, "r");
+
+	if (f == nullptr) {
+		return -1;
+	}
+
+	std::vector<char> contents;
+	const int BUF_SIZE = 65536;
+	char buf[BUF_SIZE];
+
+	int count = -1;
+	while (count != 0) {
+		count = std::fread(buf, sizeof(char), BUF_SIZE, f);
+		if (count > 0) {
+			contents.insert(contents.end(), buf, buf+count);
+		}
+	}
+
+	xdr::xdr_from_opaque(contents, output);
+	std::fclose(f);
+	return 0;
+}
+
 /*! Load an xdr object from disk, 
     reading the disk into \a buffer and deserializing from this buffer.
 */
@@ -64,35 +93,6 @@ load_xdr_from_file_fast(
  	return 0;
  	
  	#endif
-}
-
-/*! Load an xdr object from disk, dynamically allocating buffer for deserialization
-  Can be somewhat slower than  load_xdr_from_file_fast(), but easier to use.
-*/
-template<typename xdr_type>
-int __attribute__((warn_unused_result)) 
-load_xdr_from_file(xdr_type& output, const char* filename)  {
-	FILE* f = std::fopen(filename, "r");
-
-	if (f == nullptr) {
-		return -1;
-	}
-
-	std::vector<char> contents;
-	const int BUF_SIZE = 65536;
-	char buf[BUF_SIZE];
-
-	int count = -1;
-	while (count != 0) {
-		count = std::fread(buf, sizeof(char), BUF_SIZE, f);
-		if (count > 0) {
-			contents.insert(contents.end(), buf, buf+count);
-		}
-	}
-
-	xdr::xdr_from_opaque(contents, output);
-	std::fclose(f);
-	return 0;
 }
 
 namespace {

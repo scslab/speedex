@@ -585,7 +585,7 @@ void GeneratorState<random_generator>::make_block(const std::vector<double>& pri
 	output.insert(output.end(), txs.begin(), txs.begin() + options.block_size);
 	filter_by_replica_id(output);
 	
-	std::printf("writing block %lu\n", block_state.block_number);
+	std::printf("writing block %llu\n", block_state.block_number);
 
 	std::string filename = output_directory + std::to_string(block_state.block_number) + ".txs";
 	block_state.block_number ++;
