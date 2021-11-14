@@ -3,6 +3,7 @@
 #include "hotstuff/lmdb.h"
 
 #include "speedex/speedex_management_structures.h"
+#include "speedex/speedex_persistence.h"
 
 #include "utils/debug_macros.h"
 #include "utils/hash.h"
@@ -70,15 +71,47 @@ void speedex_replay_trusted_round(
 bool
 try_replay_saved_block(
 	SpeedexManagementStructures& management_structures,
+	BlockValidator& validator,
+	HashedBlock const& prev_block,
 	HashedBlockTransactionPair const& replay_data) {
 
-	throw std::runtime_error("unimpl");
+	OverallBlockValidationMeasurements measurements; //unused
+
+	bool validation_res = speedex_block_validation_logic(
+		management_structures,
+		validator,
+		measurements
+		prev_block
+		replay_data.hashedBlock,
+		replay_data.txList);
+
+	if (validation_res) {
+
+		uint64_t current_round_number = replay_data.hashedBlock.block.blockNumber;
+
+		//clears account mod log & creates memory database persistence thunk
+		persist_critical_round_data(
+			management_structures, 
+			replay_data.hashedBlock, 
+			current_measurements.data_persistence_measurements, 
+			false, 
+			false);
+
+		//persist
+		management_structures.db.persist_lmdb(current_block_number);
+		management_structures.orderbook_manager.persist_lmdb(current_block_number);
+		management_structures.block_header_hash_map.persist_lmdb(current_block_number);
+		return true;
+	}
+
+	return false;
 
 }
 
 HashedBlock
 speedex_load_persisted_data(
 	SpeedexManagementStructures& management_structures,
+	BlockValidator& validator,
 	hotstuff::HotstuffLMDB const& decided_block_cache) {
 
 	management_structures.db.load_lmdb_contents_to_memory();

@@ -392,10 +392,6 @@ bool speedex_block_validation_logic(
 
 	prices = expected_next_block.block.prices;
 
-	//for (unsigned i = 0; i < options.num_assets; i++) {
-	//	prices.push_back(expected_next_block.block.prices[i]);
-	//}
-
 	if (expected_next_block.block.feeRate + 1 < management_structures.approx_params.tax_rate) {
 		BLOCK_INFO("invalid fee rate (got %u, expected %u", 
 			expected_next_block.block.feeRate, 
