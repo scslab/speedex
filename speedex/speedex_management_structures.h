@@ -30,13 +30,6 @@ struct SpeedexManagementStructures {
 	BlockHeaderHashMap block_header_hash_map;
 	ApproximationParameters approx_params;
 
-	//! Create all of the lmdb instances for Speedex.
-	//! Will throw error if databases already exist.
-	void create_lmdb() {
-		db.create_lmdb();
-		orderbook_manager.create_lmdb();
-		block_header_hash_map.create_lmdb();
-	}
 
 	//! Open all of the lmdb environment instances in Speedex.
 	//! LMDB environments are opened before lmdb databases.
@@ -44,6 +37,14 @@ struct SpeedexManagementStructures {
 		db.open_lmdb_env();
 		orderbook_manager.open_lmdb_env();
 		block_header_hash_map.open_lmdb_env();
+	}
+
+	//! Create all of the lmdb instances for Speedex.
+	//! Will throw error if databases already exist.
+	void create_lmdb() {
+		db.create_lmdb();
+		orderbook_manager.create_lmdb();
+		block_header_hash_map.create_lmdb();
 	}
 
 	//! Open all off the LMDB instances in SPEEDEX
