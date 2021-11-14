@@ -13,4 +13,4 @@ speedex_load_persisted_data(
 	SpeedexManagementStructures& management_structures,
 	hotstuff::HotstuffLMDB const& decided_block_cache);
 
-};
+} /* speedex */
