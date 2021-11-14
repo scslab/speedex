@@ -573,14 +573,6 @@ template bool speedex_block_validation_logic(
 	OverallBlockValidationMeasurements& overall_validation_stats,
 	const HashedBlock& prev_block,
 	const HashedBlock& expected_next_block,
-	const TransactionData& transactions);
-
-template bool speedex_block_validation_logic( 
-	SpeedexManagementStructures& management_structures,
-	BlockValidator& validator,
-	OverallBlockValidationMeasurements& overall_validation_stats,
-	const HashedBlock& prev_block,
-	const HashedBlock& expected_next_block,
 	const AccountModificationBlock& transactions);
 
 template bool speedex_block_validation_logic( 
@@ -590,113 +582,5 @@ template bool speedex_block_validation_logic(
 	const HashedBlock& prev_block,
 	const HashedBlock& expected_next_block,
 	const SignedTransactionList& transactions);
-
-
-
-
-uint64_t speedex_load_persisted_data(
-	SpeedexManagementStructures& management_structures) {
-
-
-	management_structures.db.load_lmdb_contents_to_memory();
-	management_structures.orderbook_manager.load_lmdb_contents_to_memory();
-	management_structures.block_header_hash_map.load_lmdb_contents_to_memory();
-
-	auto db_round = management_structures.db.get_persisted_round_number();
-
-	auto max_orderbook_round = management_structures.orderbook_manager.get_max_persisted_round_number();
-	auto min_orderbook_round = management_structures.orderbook_manager.get_min_persisted_round_number();
-
-	if (max_orderbook_round > db_round) {
-		throw std::runtime_error("can't reload if workunit persists without db (bc of the cancel offers thing)");
-	}
-
-	BLOCK_INFO("db round: %lu manager max round: %lu hashmap %lu", 
-		db_round, 
-		max_orderbook_round, 
-		management_structures.block_header_hash_map.get_persisted_round_number());
-
-	auto start_round = std::min(
-		{
-			db_round, 
-			min_orderbook_round, 
-			management_structures.block_header_hash_map.get_persisted_round_number()
-		});
-	auto end_round = std::max(
-		{
-			db_round, 
-			max_orderbook_round, 
-			management_structures.block_header_hash_map.get_persisted_round_number()
-		});
-
-	BLOCK_INFO("replaying rounds [%lu, %lu]", start_round, end_round);
-
-	for (auto i = start_round; i <= end_round; i++) {
-		speedex_replay_trusted_round(management_structures, i);
-	}
-	management_structures.db.commit_values();
-	return end_round;
-}
-
-
-//! Replay round based on tx block data on disk
-//! Used for catch up on data from trusted sources
-//! or from data logged on disk (i.e. if db crashed
-//! before fsync)
-void speedex_replay_trusted_round(
-	SpeedexManagementStructures& management_structures,
-	const uint64_t round_number) {
-
-	if (round_number == 0) {
-		//There is no block number 0.
-		return;
-	}
-
-	auto header = load_header(round_number);
-	AccountModificationBlock tx_block;
-	auto block_filename = tx_block_name(round_number);
-	auto res = load_xdr_from_file(tx_block, block_filename.c_str());
-	if (res != 0) {
-		throw std::runtime_error((std::string("can't load tx block ") + block_filename).c_str());
-	}
-
-	BLOCK_INFO("starting to replay transactions of round %lu", round_number);
-	replay_trusted_block(management_structures, tx_block, header);
-	if (management_structures.db.get_persisted_round_number() < round_number) {
-		management_structures.db.commit_new_accounts(round_number);
-	}
-	BLOCK_INFO("replayed txs in block %lu", round_number);
-
-	//not actually used or checked.
-	ThreadsafeValidationStatistics validation_stats(
-		management_structures.orderbook_manager.get_num_orderbooks());
-
-	std::vector<Price> prices;
-	for (unsigned i = 0; i < header.block.prices.size(); i++) {
-		prices.push_back(header.block.prices[i]);
-	}
-	OrderbookStateCommitmentChecker commitment_checker(
-		header.block.internalHashes.clearingDetails, prices, header.block.feeRate);
-
-	management_structures.orderbook_manager.commit_for_loading(round_number);
-
-	NullModificationLog no_op_modification_log{};
-
-	management_structures.orderbook_manager.clear_offers_for_data_loading(
-		management_structures.db, no_op_modification_log, validation_stats, commitment_checker, round_number);
-
-	management_structures.orderbook_manager.finalize_for_loading(round_number);
-
-	auto header_hash_map = LoadLMDBHeaderMap(round_number, management_structures.block_header_hash_map);
-	header_hash_map.insert_for_loading(round_number, header.hash);
-
-	if (management_structures.db.get_persisted_round_number() < round_number) {
-		management_structures.db.persist_lmdb(round_number);
-	}
-	management_structures.orderbook_manager.persist_lmdb_for_loading(round_number);
-	if (management_structures.block_header_hash_map.get_persisted_round_number() < round_number) {
-		management_structures.block_header_hash_map.persist_lmdb(round_number);
-	}
-} 
 
 } /* speedex */

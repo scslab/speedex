@@ -64,7 +64,7 @@ class SpeedexVM {
 	get_measurements_nolock();
 
 public:
-	using block_type = HashedBlockTransactionDataPair;
+	using block_type = HashedBlockTransactionListPair;
 	using block_id = SpeedexVMBlockID;
 
 	static block_id nonempty_block_id(const block_type& blk) {

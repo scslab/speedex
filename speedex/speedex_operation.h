@@ -12,7 +12,6 @@
 
 namespace speedex {
 
-
 /*! Runs block creation logic.  Does not
 assemble a new block of transactions, nor
 does it persist data to disk.
@@ -47,16 +46,5 @@ bool speedex_block_validation_logic(
 	const HashedBlock& expected_next_block,
 	const TxLogType& transactions);
 
-
-//! loads persisted data, repairing lmdbs if necessary.
-//! at end, disk should be in a consistent state.
-uint64_t 
-speedex_load_persisted_data(
-	SpeedexManagementStructures& management_structures);
-
-void 
-speedex_replay_trusted_round(
-	SpeedexManagementStructures& management_structures,
-	const uint64_t round_number);
 
 } /* speedex */

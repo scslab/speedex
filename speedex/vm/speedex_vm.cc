@@ -174,11 +174,11 @@ SpeedexVM::assemble_block(TaggedSingleBlockResults& measurements_base, BlockStat
 	return block_size;
 }
 
-void write_tx_data(TransactionData& tx_data, const AccountModificationBlock& mod_block) {
+void write_tx_data(SignedTransactionList& tx_data, const AccountModificationBlock& mod_block) {
 	for (auto const& log : mod_block)
 	{
 		for (auto const& tx : log.new_transactions_self) {
-			tx_data.transactions.push_back(tx);
+			tx_data.push_back(tx);
 		}
 	}
 }
@@ -242,8 +242,8 @@ SpeedexVM::propose()
 	
 	auto out = std::make_unique<block_type>();
 	out->hashedBlock = proposal_base_block;
-	out -> txData.transactions.reserve(block_size);
-	write_tx_data(out->txData, *output_tx_block);
+	out -> txList.transactions.reserve(block_size);
+	write_tx_data(out->txList, *output_tx_block);
 
 	current_measurements.serialize_time = measure_time(mempool_wait_ts);
 
@@ -251,9 +251,6 @@ SpeedexVM::propose()
 	current_measurements.total_time = measure_time(start_time);
 
 	measurements_log.add_measurement(measurements_base);
-
-
-
 
 	return out;
 }
