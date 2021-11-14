@@ -202,4 +202,16 @@ AsyncPersisterPhase3::do_async_persist_phase3(
 	cv.notify_one();
 }
 
+void
+persist_after_loading(
+	SpeedexManagementStructures& management_structures,
+	uint64_t current_block_number)
+{
+	BlockDataPersistenceMeasurements measurements;
+
+	persist_async_phase1(management_structures, current_block_number, measurements);
+	persist_async_phase2(management_structures, current_block_number, measurements);
+	persist_async_phase3(management_structures, current_block_number, measurements);
+}
+
 } /* speedex */

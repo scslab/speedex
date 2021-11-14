@@ -61,6 +61,11 @@ persist_async_phase3(
 	uint64_t current_block_number,
 	BlockDataPersistenceMeasurements& measurements);
 
+void
+persist_after_loading(
+	SpeedexManagementStructures& management_structures,
+	uint64_t current_block_number);
+
 //! Operates a background thread for phase 3 persistence.
 class AsyncPersisterPhase3 : public AsyncWorker {
 	using AsyncWorker::mtx;

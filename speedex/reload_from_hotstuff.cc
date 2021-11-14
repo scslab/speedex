@@ -97,10 +97,6 @@ try_replay_saved_block(
 			false, 
 			false);
 
-		//persist
-		management_structures.db.persist_lmdb(current_block_number);
-		management_structures.orderbook_manager.persist_lmdb(current_block_number);
-		management_structures.block_header_hash_map.persist_lmdb(current_block_number);
 		return true;
 	}
 
@@ -201,6 +197,8 @@ speedex_load_persisted_data(
 		}
 		++iter;
 	}
+
+	persist_after_loading(management_structures, top_block.block.blockNumber);
 
 	return top_block;
 }
