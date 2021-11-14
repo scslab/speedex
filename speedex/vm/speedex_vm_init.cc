@@ -51,7 +51,9 @@ SpeedexVM::init_from_disk(hotstuff::HotstuffLMDB const& decided_block_cache)
 	management_structures.open_lmdb_env();
 	management_structures.open_lmdb();
 
-
+	auto top_block = speedex_load_persisted_data(management_structures, decided_block_cache);
+	last_committed_block = top_block;
+	proposal_base_block = top_block;
 }
 
 } /* speedex */
