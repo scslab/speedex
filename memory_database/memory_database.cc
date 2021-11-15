@@ -132,10 +132,10 @@ void MemoryDatabase::commit_values(const AccountModificationLog& dirty_accounts)
 void MemoryDatabase::commit_values() {
 	std::lock_guard lock(committed_mtx);
 
-	int db_size = database.size();
+	size_t db_size = database.size();
 
 	tbb::parallel_for(
-		tbb::blocked_range<std::size_t>(0, db_size, 10000),
+		tbb::blocked_range<size_t>(0, db_size, 10000),
 		[this] (auto r) {
 			for (auto  i = r.begin(); i < r.end(); i++) {
 				database[i].commit();
@@ -457,6 +457,8 @@ MemoryDatabase::_produce_state_commitment(Hash& hash) {
 
 void MemoryDatabase::add_persistence_thunk(uint64_t current_block_number, AccountModificationLog& log) {
 	std::lock_guard lock(db_thunks_mtx);
+	BLOCK_INFO("persistence thunk sz = %lu", log.size());
+
 	persistence_thunks.emplace_back(*this, current_block_number);
 	log.template parallel_accumulate_keys<DBPersistenceThunk>(persistence_thunks.back());
 }

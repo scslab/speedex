@@ -5,6 +5,8 @@
 #include "memory_database/memory_database.h"
 #include "memory_database/user_account.h"
 
+#include "modlog/account_modification_log.h"
+
 #include "xdr/types.h"
 
 #include <tbb/parallel_for.h>
@@ -61,6 +63,21 @@ public:
 		db.persist_lmdb(0);
 	}
 
+	void modify_db_entry(SerialAccountModificationLog& log, MemoryDatabase& db, AccountID acct, uint32_t asset, int64_t delta) {
+		account_db_idx idx;
+		TS_ASSERT(db.lookup_user_id(acct, &idx));
+
+		db.transfer_available(idx, asset, delta);
+		log.log_self_modification(acct, 0);
+	}
+
+	void assert_balance(MemoryDatabase& db, AccountID acct, uint32_t asset, int64_t amount) {
+		account_db_idx idx;
+		TS_ASSERT(db.lookup_user_id(acct, &idx));
+
+		TS_ASSERT_EQUALS(db.lookup_available_balance(idx, asset), amount);
+	}
+
 	void test_set_genesis() {
 		MemoryDatabase db;
 
@@ -78,6 +95,54 @@ public:
 		TS_ASSERT_EQUALS(db.lookup_available_balance(idx, 5), 15);
 
 		TS_ASSERT(!db.lookup_user_id(10000, &idx));
+	}
+
+	void test_rollback_account_values() {
+
+		MemoryDatabase db;
+
+		init_memdb(db, 10000, 10, 15);
+
+		TS_ASSERT_EQUALS(db.size(), 10000);
+
+		AccountModificationLog modlog;
+		{
+			SerialAccountModificationLog log(modlog);
+
+			modify_db_entry(log, db, 0, 1, 30);
+
+			modlog.merge_in_log_batch();
+		}
+
+		db.commit_values(modlog);
+
+		// writes round 1 to lmdb
+		db.add_persistence_thunk(1, modlog);
+		db.commit_persistence_thunks(1);
+
+		modlog.detached_clear();
+
+		assert_balance(db, 0, 1, 45);
+
+		{
+			SerialAccountModificationLog log(modlog);
+
+			modify_db_entry(log, db, 0, 1, 20);
+
+			assert_balance(db, 0, 1, 65);
+
+			modlog.merge_in_log_batch();
+		}
+
+		//make a round 2 persistence thunk, but do not commit
+		db.commit_values(modlog);
+		db.add_persistence_thunk(2, modlog);
+
+		//reload data from lmdb at round 1
+		db.clear_persistence_thunks_and_reload(1);
+
+		// must have reloaded the original balance after rd 1.
+		assert_balance(db, 0, 1, 45);
 	}
 
 
