@@ -468,11 +468,11 @@ void MemoryDatabase::clear_persistence_thunks_and_reload(uint64_t expected_persi
 	std::lock_guard lock2(committed_mtx);
 	std::lock_guard lock3(uncommitted_mtx);
 	
-	rollback_new_accounts_(expected_persisted_round_number);
-
 	if (expected_persisted_round_number != account_lmdb_instance.get_persisted_round_number()) {
-		throw std::runtime_error("invalid load!");
+		throw std::runtime_error("mismatch between expected round in db and actual persisted round in db");
 	}
+
+	rollback_new_accounts_(expected_persisted_round_number);
 
 	for (size_t i = persistence_thunks.size(); i != 0; i--) {
 		auto& thunk = persistence_thunks.at(i-1);
@@ -525,10 +525,16 @@ void MemoryDatabase::commit_persistence_thunks(uint64_t max_round_number) {
 	}
 
 	if (thunks_to_commit.size() == 0) {
-		BLOCK_INFO("NO THUNKS TO COMMIT");
+		BLOCK_INFO("DB: No thunks to commit.  Modifying db metadata (round number) only");
+
+		if (account_lmdb_instance) {
+			auto wtxn = account_lmdb_instance.wbegin();
+			account_lmdb_instance.commit_wtxn(wtxn, max_round_number);
+		}
 		return;
 	}
 
+	// counter used to enforce sequentiality of commitment
 	auto current_block_number = get_persisted_round_number();
 
 	dbenv::wtxn write_txn{nullptr};

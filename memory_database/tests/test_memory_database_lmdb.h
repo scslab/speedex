@@ -83,7 +83,7 @@ public:
 
 		init_memdb(db, 10000, 10, 15);
 
-		TS_ASSERT_EQUALS(db.size(), 10000);
+		TS_ASSERT_EQUALS(db.size(), 10000u);
 
 		account_db_idx idx;
 		TS_ASSERT(db.lookup_user_id(0, &idx));
@@ -103,7 +103,7 @@ public:
 
 		init_memdb(db, 10000, 10, 15);
 
-		TS_ASSERT_EQUALS(db.size(), 10000);
+		TS_ASSERT_EQUALS(db.size(), 10000u);
 
 		AccountModificationLog modlog;
 		{
@@ -145,5 +145,47 @@ public:
 		assert_balance(db, 0, 1, 45);
 	}
 
+	void test_rollback_with_gaps() {
 
+		MemoryDatabase db;
+
+		init_memdb(db, 10000, 10, 15);
+
+		TS_ASSERT_EQUALS(db.size(), 10000u);
+
+		AccountModificationLog modlog;
+		{
+			SerialAccountModificationLog log(modlog);
+			modify_db_entry(log, db, 500, 1, 30);
+			modlog.merge_in_log_batch();
+		}
+
+		db.commit_values(modlog);
+
+		// writes round 1 to lmdb
+		db.add_persistence_thunk(1, modlog);
+		db.commit_persistence_thunks(1);
+		modlog.detached_clear();
+
+		assert_balance(db, 500, 1, 45);
+		{
+			SerialAccountModificationLog log(modlog);
+			modify_db_entry(log, db, 501, 1, -10);
+			modlog.merge_in_log_batch();
+		}
+
+		db.add_persistence_thunk(5, modlog);
+		db.commit_persistence_thunks(3);
+
+		TS_ASSERT_THROWS_ANYTHING(db.clear_persistence_thunks_and_reload(4));
+
+		db.commit_persistence_thunks(4);
+
+		db.clear_persistence_thunks_and_reload(4);
+
+		// 500 changed in round 1, so no rollback
+		assert_balance(db, 500, 1, 45);
+		// 501 changed in round 5, so rolled back
+		assert_balance(db, 501, 1, 15);
+	}
 };
