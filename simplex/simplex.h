@@ -12,60 +12,75 @@
 
 namespace speedex {
 
+// ub if constraint matrix isn't totally unimodular
+class TUSimplex {
 
-class TaxFreeSimplex {
-
-	const size_t num_assets;
-	const size_t num_orderbooks;
-	const size_t start_orderbook_slack_vars;
-	const size_t start_asset_slack_vars;
-	const size_t num_cols;
+public:
 
 	using constraint_row_t = BitcompressedRow;
 	using int128_t = __int128;
 
+protected:
+
+	const uint16_t num_cols;
+
 	ObjectiveRow objective_row;
 	std::vector<constraint_row_t> constraint_rows;
+
 	std::vector<bool> active_cols;
 	std::vector<uint16_t> active_basis; // maps row idx to col idx
+
+	std::optional<uint16_t> get_next_pivot_column() const;
+	uint16_t get_next_pivot_row(uint16_t pivot_col) const;
+	bool do_pivot();
+
+	TUSimplex(const uint16_t num_cols);
+
+	void run_simplex();
+
+	void print_row(uint16_t row_idx) const {
+		auto const& row = constraint_rows[row_idx];
+		for (size_t i = 0u; i < num_cols; i++) {
+			std::printf("%d ", row[i]);
+		}
+		std::printf("%lf\t%u\n", (double) row.get_value(), active_basis[row_idx]);
+	}
+
+	void print_tableau() const {
+		std::printf("start tableau\n");
+		auto obj_str = objective_row.to_string();
+		std::printf("%s\n", obj_str.c_str());
+		for (uint16_t row_idx = 0; row_idx < constraint_rows.size(); row_idx++) {
+			print_row(row_idx);
+		}
+	}
+
+};
+
+class TaxFreeSimplex : public TUSimplex {
+
+	const size_t num_assets;
+	const size_t num_orderbooks;
+
+	// var layout: [y_ij e_ij s_a]
+	const size_t start_orderbook_slack_vars;
+	const size_t start_asset_slack_vars;
 
 	std::vector<int128_t> solution;
 
 	void add_asset_constraint(AssetID sell);
 
-	std::optional<size_t> get_next_pivot_column() const;
-	size_t get_next_pivot_row(size_t pivot_col) const;
-	bool do_pivot();
 	void construct_solution();
-
-	void print_row(const constraint_row_t& row) const {
-		for (size_t i = 0u; i < num_cols; i++) {
-			std::printf("%d ", row[i]);
-		}
-		std::printf("\n");
-	}
-
-	void print_tableau() const {
-		std::printf("start tableau\n");
-		for (auto const& constraint : constraint_rows) {
-			print_row(constraint);
-		}
-	}
 
 public:
 
-	TaxFreeSimplex(const size_t num_assets)
-		: num_assets(num_assets)
+	TaxFreeSimplex(const size_t _num_assets)
+		: TUSimplex(get_num_orderbooks_by_asset_count(_num_assets) * 2 + _num_assets)
+		, num_assets(_num_assets)
 		, num_orderbooks(get_num_orderbooks_by_asset_count(num_assets))
 		, start_orderbook_slack_vars(num_orderbooks)
 		, start_asset_slack_vars(num_orderbooks + num_orderbooks)
-		, num_cols(num_orderbooks + num_orderbooks + num_assets)
-		, objective_row(num_cols)
-		, constraint_rows()
-		, active_cols()
-		, active_basis()
 		{
-			active_cols.resize(num_cols, false);
 			for (auto i = 0u; i < num_assets; i++) {
 				add_asset_constraint(i);
 			}
@@ -77,6 +92,5 @@ public:
 
 	int128_t get_solution(const OfferCategory& category);
 };
-
 
 } /* speedex */

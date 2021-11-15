@@ -48,7 +48,7 @@ TaxFreeSimplex::add_asset_constraint(AssetID sell)
 }
 
 void 
-TaxFreeSimplex::add_orderbook_constraint(const int128_t& value, const OfferCategory& category)
+TaxFreeSimplex::add_orderbook_constraint( const int128_t& value, const OfferCategory& category)
 {
 	constraint_rows.emplace_back(num_cols);
 	auto& row = constraint_rows.back();
@@ -68,86 +68,9 @@ TaxFreeSimplex::add_orderbook_constraint(const int128_t& value, const OfferCateg
 	active_cols[start_asset_slack_vars + category.buyAsset] = true;
 }
 
-std::optional<size_t> 
-TaxFreeSimplex::get_next_pivot_column() const {
-	for (auto i = 0u; i < num_cols; i++) {
-		if (active_cols[i] && (objective_row[i] > 0)) {
-			return {i};
-		}
-	}
-	return std::nullopt;
-}
-
-size_t
-TaxFreeSimplex::get_next_pivot_row(size_t pivot_col) const {
-	std::optional<size_t> row_out = std::nullopt;
-
-	int128_t value = 0;
-
-	for (size_t i = 0; i < constraint_rows.size(); i++) {
-		int128_t const& constraint_value = constraint_rows[i].get_value();
-
-		if (constraint_rows[i][pivot_col] > 0) {
-			if ((!row_out) || value > constraint_value) {
-				row_out = i;
-				value = constraint_value;
-			}
-		}
-	
-	}
-	if (row_out) {
-		return *row_out;
-	}
-	throw std::runtime_error("failed to find pivot row");
-}
-
-bool
-TaxFreeSimplex::do_pivot() {
-	auto pivot_col = get_next_pivot_column();
-	if (!pivot_col) {
-		return false;
-	}
-
-	auto pivot_row = get_next_pivot_row(*pivot_col);
-
-	{
-		auto& pivot_constraint = constraint_rows[pivot_row];
-
-		int8_t coefficient = pivot_constraint[*pivot_col];
-
-		if (coefficient < 0) {
-			pivot_constraint.negate();
-		}
-	}
-
-	auto const& pivot_constraint = constraint_rows[pivot_row];
-
-	for (size_t i = 0; i < constraint_rows.size(); i++) {
-		if (i != pivot_row) {
-			auto& constraint = constraint_rows[i];
-			int8_t row_coeff = constraint[*pivot_col];
-
-			if (row_coeff < 0) {
-				constraint += pivot_constraint;
-			}
-			else if (row_coeff > 0) {
-				// x - y = -(-x + y)
-				constraint.negate();
-				constraint += pivot_constraint;
-				constraint.negate();
-			}
-		}
-	}
-
-	objective_row.subtract(pivot_constraint, *pivot_col);
-
-	active_basis[pivot_row] = *pivot_col;
-	return true;
-}
-
 void
 TaxFreeSimplex::solve() {
-	while(do_pivot()) {}
+	run_simplex();
 	construct_solution();
 }
 
@@ -253,6 +176,98 @@ TaxFreeSimplex::int128_t
 TaxFreeSimplex::get_solution(const OfferCategory& category) {
 	auto idx = category_to_idx(category, num_assets);
 	return solution[idx];
+}
+
+
+std::optional<uint16_t> 
+TUSimplex::get_next_pivot_column() const {
+	for (auto i = 0u; i < num_cols; i++) {
+		if (active_cols[i] && (objective_row[i] > 0)) {
+			return {i};
+		}
+	}
+	return std::nullopt;
+}
+uint16_t 
+TUSimplex::get_next_pivot_row(uint16_t pivot_col) const {
+	std::optional<size_t> row_out = std::nullopt;
+
+	int128_t value = 0;
+
+	for (size_t i = 0; i < constraint_rows.size(); i++) {
+		int128_t const& constraint_value = constraint_rows[i].get_value();
+
+		if (constraint_rows[i][pivot_col] > 0) {
+			if ((!row_out) || value > constraint_value) {
+				row_out = i;
+				value = constraint_value;
+			}
+		}
+	
+	}
+	if (row_out) {
+		return *row_out;
+	}
+	throw std::runtime_error("failed to find pivot row");
+}
+
+bool 
+TUSimplex::do_pivot() {
+	auto pivot_col = get_next_pivot_column();
+	if (!pivot_col) {
+		return false;
+	}
+
+	auto pivot_row = get_next_pivot_row(*pivot_col);
+
+	{
+		auto& pivot_constraint = constraint_rows[pivot_row];
+
+		int8_t coefficient = pivot_constraint[*pivot_col];
+
+		if (coefficient < 0) {
+			pivot_constraint.negate();
+		}
+	}
+
+	auto const& pivot_constraint = constraint_rows[pivot_row];
+
+	for (size_t i = 0; i < constraint_rows.size(); i++) {
+		if (i != pivot_row) {
+			auto& constraint = constraint_rows[i];
+			int8_t row_coeff = constraint[*pivot_col];
+
+			if (row_coeff < 0) {
+				constraint += pivot_constraint;
+			}
+			else if (row_coeff > 0) {
+				// x - y = -(-x + y)
+				constraint.negate();
+				constraint += pivot_constraint;
+				constraint.negate();
+			}
+		}
+	}
+
+	objective_row.subtract(pivot_constraint, *pivot_col);
+
+	active_basis[pivot_row] = *pivot_col;
+	return true;
+}
+
+TUSimplex::TUSimplex(const uint16_t num_cols)
+	: num_cols(num_cols)
+	, objective_row(num_cols)
+	, constraint_rows()
+	, active_cols()
+	, active_basis()
+	{
+		active_cols.resize(num_cols, false);
+	}
+
+void 
+TUSimplex::run_simplex() {
+	while (do_pivot()) {}
 }
 
 } /* speedex */

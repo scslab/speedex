@@ -25,6 +25,15 @@ public:
 		for (size_t i = 0; i < matrix_entries.size(); i++) {
 			matrix_entries[i] -= coeff * row[i];
 		}
+		row_value -= coeff * row.get_value();
+	}
+
+	void delta_value(int128_t delta) {
+		row_value += delta;
+	}
+
+	void set_value(int128_t val) {
+		row_value = val;
 	}
 
 	int8_t& operator[](size_t idx) {
@@ -35,11 +44,23 @@ public:
 		return matrix_entries[idx];
 	}
 
+	const int128_t& get_value() {
+		return row_value;
+	}
+
+	void negate() {
+		for (size_t i = 0; i < matrix_entries.size(); i++) {
+			matrix_entries[i] *= -1;
+		}
+		row_value *=-1;
+	}
+
 	std::string to_string() const {
-		std::string out("objective:");
+		std::string out;
 		for (size_t i = 0u; i < matrix_entries.size(); i++) {
 			out += std::string(" ") + std::to_string(matrix_entries[i]);
 		}
+		out += std::string(" ") + std::to_string((double) row_value);
 		return out;
 	}
 };

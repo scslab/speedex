@@ -457,7 +457,9 @@ public:
 		uint64_t expected_persisted_round_number);
 
 	void 
-	install_initial_accounts_and_commit(MemoryDatabaseGenesisData const& genesis_data, std::function<void(UserAccount&)> account_init_lambda);
+	install_initial_accounts_and_commit(
+		MemoryDatabaseGenesisData const& genesis_data, 
+		std::function<void(UserAccount&)> account_init_lambda);
 };
 
 } /* speedex */
