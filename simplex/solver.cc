@@ -87,18 +87,6 @@ LPSolver::add_orderbook_constraint(const int128_t& lower_bound, const int128_t& 
 	adjust_asset_constraint(category.buyAsset, -lower_bound);
 	adjust_asset_constraint(category.sellAsset, lower_bound);
 }
-/*
-void
-LPSolver::set_feasibility_objective_value() {
-	objective_row.set_value(0);
-	for (uint16_t asset = 0; asset < num_assets; asset++) {
-		auto& row = constraint_rows[asset];
-
-		if (active_basis[asset] == get_feasibility_var_idx(asset)) {
-			objective_row.delta_value(row.get_value());
-		}
-	} 
-} */
 
 void
 LPSolver::normalize_asset_constraints() {

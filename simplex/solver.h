@@ -22,7 +22,6 @@ class LPSolver : public TUSimplex {
 	// asset constraints are BUY - SELL == 0
 	void add_asset_constraint(AssetID sell);
 
-	//void set_feasibility_objective_value();
 	void set_feasibility_objective_coeffs();
 	void normalize_asset_constraints();
 

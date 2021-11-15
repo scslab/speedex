@@ -48,13 +48,6 @@ public:
 		return row_value;
 	}
 
-	void negate() {
-		for (size_t i = 0; i < matrix_entries.size(); i++) {
-			matrix_entries[i] *= -1;
-		}
-		row_value *=-1;
-	}
-
 	std::string to_string() const {
 		std::string out;
 		for (size_t i = 0u; i < matrix_entries.size(); i++) {
