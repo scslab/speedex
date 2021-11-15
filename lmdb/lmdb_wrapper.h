@@ -77,6 +77,10 @@ public:
   }
 
   dbenv::wtxn wbegin() const {
+    if (!env_open) {
+      throw std::runtime_error("can't access a db if env is unopened");
+    }
+
     return env.wbegin();
   }
 
@@ -101,31 +105,19 @@ class LMDBInstance : public BaseLMDBInstance {
 
   //! Data DBI
   MDB_dbi dbi;
+  bool dbi_valid;
 
 public:
 
-  LMDBInstance(size_t mapsize = 0x1000000000)
-    : BaseLMDBInstance(mapsize)
-    {}
+  LMDBInstance(size_t mapsize = 0x1000000000);
 
-  const MDB_dbi& get_data_dbi() const {
-    return dbi;
-  }
+  const MDB_dbi& get_data_dbi() const;
 
-  MDB_stat stat() const {
-    auto rtx = rbegin();
-    auto stat = rtx.stat(dbi);
-    rtx.abort();
-    return stat;
-  }
+  MDB_stat stat() const;
 
-  void create_db(const char* name) {
-    dbi = BaseLMDBInstance::create_db(name);
-  }
+  void create_db(const char* name);
 
-  void open_db(const char* name) {
-    dbi = BaseLMDBInstance::open_db(name);
-  }
+  void open_db(const char* name);
 };
 
 class SharedLMDBInstance {
@@ -133,28 +125,17 @@ class SharedLMDBInstance {
   BaseLMDBInstance& base_lmdb;
 
   MDB_dbi local_dbi;
+  bool local_dbi_valid;
 
 public:
 
-  SharedLMDBInstance(BaseLMDBInstance& base_lmdb)
-    : base_lmdb(base_lmdb)
-    , local_dbi{0}
-    {}
+  SharedLMDBInstance(BaseLMDBInstance& base_lmdb);
 
-  const MDB_dbi& get_data_dbi() {
-    return local_dbi;
-  }
+  const MDB_dbi& get_data_dbi();
 
-  void create_db(const char* name) {
-    if (base_lmdb.get_persisted_round_number() != 0) {
-      throw std::runtime_error("cannot create db on already open base lmdb");
-    }
-    local_dbi = base_lmdb.create_db(name);
-  }
+  void create_db(const char* name);
 
-  void open_db(const char* name) {
-    local_dbi = base_lmdb.open_db(name);
-  }
+  void open_db(const char* name);
 
   uint64_t get_persisted_round_number() const {
     return base_lmdb.get_persisted_round_number();

@@ -25,6 +25,8 @@
 #include "xdr/types.h"
 #include "xdr/transaction.h"
 
+#include <xdrpp/marshal.h>
+
 #include <atomic>
 #include <functional>
 #include <map>
@@ -35,8 +37,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-
-#include <xdrpp/marshal.h>
 
 /*
 //TODO the commit model might be unnecessary for block production?  specifically the loading atomic vals into regular vals.  Maybe gives faster access though.

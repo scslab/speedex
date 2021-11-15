@@ -97,4 +97,67 @@ void BaseLMDBInstance::commit_wtxn(dbenv::wtxn& txn, uint64_t persisted_round, b
   }
 }
 
+LMDBInstance::LMDBInstance(size_t mapsize)
+    : BaseLMDBInstance(mapsize)
+    , dbi(0)
+    , dbi_valid(false)
+    {}
+
+const MDB_dbi& 
+LMDBInstance::get_data_dbi() const {
+  if (!dbi_valid) {
+    throw std::runtime_error("invalid data dbi access before opening!");
+  }
+  return dbi;
+}
+
+MDB_stat 
+LMDBInstance::stat() const {
+  auto rtx = rbegin();
+  auto stat = rtx.stat(dbi);
+  rtx.abort();
+  return stat;
+}
+
+void 
+LMDBInstance::create_db(const char* name) {
+  dbi = BaseLMDBInstance::create_db(name);
+  dbi_valid = true;
+}
+
+void 
+LMDBInstance::open_db(const char* name) {
+  dbi = BaseLMDBInstance::open_db(name);
+  dbi_valid = true;
+}
+
+SharedLMDBInstance::SharedLMDBInstance(BaseLMDBInstance& base_lmdb)
+  : base_lmdb(base_lmdb)
+  , local_dbi{0}
+  , local_dbi_valid(false)
+  {}
+
+const MDB_dbi& 
+SharedLMDBInstance::get_data_dbi() {
+  if (!local_dbi_valid) {
+    throw std::runtime_error("shared lmdb dbi access before opening");
+  }
+  return local_dbi;
+}
+
+void 
+SharedLMDBInstance::create_db(const char* name) {
+  if (base_lmdb.get_persisted_round_number() != 0) {
+    throw std::runtime_error("cannot create db on already open base lmdb");
+  }
+  local_dbi = base_lmdb.create_db(name);
+  local_dbi_valid = true;
+}
+
+void 
+SharedLMDBInstance::open_db(const char* name) {
+  local_dbi = base_lmdb.open_db(name);
+  local_dbi_valid = true;
+}
+
 } /* speedex */

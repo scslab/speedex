@@ -78,6 +78,9 @@ MEMORY_DATABASE_SRCS = \
 	memory_database/memory_database_view.cc \
 	memory_database/user_account.cc
 
+MEMORY_DATABASE_TEST_SRCS = \
+	memory_database/tests/test_memory_database_lmdb.h
+
 MEMPOOL_SRCS = \
 	mempool/mempool.cc \
 	mempool/mempool_cleaner.cc \
@@ -181,6 +184,7 @@ $(MAIN_CCS:.cc=.o) : $(XH_FILES)
 TEST_SRCS = \
 	$(HEADER_HASH_TEST_SRCS) \
 	$(HOTSTUFF_TEST_SRCS) \
+	$(MEMORY_DATABASE_TEST_SRCS) \
 	$(SIMPLEX_TEST_SRCS) \
 	$(TRIE_TEST_SRCS)
 
