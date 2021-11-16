@@ -60,10 +60,9 @@ y_{AB} + e_{AB} = (U_{AB} - L_{AB})
 
 (or equiv, demand - supply = 0)
 
-\Sigma_B y_{BA} + s_A - \Sigma_B y_{AB} - t_A = -\Sigma_B L_{BA} +\Sigma_B L_{AB}
+\Sigma_B y_{BA} + s_A - \Sigma_B y_{AB} - t_A = -\Sigma_B L_{BA} + \Sigma_B L_{AB}
 
 for (sell A, buy B) pair, neg on buy, pos on sell (neg on swap, pos on regular)
-
 
 y_{AB}, e_{AB}, t_A, s_A all >=0
 
@@ -72,6 +71,10 @@ y_{AB}, e_{AB}, t_A, s_A all >=0
 When checking feasibility as a Tatonnement shortcut, we do not need to recover a solution to this LP.  However, if necessary, we could, using the same techniques as in the regular LP.  
 
 We simply need to check whether the objective value is 0.
+
+## Note
+
+We can't collapse the t_As into one set of constraints, as that would violate total unimodularity.
 
 
 

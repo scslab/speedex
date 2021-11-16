@@ -51,9 +51,13 @@ public:
 	std::string to_string() const {
 		std::string out;
 		for (size_t i = 0u; i < matrix_entries.size(); i++) {
-			out += std::string(" ") + std::to_string(matrix_entries[i]);
+			std::string prefix = std::string(" ");
+			if (matrix_entries[i] == -1) {
+				prefix = std::string ("");
+			}
+			out += prefix + std::to_string(matrix_entries[i]) + std::string(" ");
 		}
-		out += std::string(" ") + std::to_string((double) row_value);
+		out += std::to_string((double) row_value);
 		return out;
 	}
 };

@@ -4,7 +4,7 @@
 
 namespace speedex {
 
-class LPSolver : public TUSimplex {
+class SimplexLPSolver : public TUSimplex {
 	const size_t num_assets;
 	const size_t num_orderbooks;
 
@@ -33,7 +33,7 @@ class LPSolver : public TUSimplex {
 
 public:
 
-	LPSolver(size_t _num_assets) 
+	SimplexLPSolver(size_t _num_assets) 
 		: TUSimplex(2 * get_num_orderbooks_by_asset_count(_num_assets) + 2 * _num_assets)
 		, num_assets(_num_assets)
 		, num_orderbooks(get_num_orderbooks_by_asset_count(num_assets))
@@ -51,5 +51,6 @@ public:
 
 	bool check_feasibility();
 };
+
 
 } /* speedex */

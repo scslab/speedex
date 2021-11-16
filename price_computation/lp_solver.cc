@@ -143,6 +143,63 @@ bool LPSolver::check_feasibility(
 	return (status == 0);
 }
 
+bool
+LPSolver::unsafe_check_feasibility(
+	Price* prices, 
+	std::unique_ptr<LPInstance>& instance, 
+	const ApproximationParameters approx_params,
+	std::vector<BoundsInfo> & info,
+	size_t num_assets)
+{
+	auto* lp = instance -> lp;
+	auto* ia = instance -> ia;
+	auto* ja = instance -> ja;
+	auto* ar = instance -> ar;
+
+	const size_t nnz = instance -> nnz;
+
+	instance->clear();
+
+	glp_set_obj_dir(lp, GLP_MAX);
+
+	glp_add_rows(lp, num_assets);
+
+	for (auto i = 0u; i < num_assets; i++) {
+		// i'th asset constraint must be positive
+		glp_set_row_bnds(lp, i+1, GLP_LO, 0.0, 0.0); 
+	}
+
+	size_t work_units_sz = info.size();
+
+	if (nnz != 1 + 2 * work_units_sz) {
+		throw std::runtime_error("invalid nnz");
+	}
+
+	//add in work unit supply availability constraints
+	glp_add_cols(lp, work_units_sz);
+
+	int next_available_nnz = 1; // whyyyyyyy
+	for (unsigned int i = 0; i < work_units_sz; i++) {
+		//check feasibility calls within tatonnement runs always use lower bound on supply
+		add_orderbook_range_constraint(lp, info[i], i+1, prices, ia, ja, ar, next_available_nnz, approx_params.tax_rate, true);
+	}
+
+	glp_load_matrix(lp, nnz - 1, ia, ja, ar);
+
+	glp_smcp parm;
+	glp_init_smcp(&parm);
+
+	//use parm to set debug message level
+	parm.msg_lev = GLP_MSG_OFF;
+	R_INFO_F(parm.msg_lev = GLP_MSG_ALL);
+
+	parm.presolve = GLP_ON;
+
+	auto status = glp_simplex(lp, &parm);
+
+	return (status == 0);
+}
+
 ClearingParams 
 LPSolver::solve(
 	Price* prices, 

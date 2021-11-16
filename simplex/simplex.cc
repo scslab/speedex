@@ -22,6 +22,346 @@ Constraint rows:
 
 namespace speedex {
 
+
+std::optional<uint16_t>
+SparseTUSimplex::get_next_pivot_column() const {
+	for (auto i = 0u; i < num_cols; i++) {
+		if (active_cols[i] && (objective_row[i] > 0)) {
+			return {i};
+		}
+	}
+	return std::nullopt;
+}
+
+uint16_t 
+SparseTUSimplex::get_next_pivot_row(uint16_t pivot_col) const {
+	std::optional<size_t> row_out = std::nullopt;
+
+	int128_t value = 0;
+
+	for (size_t i = 0; i < constraint_rows.size(); i++) {
+		int128_t const& constraint_value = constraint_rows[i].get_value();
+
+		if (constraint_rows[i][pivot_col] > 0) {
+			if ((!row_out) || value > constraint_value) {
+				row_out = i;
+				value = constraint_value;
+			}
+		}
+	
+	}
+	if (row_out) {
+		return *row_out;
+	}
+	throw std::runtime_error("failed to find pivot row");
+}
+
+bool
+SparseTUSimplex::do_pivot() {
+	auto pivot_col_idx = get_next_pivot_column();
+	if (!pivot_col_idx) {
+		return false;
+	}
+
+	auto pivot_row = get_next_pivot_row(*pivot_col_idx);
+
+	{
+		auto& pivot_constraint = constraint_rows[pivot_row];
+
+		int8_t coefficient = pivot_constraint[*pivot_col_idx];
+
+		if (coefficient < 0) {
+			pivot_constraint.negate();
+		}
+	}
+
+	auto const& pivot_constraint = constraint_rows[pivot_row];
+
+	auto& pivot_col = constraint_columns[*pivot_col_idx];
+
+	for (auto nonzero_row : pivot_col.nonzeros) {
+		if (nonzero_row != pivot_row) {
+			auto& constraint = constraint_rows[nonzero_row];
+			int8_t row_coeff = constraint[*pivot_col_idx];
+			if (row_coeff == 0) {
+				throw std::runtime_error("invalid nnz");
+			}
+			constraint.add(pivot_constraint, pivot_row, row_coeff, constraint_columns);
+		}
+	}
+/*
+	for (size_t i = 0; i < constraint_rows.size(); i++) {
+		if (i != pivot_row) {
+			auto& constraint = constraint_rows[i];
+			int8_t row_coeff = constraint[*pivot_col];
+
+			if (row_coeff < 0) {
+				constraint += pivot_constraint;
+			}
+			else if (row_coeff > 0) {
+				// x - y = -(-x + y)
+				constraint.negate();
+				constraint += pivot_constraint;
+				constraint.negate();
+			}
+		}
+	}*/
+
+	objective_row.subtract(pivot_constraint, *pivot_col_idx);
+
+	active_basis[pivot_row] = *pivot_col_idx;
+	return true;
+}
+
+void 
+SparseTUSimplex::set_entry(size_t row_idx, size_t col_idx, int8_t value) {
+	auto& row = constraint_rows[row_idx];
+	auto& col = constraint_columns[col_idx];
+	row.set(col_idx, value);
+	col.insert(row_idx);
+}
+
+template<typename T>
+class forward_list_iter {
+	std::forward_list<T>& list;
+	std::forward_list<T>::iterator iter, back_iter;
+public:
+
+	forward_list_iter(std::forward_list<T>& list)
+		: list(list)
+		, iter(list.begin())
+		, back_iter(list.before_begin()) {}
+
+	T& operator*() {
+		return *iter;
+	}
+
+	forward_list_iter& operator++(int) {
+		iter++;
+		back_iter++;
+		return *this;
+	}
+
+	void insert(T const& val) {
+		iter = list.insert_after(back_iter, val);
+	}
+
+	void erase() {
+		iter = list.erase_after(back_iter);
+	}
+
+	bool at_end() {
+		return iter == list.end();
+	}
+};
+
+void add_list(
+	std::forward_list<uint16_t>& match_sign_dst, 
+	std::forward_list<uint16_t>& opp_sign_dst, 
+	std::forward_list<uint16_t> const& src, 
+	const size_t dst_row_idx, 
+	std::vector<SparseTUColumn>& cols)
+{
+
+	forward_list_iter match_iter(match_sign_dst);
+	forward_list_iter opp_iter(opp_sign_dst);
+
+	//auto match_iter = match_sign_dst.begin();
+	//auto opp_iter = opp_sign_dst.begin();
+
+	auto src_iter = src.begin();
+
+	//size_t src_idx = 0;
+	while (src_iter != src.end()) {
+		while ((!match_iter.at_end()) && (*match_iter < *src_iter)) {
+		//while (match_iter != match_sign_dst.end() && (*match_iter) < src[src_idx]) {
+			match_iter++;
+		}
+		while ((!opp_iter.at_end()) && (*opp_iter < *src_iter)) {
+		//while (opp_iter != opp_sign_dst.end() && (*opp_iter) < src[src_idx]) {
+			opp_iter++;
+		}
+
+		bool present_in_opp = (!opp_iter.at_end()) && (*opp_iter == *src_iter);
+		//bool present_in_opp = (opp_iter != opp_sign_dst.end()) && ((*opp_iter) == src[src_idx]);
+	
+		if (present_in_opp) {
+			cols[*opp_iter].remove(dst_row_idx);
+			opp_iter.erase();
+			//opp_iter = opp_sign_dst.erase(opp_iter);
+		} else {
+			match_iter.insert(*src_iter);
+		//	match_iter = match_sign_dst.insert(match_iter, src[src_idx]);
+			cols[*match_iter].insert(dst_row_idx);
+		}
+		src_iter ++;
+	}
+}
+
+void add_list(
+	std::vector<uint16_t>& match_sign_dst, 
+	std::vector<uint16_t>& opp_sign_dst, 
+	std::vector<uint16_t> const& src, 
+	const size_t dst_row_idx, 
+	std::vector<SparseTUColumn>& cols)
+{
+
+	auto match_iter = match_sign_dst.begin();
+	auto opp_iter = opp_sign_dst.begin();
+
+	auto src_iter = src.begin();
+
+	//size_t src_idx = 0;
+	while (src_iter != src.end()) {
+		while (match_iter != match_sign_dst.end() && (*match_iter) < *src_iter) {
+			match_iter++;
+		}
+		while (opp_iter != opp_sign_dst.end() && (*opp_iter) < *src_iter) {
+			opp_iter++;
+		}
+
+		bool present_in_opp = (opp_iter != opp_sign_dst.end()) && ((*opp_iter) == *src_iter);
+	
+		if (present_in_opp) {
+			cols[*opp_iter].remove(dst_row_idx);
+			//opp_iter.erase();
+			opp_iter = opp_sign_dst.erase(opp_iter);
+		} else {
+		//	match_iter.insert(*src_iter);
+			match_iter = match_sign_dst.insert(match_iter, *src_iter);
+			cols[*match_iter].insert(dst_row_idx);
+		}
+		src_iter ++;
+	}
+}
+
+void 
+SparseTURow::add(SparseTURow const& other_row, const size_t other_row_idx, int8_t coeff, std::vector<SparseTUColumn>& cols) {
+
+	if (coeff > 0) {
+		add_list(pos, neg, other_row.pos, other_row_idx, cols);
+		add_list(neg, pos, other_row.neg, other_row_idx, cols);
+	} else {
+		add_list(pos, neg, other_row.neg, other_row_idx, cols);
+		add_list(neg, pos, other_row.pos, other_row_idx, cols);
+	}
+	value += other_row.value * coeff;
+}
+
+void insert_to_list(std::forward_list<uint16_t>& list, size_t idx) {
+
+	forward_list_iter it(list);
+	//auto iter = list.begin();
+	//auto back_iter = list.before_begin();
+	//while (iter != list.end()) {
+	while (!it.at_end()) {
+		if (idx > *it) {
+			it.insert(idx);
+			//list.insert_after(back_iter, idx);
+			return;
+		}
+		it++;
+		//iter++;
+		//back_iter++;
+	}
+	it.insert(idx);
+	//list.insert_after(back_iter, idx);
+}
+
+void insert_to_list(std::vector<uint16_t>& list, size_t idx) {
+	auto iter = list.begin();
+	while (iter != list.end()) {
+		if (idx > *iter) {
+			list.insert(iter, idx);
+			return;
+		}
+		iter++;
+	}
+	list.insert(iter, idx);
+}
+
+void 
+SparseTURow::set(size_t idx, int8_t value) {
+	if (value > 0) {
+		insert_to_list(pos, idx);
+	} else {
+		insert_to_list(neg, idx);
+	}
+}
+
+
+
+void
+SparseTUColumn::insert(uint16_t row) {
+	auto iter = nonzeros.begin();
+	auto back_iter = nonzeros.before_begin();
+	while (iter != nonzeros.end()) {
+		if (*iter > row) {
+			nonzeros.insert_after(back_iter, row);
+			return;
+		}
+		iter++;
+		back_iter++;
+	}
+	nonzeros.insert_after(back_iter, row);
+
+/*	for (size_t idx = 0; idx < nonzeros.size(); idx++) {
+		if (nonzeros[idx] > row) {
+			nonzeros.insert(nonzeros.begin() + idx, row);
+			return;
+		}
+	} */
+	//nonzeros.push_back(row);
+}
+
+void
+SparseTUColumn::remove(uint16_t row) {
+
+	auto iter = nonzeros.begin();
+	auto back_iter = nonzeros.before_begin();
+
+	while (true) {
+		if (iter == nonzeros.end()) {
+			std::printf("attempt to remove %u from list without it\n", row);
+			for (auto& val : nonzeros) {
+				std::printf("val: %u\n", val);
+			}
+			throw std::runtime_error("nnz accounting");
+		}
+		if (*iter == row) {
+			nonzeros.erase_after(back_iter);
+			return;
+		}
+		iter++;
+		back_iter++;
+	}
+/*	for (size_t idx = 0; idx < nonzeros.size(); idx++) {
+		if (nonzeros[idx] == row) {
+			nonzeros.erase(nonzeros.begin() + idx);
+			return;
+		}
+	} */
+	throw std::runtime_error("nnz accounting error");
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void 
 TaxFreeSimplex::add_asset_constraint(AssetID sell)
 {
@@ -269,5 +609,11 @@ void
 TUSimplex::run_simplex() {
 	while (do_pivot()) {}
 }
+
+void 
+SparseTUSimplex::run_simplex() {
+	while (do_pivot()) {}
+}
+
 
 } /* speedex */

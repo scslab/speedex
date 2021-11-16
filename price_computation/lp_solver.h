@@ -71,6 +71,7 @@ struct BoundsInfo {
 	OfferCategory category;
 };
 
+
 /*! Constructs and solves instances of the "trade-maximization" linear program.
 
 
@@ -139,6 +140,15 @@ public:
 		std::unique_ptr<LPInstance>& instance, 
 		const ApproximationParameters approx_params);
 
+
+	//! for comparing LP speed ONLY
+	bool
+	unsafe_check_feasibility(
+		Price* prices, 
+		std::unique_ptr<LPInstance>& instance, 
+		const ApproximationParameters approx_params,
+		std::vector<BoundsInfo> & info,
+		size_t num_assets);
 
 	//! Produce a new lp solver instance.
 	std::unique_ptr<LPInstance> make_instance() {

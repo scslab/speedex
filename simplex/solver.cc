@@ -3,30 +3,36 @@
 namespace speedex {
 
 uint16_t
-LPSolver::get_slack_var_idx(AssetID asset) {
+SimplexLPSolver::get_slack_var_idx(AssetID asset) {
 	return start_asset_slack_vars + asset;
 }
 
 uint16_t
-LPSolver::get_feasibility_var_idx(AssetID asset) {
+SimplexLPSolver::get_feasibility_var_idx(AssetID asset) {
 	return start_feasibility_slack_vars + asset;
 }
 
 void
-LPSolver::set_feasibility_objective_coeffs() {
+SimplexLPSolver::set_feasibility_objective_coeffs() {
 	for (uint16_t asset = 0; asset < num_assets; asset++) {
 		objective_row[get_feasibility_var_idx(asset)] = -1;
 	}
 }
 
 void 
-LPSolver::add_asset_constraint(AssetID sell)
+SimplexLPSolver::add_asset_constraint(AssetID sell)
 {
-	constraint_rows.emplace_back(num_cols);
-	auto& row = constraint_rows.back();
+	add_new_constraint_row();
 
-	row.set_pos(get_slack_var_idx(sell));
-	row.set_neg(get_feasibility_var_idx(sell));
+	//auto& row = constraint_rows.back();
+
+	size_t row_idx = sell;
+
+	//row.set_pos(get_slack_var_idx(sell));
+	//row.set_neg(get_feasibility_var_idx(sell));
+	set_entry(row_idx, get_slack_var_idx(sell), 1);
+	set_entry(row_idx, get_feasibility_var_idx(sell), -1);
+
 	active_basis.push_back(get_slack_var_idx(sell)); // by default, start with slack var active.
 	//This will change if the feasibility slack becomes necessary
 
@@ -40,13 +46,17 @@ LPSolver::add_asset_constraint(AssetID sell)
 			category.sellAsset = buy;
 			category.buyAsset = sell;
 			auto buy_sell_idx = category_to_idx(category, num_assets);
-			row.set_neg(sell_buy_idx);
-			row.set_pos(buy_sell_idx);
+
+			set_entry(row_idx, sell_buy_idx, -1);
+			set_entry(row_idx, buy_sell_idx, 1);
+			//row.set_neg(sell_buy_idx);
+			//row.set_pos(buy_sell_idx);
 		}
 	}
 }
 
-void LPSolver::adjust_asset_constraint(AssetID asset, int128_t amount) {
+void 
+SimplexLPSolver::adjust_asset_constraint(AssetID asset, int128_t amount) {
 	auto& row = constraint_rows[asset];
 
 	row.set_value(row.get_value() + amount);
@@ -59,24 +69,26 @@ void LPSolver::adjust_asset_constraint(AssetID asset, int128_t amount) {
 }
 
 void
-LPSolver::set_asset_constraint_slacks_active(AssetID asset) {
+SimplexLPSolver::set_asset_constraint_slacks_active(AssetID asset) {
 	active_cols[get_slack_var_idx(asset)] = true;
 	active_cols[get_feasibility_var_idx(asset)] = true;
 }
 
 void 
-LPSolver::add_orderbook_constraint(const int128_t& lower_bound, const int128_t& upper_bound, const OfferCategory& category)
+SimplexLPSolver::add_orderbook_constraint(const int128_t& lower_bound, const int128_t& upper_bound, const OfferCategory& category)
 {
-	constraint_rows.emplace_back(num_cols);
+	add_new_constraint_row();
 	auto& row = constraint_rows.back();
+
+	size_t row_idx = constraint_rows.size() - 1;
 
 	row.set_value(upper_bound - lower_bound);
 
 	auto idx = category_to_idx(category, num_assets);
 	
-	row.set_pos(idx);
+	set_entry(row_idx, idx, 1);
 	active_cols[idx] = true;
-	row.set_pos(start_orderbook_slack_vars + idx);
+	set_entry(row_idx, start_orderbook_slack_vars + idx, 1);
 	active_cols[start_orderbook_slack_vars + idx] = true;
 	
 	active_basis.push_back(start_orderbook_slack_vars + idx);
@@ -89,7 +101,7 @@ LPSolver::add_orderbook_constraint(const int128_t& lower_bound, const int128_t& 
 }
 
 void
-LPSolver::normalize_asset_constraints() {
+SimplexLPSolver::normalize_asset_constraints() {
 	for (uint16_t asset = 0; asset < num_assets; asset++) {
 		auto& row = constraint_rows[asset];
 
@@ -105,12 +117,11 @@ LPSolver::normalize_asset_constraints() {
 }
 
 bool
-LPSolver::check_feasibility() {
+SimplexLPSolver::check_feasibility() {
 	set_feasibility_objective_coeffs();
 	normalize_asset_constraints();
 	run_simplex();
 	return objective_row.get_value() == 0;
 }
-
 
 } /* speedex */

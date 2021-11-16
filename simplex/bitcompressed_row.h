@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <unordered_map>
 
 namespace speedex {
 
@@ -26,6 +27,38 @@ public:
 		}
 
 	BitcompressedRow& operator+=(const BitcompressedRow& other);
+
+	void negate();
+
+	void set_pos(uint16_t idx);
+	void set_neg(uint16_t idx);
+
+	void set_value(const int128_t& value) {
+		row_value = value;
+	}
+	const int128_t& get_value() const {
+		return row_value;
+	}
+
+	int8_t operator[](size_t idx) const;
+};
+
+class SparseRow {
+	using int128_t = __int128;
+	
+	std::unordered_map<uint16_t, uint64_t> entries;
+
+	int128_t row_value;
+
+public:
+
+	SparseRow(size_t num_cols)
+		: entries()
+		, row_value(0)
+		{
+		}
+
+	SparseRow& operator+=(const SparseRow& other);
 
 	void negate();
 
