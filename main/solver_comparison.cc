@@ -23,14 +23,14 @@ template<typename rand_gen>
 std::vector<BoundsInfo> gen_bounds(size_t num_assets, rand_gen& gen) {
 
 	std::uniform_int_distribution<> bounds_dist(100, 1000);
-	std::uniform_int_distribution<> gap_dist(1000, 10000);
+	std::uniform_int_distribution<> gap_dist(10, 100);
 
 	std::vector<BoundsInfo> out;
 
 	size_t num_work_units = get_num_orderbooks_by_asset_count(num_assets);
 
 	for (size_t idx = 0; idx < num_work_units; idx++) {
-		uint64_t lb = 100;//bounds_dist(gen);
+		uint64_t lb = 1;//bounds_dist(gen);
 		uint64_t ub = lb + gap_dist(gen);
 		BoundsInfo bds;
 		bds.bounds.first = lb;
@@ -73,7 +73,7 @@ bool run_glpk(std::vector<BoundsInfo>& info, std::vector<Price>& prices, std::un
 		num_assets);
 }
 
-bool run_simplex(std::vector<BoundsInfo> const& info, std::vector<Price> const& prices, size_t num_assets) {
+bool run_simplex(std::vector<BoundsInfo> const& info, std::vector<Price> const& prices, size_t num_assets, bool glpk_res) {
 
 	SimplexLPSolver solver(num_assets);
 
@@ -82,8 +82,24 @@ bool run_simplex(std::vector<BoundsInfo> const& info, std::vector<Price> const& 
 		int128_t ub = ((int128_t)b.bounds.second) * ((int128_t) prices[b.category.sellAsset]);
 		solver.add_orderbook_constraint(lb, ub, b.category);
 	}
+	try {
+		bool res = solver.check_feasibility();
+		if (res != glpk_res) {
+			std::printf("%d %d\n", glpk_res, res);
+			throw std::runtime_error("disagreement!");
+		}
+		return res;
+	} catch(...) {
 
-	return solver.check_feasibility();
+		for (auto const& b : info) {
+
+			int128_t lb = ((int128_t)b.bounds.first) * ((int128_t) prices[b.category.sellAsset]);
+			int128_t ub = ((int128_t)b.bounds.second) * ((int128_t) prices[b.category.sellAsset]);
+			std::printf("orderbook (sell %u, buy %u): lb %lf ub %lf\n", b.category.sellAsset, b.category.buyAsset, (double) lb, (double) ub);
+		}
+
+		exit(1);
+	}
 }
 
 template<typename rand_gen>
@@ -94,13 +110,16 @@ void run_experiment(size_t num_assets, std::unique_ptr<LPInstance>& instance, LP
 
 	auto ts = init_time_measurement();
 
+	bool glpk_res = false;
+
 	if (run_glpk(bounds, prices, instance, lp_solver, num_assets)) {
 		glpk_successes++;
+		glpk_res = true;
 	}
 
 	float glpk_time = measure_time(ts);
 
-	if(run_simplex(bounds, prices, num_assets)) {
+	if(run_simplex(bounds, prices, num_assets, glpk_res)) {
 		simplex_successes++;
 	}
 

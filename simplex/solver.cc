@@ -15,7 +15,7 @@ SimplexLPSolver::get_feasibility_var_idx(AssetID asset) {
 void
 SimplexLPSolver::set_feasibility_objective_coeffs() {
 	for (uint16_t asset = 0; asset < num_assets; asset++) {
-		objective_row[get_feasibility_var_idx(asset)] = -1;
+		objective_row.set_idx(get_feasibility_var_idx(asset), -1);
 	}
 }
 
@@ -57,7 +57,7 @@ SimplexLPSolver::add_asset_constraint(AssetID sell)
 
 void 
 SimplexLPSolver::adjust_asset_constraint(AssetID asset, int128_t amount) {
-	auto& row = constraint_rows[asset];
+	auto& row = tableau.rows[asset];
 
 	row.set_value(row.get_value() + amount);
 
@@ -77,10 +77,19 @@ SimplexLPSolver::set_asset_constraint_slacks_active(AssetID asset) {
 void 
 SimplexLPSolver::add_orderbook_constraint(const int128_t& lower_bound, const int128_t& upper_bound, const OfferCategory& category)
 {
-	add_new_constraint_row();
-	auto& row = constraint_rows.back();
+	if (lower_bound > upper_bound) {
+		throw std::runtime_error("invalid bounds");
+	}
 
-	size_t row_idx = constraint_rows.size() - 1;
+	if (lower_bound == upper_bound) {
+		std::printf("identical bounds, returning\n");
+		return;
+	}
+
+	add_new_constraint_row();
+	auto& row = tableau.rows.back();
+
+	size_t row_idx = tableau.rows.size() - 1;
 
 	row.set_value(upper_bound - lower_bound);
 
@@ -103,7 +112,7 @@ SimplexLPSolver::add_orderbook_constraint(const int128_t& lower_bound, const int
 void
 SimplexLPSolver::normalize_asset_constraints() {
 	for (uint16_t asset = 0; asset < num_assets; asset++) {
-		auto& row = constraint_rows[asset];
+		auto& row = tableau.rows[asset];
 
 		auto feasibility_idx = get_feasibility_var_idx(asset);
 
@@ -111,7 +120,16 @@ SimplexLPSolver::normalize_asset_constraints() {
 
 			row.negate();
 
-			objective_row.subtract(row, feasibility_idx);
+			//std::printf("feas constr on %u\n", asset);
+			//objective_row.print();
+			//tableau.print("before subtract");
+
+			//std::printf("row in question:\n");
+			//tableau.print_row(asset);
+
+			objective_row.subtract_sparse(row, feasibility_idx);
+
+			//objective_row.print();
 		}
 	}
 }

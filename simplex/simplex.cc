@@ -24,27 +24,50 @@ namespace speedex {
 
 
 std::optional<uint16_t>
-SparseTUSimplex::get_next_pivot_column() const {
+SparseTUSimplex::get_next_pivot_column() {
+
+	//std::printf("%s\n", objective_row.to_string().c_str());
+
+	while(true) {
+		auto res = objective_row.get_next_pos();
+		if (!res) {
+	//		std::printf("got no result from row\n");
+			//break;;
+			return res;
+		}
+		if (active_cols[*res]) {
+	//		std::printf("got res of %u\n", *res);
+			//break;
+			return res;
+		}
+	} 
+
 	for (auto i = 0u; i < num_cols; i++) {
 		if (active_cols[i] && (objective_row[i] > 0)) {
+			std::printf("actual returned val was %u\n", i);
 			return {i};
 		}
 	}
-	return std::nullopt;
+	std::printf("returning nullopt\n");
+	return std::nullopt; 
 }
 
 uint16_t 
 SparseTUSimplex::get_next_pivot_row(uint16_t pivot_col) const {
-	std::optional<size_t> row_out = std::nullopt;
+	return tableau.get_pivot_row(pivot_col);
+	/*std::optional<size_t> row_out = std::nullopt;
+
+	auto const& col = tableau.cols[pivot_col];
 
 	int128_t value = 0;
 
-	for (size_t i = 0; i < constraint_rows.size(); i++) {
-		int128_t const& constraint_value = constraint_rows[i].get_value();
+	for (auto row_idx : col.nonzeros) {
+	//for (size_t i = 0; i < constraint_rows.size(); i++) {
+		int128_t const& constraint_value = tableau.rows[row_idx].get_value();
 
-		if (constraint_rows[i][pivot_col] > 0) {
+		if (tableau.rows[row_idx][pivot_col] > 0) {
 			if ((!row_out) || value > constraint_value) {
-				row_out = i;
+				row_out = row_idx;
 				value = constraint_value;
 			}
 		}
@@ -53,11 +76,17 @@ SparseTUSimplex::get_next_pivot_row(uint16_t pivot_col) const {
 	if (row_out) {
 		return *row_out;
 	}
-	throw std::runtime_error("failed to find pivot row");
+	throw std::runtime_error("failed to find pivot row");*/
 }
 
 bool
 SparseTUSimplex::do_pivot() {
+
+	//objective_row.print();
+	//tableau.print("pre pivot");
+
+	//tableau.integrity_check();
+
 	auto pivot_col_idx = get_next_pivot_column();
 	if (!pivot_col_idx) {
 		return false;
@@ -65,49 +94,47 @@ SparseTUSimplex::do_pivot() {
 
 	auto pivot_row = get_next_pivot_row(*pivot_col_idx);
 
-	{
+	//std::printf("pivot on (%u, %u)\n", pivot_row, *pivot_col_idx);
+
+	/*{
 		auto& pivot_constraint = constraint_rows[pivot_row];
 
 		int8_t coefficient = pivot_constraint[*pivot_col_idx];
 
 		if (coefficient < 0) {
+			throw std::runtime_error("invalid pivot constr");
 			pivot_constraint.negate();
 		}
-	}
+	}*/
 
-	auto const& pivot_constraint = constraint_rows[pivot_row];
+	auto const& pivot_constraint = tableau.rows[pivot_row];
 
+	tableau.do_pivot(pivot_row, *pivot_col_idx);
+
+	//objective_row.print();
+	//tableau.print("post pivot");
+/*
 	auto& pivot_col = constraint_columns[*pivot_col_idx];
 
-	for (auto nonzero_row : pivot_col.nonzeros) {
+
+	auto const& nnz_list = pivot_col.nonzeros;
+	//for (auto iter = nnz_list.begin(); iter != nnz_list.end(); iter++) {
+	for (auto nonzero_row : nnz_list) {
+		//auto nonzero_row = *iter;
 		if (nonzero_row != pivot_row) {
 			auto& constraint = constraint_rows[nonzero_row];
 			int8_t row_coeff = constraint[*pivot_col_idx];
 			if (row_coeff == 0) {
 				throw std::runtime_error("invalid nnz");
 			}
-			constraint.add(pivot_constraint, pivot_row, row_coeff, constraint_columns);
+			constraint.add(pivot_constraint, nonzero_row, -row_coeff, *pivot_col_idx, constraint_columns);
 		}
 	}
-/*
-	for (size_t i = 0; i < constraint_rows.size(); i++) {
-		if (i != pivot_row) {
-			auto& constraint = constraint_rows[i];
-			int8_t row_coeff = constraint[*pivot_col];
+	pivot_col.set_singleton(pivot_row);
+	*/
 
-			if (row_coeff < 0) {
-				constraint += pivot_constraint;
-			}
-			else if (row_coeff > 0) {
-				// x - y = -(-x + y)
-				constraint.negate();
-				constraint += pivot_constraint;
-				constraint.negate();
-			}
-		}
-	}*/
-
-	objective_row.subtract(pivot_constraint, *pivot_col_idx);
+	//objective_row.subtract(pivot_constraint, *pivot_col_idx);
+	objective_row.subtract_sparse(pivot_constraint, *pivot_col_idx);
 
 	active_basis[pivot_row] = *pivot_col_idx;
 	return true;
@@ -115,237 +142,11 @@ SparseTUSimplex::do_pivot() {
 
 void 
 SparseTUSimplex::set_entry(size_t row_idx, size_t col_idx, int8_t value) {
-	auto& row = constraint_rows[row_idx];
-	auto& col = constraint_columns[col_idx];
+	auto& row = tableau.rows[row_idx];
+	auto& col = tableau.cols[col_idx];
 	row.set(col_idx, value);
-	col.insert(row_idx);
+	col.set(row_idx, value);
 }
-
-template<typename T>
-class forward_list_iter {
-	std::forward_list<T>& list;
-	std::forward_list<T>::iterator iter, back_iter;
-public:
-
-	forward_list_iter(std::forward_list<T>& list)
-		: list(list)
-		, iter(list.begin())
-		, back_iter(list.before_begin()) {}
-
-	T& operator*() {
-		return *iter;
-	}
-
-	forward_list_iter& operator++(int) {
-		iter++;
-		back_iter++;
-		return *this;
-	}
-
-	void insert(T const& val) {
-		iter = list.insert_after(back_iter, val);
-	}
-
-	void erase() {
-		iter = list.erase_after(back_iter);
-	}
-
-	bool at_end() {
-		return iter == list.end();
-	}
-};
-
-void add_list(
-	std::forward_list<uint16_t>& match_sign_dst, 
-	std::forward_list<uint16_t>& opp_sign_dst, 
-	std::forward_list<uint16_t> const& src, 
-	const size_t dst_row_idx, 
-	std::vector<SparseTUColumn>& cols)
-{
-
-	forward_list_iter match_iter(match_sign_dst);
-	forward_list_iter opp_iter(opp_sign_dst);
-
-	//auto match_iter = match_sign_dst.begin();
-	//auto opp_iter = opp_sign_dst.begin();
-
-	auto src_iter = src.begin();
-
-	//size_t src_idx = 0;
-	while (src_iter != src.end()) {
-		while ((!match_iter.at_end()) && (*match_iter < *src_iter)) {
-		//while (match_iter != match_sign_dst.end() && (*match_iter) < src[src_idx]) {
-			match_iter++;
-		}
-		while ((!opp_iter.at_end()) && (*opp_iter < *src_iter)) {
-		//while (opp_iter != opp_sign_dst.end() && (*opp_iter) < src[src_idx]) {
-			opp_iter++;
-		}
-
-		bool present_in_opp = (!opp_iter.at_end()) && (*opp_iter == *src_iter);
-		//bool present_in_opp = (opp_iter != opp_sign_dst.end()) && ((*opp_iter) == src[src_idx]);
-	
-		if (present_in_opp) {
-			cols[*opp_iter].remove(dst_row_idx);
-			opp_iter.erase();
-			//opp_iter = opp_sign_dst.erase(opp_iter);
-		} else {
-			match_iter.insert(*src_iter);
-		//	match_iter = match_sign_dst.insert(match_iter, src[src_idx]);
-			cols[*match_iter].insert(dst_row_idx);
-		}
-		src_iter ++;
-	}
-}
-
-void add_list(
-	std::vector<uint16_t>& match_sign_dst, 
-	std::vector<uint16_t>& opp_sign_dst, 
-	std::vector<uint16_t> const& src, 
-	const size_t dst_row_idx, 
-	std::vector<SparseTUColumn>& cols)
-{
-
-	auto match_iter = match_sign_dst.begin();
-	auto opp_iter = opp_sign_dst.begin();
-
-	auto src_iter = src.begin();
-
-	//size_t src_idx = 0;
-	while (src_iter != src.end()) {
-		while (match_iter != match_sign_dst.end() && (*match_iter) < *src_iter) {
-			match_iter++;
-		}
-		while (opp_iter != opp_sign_dst.end() && (*opp_iter) < *src_iter) {
-			opp_iter++;
-		}
-
-		bool present_in_opp = (opp_iter != opp_sign_dst.end()) && ((*opp_iter) == *src_iter);
-	
-		if (present_in_opp) {
-			cols[*opp_iter].remove(dst_row_idx);
-			//opp_iter.erase();
-			opp_iter = opp_sign_dst.erase(opp_iter);
-		} else {
-		//	match_iter.insert(*src_iter);
-			match_iter = match_sign_dst.insert(match_iter, *src_iter);
-			cols[*match_iter].insert(dst_row_idx);
-		}
-		src_iter ++;
-	}
-}
-
-void 
-SparseTURow::add(SparseTURow const& other_row, const size_t other_row_idx, int8_t coeff, std::vector<SparseTUColumn>& cols) {
-
-	if (coeff > 0) {
-		add_list(pos, neg, other_row.pos, other_row_idx, cols);
-		add_list(neg, pos, other_row.neg, other_row_idx, cols);
-	} else {
-		add_list(pos, neg, other_row.neg, other_row_idx, cols);
-		add_list(neg, pos, other_row.pos, other_row_idx, cols);
-	}
-	value += other_row.value * coeff;
-}
-
-void insert_to_list(std::forward_list<uint16_t>& list, size_t idx) {
-
-	forward_list_iter it(list);
-	//auto iter = list.begin();
-	//auto back_iter = list.before_begin();
-	//while (iter != list.end()) {
-	while (!it.at_end()) {
-		if (idx > *it) {
-			it.insert(idx);
-			//list.insert_after(back_iter, idx);
-			return;
-		}
-		it++;
-		//iter++;
-		//back_iter++;
-	}
-	it.insert(idx);
-	//list.insert_after(back_iter, idx);
-}
-
-void insert_to_list(std::vector<uint16_t>& list, size_t idx) {
-	auto iter = list.begin();
-	while (iter != list.end()) {
-		if (idx > *iter) {
-			list.insert(iter, idx);
-			return;
-		}
-		iter++;
-	}
-	list.insert(iter, idx);
-}
-
-void 
-SparseTURow::set(size_t idx, int8_t value) {
-	if (value > 0) {
-		insert_to_list(pos, idx);
-	} else {
-		insert_to_list(neg, idx);
-	}
-}
-
-
-
-void
-SparseTUColumn::insert(uint16_t row) {
-	auto iter = nonzeros.begin();
-	auto back_iter = nonzeros.before_begin();
-	while (iter != nonzeros.end()) {
-		if (*iter > row) {
-			nonzeros.insert_after(back_iter, row);
-			return;
-		}
-		iter++;
-		back_iter++;
-	}
-	nonzeros.insert_after(back_iter, row);
-
-/*	for (size_t idx = 0; idx < nonzeros.size(); idx++) {
-		if (nonzeros[idx] > row) {
-			nonzeros.insert(nonzeros.begin() + idx, row);
-			return;
-		}
-	} */
-	//nonzeros.push_back(row);
-}
-
-void
-SparseTUColumn::remove(uint16_t row) {
-
-	auto iter = nonzeros.begin();
-	auto back_iter = nonzeros.before_begin();
-
-	while (true) {
-		if (iter == nonzeros.end()) {
-			std::printf("attempt to remove %u from list without it\n", row);
-			for (auto& val : nonzeros) {
-				std::printf("val: %u\n", val);
-			}
-			throw std::runtime_error("nnz accounting");
-		}
-		if (*iter == row) {
-			nonzeros.erase_after(back_iter);
-			return;
-		}
-		iter++;
-		back_iter++;
-	}
-/*	for (size_t idx = 0; idx < nonzeros.size(); idx++) {
-		if (nonzeros[idx] == row) {
-			nonzeros.erase(nonzeros.begin() + idx);
-			return;
-		}
-	} */
-	throw std::runtime_error("nnz accounting error");
-}
-
-
-
 
 
 
@@ -402,7 +203,7 @@ TaxFreeSimplex::add_orderbook_constraint( const int128_t& value, const OfferCate
 	active_cols[start_orderbook_slack_vars + idx] = true;
 	active_basis.push_back(start_orderbook_slack_vars + idx);
 
-	objective_row[idx] = 1;
+	objective_row.set_idx(idx, 1);
 
 	active_cols[start_asset_slack_vars + category.sellAsset] = true;
 	active_cols[start_asset_slack_vars + category.buyAsset] = true;

@@ -4,7 +4,7 @@
 
 namespace speedex {
 
-class SimplexLPSolver : public TUSimplex {
+class SimplexLPSolver : public SparseTUSimplex {
 	const size_t num_assets;
 	const size_t num_orderbooks;
 
@@ -34,7 +34,7 @@ class SimplexLPSolver : public TUSimplex {
 public:
 
 	SimplexLPSolver(size_t _num_assets) 
-		: TUSimplex(2 * get_num_orderbooks_by_asset_count(_num_assets) + 2 * _num_assets)
+		: SparseTUSimplex(2 * get_num_orderbooks_by_asset_count(_num_assets) + 2 * _num_assets)
 		, num_assets(_num_assets)
 		, num_orderbooks(get_num_orderbooks_by_asset_count(num_assets))
 		, start_orderbook_slack_vars(num_orderbooks)

@@ -4,66 +4,11 @@
 
 #include "simplex/bitcompressed_row.h"
 #include "simplex/objective_row.h"
+#include "simplex/sparse.h"
 
 #include "xdr/types.h"
 
-#include <optional>
-#include <vector>
-#include <forward_list>
-
 namespace speedex {
-
-struct SparseTUColumn {
-	std::forward_list<uint16_t> nonzeros;
-
-	void insert(uint16_t row);
-	void remove(uint16_t row);
-
-	SparseTUColumn(const SparseTUColumn&) = delete;
-	SparseTUColumn() = default;
-};
-
-class SparseTURow {
-	std::vector<uint16_t> pos;
-	std::vector<uint16_t> neg;
-
-	using int128_t = __int128;
-
-	int128_t value;
-
-public:
-	const int128_t& get_value() const {
-		return value;
-	}
-
-	void set_value(const int128_t& new_value) {
-		value = new_value;
-	}
-
-	int8_t operator[](uint16_t idx) const {
-		for (auto const& p : pos) {
-			if (idx == p) {
-				return 1;
-			}
-		}
-		for (auto const& n : neg) {
-			if (idx == n) {
-				return -1;
-			}
-		}
-		return 0;
-	}
-
-	void negate() {
-		std::swap(pos, neg);
-		value *= -1;
-	}
-
-	// can only set a value that's not already set
-	void set(size_t idx, int8_t value);
-
-	void add(SparseTURow const& other_row, const size_t other_row_idx, int8_t coeff, std::vector<SparseTUColumn>& cols);
-};
 
 class SparseTUSimplex {
 public:
@@ -74,8 +19,10 @@ protected:
 
 	const uint16_t num_cols;
 
-	std::vector<SparseTURow> constraint_rows;
-	std::vector<SparseTUColumn> constraint_columns;
+	//std::vector<SparseTURow> constraint_rows;
+	//std::vector<SparseTUColumn> constraint_columns;
+
+	SparseTableau tableau;
 
 	ObjectiveRow objective_row;
 
@@ -84,18 +31,16 @@ protected:
 
 	SparseTUSimplex(size_t num_cols)
 		: num_cols(num_cols)
-		, constraint_rows()
-		, constraint_columns(num_cols)
+		, tableau(num_cols)
+		//, constraint_rows()
+		//, constraint_columns(num_cols)
 		, objective_row(num_cols)
 		, active_cols(num_cols, false)
 		, active_basis()
 	{
-		if (active_cols.size() != num_cols) {
-			throw std::runtime_error("wtf");
-		}
 	}
 
-	std::optional<uint16_t> get_next_pivot_column() const;
+	std::optional<uint16_t> get_next_pivot_column();
 
 	uint16_t get_next_pivot_row(uint16_t pivot_col) const;
 
@@ -106,7 +51,8 @@ protected:
 	void run_simplex();
 
 	void add_new_constraint_row() {
-		constraint_rows.emplace_back();
+		tableau.add_row();
+		//constraint_rows.emplace_back();
 	}
 };
 

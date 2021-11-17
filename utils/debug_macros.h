@@ -40,7 +40,7 @@ Printouts include file/line information.
 
 #define HOTSTUFF_DEBUG DEBUG_LEVEL_INFO
 
-#define LOG(s, ...) std::printf((std::string("%-40s") + s + "\n").c_str(), (std::string(__FILE__) + "." + std::to_string(__LINE__) + ":").c_str() __VA_OPT__(,) __VA_ARGS__)
+#define LOG(s, ...) std::printf((std::string("%-45s") + s + "\n").c_str(), (std::string(__FILE__) + "." + std::to_string(__LINE__) + ":").c_str() __VA_OPT__(,) __VA_ARGS__)
 
 #if DEBUG_LEVEL <= DEBUG_LEVEL_INFO || TRIE_DEBUG <= DEBUG_LEVEL_INFO || ROUNDING_DEBUG <= DEBUG_LEVEL_INFO ||  TATONNEMENT_DEBUG <= DEBUG_LEVEL_INFO || PROOF_DEBUG <= DEBUG_LEVEL_INFO
 #define TEST_START() LOG("Starting Test:%s", __FUNCTION__)

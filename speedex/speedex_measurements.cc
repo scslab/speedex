@@ -13,7 +13,7 @@ void SpeedexMeasurements::add_measurement(TaggedSingleBlockResults const& res)
 		return;
 	}
 
-	std::printf("uncling measurement block %lu.  Is this intentional?\n", res.blockNumber);
+	std::printf("uncling measurement block %llu.  Is this intentional?\n", res.blockNumber);
 	uncled_measurements.push_back(iter->second);
 	iter->second = res;
 }

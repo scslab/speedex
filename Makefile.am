@@ -118,12 +118,14 @@ RPC_SRCS = \
 SIMPLEX_SRCS = \
 	simplex/bitcompressed_row.cc \
 	simplex/simplex.cc \
-	simplex/solver.cc
+	simplex/solver.cc \
+	simplex/sparse.cc
 
 SIMPLEX_TEST_SRCS = \
 	simplex/tests/test_bitcompressed_row.h \
 	simplex/tests/test_feasibility_solver.h \
-	simplex/tests/test_simplex.h
+	simplex/tests/test_simplex.h \
+	simplex/tests/test_tableau.h
 
 SPEEDEX_SRCS = \
 	speedex/reload_from_hotstuff.cc \
