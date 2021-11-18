@@ -75,6 +75,8 @@ bool run_glpk(std::vector<BoundsInfo>& info, std::vector<Price>& prices, std::un
 
 bool run_simplex(std::vector<BoundsInfo> const& info, std::vector<Price> const& prices, size_t num_assets, bool glpk_res) {
 
+	alloc.clear();
+
 	SimplexLPSolver solver(num_assets);
 
 	for (auto const& b : info) {

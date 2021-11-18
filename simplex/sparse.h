@@ -105,14 +105,15 @@ extern Allocator alloc;
 
 struct SignedTUColumn {
 
-	//buffered_forward_list pos2, neg2;
+	//buffered_forward_list pos, neg;
 	std::forward_list<uint16_t> pos, neg;
 
 	NegatedRows const& negated;
 
 	SignedTUColumn(NegatedRows const& negations)
-		: pos()
-		, neg()
+		//: pos(alloc)
+		//, neg(alloc)
+		: pos(), neg()
 		, negated(negations)
 		{}
 
@@ -173,14 +174,20 @@ struct SignedTURow {
 	SignedTURow(NegatedRows& negations)
 		: pos(alloc)
 		, neg(alloc)
-	//	, pos()
-	//	, neg()
 		, value(0)
 		, negation_idx(negations.size())
 		, negations(negations)
 	{
 		negations.push_back(false);
 	}
+
+	SignedTURow(SignedTURow&& other)
+		: pos(std::move(other.pos))
+		, neg(std::move(other.neg))
+		, value(other.value)
+		, negation_idx(other.negation_idx)
+		, negations(other.negations)
+		{}
 
 	int128_t get_value() const {
 		return is_negated() ? -value : value;
@@ -274,7 +281,7 @@ struct SparseTableau {
 	std::vector<SignedTUColumn> cols;
 
 	SparseTableau(uint16_t num_cols)
-		:negations()
+		: negations()
 		, rows()
 		, cols()
 	{

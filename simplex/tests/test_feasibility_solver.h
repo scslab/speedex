@@ -18,6 +18,10 @@ class FeasibilityTests : public CxxTest::TestSuite {
 		return out;
 	}
 
+	void setUp() {
+		alloc.clear();
+	}
+
 public:
 
 	void test_empty() {

@@ -1,6 +1,10 @@
 #pragma once
 
 #include <memory>
+#include <set>
+#include <vector>
+#include <stdexcept>
+#include <cstdint>
 
 namespace speedex {
 
@@ -57,11 +61,14 @@ class Allocator {
 
 	std::vector<uint32_t> nonfull_buffers;
 
+	//std::set<uint64_t> freed_buffers;
+
 public:
 
 	Allocator()
 		: buffers()
 		, nonfull_buffers()
+		//, freed_buffers()
 		{
 			buffers.emplace_back(std::make_unique<AllocatorRow>(1));
 			nonfull_buffers.push_back(0);
@@ -79,9 +86,11 @@ public:
 		uint64_t out = buffers[nonfull_buffers.back()]->allocate();
 
 		if (buffers[nonfull_buffers.back()]->full()) {
+		//	std::printf("fetching new buffer, cur size was %lu (nonempty was %lu, back %lu)\n", buffers.size(), nonfull_buffers.size(), nonfull_buffers.back());
 			nonfull_buffers.pop_back();
 
 			if (nonfull_buffers.empty()) {
+		//		std::printf("alloc new buffer\n");
 				uint32_t next_buffer_idx = buffers.size();
 				buffers.emplace_back(std::make_unique<AllocatorRow>(next_buffer_idx + 1));
 				nonfull_buffers.push_back(next_buffer_idx);
@@ -93,7 +102,19 @@ public:
 	void free(uint64_t addr) {
 		uint32_t buf_idx = (addr >> 32) - 1;
 		buffers[buf_idx]->free();
+
+		//if (freed_buffers.find(addr) != freed_buffers.end()) {
+		//	std::printf("double free on %llx\n", addr);
+		//	for (auto val : freed_buffers) {
+		//		std::printf("\tfreed_buffers=%llx\n", val);
+		//	}
+		//} else {
+		//	std::printf("free on %llx\n", addr);
+		//}
+
+		//freed_buffers.insert(addr);
 		if (buffers[buf_idx]->empty()) {
+		//	std::printf("buffer %lu is now free", buf_idx);
 			nonfull_buffers.push_back(buf_idx);
 		}
 	}
@@ -119,6 +140,8 @@ public:
 			buffers[i]->clear();
 			nonfull_buffers.push_back(i);
 		}
+		//freed_buffers.clear();
+		//std::printf("clearing free buffers, %lu\n", freed_buffers.size());
 	}
 };
 
@@ -137,8 +160,17 @@ public:
 			*(alloc.get(before_list_elt_addr)) = 0;
 		}
 
+	buffered_forward_list(buffered_forward_list&& other)
+		: alloc(other.alloc)
+		, before_list_elt_addr(other.before_list_elt_addr)
+		{
+			other.before_list_elt_addr = 0;
+		}
+
 	~buffered_forward_list() {
-		alloc.free(before_list_elt_addr);
+		if (before_list_elt_addr != 0) {
+			alloc.free(before_list_elt_addr);
+		}
 	}
 
 	class iterator {

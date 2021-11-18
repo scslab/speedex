@@ -139,7 +139,8 @@ SimplexLPSolver::check_feasibility() {
 	set_feasibility_objective_coeffs();
 	normalize_asset_constraints();
 	run_simplex();
-	return objective_row.get_value() == 0;
+	bool res = objective_row.get_value() == 0;
+	return res;
 }
 
 } /* speedex */
