@@ -23,7 +23,7 @@ template<typename rand_gen>
 std::vector<BoundsInfo> gen_bounds(size_t num_assets, rand_gen& gen) {
 
 	std::uniform_int_distribution<> bounds_dist(100, 1000);
-	std::uniform_int_distribution<> gap_dist(10, 100);
+	std::uniform_int_distribution<> gap_dist(1000, 10000);
 
 	std::vector<BoundsInfo> out;
 
@@ -82,9 +82,10 @@ bool run_simplex(std::vector<BoundsInfo> const& info, std::vector<Price> const& 
 		int128_t ub = ((int128_t)b.bounds.second) * ((int128_t) prices[b.category.sellAsset]);
 		solver.add_orderbook_constraint(lb, ub, b.category);
 	}
-	try {
+	//try {
 		bool res = solver.check_feasibility();
-		if (res != glpk_res) {
+		return res;
+/*		if (res != glpk_res) {
 			std::printf("%d %d\n", glpk_res, res);
 			throw std::runtime_error("disagreement!");
 		}
@@ -99,7 +100,7 @@ bool run_simplex(std::vector<BoundsInfo> const& info, std::vector<Price> const& 
 		}
 
 		exit(1);
-	}
+	}*/
 }
 
 template<typename rand_gen>

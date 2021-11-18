@@ -4,6 +4,8 @@
 
 namespace speedex {
 
+extern Allocator alloc;
+
 class SimplexLPSolver : public SparseTUSimplex {
 	const size_t num_assets;
 	const size_t num_orderbooks;
@@ -42,6 +44,7 @@ public:
 		, start_feasibility_slack_vars(start_asset_slack_vars + num_assets)
 		, solution()
 		{
+			alloc.clear();
 			for (auto i = 0u; i < num_assets; i++) {
 				add_asset_constraint(i);
 			}

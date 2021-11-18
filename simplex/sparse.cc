@@ -2,8 +2,7 @@
 
 namespace speedex {
 
-
-
+Allocator alloc;
 
 template<typename list_t>
 void print_list(list_t const& l) {
@@ -217,6 +216,20 @@ void insert_to_list(std::forward_list<uint16_t>& list, size_t idx) {
 	it.insert(idx);
 }
 
+void insert_to_list(buffered_forward_list& list, size_t idx) {
+
+	buffered_forward_list_iter it(list);
+	while (!it.at_end()) {
+		if (idx < *it) {
+			it.insert(idx);
+			return;
+		}
+		it++;
+	}
+	it.insert(idx);
+}
+
+
 void insert_to_list(std::set<uint16_t>& set, size_t idx) {
 	set.insert(idx);
 }
@@ -250,8 +263,10 @@ SignedTURow::set(size_t idx, int8_t value) {
 
 	if (is_pos) {
 		insert_to_list(pos, idx);
+		//insert_to_list(pos2, idx);
 	} else {
 		insert_to_list(neg, idx);
+		//insert_to_list(neg2, idx);
 	}
 }
 
@@ -290,6 +305,20 @@ SignedTUColumn::insert_neg(uint16_t row) {
 
 void remove_from_list(std::forward_list<uint16_t>& list, uint16_t idx) {
 	forward_list_iter it(list);
+	while (true) {
+		if (it.at_end()) {
+			throw std::runtime_error("hit list end too early");
+		}
+		if (idx == *it) {
+			it.erase();
+			return;
+		}
+		it++;
+	}
+}
+
+void remove_from_list(buffered_forward_list& list, uint16_t idx) {
+	buffered_forward_list_iter it(list);
 	while (true) {
 		if (idx == *it) {
 			it.erase();
@@ -362,18 +391,23 @@ SparseTUColumn::remove(uint16_t row) {
 	throw std::runtime_error("nnz accounting error");
 }
 
-void insert_to_iterator(forward_list_iter<uint16_t>& it, uint16_t idx) {
+template<typename buffered_iter_t>
+void insert_to_iterator(buffered_iter_t& it, uint16_t idx) {
+	//std::printf("start insert_to_iterator\n");
 	while (!it.at_end()) {
+	//	std::printf("compare against %u\n", *it);
 		if (idx < *it) {
 			it.insert(idx);
 			return;
 		}
 		it++;
 	}
+	//std::printf("insert at end\n");
 	it.insert(idx);	
 }
 
-bool try_erase_from_iterator(forward_list_iter<uint16_t>& it, uint16_t value) {
+bool try_erase_from_iterator(buffered_forward_list_iter& it, uint16_t value) {
+	//std::printf("try erase from buffered_it\n");
 	while (!it.at_end()) {
 	//	std::printf("*it=%u value=%u\n", *it, value);
 		if (*it == value) {
@@ -388,19 +422,74 @@ bool try_erase_from_iterator(forward_list_iter<uint16_t>& it, uint16_t value) {
 	return false;
 }
 
+bool try_erase_from_iterator(forward_list_iter<uint16_t>& it, uint16_t value) {
+	//std::printf("try erase from regular it\n");
+	while (!it.at_end()) {
+	//	std::printf("*it=%u value=%u\n", *it, value);
+		if (*it == value) {
+			it.erase();
+			return true;
+		}
+		if (*it > value) {
+			return false;
+		}
+		it++;
+	}
+	return false;
+}
+
+void check_(std::forward_list<uint16_t> const& l1, buffered_forward_list const& l2) {
+	auto it1 = l1.begin();
+	auto it2 = l2.begin();
+
+	std::printf("begin check\n");
+
+	for (auto const& val : l1) {
+		std::printf("expected %u\n", val);
+	}
+
+	while (it1 != l1.end()) {
+		std::printf("checking %u\n", *it1);
+		if (*it1 != *it2) {
+			std::printf("%u vs %u\n", *it1, *it2);
+			throw std::runtime_error("iter mismatch");
+		}
+		it1++;
+		it2++;
+	}
+	if (it2 != l2.end()) {
+		throw std::runtime_error("wtf");
+	}
+}
+
+/*void SignedTURow::check() const {
+	pos2.print_list();
+	neg2.print_list();
+	check_(pos, pos2);
+	check_(neg, neg2);
+	std::printf("done row\n");
+} */
+
+
 void 
 SignedTURow::iterator::insert_pos(uint16_t idx) {
 	if (negated) {
+	//	insert_to_iterator(neg_it2, idx);
 		insert_to_iterator(neg_it, idx);
 	} else {
+		//insert_to_iterator(pos_it2, idx);
 		insert_to_iterator(pos_it, idx);
 	}
 }
 void 
 SignedTURow::iterator::insert_neg(uint16_t idx) {
 	if (negated) {
+	//	std::printf("within insert_neg, insert to pos (bc negation)\n");
+	//	insert_to_iterator(pos_it2, idx);
 		insert_to_iterator(pos_it, idx);
 	} else {
+	//	std::printf("within insert_neg, insert to neg (bc no negation)\n");
+	//	insert_to_iterator(neg_it2, idx);
 		insert_to_iterator(neg_it, idx);
 	}
 }
@@ -410,17 +499,23 @@ SignedTURow::iterator::try_erase_pos(uint16_t idx) {
 	//std::printf("try_erase_pos on %u\n", idx);
 	if (negated) {
 	//	std::printf("negated: from neg list\n");
+	//	bool res = try_erase_from_iterator(neg_it2, idx);
+	//	std::printf("buffered_it res was %d\n", res);
 		return try_erase_from_iterator(neg_it, idx);
 	} else {
-	//	std::printf("from pos list\n");
+	//    std::printf("from pos list\n");
+	//	bool res = try_erase_from_iterator(pos_it2, idx);
+	//	std::printf("buffered_it res was %d\n", res);
 		return try_erase_from_iterator(pos_it, idx);
 	}
 }
 bool 
 SignedTURow::iterator::try_erase_neg(uint16_t idx) {
 	if (negated) {
+	//	try_erase_from_iterator(pos_it2, idx);
 		return try_erase_from_iterator(pos_it, idx);
 	} else {
+	//	try_erase_from_iterator(neg_it2, idx);
 		return try_erase_from_iterator(neg_it, idx);
 	}
 }
@@ -431,8 +526,8 @@ SparseTableau::do_pivot(uint16_t pivot_row, uint16_t pivot_col) {
 	auto& row = rows[pivot_row];
 	auto& col = cols[pivot_col];
 
-	//std::printf("\n\nprior to pivot on (%u, %u)\n", pivot_row, pivot_col);
-	//print("pivot prior");
+//	std::printf("\n\nprior to pivot on (%u, %u)\n", pivot_row, pivot_col);
+//	print("pivot prior");
 
 	auto pos_row_it = row.pos.begin();
 	auto neg_row_it = row.neg.begin();
@@ -510,13 +605,15 @@ SparseTableau::do_pivot(uint16_t pivot_row, uint16_t pivot_col) {
 		}
 	}
 
-	//print("post negations");
+	//print("prior to check");
 	//integrity_check();
 
 	while(true) {
 		auto [next_col_idx, coeff] = advance();
 
 		if (coeff == 0) {
+			//integrity_check();
+
 			col.set_single_pos(pivot_row);
 
 			for (auto touched_row : touched_rows) {
@@ -545,6 +642,7 @@ SparseTableau::do_pivot(uint16_t pivot_row, uint16_t pivot_col) {
 			} else {
 				row_it.guarded_insert_neg(next_col_idx, mod_col);
 			}
+		//	print("post insert");
 		//	integrity_check();
 		}
 	}
@@ -623,13 +721,18 @@ SparseTableau::integrity_check(bool print_warning) const {
 
 			get(row, col);
 		}
+	//	rows[row].check();
 		check_incr_list(rows[row].pos);
 		check_incr_list(rows[row].neg);
 	}
 
 	for (size_t i = 0; i < cols.size(); i++) {
+		//col.check();
 		check_incr_list(cols[i].pos);
 		check_incr_list(cols[i].neg);
+	}
+	if (print_warning) {
+		std::printf("done integrity check\n");
 	}
 }
 
