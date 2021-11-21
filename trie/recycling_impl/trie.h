@@ -548,6 +548,10 @@ private:
 	template<typename MergeFn = OverwriteMergeFn>
 	void merge_in_nolock(serial_trie_t& trie) {
 
+		if (trie.size() == 0) {
+			return;
+		}
+
 		invalidate_hash();
 
 		if (root == UINT32_MAX) {

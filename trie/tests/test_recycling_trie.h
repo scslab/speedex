@@ -35,4 +35,20 @@ public:
 
 		TS_ASSERT_EQUALS(hash, hash2);
 	}
+
+	void test_empty_hash2() {
+		AccountTrie<EmptyValue> trie;
+
+		Hash h1;
+		trie.hash(h1);
+
+		SerialAccountTrie<EmptyValue> serial_trie = trie.open_serial_subsidiary();
+
+		trie.merge_in(serial_trie);
+
+		Hash h2;
+		trie.hash(h2);
+
+		TS_ASSERT_EQUALS(h1, h2);
+	}
 };
