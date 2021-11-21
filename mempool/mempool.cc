@@ -88,6 +88,10 @@ void Mempool::push_mempool_buffer_to_mempool() {
 void Mempool::join_small_chunks() {
 	std::lock_guard lock(mtx);
 
+	if (mempool.size() == 0) {
+		return;
+	}
+
 	//ensures that the average chunk size is at least TARGET/2
 	for (size_t i = 0; i < mempool.size() - 1;) {
 		if (mempool[i].size() + mempool[i+1].size() < TARGET_CHUNK_SIZE) {
