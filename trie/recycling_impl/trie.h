@@ -1061,25 +1061,30 @@ AccountTrie<ValueType>::hash(Hash& output_hash) {
 		output_hash = root_hash;
 		return;
 	}
-	
-	// It seems to perform substantially faster to just allocate a vector on the stack,
-	// rather than fetching a vector from a threadlocal cache.
-	tbb::parallel_for(
-		AccountHashRange<node_t>(root, allocator),
-		[this] (const auto& r) {
-			std::vector<unsigned char> digest_buffer;
-			digest_buffer.reserve(default_digest_buffer_sz);
-			for (size_t i = 0; i < r.num_nodes(); i++) {
-				r[i].template compute_hash<ApplyFn...>(allocator, digest_buffer);
-			}
-		});
-	
-	std::vector<unsigned char> digest_buffer;
-	digest_buffer.reserve(default_digest_buffer_sz);
 
-	allocator.get_object(root).template compute_hash<ApplyFn...>(allocator, digest_buffer);
+	if (root != UINT32_MAX) {
+	
+		// It seems to perform substantially faster to just allocate a vector on the stack,
+		// rather than fetching a vector from a threadlocal cache.
+		tbb::parallel_for(
+			AccountHashRange<node_t>(root, allocator),
+			[this] (const auto& r) {
+				std::vector<unsigned char> digest_buffer;
+				digest_buffer.reserve(default_digest_buffer_sz);
+				for (size_t i = 0; i < r.num_nodes(); i++) {
+					r[i].template compute_hash<ApplyFn...>(allocator, digest_buffer);
+				}
+			});
+		
+		std::vector<unsigned char> digest_buffer;
+		digest_buffer.reserve(default_digest_buffer_sz);
 
-	get_root_hash(root_hash);
+		allocator.get_object(root).template compute_hash<ApplyFn...>(allocator, digest_buffer);
+
+		get_root_hash(root_hash);
+	} else {
+		root_hash = Hash{};
+	}
 
 	output_hash = root_hash;
 
