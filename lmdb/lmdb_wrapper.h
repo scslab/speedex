@@ -51,8 +51,8 @@ class BaseLMDBInstance {
 
 public:
 
-  BaseLMDBInstance(size_t mapsize) 
-    : env{mapsize}
+  BaseLMDBInstance(size_t mapsize, size_t maxdbs = 50) 
+    : env{mapsize, maxdbs}
     , env_open{false}
     , metadata_dbi{0}
     , metadata_dbi_open{false}

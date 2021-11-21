@@ -40,11 +40,11 @@ dbval::hex() const
   return hexdump(mv_data, mv_size);
 }
 
-dbenv::dbenv(size_t mapsize) {
+dbenv::dbenv(size_t mapsize, size_t maxdbs) {
   MDB_env *env;
   check(mdb_env_create(&env), "mdb_env_create");
   reset(env);
-  mdb_env_set_maxdbs(env, 50);
+  mdb_env_set_maxdbs(env, maxdbs);
   mdb_env_set_mapsize(env, mapsize);
 }
 

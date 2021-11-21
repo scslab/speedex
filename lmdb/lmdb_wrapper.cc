@@ -45,14 +45,10 @@ MDB_dbi BaseLMDBInstance::create_db(const char* name) {
   auto wtx = env.wbegin();
   MDB_dbi dbi = wtx.open(name, MDB_CREATE);
 
-  if (metadata_dbi_open) {
-    throw std::runtime_error("double open");
+  if (!metadata_dbi_open) {
+    metadata_dbi = wtx.open("metadata", MDB_CREATE);
+    metadata_dbi_open = true;
   }
-
-  //if (!metadata_dbi_open) {
-  metadata_dbi = wtx.open("metadata", MDB_CREATE);
-  metadata_dbi_open = true;
-  //}
 
   auto preexist_check = wtx.get(metadata_dbi, dbval("persisted block"));
 
@@ -147,9 +143,6 @@ SharedLMDBInstance::get_data_dbi() {
 
 void 
 SharedLMDBInstance::create_db(const char* name) {
-  if (base_lmdb.get_persisted_round_number() != 0) {
-    throw std::runtime_error("cannot create db on already open base lmdb");
-  }
   local_dbi = base_lmdb.create_db(name);
   local_dbi_valid = true;
 }

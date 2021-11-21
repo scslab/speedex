@@ -82,7 +82,7 @@ public:
 	Roughly 1 billion.
 	*/
 	OrderbookManagerLMDB(size_t num_orderbooks)
-		: base_instance{0x40000000}
+		: base_instance{0x40000000, 400}
 		, num_orderbooks(num_orderbooks)
 		{}
 

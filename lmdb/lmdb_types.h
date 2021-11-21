@@ -98,7 +98,7 @@ struct dbenv : unique_destructor_t<mdb_env_close> {
       throw dberror(err, msg);
   }
 
-  dbenv(size_t mapsize);
+  dbenv(size_t mapsize, size_t maxdbs);
   dbenv(dbenv &&) = default;
   dbenv &operator=(dbenv &&) = default;
   void open(const char *path, unsigned flags = 0, mdb_mode_t mode = 0666);
