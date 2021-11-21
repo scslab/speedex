@@ -26,6 +26,7 @@ databases/
 clean_lmdbs
 counting_vm_hotstuff
 overlay_sim
+speedex_vm_hotstuff
 synthetic_data_gen
 trie_comparison
 
