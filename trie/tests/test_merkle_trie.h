@@ -353,4 +353,23 @@ public:
 		TS_ASSERT_EQUALS(trie.endow_lt_key(buf), 500);
 	}
 
+	void test_empty_hash() {
+
+		using ValueT = XdrTypeWrapper<Offer>;
+		using TrieT = MerkleTrie<ByteArrayPrefix<2>, ValueT, CombinedMetadata<OrderbookMetadata>>;
+
+
+		TrieT trie;
+		Hash hash;
+
+		trie.hash(hash);
+
+		MerkleTrie<ByteArrayPrefix<2>, EmptyValue, CombinedMetadata<OrderbookMetadata>> trie2;
+
+		Hash hash2;
+		trie2.hash(hash2);
+
+		TS_ASSERT_EQUALS(hash, hash2);
+	}
+
 };
