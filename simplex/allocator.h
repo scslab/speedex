@@ -741,14 +741,14 @@ public:
 			//, cached_value(0)
 			{
 				//if (cur_object != nullptr) {
-			//		cached_value = Allocator::get_value(*cur_object);
-			//	}
+				//	cached = *cur_object;//Allocator::get_value(*cur_object);
+				//}
 			}
 
 		iterator& operator++() {
-			cur_object = alloc.get(*cur_object);
+			cur_object = alloc.get( *cur_object);
 			//if (cur_object != nullptr) {
-			//	cached_value = Allocator::get_value(*cur_object);
+			//	cached = *cur_object;//Allocator::get_value(*cur_object);
 			//}
 
 			return *this;
@@ -794,10 +794,11 @@ public:
 
 		//	std::printf("new_obj: %p, %llx\n", &new_obj, new_obj);
 
-			Allocator::copy_next_obj_ptr(*new_obj, *cur_object);
+			Allocator::copy_next_obj_ptr(*new_obj,*cur_object);
 			Allocator::set_value(*new_obj, value);
 
 			Allocator::copy_next_obj_ptr(*cur_object, new_obj_addr);
+			//cached = *cur_object;
 
 		//	std::printf("post cur_obj %llx\n", *cur_object);
 		//	std::printf("new obj: %llx\n", new_obj);
@@ -816,6 +817,7 @@ public:
 			alloc.free(*cur_object);
 
 			Allocator::copy_next_obj_ptr(*cur_object, next_obj);
+			//cached = *cur_object;
 
 			return iterator(alloc.get(*cur_object));
 		}
@@ -850,11 +852,11 @@ public:
 		}
 	}
 
-	void print_list() const {
-		std::printf("printing list, start addr = %llx\n", before_list_elt_addr);
-		for (auto p : *this) {
-		}
-	}
+	//void print_list() const {
+	//	std::printf("printing list, start addr = %llx\n", before_list_elt_addr);
+	//	for (auto p : *this) {
+	//	}
+	//}
 };
 
 template<typename forward_list_t>

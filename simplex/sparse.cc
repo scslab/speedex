@@ -389,7 +389,8 @@ void remove_from_list(std::forward_list<uint16_t>& list, uint16_t idx) {
 	}
 }
 
-void remove_from_list(buffered_forward_list& list, uint16_t idx) {
+template<typename list_t>
+void remove_from_list(list_t& list, uint16_t idx) {
 	buffered_forward_list_iter it(list);
 	while (true) {
 		if (idx == *it) {

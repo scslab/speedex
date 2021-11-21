@@ -119,10 +119,10 @@ void run_experiment(size_t num_assets, std::unique_ptr<LPInstance>& instance, LP
 
 	bool glpk_res = false;
 
-/*	if (run_glpk(bounds, prices, instance, lp_solver, num_assets)) {
+	if (run_glpk(bounds, prices, instance, lp_solver, num_assets)) {
 		glpk_successes++;
 		glpk_res = true;
-	}*/
+	}
 
 	float glpk_time = measure_time(ts);
 
