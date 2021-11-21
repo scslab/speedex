@@ -60,6 +60,8 @@ class SpeedexVM {
 	BlockProducer block_producer;
 	BlockValidator block_validator;
 
+	std::atomic<bool> experiment_done = false;
+
 	void rewind_structs_to_committed_height();
 	size_t assemble_block(TaggedSingleBlockResults& measurements_base, BlockStateUpdateStatsWrapper& state_update_stats);
 
@@ -103,8 +105,17 @@ public:
 	void rewind_to_last_commit();
 
 	void init_clean();
-
 	void init_from_disk(hotstuff::HotstuffLMDB const& decided_block_cache);
+
+
+	// expose state to non-hotstuff components
+	bool experiment_is_done() const {
+		return experiment_done;
+	}
+
+	Mempool& get_mempool() {
+		return mempool_structs.mempool;
+	}
 };
 
 } /* speedex */

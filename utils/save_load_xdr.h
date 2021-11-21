@@ -63,7 +63,7 @@ load_xdr_from_file_fast(
 
 		return load_xdr_from_file(output, filename);
 
-	#elif
+	#else
 
 	void* buf_head = static_cast<void*>(buffer);
 	size_t aligned_buf_size = BUF_SIZE;

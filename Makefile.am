@@ -178,6 +178,7 @@ MAIN_CCS = \
 	main/simple.cc \
 	main/replicated_simulation_experiment_controller.cc \
 	main/solver_comparison.cc \
+	main/speedex_vm_hotstuff.cc \
 	main/synthetic_data_gen_from_params.cc \
 	main/trie_comparison.cc 
 
@@ -204,6 +205,7 @@ bin_PROGRAMS = \
 	simple \
 	replicated_simulation_experiment_controller \
 	solver_comparison \
+	speedex_vm_hotstuff \
 	synthetic_data_gen \
 	trie_comparison \
 	test
@@ -214,6 +216,7 @@ overlay_sim_SOURCES = $(SRCS) main/overlay_sim.cc
 simple_SOURCES = $(SRCS) main/simple.cc
 replicated_simulation_experiment_controller_SOURCES = $(SRCS) main/replicated_simulation_experiment_controller.cc
 solver_comparison_SOURCES = $(SRCS) main/solver_comparison.cc
+speedex_vm_hotstuff_SOURCES = $(SRCS) main/speedex_vm_hotstuff.cc
 synthetic_data_gen_SOURCES = $(SRCS) main/synthetic_data_gen_from_params.cc
 trie_comparison_SOURCES = $(SRCS) main/trie_comparison.cc
 

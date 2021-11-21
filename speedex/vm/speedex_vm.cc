@@ -212,6 +212,8 @@ SpeedexVM::propose()
 
 	size_t block_size = assemble_block(measurements_base, state_update_stats);
 
+	experiment_done = (block_size < 1000);
+
 	current_measurements.total_block_build_time = measure_time_from_basept(start_time);
 
 	HashedBlock new_block = speedex_block_creation_logic(
