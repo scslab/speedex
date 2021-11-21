@@ -102,6 +102,7 @@ public:
 		} else {
 			clear_open_links();
 		}
+		bv.clear();
 	}
 
 	FixedChildrenMap(ValueType value) 
