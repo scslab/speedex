@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <vector>
 
 #include "utils/async_worker.h"
@@ -74,6 +75,42 @@ public:
 		std::lock_guard lock(mtx);
 		work = ptrs;
 		cv.notify_all();
+	}
+};
+
+template<typename garbage_t>
+class ThunkGarbage {
+	std::vector<garbage_t*> to_delete;
+
+public:
+	ThunkGarbage() : to_delete() {}
+
+	ThunkGarbage(const ThunkGarbage&) = delete;
+	ThunkGarbage(ThunkGarbage&&) = delete;
+
+	~ThunkGarbage() {
+		for (auto* ptr : to_delete) {
+			delete ptr;
+		}
+	}
+
+	void add(garbage_t* garbage) {
+		to_delete.push_back(garbage);
+	}
+
+	//! Add a vector of garbage pointers
+	//! (i.e. the result of release() on another garbage object).
+	void add(std::vector<garbage_t*> ptrs) {
+		to_delete.insert(to_delete.end(), ptrs.begin(), ptrs.end());
+	}
+
+	//! Release the list of pointers (Caller becomes responsible for deleting
+	//! these pointers).
+	std::vector<garbage_t*>
+	release() {
+		auto out = std::move(to_delete);
+		to_delete.clear();
+		return out;
 	}
 };
 

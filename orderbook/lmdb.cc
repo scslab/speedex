@@ -7,7 +7,7 @@ namespace speedex {
 
 
 //Commits everything up to and including current_block_number
-ThunkGarbage
+std::unique_ptr<ThunkGarbage<typename OrderbookLMDB::trie_t>>
 __attribute__((warn_unused_result)) 
 OrderbookLMDB::write_thunks(const uint64_t current_block_number, dbenv::wtxn& wtx, bool debug) {
 
@@ -45,7 +45,7 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, dbenv::wtxn& wt
 //	}
 
 	if (relevant_thunks.size() == 0) {
-		return ThunkGarbage{};
+		return nullptr;
 	}
 
 // changed to inequality when thunk gaps were added
@@ -338,17 +338,17 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, dbenv::wtxn& wt
 		std::printf("done saving workunit\n");
 
 
-	ThunkGarbage output;
+	auto garbage = std::make_unique<ThunkGarbage<trie_t>>();
 
 	for (auto& thunk : relevant_thunks) {
-		output.add(
+		garbage -> add(
 			thunk.cleared_offers
 				.dump_contents_for_detached_deletion_and_clear());
 	}
 
 	//commit_wtxn(wtx, current_block_number);
 
-	return output;
+	return garbage;
 }
 
 OrderbookLMDB::OrderbookLMDB(OfferCategory const& category, OrderbookManagerLMDB& manager_lmdb) 

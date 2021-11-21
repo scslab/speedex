@@ -24,7 +24,7 @@ ReplicaInfo::parse(fy_node* info_yaml) {
 	size_t found = fy_node_scanf(
 		info_yaml,
 		"sk_seed %lu "
-		"hostname %1024s",
+		"hostname %1023s",
 		&sk_seed,
 		hostname_buf);
 

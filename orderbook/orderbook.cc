@@ -138,12 +138,12 @@ void Orderbook::generate_metadata_index() {
 }
 
 
-ThunkGarbage
+std::unique_ptr<ThunkGarbage<typename OrderbookTrie::TrieT>>
 __attribute__((warn_unused_result))
 Orderbook::persist_lmdb(uint64_t current_block_number, dbenv::wtxn& wtx) {
 
 	if (!lmdb_instance) {
-		return ThunkGarbage();
+		return nullptr;
 	}
 	return lmdb_instance.write_thunks(current_block_number, wtx);
 }

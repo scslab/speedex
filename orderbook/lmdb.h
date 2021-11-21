@@ -31,39 +31,6 @@ left inside the class when going out of scope, which should cut down
 on accidental memory leaks.
 */
 
-class ThunkGarbage {
-	using trie_t = OrderbookTrie::TrieT;
-	std::vector<trie_t*> to_delete;
-
-public:
-	ThunkGarbage() : to_delete() {}
-
-	~ThunkGarbage() {
-		for (auto* ptr : to_delete) {
-			delete ptr;
-		}
-	}
-
-	void add(trie_t* garbage) {
-		to_delete.push_back(garbage);
-	}
-
-	//! Add a vector of garbage pointers
-	//! (i.e. the result of release() on another garbage object).
-	void add(std::vector<trie_t*> ptrs) {
-		to_delete.insert(to_delete.end(), ptrs.begin(), ptrs.end());
-	}
-
-	//! Release the list of pointers (Caller becomes responsible for deleting
-	//! these pointers).
-	std::vector<trie_t*>
-	release() {
-		auto out = std::move(to_delete);
-		to_delete.clear();
-		return out;
-	}
-};
-
 class OrderbookManagerLMDB {
 
 	//External iface is set up so that we could introduce limited sharding here
@@ -139,8 +106,9 @@ public:
 
 		Returns a list of pointers which the caller is responsible for deleting.
 	*/
-	ThunkGarbage
-	__attribute__((warn_unused_result)) write_thunks(
+	std::unique_ptr<ThunkGarbage<trie_t>>
+	__attribute__((warn_unused_result)) 
+	write_thunks(
 		const uint64_t current_block_number,
 		dbenv::wtxn& wtx,
 		bool debug = false);

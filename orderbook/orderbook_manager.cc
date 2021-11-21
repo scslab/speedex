@@ -91,14 +91,17 @@ void OrderbookManager::persist_lmdb_for_loading(uint64_t current_block_number) {
 		auto& local_lmdb = lmdb.get_base_instance_by_index(i);
 
 		if (local_lmdb.get_persisted_round_number() < current_block_number) {
-			ThunkGarbage garbage;
+
+			ThunkGarbage<OrderbookTrie::TrieT> garbage;
 
 			auto wtx = local_lmdb.wbegin();
 
 			for (auto j = start; j < end; j++) {
 				auto orderbook_garbage 
 					= orderbooks[j].persist_lmdb(current_block_number, wtx);
-				garbage.add(orderbook_garbage.release());
+				if (orderbook_garbage != nullptr) {
+					garbage.add(orderbook_garbage -> release());
+				}
 			}
 
 			thunk_garbage_deleter.call_delete(garbage.release());
@@ -144,7 +147,7 @@ void OrderbookManager::persist_lmdb(uint64_t current_block_number) {
 	for (auto i = 0u; i < lmdb.get_num_base_instances(); i++) {
 		auto [start, end] = lmdb.get_base_instance_range(i);
 		auto& local_lmdb = lmdb.get_base_instance_by_index(i);
-		ThunkGarbage garbage;
+		ThunkGarbage<OrderbookTrie::TrieT> garbage;
 
 		auto wtx = local_lmdb.wbegin();
 
@@ -153,7 +156,9 @@ void OrderbookManager::persist_lmdb(uint64_t current_block_number) {
 			auto orderbook_garbage 
 				= orderbooks[j].persist_lmdb(current_block_number, wtx);
 
-			garbage.add(orderbook_garbage.release());
+			if (orderbook_garbage != nullptr) {
+				garbage.add(orderbook_garbage->release());
+			}
 		}
 		local_lmdb.commit_wtxn(wtx, current_block_number);
 
