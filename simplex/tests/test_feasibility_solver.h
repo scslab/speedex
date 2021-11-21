@@ -20,6 +20,7 @@ class FeasibilityTests : public CxxTest::TestSuite {
 
 	void setUp() {
 		alloc.clear();
+		c_alloc.clear();
 	}
 
 public:

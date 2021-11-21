@@ -23,7 +23,7 @@ template<typename rand_gen>
 std::vector<BoundsInfo> gen_bounds(size_t num_assets, rand_gen& gen) {
 
 	std::uniform_int_distribution<> bounds_dist(100, 1000);
-	std::uniform_int_distribution<> gap_dist(1000, 10000);
+	std::uniform_int_distribution<> gap_dist(10, 100);
 
 	std::vector<BoundsInfo> out;
 
@@ -76,6 +76,7 @@ bool run_glpk(std::vector<BoundsInfo>& info, std::vector<Price>& prices, std::un
 bool run_simplex(std::vector<BoundsInfo> const& info, std::vector<Price> const& prices, size_t num_assets, bool glpk_res) {
 
 	alloc.clear();
+	c_alloc.clear();
 
 	SimplexLPSolver solver(num_assets);
 
@@ -105,6 +106,9 @@ bool run_simplex(std::vector<BoundsInfo> const& info, std::vector<Price> const& 
 	}*/
 }
 
+float overall_sum_simplex = 0;
+size_t count = 0;
+
 template<typename rand_gen>
 void run_experiment(size_t num_assets, std::unique_ptr<LPInstance>& instance, LPSolver& lp_solver, rand_gen& gen, size_t& glpk_successes, size_t& simplex_successes) {
 
@@ -115,10 +119,10 @@ void run_experiment(size_t num_assets, std::unique_ptr<LPInstance>& instance, LP
 
 	bool glpk_res = false;
 
-	if (run_glpk(bounds, prices, instance, lp_solver, num_assets)) {
+/*	if (run_glpk(bounds, prices, instance, lp_solver, num_assets)) {
 		glpk_successes++;
 		glpk_res = true;
-	}
+	}*/
 
 	float glpk_time = measure_time(ts);
 
@@ -128,7 +132,11 @@ void run_experiment(size_t num_assets, std::unique_ptr<LPInstance>& instance, LP
 
 	float simplex_time = measure_time(ts);
 
-	std::printf("glpk_time(successes=%lu) %lf\t simplex_time(successes=%lu) %lf\n", glpk_successes, glpk_time, simplex_successes, simplex_time);
+	overall_sum_simplex += simplex_time;
+	count++;
+
+	std::printf("glpk_time(successes=%lu) %lf\t simplex_time(successes=%lu) %lf (avg %lf)\n",
+		glpk_successes, glpk_time, simplex_successes, simplex_time, overall_sum_simplex / count);
 }
 
 

@@ -101,19 +101,17 @@ public:
 	}
 };
 
-extern Allocator alloc;
-
 struct SignedTUColumn {
+	using list_t = buffered_forward_list;
 
-	//buffered_forward_list pos, neg;
-	std::forward_list<uint16_t> pos, neg;
+	list_t pos, neg;
+	//std::forward_list<uint16_t> pos, neg;
 
 	NegatedRows const& negated;
 
 	SignedTUColumn(NegatedRows const& negations)
-		//: pos(alloc)
-		//, neg(alloc)
-		: pos(), neg()
+		: pos()
+		, neg()
 		, negated(negations)
 		{}
 
@@ -129,11 +127,11 @@ struct SignedTUColumn {
 		pos.clear();
 		neg.clear();
 		if (negated[row_idx]) {
-			//neg.before_begin().insert_after(row_idx);
-			neg.insert_after(neg.before_begin(), row_idx);
+			neg.before_begin().insert_after(row_idx);
+			//neg.insert_after(neg.before_begin(), row_idx);
 		} else {
-			//pos.before_begin().insert_after(row_idx);
-			pos.insert_after(pos.before_begin(), row_idx);
+			pos.before_begin().insert_after(row_idx);
+			//pos.insert_after(pos.before_begin(), row_idx);
 		}
 	}
 
@@ -158,10 +156,35 @@ struct SignedTUColumn {
 		}
 		return 0;
 	}
+
+	class iterator {
+		buffered_forward_list_iter<list_t> pos_it, neg_it;
+		NegatedRows const& negations;
+
+	public:
+		iterator(SignedTUColumn& col) 
+			: pos_it(col.pos)
+			, neg_it(col.neg)
+			, negations(col.negated)
+			{}
+
+
+		void insert_pos(uint16_t row_idx);
+		void insert_neg(uint16_t row_idx);
+
+		void remove_pos(uint16_t row_idx);
+		void remove_neg(uint16_t row_idx);
+	};
+
+	iterator begin() {
+		return iterator(*this);
+	}
 };
 
 struct SignedTURow {
-	buffered_forward_list pos, neg;
+
+	using list_t = buffered_forward_list;
+	list_t pos, neg;
 	//std::forward_list<uint16_t> pos, neg;
 
 	using int128_t = __int128;
@@ -172,8 +195,8 @@ struct SignedTURow {
 	NegatedRows& negations;
 
 	SignedTURow(NegatedRows& negations)
-		: pos(alloc)
-		, neg(alloc)
+		: pos()
+		, neg()
 		, value(0)
 		, negation_idx(negations.size())
 		, negations(negations)
@@ -210,7 +233,7 @@ struct SignedTURow {
 	//void check() const;
 
 	class iterator {
-		buffered_forward_list_iter pos_it, neg_it;
+		buffered_forward_list_iter<list_t> pos_it, neg_it;
 		//forward_list_iter<uint16_t> pos_it, neg_it;
 		const bool negated;
 		const uint16_t row_idx;
@@ -230,7 +253,7 @@ struct SignedTURow {
 		bool try_erase_pos(uint16_t idx);
 		bool try_erase_neg(uint16_t idx);
 
-		void guarded_insert_pos(uint16_t idx, SignedTUColumn& mod_col) {
+		void guarded_insert_pos(uint16_t idx, SignedTUColumn::iterator& mod_col) {
 		//	std::printf("guarded_insert_pos: insert col %u to row %u\n", idx, row_idx);
 			if (!try_erase_neg(idx)) {
 		//		std::printf("erase_neg failed, inserting pos\n");
@@ -240,7 +263,7 @@ struct SignedTURow {
 				mod_col.remove_neg(row_idx);
 			}
 		}
-		void guarded_insert_neg(uint16_t idx, SignedTUColumn& mod_col) {
+		void guarded_insert_neg(uint16_t idx, SignedTUColumn::iterator& mod_col) {
 		//	std::printf("guarded_insert_neg: insert col %u to row %u\n", idx, row_idx);
 			if (!try_erase_pos(idx)) {
 		//		std::printf("erase_pos failed, inserting neg\n");

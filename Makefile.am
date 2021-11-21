@@ -116,6 +116,7 @@ RPC_SRCS = \
 	rpc/consensus_api_server.cc
 
 SIMPLEX_SRCS = \
+	simplex/allocator.cc \
 	simplex/bitcompressed_row.cc \
 	simplex/simplex.cc \
 	simplex/solver.cc \

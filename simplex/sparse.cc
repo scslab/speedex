@@ -2,8 +2,6 @@
 
 namespace speedex {
 
-Allocator alloc;
-
 template<typename list_t>
 void print_list(list_t const& l) {
 	for (auto const& l2 : l) {
@@ -202,7 +200,7 @@ SparseTURow::operator[](uint16_t idx) const {
 	}
 	return 0;
 } 
-
+/*
 void insert_to_list(std::forward_list<uint16_t>& list, size_t idx) {
 
 	forward_list_iter it(list);
@@ -214,11 +212,12 @@ void insert_to_list(std::forward_list<uint16_t>& list, size_t idx) {
 		it++;
 	}
 	it.insert(idx);
-}
+}*/
 
-void insert_to_list(buffered_forward_list& list, size_t idx) {
+template<typename forward_list_t>
+void insert_to_list(forward_list_t& list, size_t idx) {
 
-	buffered_forward_list_iter it(list);
+	buffered_forward_list_iter<forward_list_t> it(list);
 	while (!it.at_end()) {
 		if (idx < *it) {
 			it.insert(idx);
@@ -303,12 +302,85 @@ SignedTUColumn::insert_neg(uint16_t row) {
 	}
 }
 
+template<typename buffered_iter_t>
+void insert_to_iterator(buffered_iter_t& it, uint16_t idx) {
+	//std::printf("start insert_to_iterator\n");
+	while (!it.at_end()) {
+	//	std::printf("compare against %u\n", *it);
+		if (idx < *it) {
+			it.insert(idx);
+			return;
+		}
+		it++;
+	}
+	//std::printf("insert at end\n");
+	it.insert(idx);	
+}
+
+template<typename forward_list_t>
+bool try_erase_from_iterator(buffered_forward_list_iter<forward_list_t>& it, uint16_t value) {
+	//std::printf("try erase from buffered_it\n");
+	while (!it.at_end()) {
+	//	std::printf("*it=%u value=%u\n", *it, value);
+		if (*it == value) {
+			it.erase();
+			return true;
+		}
+		if (*it > value) {
+			return false;
+		}
+		it++;
+	}
+	return false;
+}
+
+
+void
+SignedTUColumn::iterator::insert_pos(uint16_t row) {
+	if (negations[row]) {
+		insert_to_iterator(neg_it, row);
+	} else {
+		insert_to_iterator(pos_it, row);
+	}
+}
+
+void
+SignedTUColumn::iterator::insert_neg(uint16_t row) {
+	if (negations[row]) {
+		insert_to_iterator(pos_it, row);
+	} else {
+		insert_to_iterator(neg_it, row);
+	}
+}
+
+void
+SignedTUColumn::iterator::remove_pos(uint16_t row) {
+	if (negations[row]) {
+		if (!try_erase_from_iterator(neg_it, row)) {
+			throw std::runtime_error("desync");
+		}
+	} else {
+		if (!try_erase_from_iterator(pos_it, row)) {
+			throw std::runtime_error("desync");
+		}	
+	}
+}
+void 
+SignedTUColumn::iterator::remove_neg(uint16_t row) {
+	if (negations[row]) {
+		if (!try_erase_from_iterator(pos_it, row)) {
+			throw std::runtime_error("desync");
+		}
+	} else {
+		if (!try_erase_from_iterator(neg_it, row)) {
+			throw std::runtime_error("desync");
+		}	
+	}
+}
+
 void remove_from_list(std::forward_list<uint16_t>& list, uint16_t idx) {
 	forward_list_iter it(list);
 	while (true) {
-		if (it.at_end()) {
-			throw std::runtime_error("hit list end too early");
-		}
 		if (idx == *it) {
 			it.erase();
 			return;
@@ -389,37 +461,6 @@ SparseTUColumn::remove(uint16_t row) {
 		}
 	} */
 	throw std::runtime_error("nnz accounting error");
-}
-
-template<typename buffered_iter_t>
-void insert_to_iterator(buffered_iter_t& it, uint16_t idx) {
-	//std::printf("start insert_to_iterator\n");
-	while (!it.at_end()) {
-	//	std::printf("compare against %u\n", *it);
-		if (idx < *it) {
-			it.insert(idx);
-			return;
-		}
-		it++;
-	}
-	//std::printf("insert at end\n");
-	it.insert(idx);	
-}
-
-bool try_erase_from_iterator(buffered_forward_list_iter& it, uint16_t value) {
-	//std::printf("try erase from buffered_it\n");
-	while (!it.at_end()) {
-	//	std::printf("*it=%u value=%u\n", *it, value);
-		if (*it == value) {
-			it.erase();
-			return true;
-		}
-		if (*it > value) {
-			return false;
-		}
-		it++;
-	}
-	return false;
 }
 
 bool try_erase_from_iterator(forward_list_iter<uint16_t>& it, uint16_t value) {
@@ -526,8 +567,10 @@ SparseTableau::do_pivot(uint16_t pivot_row, uint16_t pivot_col) {
 	auto& row = rows[pivot_row];
 	auto& col = cols[pivot_col];
 
-//	std::printf("\n\nprior to pivot on (%u, %u)\n", pivot_row, pivot_col);
-//	print("pivot prior");
+	//std::printf("\n\nprior to pivot on (%u, %u)\n", pivot_row, pivot_col);
+	//print("pivot prior");
+
+//	integrity_check();
 
 	auto pos_row_it = row.pos.begin();
 	auto neg_row_it = row.neg.begin();
@@ -566,42 +609,59 @@ SparseTableau::do_pivot(uint16_t pivot_row, uint16_t pivot_col) {
 
 	//Iterators for the rows with nonzero elts in the pivot col.
 	// divided by pos/neg, including accounting for negations
+
 	std::vector<SignedTURow::iterator> row_iters;
 
 	std::vector<uint16_t> negated_rows;
 	std::vector<uint16_t> touched_rows;
 
-	for (auto pos_nz : col.pos) {
-		//std::printf("found %u\n", pos_nz);
-		if (pos_nz != pivot_row) {
-
-			if (!negations[pos_nz]) {
-				rows[pos_nz].negate();
-				negated_rows.push_back(pos_nz);
+	auto add_pos_it = [this, &row_iters, &negated_rows, &touched_rows, &pivot_row] (uint16_t row_idx) {
+		if (row_idx != pivot_row) {
+			if (!negations[row_idx]) {
+				rows[row_idx].negate();
+				negated_rows.push_back(row_idx);
 			}
-			touched_rows.push_back(pos_nz);
-			row_iters.push_back(rows[pos_nz].begin_insert(pos_nz));
-
-
+			touched_rows.push_back(row_idx);
+			row_iters.push_back(rows[row_idx].begin_insert(row_idx));
 		}
-	}
+	};
 
-	for (auto neg_nz : col.neg) {
-
-		//std::printf("found %u\n", neg_nz);
-
-		if (neg_nz != pivot_row) {
-
-
-			if (negations[neg_nz]) {
-				rows[neg_nz].negate();
-				negated_rows.push_back(neg_nz);
+	auto add_neg_it = [this, &row_iters, &negated_rows, &touched_rows, &pivot_row] (uint16_t row_idx) {
+		if (row_idx != pivot_row) {
+			if (negations[row_idx]) {
+				rows[row_idx].negate();
+				negated_rows.push_back(row_idx);
 			}
+			touched_rows.push_back(row_idx);
+			row_iters.push_back(rows[row_idx].begin_insert(row_idx));
+		}
+	};
 
-			touched_rows.push_back(neg_nz);
+	auto pos_acc_it = col.pos.begin();
+	auto neg_acc_it = col.neg.begin();
 
-			row_iters.push_back(rows[neg_nz].begin_insert(neg_nz));
+	while(true) {
+		if (pos_acc_it == col.pos.end()) {
+			while(neg_acc_it != col.neg.end()) {
+				add_neg_it(*neg_acc_it);
+				++neg_acc_it;
+			}
+			break;
+		}
+		if (neg_acc_it == col.neg.end()) {
+			while(pos_acc_it != col.pos.end()) {
+				add_pos_it(*pos_acc_it);
+				++pos_acc_it;
+			}
+			break;
+		}
 
+		if (*pos_acc_it < *neg_acc_it) {
+			add_pos_it(*pos_acc_it);
+			++pos_acc_it;
+		} else {
+			add_neg_it(*neg_acc_it);
+			++neg_acc_it;
 		}
 	}
 
@@ -628,22 +688,19 @@ SparseTableau::do_pivot(uint16_t pivot_row, uint16_t pivot_col) {
 			//done
 			return;
 		}
-		//if (next_col_idx == pivot_col) {
-		//	continue;
-		//}
-
-		//std::printf("action on col %u, value %d\n", next_col_idx, coeff);
 
 		auto &mod_col = cols[next_col_idx];
 
+		auto mod_col_it = mod_col.begin();
+
 		for (auto& row_it : row_iters) {
 			if (coeff > 0) {
-				row_it.guarded_insert_pos(next_col_idx, mod_col);
+				row_it.guarded_insert_pos(next_col_idx, mod_col_it);
 			} else {
-				row_it.guarded_insert_neg(next_col_idx, mod_col);
+				row_it.guarded_insert_neg(next_col_idx, mod_col_it);
 			}
-		//	print("post insert");
-		//	integrity_check();
+			//print("post insert");
+			//integrity_check();
 		}
 	}
 	throw std::runtime_error("beyond here is dead code");

@@ -10,6 +10,11 @@ using namespace speedex;
 
 class TableauTests : public CxxTest::TestSuite {
 
+	void setUp() {
+		alloc.clear();
+		c_alloc.clear();
+	}
+
 public:
 
 	void test_set() {
@@ -91,9 +96,7 @@ public:
 	}
 
 	void test_insert_sequential() {
-		Allocator alloc;
-
-		buffered_forward_list list(alloc);
+		buffered_forward_list list;
 		auto it = list.before_begin();
 
 		it = it.insert_after(1);
@@ -112,9 +115,7 @@ public:
 	}
 
 	void test_insert_nonsequential() {
-		Allocator alloc;
-
-		buffered_forward_list list(alloc);
+		buffered_forward_list list;
 
 		auto it = list.before_begin();
 
@@ -137,9 +138,7 @@ public:
 	}
 
 	void test_erase_front() {
-		Allocator alloc;
-
-		buffered_forward_list list(alloc);
+		buffered_forward_list list;
 
 		auto it = list.before_begin();
 
@@ -169,9 +168,7 @@ public:
 	}
 
 	void test_buffered_iter() {
-		Allocator alloc;
-
-		buffered_forward_list list(alloc);
+		buffered_forward_list list;
 
 		buffered_forward_list_iter it(list);
 
@@ -198,9 +195,7 @@ public:
 	}
 
 	void test_erase_iter() {
-		Allocator alloc;
-
-		buffered_forward_list list(alloc);
+		buffered_forward_list list;
 
 		auto it = list.before_begin();
 
@@ -217,5 +212,162 @@ public:
 
 
 	}
+
+	void test_huge_list() {
+		buffered_forward_list list;
+
+		auto it = list.before_begin();
+
+		for (size_t i = 0; i < 0x4'0000; i++) {
+			it.insert_after(i % 0x1'0000);
+			it++;
+		}
+	}
+
+	void test_c_insert_sequential() {
+
+		compressed_forward_list list;
+		auto it = list.before_begin();
+
+		it = it.insert_after(1);
+		it = it.insert_after(2);
+		it = it.insert_after(3);
+		it = it.insert_after(4);
+		it = it.insert_after(5);
+
+		std::vector<uint16_t> res;
+		for (auto val : list) {
+			res.push_back(val);
+		}
+
+		TS_ASSERT_EQUALS(res.size(), 5);
+		TS_ASSERT_EQUALS(res[0], 1);
+		TS_ASSERT_EQUALS(res[1], 2);
+		TS_ASSERT_EQUALS(res[2], 3);
+		TS_ASSERT_EQUALS(res[3], 4);
+		TS_ASSERT_EQUALS(res[4], 5);
+	}
+
+	void test_c_insert_reverse() {
+		compressed_forward_list list;
+		auto it = list.before_begin();
+
+		it.insert_after(5);
+		it.insert_after(4);
+		it.insert_after(3);
+		it.insert_after(2);
+		it.insert_after(1);
+
+
+		std::vector<uint16_t> res;
+		for (auto val : list) {
+			res.push_back(val);
+		}
+
+		TS_ASSERT_EQUALS(res.size(), 5);
+		TS_ASSERT_EQUALS(res[0], 1);
+		TS_ASSERT_EQUALS(res[1], 2);
+		TS_ASSERT_EQUALS(res[2], 3);
+		TS_ASSERT_EQUALS(res[3], 4);
+		TS_ASSERT_EQUALS(res[4], 5);
+	}
+
+	void test_c_insert_mixed() {
+		compressed_forward_list list;
+		auto it = list.before_begin();
+
+		it.insert_after(3);
+		it.insert_after(2);
+		it.insert_after(1);
+		++it;
+		++it;
+		++it;
+		it.insert_after(5);
+		it.insert_after(4);
+		
+		std::vector<uint16_t> res;
+		for (auto val : list) {
+			res.push_back(val);
+		}
+		
+		TS_ASSERT_EQUALS(res.size(), 5);
+		TS_ASSERT_EQUALS(res[0], 1);
+		TS_ASSERT_EQUALS(res[1], 2);
+		TS_ASSERT_EQUALS(res[2], 3);
+		TS_ASSERT_EQUALS(res[3], 4);
+		TS_ASSERT_EQUALS(res[4], 5);
+	}
+
+	void test_c_erase_head() {
+		compressed_forward_list list;
+		auto it = list.before_begin();
+
+		it = it.insert_after(1);
+		it = it.insert_after(2);
+
+		it = list.before_begin();
+
+		it.erase_after();
+		
+		std::vector<uint16_t> res;
+		for (auto val : list) {
+			res.push_back(val);
+		}
+
+		TS_ASSERT_EQUALS(res.size(), 1);
+		TS_ASSERT_EQUALS(res[0], 2);
+	}
+
+	void test_c_erase_iter() {
+		compressed_forward_list list;
+
+		auto it = list.before_begin();
+
+		it = it.insert_after(1);
+		it = it.insert_after(2);
+		it = it.insert_after(3);
+
+		it = list.begin();
+
+		auto it_after = it.erase_after();
+
+		TS_ASSERT_EQUALS(*it, 1);
+		TS_ASSERT_EQUALS(*it_after, 3);
+	}
+
+	void test_empty_list() {
+		compressed_forward_list list;
+
+		std::vector<uint16_t> res;
+		for (auto val : list) {
+			res.push_back(val);
+		}
+
+		TS_ASSERT_EQUALS(res.size(), 0);
+	}
+
+	void test_erase_firstiter_condition() {
+		compressed_forward_list list;
+
+		auto it = list.before_begin();
+		it = it.insert_after(1);
+		it = it.insert_after(2);
+		it = it.insert_after(3);
+		it = list.before_begin();
+		it.erase_after();
+
+
+
+		std::vector<uint16_t> res;
+		for (auto val : list) {
+			res.push_back(val);
+		}
+
+		TS_ASSERT_EQUALS(res.size(), 2);
+		TS_ASSERT_EQUALS(res[0], 2);
+		TS_ASSERT_EQUALS(res[1], 3);
+	}
+
+
 
 };
