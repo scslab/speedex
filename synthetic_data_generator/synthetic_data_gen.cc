@@ -597,7 +597,9 @@ void GeneratorState<random_generator>::make_block(const std::vector<double>& pri
 
 	signer.sign_block(output);
 
-	if (save_xdr_to_file(output, filename.c_str())) {
+	xdr::opaque_vec<> serialized_output = xdr::xdr_to_opaque(output);
+
+	if (save_xdr_to_file(serialized_output, filename.c_str())) {
 		throw std::runtime_error("was not able to save file!");
 	}
 
