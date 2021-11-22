@@ -58,14 +58,14 @@ def dump( sock ):
         buf = sock.recv( 0x10000 )
         if not buf:
             break
-        sys.stdout.write( buf )
+        sys.stdout.write( buf.decode('utf-8' ))
 
     sock.close()
 
 try:
     opts, args = getopt.getopt( sys.argv[ 1: ], "achns:p:v", [ "all", "client-version", "help", "no-cache", "server=", "port=", "version" ] )
 except getopt.GetoptError as err:
-    print str( err )
+    print (str( err ))
     usage()
     sys.exit( 1 )
 
@@ -75,9 +75,9 @@ command = None
 
 for opt, param in opts:
     if opt in ( "-a", "--all" ):
-        command = "all"
+        command = b"all"
     elif opt in ( "-c", "--client-version" ):
-        print "1.1"
+        print ("1.1")
         sys.exit( 0 )
     elif opt in ( "-h", "--help" ):
         usage()
@@ -90,13 +90,13 @@ for opt, param in opts:
     elif opt in ( "-p", "--port" ):
         port = int( param )
     elif opt in ( "-v", "--version" ):
-        command = "version"
+        command = b"version"
 
 if command == None:
     if len( args ) > 0:
-        command = args[ 0 ]
+        command = os.fsencode(args[ 0 ])
     else:
-        print >> sys.stderr, sys.argv[ 0 ] + ": no command specified"
+        print (sys.argv[ 0 ] + ": no command specified", file = sys.stderr)
         sys.exit( 1 )
 
 # Our tmcd server is also our DNS server, so that's how we find it.
@@ -127,7 +127,7 @@ server = socket.gethostbyname(server)
 
 sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
 sock.connect( (server, port) )
-sock.send( "geni_" + command )
+sock.send( b"geni_" + command )
 
 firstchar = sock.recv( 1 )
 if not firstchar:
@@ -136,7 +136,7 @@ if not firstchar:
 
 if firstchar != "\x00":
     # old protocol -- just dump everything
-    sys.stdout.write( firstchar )
+    sys.stdout.write( firstchar.decode('utf-8'))
     dump( sock )
     sys.exit( 0 )
 
@@ -156,5 +156,5 @@ if nextchar == "\x00":
         sys.stderr.write( buf )
 
 # new protocol, success
-sys.stdout.write( nextchar )
+sys.stdout.write( nextchar.decode('utf-8' ))
 dump( sock )
