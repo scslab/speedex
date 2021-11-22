@@ -1,3 +1,5 @@
+#include "automation/get_replica_id.h"
+
 #include "config/replica_config.h"
 
 #include "hotstuff/hotstuff.h"
@@ -108,7 +110,7 @@ int main(int argc, char* const* argv)
 	}
 
 	if (!self_id) {
-		usage();
+		self_id = get_replica_id();
 	}
 	if (!config_file) {
 		usage();
