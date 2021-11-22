@@ -1,0 +1,7 @@
+---
+- name: git clone
+  hosts: all
+  tasks:
+          - name: git_clone
+            shell: "cd ~/xfs && git clone --recursive https://github.com/scslab/speedex.git"
+

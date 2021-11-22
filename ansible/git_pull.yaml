@@ -1,0 +1,7 @@
+---
+- name: git pull
+  hosts: all
+  tasks:
+          - name: git_pull
+            shell: "cd ~/xfs/speedex && git pull"
+

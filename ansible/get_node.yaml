@@ -1,0 +1,7 @@
+---
+- name: getreplica
+  hosts: all
+  tasks: 
+          - name: get_replica
+            shell: "cd ~/xfs/speedex/automation && ./get_node.sh"
+
