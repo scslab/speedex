@@ -84,7 +84,7 @@ void BlockHeaderHashMap::persist_lmdb(uint64_t current_block_number) {
 		auto cur_bytes = xdr::xdr_to_opaque(unwrapped_value);
 
 		dbval hash_val{cur_bytes};
-		wtx.put(lmdb_instance.get_data_dbi(), key, hash_val);
+		wtx.put(lmdb_instance.get_data_dbi(), &key, &hash_val);
 	}
 
 	lmdb_instance.commit_wtxn(wtx, current_block_number);

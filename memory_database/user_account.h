@@ -264,16 +264,13 @@ public:
 	//! based on uncommitted account balances.
 	AccountCommitment tentative_commitment() const;
 
-	//! Convert an account ID into a key (byte string) for lmdb.
-	static dbval produce_lmdb_key(const AccountID& owner);
-
 	//! Convert an lmdb key (byte string) into an account id.
 	static AccountID read_lmdb_key(const dbval& key);
 	
 	void log() {
 		for (unsigned int i = 0; i < owned_assets.size(); i++) {
 			std::printf (
-				"%u=%lld ", i, owned_assets[i].lookup_available_balance());
+				"%u=%ld ", i, owned_assets[i].lookup_available_balance());
 		}
 		std::printf("\n");
 	}

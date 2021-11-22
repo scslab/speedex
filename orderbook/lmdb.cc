@@ -203,7 +203,7 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, dbenv::wtxn& wt
 
 					auto value_buf = xdr::xdr_to_opaque(cur_offer);
 					dbval value = dbval{value_buf.data(), value_buf.size()};
-					wtx.put(get_data_dbi(), db_key, value);
+					wtx.put(get_data_dbi(), &db_key, &value);
 				} else {
 					break;
 				}
@@ -291,7 +291,7 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, dbenv::wtxn& wt
 		if (partial_exec_offer.amount > 0) {
 			auto modified_offer_buf = xdr::xdr_to_opaque(partial_exec_offer);
 			dbval modified_offer = dbval{modified_offer_buf.data(), modified_offer_buf.size()};//xdr_to_dbval(partial_exec_offer);
-			wtx.put(get_data_dbi(), partial_exec_key, modified_offer);
+			wtx.put(get_data_dbi(), &partial_exec_key, &modified_offer);
 		} else {
 			//partial_exec_offer.amount = 0
 			wtx.del(get_data_dbi(), partial_exec_key);

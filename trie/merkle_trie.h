@@ -1706,7 +1706,7 @@ compute_hash_branch_node(
 		}
 		if (child_meta.size < child_meta.num_deleted_subnodes) {
 			std::printf(
-				"child_meta size: %llu child num_deleted_subnodes: %d\n", 
+				"child_meta size: %lu child num_deleted_subnodes: %d\n", 
 				child_meta.size, 
 				child_meta.num_deleted_subnodes);
 			(*iter).second->_log("my subtree:");

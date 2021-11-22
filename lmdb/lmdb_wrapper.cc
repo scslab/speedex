@@ -67,7 +67,9 @@ MDB_dbi BaseLMDBInstance::create_db(const char* name) {
 
 void 
 BaseLMDBInstance::write_persisted_round_number(dbenv::wtxn& wtx, uint64_t round_number) {
-  wtx.put(metadata_dbi, dbval("persisted block"), dbval(&round_number, sizeof(uint64_t)));
+  dbval persisted_key = dbval("persisted block");
+  dbval round_value = dbval(&round_number, sizeof(uint64_t));
+  wtx.put(metadata_dbi, &persisted_key, &round_value);
 }
 
 

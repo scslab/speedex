@@ -107,6 +107,13 @@ public:
 	void put_vm_in_proposer_mode() {
 		vm_bridge.put_vm_in_proposer_mode();
 	}
+
+	bool proposal_buffer_is_empty() const {
+		return vm_bridge.proposal_buffer_is_empty();
+	}
+	void stop_proposals() {
+		vm_bridge.stop_proposals();
+	}	
 };
 
 } /* hotstuff */

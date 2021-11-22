@@ -32,6 +32,7 @@ void SpeedexOptions::parse_options(const char* filename) {
 	if (count != 4) {
 		throw std::runtime_error("failed to parse options yaml");
 	}
+	fy_document_destroy(fyd);
 }
 
 

@@ -23,7 +23,7 @@ class VMControlInterface : public speedex::AsyncWorker {
 	using proposal_buffer_t = std::unique_ptr<typename VMType::block_type>;
 	using submission_t = std::unique_ptr<typename VMType::block_type>;
 
-	constexpr static size_t PROPOSAL_BUFFER_TARGET = 3;
+	size_t PROPOSAL_BUFFER_TARGET = 3;
 
 	std::vector<submission_t> blocks_to_validate;
 
@@ -77,6 +77,14 @@ public:
 	}
 	void init_from_disk(HotstuffLMDB const& decided_block_cache) {
 		vm_instance -> init_from_disk(decided_block_cache);
+	}
+	bool proposal_buffer_is_empty() const {
+		std::lock_guard lock(mtx);
+		return proposal_buffer.empty() && (PROPOSAL_BUFFER_TARGET == 0);
+	}
+	void stop_proposals() {
+		std::lock_guard lock(mtx);
+		PROPOSAL_BUFFER_TARGET = 0;
 	}
 };
 

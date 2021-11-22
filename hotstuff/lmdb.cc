@@ -60,7 +60,7 @@ HotstuffLMDB::txn::add_decided_block_(block_ptr_t blk, std::vector<uint8_t> cons
 	dbval value_val{value_bytes};
 	dbval key_val{key_bytes};
 
-	tx.put(data_dbi, key_val, value_val);
+	tx.put(data_dbi, &key_val, &value_val);
 	//commit_wtxn(wtx, blk -> get_height());
 }
 
@@ -94,8 +94,10 @@ HotstuffLMDB::txn::set_qc_on_top_block(QuorumCertificate const& qc) {
 	auto bytes = xdr::xdr_to_opaque(qc.serialize());
 
 	dbval qc_dbval = dbval{bytes};
+	
+	dbval qc_key = dbval{"qc"};
 
-	tx.put(meta_dbi, dbval{"qc"}, qc_dbval);
+	tx.put(meta_dbi, &qc_key, &qc_dbval);
 }
 
 QuorumCertificateWire 

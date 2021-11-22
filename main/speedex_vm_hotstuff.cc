@@ -24,6 +24,8 @@
 using namespace hotstuff;
 using namespace speedex;
 
+using namespace std::chrono_literals;
+
 [[noreturn]]
 static void usage() {
 	std::printf(R"(
@@ -122,6 +124,8 @@ int main(int argc, char* const* argv)
 
 	auto sk = config.parse(fyd, *self_id);
 
+	fy_document_destroy(fyd);
+
 
 	if (speedex_options_file.size() == 0) {
 		usage();
@@ -162,6 +166,8 @@ int main(int argc, char* const* argv)
 		pmaker.set_self_as_proposer();
 	}
 
+	std::this_thread::sleep_for(2000ms);
+
 	while (true) {
 		if (pmaker.should_propose()) {
 			std::printf("attempting propose\n");
@@ -169,10 +175,14 @@ int main(int argc, char* const* argv)
 			pmaker.do_propose();
 			pmaker.wait_for_qc();
 		}
-		//std::this_thread::sleep_for(1000ms);
-		if (vm -> experiment_is_done()) {
+		std::this_thread::sleep_for(1000ms);
+		if (app.proposal_buffer_is_empty()) {
+			std::printf("done with experiment, writing measurements\n");
 			vm -> write_measurements();
-			return 0;
+			exit(0);
+		}
+		if (vm -> experiment_is_done()) {
+			app.stop_proposals();
 		}
 	}
 }

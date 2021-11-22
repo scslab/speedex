@@ -35,12 +35,12 @@ public:
 			auto pk_opt =  management_structures.db.get_pk_nolock(sender_acct);
 			if (!pk_opt) {
 
-				std::printf("no pk! account %llu\n", sender_acct);
+				std::printf("no pk! account %lu\n", sender_acct);
 				temp_valid = false;
 				break;
 			}
 			if (!sig_check(block[i].transaction, block[i].signature, *pk_opt)) {
-				std::printf("tx %lu failed, %llu\n", i, sender_acct);
+				std::printf("tx %lu failed, %lu\n", i, sender_acct);
 				temp_valid = false;
 				break;
 			}

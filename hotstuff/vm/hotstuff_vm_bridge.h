@@ -124,6 +124,13 @@ public:
 		vm_interface.set_proposer();
 	}
 
+	bool proposal_buffer_is_empty() const {
+		return vm_interface.proposal_buffer_is_empty();
+	}
+	void stop_proposals() {
+		vm_interface.stop_proposals();
+	}
+
 };
 
 } /* hotstuff */

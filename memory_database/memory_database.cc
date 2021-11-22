@@ -13,7 +13,7 @@ namespace speedex {
 UserAccount& MemoryDatabase::find_account(account_db_idx user_index) {
 	uint64_t db_size = database.size();
 	if (user_index >= db_size) {
-		std::printf("invalid db access: %llu of %llu\n", user_index, db_size);
+		std::printf("invalid db access: %lu of %lu\n", user_index, db_size);
 		throw std::runtime_error("invalid db idx access");
 	}
 	return database[user_index];
@@ -22,7 +22,7 @@ UserAccount& MemoryDatabase::find_account(account_db_idx user_index) {
 const UserAccount& MemoryDatabase::find_account(account_db_idx user_index) const {
 	uint64_t db_size = database.size();
 	if (user_index >= db_size) {
-		std::printf("invalid db access: %llu of %llu\n", user_index, db_size);
+		std::printf("invalid db access: %lu of %lu\n", user_index, db_size);
 		throw std::runtime_error("invalid db idx access");
 	}
 	return database[user_index];
@@ -483,7 +483,7 @@ void MemoryDatabase::clear_persistence_thunks_and_reload(uint64_t expected_persi
 				[this, &thunk] (auto r) {
 					auto rtx = account_lmdb_instance.rbegin();
 					for (auto idx = r.begin(); idx < r.end(); idx++) {
-						dbval key = UserAccount::produce_lmdb_key(thunk.kvs->at(idx).key);
+						dbval key = dbval{&thunk.kvs->at(idx).key, sizeof(AccountID)};
 
 						auto res = rtx.get(account_lmdb_instance.get_data_dbi(), key);
 						
@@ -554,7 +554,7 @@ void MemoryDatabase::commit_persistence_thunks(uint64_t max_round_number) {
 		// Used to require strict sequentiality, now gaps allowed in case of validation failures
 		// due to byzantine proposers.
 		if (thunk.current_block_number < current_block_number + 1) {
-			std::printf("i = %lu thunks[i].current_block_number= %llu current_block_number = %llu\n", i, thunk.current_block_number, current_block_number);
+			std::printf("i = %lu thunks[i].current_block_number= %lu current_block_number = %lu\n", i, thunk.current_block_number, current_block_number);
 			throw std::runtime_error("can't persist blocks in wrong order!!!");
 		}
 
@@ -563,10 +563,10 @@ void MemoryDatabase::commit_persistence_thunks(uint64_t max_round_number) {
 
 			auto& kv = (*thunk.kvs)[i];
 		
-			dbval key = UserAccount::produce_lmdb_key(kv.key);
+			dbval key = dbval{&kv.key, sizeof(AccountID)};//UserAccount::produce_lmdb_key(kv.key);
 
 			if (!(kv.msg.size())) {
-				std::printf("missing value for kv %llu\n", kv.key);
+				std::printf("missing value for kv %lu\n", kv.key);
 				std::printf("thunk.kvs.size() = %lu\n", thunk.kvs->size());
 				throw std::runtime_error("failed to accumulate value in persistence thunk");
 			}
@@ -574,7 +574,7 @@ void MemoryDatabase::commit_persistence_thunks(uint64_t max_round_number) {
 			dbval val = dbval{kv.msg.data(), kv.msg.size()};
 			
 			if (account_lmdb_instance) {
-				write_txn.put(account_lmdb_instance.get_data_dbi(), key, val);
+				write_txn.put(account_lmdb_instance.get_data_dbi(), &key, &val);
 			}
 		}
 		current_block_number = thunk.current_block_number;
@@ -618,7 +618,7 @@ void MemoryDatabase::persist_lmdb(uint64_t current_block_number) {
 	int modified_count = 0;
 	for (account_db_idx i = 0; i < database.size(); i++) {
 		if (i % 100000 == 0) {
-			std::printf("%lld\n", i);
+			std::printf("%ld\n", i);
 		}
 
 		modified_count++;
@@ -627,10 +627,11 @@ void MemoryDatabase::persist_lmdb(uint64_t current_block_number) {
 
 		auto commitment_buf = xdr::xdr_to_opaque(commitment);
 		dbval val = dbval{commitment_buf.data(), commitment_buf.size()};
-		dbval key = UserAccount::produce_lmdb_key(database[i].get_owner());
+		AccountID owner = database[i].get_owner();
+		dbval key = dbval(&owner, sizeof(AccountID));//UserAccount::produce_lmdb_key(database[i].get_owner());
 
 
-		write_txn.put(account_lmdb_instance.get_data_dbi(), key, val);
+		write_txn.put(account_lmdb_instance.get_data_dbi(), &key, &val);
 
 	}
 

@@ -186,7 +186,7 @@ BlockProducer::build_block(
 
 	MEMPOOL_INFO_F(
 		for (auto iter = producer.status_counts.begin(); iter != producer.status_counts.end(); iter++) {
-			std::printf("block_producer.cc:   mempool stats: code %d count %llu\n", iter->first, iter->second);
+			std::printf("block_producer.cc:   mempool stats: code %d count %lu\n", iter->first, iter->second);
 		}
 		std::printf("block_producer.cc: new_offers %u cancel_offer %u payment %u new_account %u\n", 
 			producer.stats.new_offer_count, producer.stats.cancel_offer_count, producer.stats.payment_count, producer.stats.new_account_count); 

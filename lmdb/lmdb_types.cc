@@ -106,9 +106,9 @@ dbenv::txn::get(dbi db, dbval key) const
 }
 
 void
-dbenv::wtxn::put(dbi db, dbval key, dbval val, unsigned flags) const
+dbenv::wtxn::put(dbi db, dbval* key, dbval* val, unsigned flags) const
 {
-  check (mdb_put(tx_, db, &key, &val, flags), "mdb_db_put");
+  check (mdb_put(tx_, db, key, val, flags), "mdb_db_put");
 }
 
 bool

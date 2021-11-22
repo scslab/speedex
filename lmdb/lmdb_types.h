@@ -227,7 +227,7 @@ struct dbenv : unique_destructor_t<mdb_env_close> {
     wtxn wbegin() const;
 
     //! Throws an exceptin on any failure.
-    void put(dbi, dbval key, dbval val, unsigned flags = 0) const;
+    void put(dbi, dbval* key, dbval* val, unsigned flags = 0) const;
     //! Throws an exception on failures except MDB_NOOVERWRITE, in
     //! which case returns false and val is updated to existing value.
     bool tryput(dbi, dbval key, dbval *val, unsigned flags = 0) const;
