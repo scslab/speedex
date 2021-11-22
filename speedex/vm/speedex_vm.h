@@ -26,7 +26,7 @@ namespace speedex {
 class ExperimentParameters;
 
 class SpeedexVM {
-	constexpr static size_t PERSIST_BATCH = 5;
+	const size_t PERSIST_BATCH;
 	
 	SpeedexManagementStructures management_structures;
 

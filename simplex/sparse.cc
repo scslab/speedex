@@ -304,16 +304,13 @@ SignedTUColumn::insert_neg(uint16_t row) {
 
 template<typename buffered_iter_t>
 void insert_to_iterator(buffered_iter_t& it, uint16_t idx) {
-	//std::printf("start insert_to_iterator\n");
 	while (!it.at_end()) {
-	//	std::printf("compare against %u\n", *it);
 		if (idx < *it) {
 			it.insert(idx);
 			return;
 		}
 		it++;
 	}
-	//std::printf("insert at end\n");
 	it.insert(idx);	
 }
 

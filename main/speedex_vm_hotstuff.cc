@@ -146,6 +146,10 @@ int main(int argc, char* const* argv)
 	SpeedexOptions speedex_options;
 	speedex_options.parse_options(speedex_options_file.c_str());
 
+	if (speedex_options.num_assets != params.num_assets) {
+		throw std::runtime_error("mismatch in num assets between speedex_options and experiment_options");
+	}
+
 	auto vm = std::make_shared<SpeedexVM>(params, speedex_options, experiment_results_folder);
 
 	HotstuffApp app(config, *self_id, sk, vm);

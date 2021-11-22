@@ -32,7 +32,6 @@ usage: synthetic_data_gen --speedex_options=<options_yaml, required>
 enum opttag {
 	OPT_REPLICA_ID = 0x100,
 	OPT_CONFIG_FILE,
-	SPEEDEX_OPTIONS,
 	EXPERIMENT_OPTIONS,
 	EXPERIMENT_NAME,
 	JUST_PARAMS
@@ -41,7 +40,6 @@ enum opttag {
 static const struct option opts[] = {
 	{"replica_id", required_argument, nullptr, OPT_REPLICA_ID},
 	{"config_file", required_argument, nullptr, OPT_CONFIG_FILE},
-	{"speedex_options", required_argument, nullptr, SPEEDEX_OPTIONS},
 	{"exp_options", required_argument, nullptr, EXPERIMENT_OPTIONS},
 	{"exp_name", required_argument, nullptr, EXPERIMENT_NAME},
 	{"just_params", no_argument, nullptr, JUST_PARAMS},
@@ -62,7 +60,6 @@ int main(int argc, char* const* argv)
 
 	bool just_params = false;
 
-	std::string speedex_options_file;
 	std::string experiment_options_file;
 	std::string experiment_name;
 	
@@ -77,9 +74,6 @@ int main(int argc, char* const* argv)
 				break;
 			case OPT_CONFIG_FILE:
 				config_file = optarg;
-				break;
-			case SPEEDEX_OPTIONS:
-				speedex_options_file = optarg;
 				break;
 			case EXPERIMENT_OPTIONS:
 				experiment_options_file = optarg;
@@ -114,10 +108,6 @@ int main(int argc, char* const* argv)
 		conf_pair->second.parse(fyd, conf_pair->first);
 	}
 
-	if (speedex_options_file.size() == 0) {
-		usage();
-	}
-
 	if (experiment_options_file.size() == 0) {
 		usage();
 	}
@@ -143,11 +133,6 @@ int main(int argc, char* const* argv)
 	params.account_list_filename = output_root + "accounts";
 	params.default_amount = 100'000'000;
 
-	SpeedexOptions speedex_options;
-	speedex_options.parse_options(speedex_options_file.c_str());
-	
-	params.num_threads = 0; // SET LATER
-	params.persistence_frequency = speedex_options.persistence_frequency;
 	params.num_blocks = options.num_blocks;
 
 
@@ -156,10 +141,6 @@ int main(int argc, char* const* argv)
 	}
 	if (mkdir_safe(output_root.c_str())) {
 		std::printf("directory %s already exists, continuing\n", output_root.c_str());
-	}
-
-	if (params.num_assets != speedex_options.num_assets) {
-		throw std::runtime_error("mismatch in number of assets.  Are you sure?");
 	}
 
 	auto params_file = output_root + std::string("params");

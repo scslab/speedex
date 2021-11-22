@@ -16,7 +16,8 @@ SpeedexVM::SpeedexVM(
 		const ExperimentParameters& params,
 		const SpeedexOptions& options,
 		std::string measurement_output_prefix)
-	: management_structures(options.num_assets, options.get_approx_params())
+	: PERSIST_BATCH(options.persistence_frequency)
+	, management_structures(options.num_assets, options.get_approx_params())
 	, operation_mtx()
 	, confirmation_mtx()
 	, proposal_base_block()
