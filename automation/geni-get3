@@ -1,0 +1,160 @@
+#!/usr/bin/env python
+#
+# Copyright (c) 2013 University of Utah and the Flux Group.
+# Converted to python3 from python2.
+#
+# {{{GENIPUBLIC-LICENSE
+#
+# GENI Public License
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and/or hardware specification (the "Work") to
+# deal in the Work without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Work, and to permit persons to whom the Work
+# is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Work.
+#
+# THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
+# IN THE WORK.
+#
+# }}}
+#
+
+import getopt
+import re
+import socket
+import sys
+import os
+
+PORT=7777
+VERSION=1
+
+def usage():
+    print ("Usage:")
+    print ("    " + sys.argv[ 0 ] + " [options] [command]")
+    print ("")
+    print ("Options:")
+    print ("    -a, --all             dump all information available")
+    print ("    -c, --client-version  display client version")
+    print ("    -h, --help            show this message")
+    print ("    -n, --no-cache        disable reading cached results")
+    print ("    -s, --server          specify server name/address")
+    print ("    -p, --port            specify server port")
+    print ("    -v, --version         display server version")
+    print ("")
+    print ("Try \"" + sys.argv[ 0 ] + " commands\" for a list of supported commands.")
+
+def dump( sock ):
+    while True:
+        buf = sock.recv( 0x10000 )
+        if not buf:
+            break
+        sys.stdout.write( buf )
+
+    sock.close()
+
+try:
+    opts, args = getopt.getopt( sys.argv[ 1: ], "achns:p:v", [ "all", "client-version", "help", "no-cache", "server=", "port=", "version" ] )
+except getopt.GetoptError as err:
+    print str( err )
+    usage()
+    sys.exit( 1 )
+
+server = None
+port = PORT
+command = None
+
+for opt, param in opts:
+    if opt in ( "-a", "--all" ):
+        command = "all"
+    elif opt in ( "-c", "--client-version" ):
+        print "1.1"
+        sys.exit( 0 )
+    elif opt in ( "-h", "--help" ):
+        usage()
+        sys.exit( 0 )
+    elif opt in ( "-n", "--no-cache" ):
+        # Ignored; we don't currently cache anyway...
+        pass
+    elif opt in ( "-s", "--server" ):
+        server = param
+    elif opt in ( "-p", "--port" ):
+        port = int( param )
+    elif opt in ( "-v", "--version" ):
+        command = "version"
+
+if command == None:
+    if len( args ) > 0:
+        command = args[ 0 ]
+    else:
+        print >> sys.stderr, sys.argv[ 0 ] + ": no command specified"
+        sys.exit( 1 )
+
+# Our tmcd server is also our DNS server, so that's how we find it.
+# But we can be overridden by /etc/emulab/bossnode .
+if not server and os.access("/etc/emulab/bossnode",os.R_OK):
+    fd = open( "/etc/emulab/bossnode", "r" )
+    lines = fd.readlines()
+    for line in lines:
+        match = re.search( r"([0-9.]+)", line )
+        if match:
+            server = match.group( 1 )
+            break
+    fd.close()
+if not server:
+    resolv_conf = open( "/etc/resolv.conf", "r" )
+    for line in resolv_conf.readlines():
+        match = re.search( r"nameserver\s+([0-9.]+)", line )
+        if match:
+            server = match.group( 1 )
+            break
+    else:
+        print >> sys.stderr, sys.argv[ 0 ] + ": unable to find server address"
+        sys.exit( 1 )
+    resolv_conf.close()
+
+# This is a no-op if 'server' is an IP address.
+server = socket.gethostbyname(server)
+
+sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+sock.connect( (server, port) )
+sock.send( "geni_" + command )
+
+firstchar = sock.recv( 1 )
+if not firstchar:
+    print >> sys.stderr, sys.argv[ 0 ] + ": unexpected EOF from server"
+    sys.exit( 1 )
+
+if firstchar != "\x00":
+    # old protocol -- just dump everything
+    sys.stdout.write( firstchar )
+    dump( sock )
+    sys.exit( 0 )
+
+nextchar = sock.recv( 1 )
+if not nextchar:
+    print >> sys.stderr, sys.argv[ 0 ] + ": unexpected EOF from server"
+    sys.exit( 1 )
+
+if nextchar == "\x00":
+    # error from server
+    sys.stderr.write( sys.argv[ 0 ] + ": " + command + ": " )
+    while True:
+        buf = sock.recv( 0x10000 )
+        if not buf:
+            sock.close()
+            sys.exit( 1 )
+        sys.stderr.write( buf )
+
+# new protocol, success
+sys.stdout.write( nextchar )
+dump( sock )
