@@ -1,0 +1,9 @@
+---
+- name: pull and remake
+  hosts: all
+  tasks:
+          - name: git_pull
+            shell: "cd ~/xfs/speedex && git pull"
+          - name: remake
+            shell: "cd ~/xfs/speedex && make -j"
+
