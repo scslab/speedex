@@ -1,0 +1,7 @@
+---
+- name: make all
+  hosts: all
+  tasks:
+          - name: make all
+            shell: "cd ~/xfs/speedex && make -j"
+
