@@ -3,6 +3,8 @@
 #include <cstdio>
 #include <string>
 
+#include "utils/debug_macros.h"
+
 #include "xdr/types.h"
 
 namespace speedex {
@@ -27,7 +29,10 @@ get_replica_id() {
 
 	std::fclose(f);
 
-	return std::stol(replica_id.c_str());
+	ReplicaID out = std::stol(replica_id.c_str());
+
+	LOG("loaded replica id = %lu", out);
+	return out;
 }
 
 } /* speedex */

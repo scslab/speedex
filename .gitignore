@@ -21,6 +21,8 @@ test
 test_runner.cc
 README
 databases/
+experiment_data/
+experiment_results/
 
 automation/replica
 
@@ -28,6 +30,7 @@ automation/replica
 clean_lmdbs
 counting_vm_hotstuff
 overlay_sim
+solver_comparison
 speedex_vm_hotstuff
 synthetic_data_gen
 trie_comparison

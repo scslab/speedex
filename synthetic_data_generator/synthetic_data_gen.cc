@@ -532,13 +532,23 @@ GeneratorState<random_generator>::gen_transactions(size_t num_txs, const std::ve
 template<typename random_generator>
 void
 GeneratorState<random_generator>::filter_by_replica_id(ExperimentBlock& block) {
-	if (!conf_pair) {
-		return;
+
+	std::printf("before: block.size() = %lu\n", block.size());
+
+	if (conf_pair) {
+
+		for (size_t i = 0; i < block.size();) {
+			AccountID src_account = block[i].transaction.metadata.sourceAccount;
+			if (src_account % (conf_pair -> second.nreplicas) != conf_pair -> first) {
+				block[i] = block.back();
+				block.pop_back();
+			} else {
+				++i;
+			}
+		}
 	}
 
-	std::remove_if(block.begin(), block.end(), [this] (SignedTransaction const& tx) -> bool {
-		return tx.transaction.metadata.sourceAccount % (conf_pair -> second.nreplicas) != conf_pair -> first;
-	});
+	std::printf("after: block.size() = %lu\n", block.size());
 }
 
 template<typename random_generator>
@@ -599,7 +609,7 @@ void GeneratorState<random_generator>::make_block(const std::vector<double>& pri
 
 	xdr::opaque_vec<> serialized_output = xdr::xdr_to_opaque(output);
 
-	if (save_xdr_to_file(serialized_output, filename.c_str())) {
+	if (save_xdr_to_file(output, filename.c_str())) {
 		throw std::runtime_error("was not able to save file!");
 	}
 
