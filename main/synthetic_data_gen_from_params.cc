@@ -1,5 +1,7 @@
 #include <cstddef>
 
+#include "automation/get_replica_id.h"
+
 #include "config/replica_config.h"
 
 #include "speedex/speedex_options.h"
@@ -93,14 +95,15 @@ int main(int argc, char* const* argv)
 		}
 	}
 
-	if (config_file.has_value() != self_id.has_value()) {
-		usage();
-	}
-
 	std::optional<std::pair<ReplicaID, ReplicaConfig>> conf_pair;
 	if (config_file.has_value()) {
 		conf_pair = std::make_optional<std::pair<ReplicaID, ReplicaConfig>>();
-		conf_pair->first = *self_id;
+
+		if (self_id) {
+			conf_pair->first = *self_id;
+		} else {
+			conf_pair->first = get_replica_id();
+		}
 
 		struct fy_document* fyd = fy_document_build_from_file(NULL, config_file->c_str());
 		if (fyd == NULL) {
@@ -108,7 +111,7 @@ int main(int argc, char* const* argv)
 			usage();
 		}
 
-		conf_pair->second.parse(fyd, *self_id);
+		conf_pair->second.parse(fyd, conf_pair->first);
 	}
 
 	if (speedex_options_file.size() == 0) {
