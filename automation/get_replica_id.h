@@ -17,15 +17,25 @@ get_replica_id() {
 		throw std::runtime_error("failed to open replica file");
 	}
 
-	char buf[10];
+	const size_t buf_size = 10;
+
+	char buf[buf_size + 1];
 
 	// expected format: "node-X" 
 
-	if (std::fread(buf, sizeof(char), 10, f) < 6) {
+	if (std::fread(buf, sizeof(char), buf_size, f) < 7) {
 		throw std::runtime_error("failed to read replica file");
 	}
+	size_t dash_offset = 0;
 
-	std::string replica_id = std::string(buf+5);
+	for (size_t offset = 0; offset < buf_size; offset++) {
+		if (buf[offset] == '-') {
+			dash_offset = offset;
+			break;
+		}
+	}
+
+	std::string replica_id = std::string(buf+dash_offset + 1);
 
 	std::fclose(f);
 
