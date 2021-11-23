@@ -19,8 +19,7 @@ using namespace speedex;
 [[noreturn]]
 static void usage() {
 	std::printf(R"(
-usage: synthetic_data_gen --speedex_options=<options_yaml, required> 
-                          --exp_options=<experiment_options_yaml, required>
+usage: synthetic_data_gen --exp_options=<experiment_options_yaml, required>
                           --exp_name=<experiment_name, required>
                           --just_params (optional)
                           --replica_id=<id, optional> 
@@ -50,11 +49,6 @@ static const struct option opts[] = {
 
 int main(int argc, char* const* argv)
 {
-	//if (!(argc == 4 || argc == 5)) {
-	//	std::printf("usage: ./synthetic_data_gen <speedex_options_yaml> <experiment_yaml> <experiment_name> <just_params>\n");
-	//	return 1;
-	//}
-
 	std::optional<ReplicaID> self_id;
 	std::optional<std::string> config_file;
 

@@ -23,6 +23,9 @@ XH_FILES = $(X_FILES:.x=.h)
 
 # main srcs
 
+AUTOMATION_SRCS = \
+	automation/experiment_control.cc
+
 BLOCK_PROCESSING_SRCS = \
 	block_processing/block_producer.cc \
 	block_processing/block_validator.cc \
@@ -155,6 +158,7 @@ UTILS_SRCS = \
 	utils/manage_data_dirs.cc
 
 SRCS = \
+	$(AUTOMATION_SRCS) \
 	$(BLOCK_PROCESSING_SRCS) \
 	$(CONFIG_SRCS) \
 	$(CRYPTO_SRCS) \

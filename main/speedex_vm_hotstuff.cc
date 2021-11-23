@@ -1,3 +1,4 @@
+#include "automation/experiment_control.h"
 #include "automation/get_replica_id.h"
 
 #include "config/replica_config.h"
@@ -164,6 +165,10 @@ int main(int argc, char* const* argv)
 
 	SyntheticDataStream data_stream(experiment_data_folder);
 	OverlayClientManager client_manager(config, *self_id, vm -> get_mempool());
+
+	ExperimentController control_server(vm);
+	control_server.wait_for_breakpoint_signal();
+
 	OverlayFlooder flooder(data_stream, client_manager, 2'000'000);
 
 	PaceMakerWaitQC pmaker(app);
@@ -185,6 +190,7 @@ int main(int argc, char* const* argv)
 		if (app.proposal_buffer_is_empty()) {
 			std::printf("done with experiment, writing measurements\n");
 			vm -> write_measurements();
+			control_server.wait_for_breakpoint_signal();
 			exit(0);
 		}
 		if (vm -> experiment_is_done()) {

@@ -51,4 +51,12 @@ program ExperimentControl {
 	} = 1;
 } = 0x11111113;
 
+program HotstuffVMControl {
+	version HotstuffVMControlV1 {
+		void signal_breakpoint(void) = 1;
+		void write_measurements(void) = 2;
+		ExperimentResultsUnion get_measurements(void) = 3;
+	} = 1;
+} = 0x11111114;
+
 } /* speedex */
