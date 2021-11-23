@@ -31,7 +31,7 @@ get_experiment_var(const char* var) {
 
 	size_t last_idx = str.find_last_not_of(whitespace);
 
-	str = str.substr(0, last_idx);
+	str = str.substr(0, last_idx + 1);
 
 	LOG("variable \"%s\" assigned value \"%s\"", var, str.c_str());
 
