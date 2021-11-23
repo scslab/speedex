@@ -1,5 +1,7 @@
 #pragma once
 
+#include "utils/debug_macros.h"
+
 namespace speedex {
 
 constexpr static const char* CONFIG_FILE_FILENAME = "automation/config_file";
@@ -10,6 +12,8 @@ constexpr static const char* RESULTS_FOLDER_FILENAME = "automation/results_folde
 static std::string
 get_experiment_var(const char* var) {
 	FILE* f = std::fopen(var, "r");
+
+	const std::string whitespace = " \t\r\n";
 
 	if (f == nullptr) {
 		throw std::runtime_error(std::string("failed to open file ") + var);
@@ -24,6 +28,12 @@ get_experiment_var(const char* var) {
 	}
 
 	std::string str = std::string(buf.data());
+
+	size_t last_idx = str.find_last_not_of(whitespace);
+
+	str = str.substring(0, last_idx);
+
+	LOG("variable \"%s\" assigned value \"%s\"", var, str.c_str());
 
 	std::fclose(f);
 
