@@ -1,0 +1,11 @@
+---
+- name: set exp options
+  hosts: all
+  tasks: 
+          - name: set speedex options
+            shell: "cd ~/xfs/speedex/automation && echo {{ speedex_options }} > speedex_options"
+          - name: set data folder
+            shell: "cd ~/xfs/speedex/automation && echo {{ data_folder }} > data_folder"
+          - name: set results folder
+            shell: "cd ~/xfs/speedex/automation && echo {{ results_folder }} > results_folder"
+

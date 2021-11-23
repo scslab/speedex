@@ -1,4 +1,5 @@
 #include "automation/experiment_control.h"
+#include "automation/get_experiment_vars.h"
 #include "automation/get_replica_id.h"
 
 #include "config/replica_config.h"
@@ -114,7 +115,7 @@ int main(int argc, char* const* argv)
 		self_id = get_replica_id();
 	}
 	if (!config_file) {
-		usage();
+		config_file = get_config_file();
 	}
 
 	ReplicaConfig config;
@@ -131,15 +132,15 @@ int main(int argc, char* const* argv)
 
 
 	if (speedex_options_file.size() == 0) {
-		usage();
+		speedex_options_file = get_speedex_options();
 	}
 
 	if (experiment_data_folder.size() == 0) {
-		usage();
+		experiment_data_folder = get_experiment_data_folder();
 	}
 
 	if (experiment_results_folder.size() == 0) {
-		usage();
+		experiment_results_folder = get_experiment_results_folder();
 	}
 
 	std::string experiment_params_file = experiment_data_folder + "params";

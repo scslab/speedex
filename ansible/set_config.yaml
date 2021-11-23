@@ -1,0 +1,9 @@
+---
+- name: set config
+  hosts: all
+  vars:
+    config_file = "config/config_4.yaml"
+  tasks: 
+          - name: set config
+            shell: "cd ~/xfs/speedex/automation && echo {{ config_file }} > config_file"
+

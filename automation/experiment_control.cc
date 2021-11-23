@@ -4,6 +4,8 @@
 
 #include "speedex/vm/speedex_vm.h"
 
+#include "utils/debug_macros.h"
+
 namespace speedex {
 
 void 
@@ -30,6 +32,7 @@ HotstuffVMControl_server::wait_for_breakpoint_signal() {
 
 	std::unique_lock lock(mtx);
 	if (!done_lambda()) {
+		LOG("waiting for experiment breakpoint");
 		cv.wait(lock, done_lambda);
 	}
 	bp_signalled = false;

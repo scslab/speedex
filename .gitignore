@@ -24,7 +24,12 @@ databases/
 experiment_data/
 experiment_results/
 
+#automation
+automation/config_file
+automation/data_folder
+automation/results_folder
 automation/replica
+automation/speedex_options
 
 #binaries
 clean_lmdbs
