@@ -22,6 +22,7 @@ get_experiment_var(const char* var) {
 	constexpr static size_t buf_size = 1024;
 
 	std::array<char, buf_size> buf;
+	data.fill(0);
 
 	if (std::fread(buf.data(), sizeof(char), buf_size, f) == 0) {
 		throw std::runtime_error("failed to read replica file");
