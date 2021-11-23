@@ -3,5 +3,5 @@
   hosts: all
   tasks:
           - name: synthetic data gen
-            shell: "cd ~/xfs/speedex && ./synthetic_data_gen --exp_options={{ exp_options }} --exp_name={{ exp_name }} --config=config/config_4.yaml"
+            shell: "cd ~/xfs/speedex && ./synthetic_data_gen --exp_options={{ exp_options }} --exp_name={{ exp_name }}"
 

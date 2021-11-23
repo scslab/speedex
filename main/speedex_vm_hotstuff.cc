@@ -154,6 +154,10 @@ int main(int argc, char* const* argv)
 		throw std::runtime_error("mismatch in num assets between speedex_options and experiment_options");
 	}
 
+	if (config.nreplicas != params.n_replicas) {
+		throw std::runtime_error("mismatch between experiment data sharding and num replicas");
+	}
+
 	auto vm = std::make_shared<SpeedexVM>(params, speedex_options, experiment_results_folder);
 
 	HotstuffApp app(config, *self_id, sk, vm);

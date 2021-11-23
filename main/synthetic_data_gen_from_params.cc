@@ -1,5 +1,6 @@
 #include <cstddef>
 
+#include "automation/get_experiment_vars.h"
 #include "automation/get_replica_id.h"
 
 #include "config/replica_config.h"
@@ -84,23 +85,30 @@ int main(int argc, char* const* argv)
 	}
 
 	std::optional<std::pair<ReplicaID, ReplicaConfig>> conf_pair;
-	if (config_file.has_value()) {
-		conf_pair = std::make_optional<std::pair<ReplicaID, ReplicaConfig>>();
+	
+	//if (config_file.has_value()) {
 
-		if (self_id) {
-			conf_pair->first = *self_id;
-		} else {
-			conf_pair->first = get_replica_id();
-		}
-
-		struct fy_document* fyd = fy_document_build_from_file(NULL, config_file->c_str());
-		if (fyd == NULL) {
-			std::printf("Failed to build doc from file \"%s\"\n", config_file->c_str());
-			usage();
-		}
-
-		conf_pair->second.parse(fyd, conf_pair->first);
+	if (!config_file) {
+		config_file = get_config_file();
 	}
+	
+	conf_pair = std::make_optional<std::pair<ReplicaID, ReplicaConfig>>();
+
+	if (self_id) {
+		conf_pair->first = *self_id;
+	} else {
+		conf_pair->first = get_replica_id();
+	}
+
+	struct fy_document* fyd = fy_document_build_from_file(NULL, config_file->c_str());
+	if (fyd == NULL) {
+		std::printf("Failed to build doc from file \"%s\"\n", config_file->c_str());
+		usage();
+	}
+
+	conf_pair->second.parse(fyd, conf_pair->first);
+	
+	//}
 
 	if (experiment_options_file.size() == 0) {
 		usage();
@@ -126,9 +134,8 @@ int main(int argc, char* const* argv)
 	params.num_assets = options.num_assets;
 	params.account_list_filename = output_root + "accounts";
 	params.default_amount = 100'000'000;
-
 	params.num_blocks = options.num_blocks;
-
+	params.n_replicas = conf_pair -> second.nreplicas;
 
 	if (mkdir_safe(options.output_prefix.c_str())) {
 		std::printf("directory %s already exists, continuing\n", options.output_prefix.c_str());

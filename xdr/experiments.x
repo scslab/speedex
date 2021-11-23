@@ -27,6 +27,7 @@ struct ExperimentParameters {
 	uint64 default_amount;
 	string account_list_filename<200>;
 	unsigned int num_blocks;
+	uint32 n_replicas;
 };
 
 typedef AccountID AccountIDList<>;
