@@ -114,6 +114,10 @@ VMControlInterface<VMType>::get_proposal()
 		if (additional_proposal_requests < PROPOSAL_BUFFER_TARGET) {
 			additional_proposal_requests = PROPOSAL_BUFFER_TARGET;
 		}
+		if (PROPOSAL_BUFFER_TARGET == 0) {
+			HOTSTUFF_INFO("VM INTERFACE: cannot get proposal from empty buffer after proposals are stopped");
+			return nullptr;
+		}
 		cv.notify_all();
 		HOTSTUFF_INFO("VM INTERFACE: waiting on new proposal from vm");
 		cv.wait(lock, [this] { return done_flag || (!proposal_buffer.empty());});

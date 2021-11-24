@@ -56,6 +56,9 @@ program HotstuffVMControl {
 		void signal_breakpoint(void) = 1;
 		void write_measurements(void) = 2;
 		ExperimentResultsUnion get_measurements(void) = 3;
+		uint32 experiment_is_done(void) = 4;
+		void send_producer_is_done_signal(void) = 5;
+		uint64 get_speedex_block_height(void) = 6;
 	} = 1;
 } = 0x11111114;
 

@@ -186,20 +186,32 @@ int main(int argc, char* const* argv)
 
 	while (true) {
 		if (pmaker.should_propose()) {
-			std::printf("attempting propose\n");
 			app.put_vm_in_proposer_mode();
 			pmaker.do_propose();
 			pmaker.wait_for_qc();
+		} else {
+			std::this_thread::sleep_for(1000ms);
 		}
-		std::this_thread::sleep_for(1000ms);
-		if (app.proposal_buffer_is_empty()) {
-			std::printf("done with experiment, writing measurements\n");
-			vm -> write_measurements();
-			control_server.wait_for_breakpoint_signal();
-			exit(0);
-		}
+
+		/* Experiment control conditions */
+
+		// conditions only activate for current producer
 		if (vm -> experiment_is_done()) {
 			app.stop_proposals();
+		}
+		if (app.proposal_buffer_is_empty()) {
+			std::printf("done with experiment\n");
+			control_server.wait_for_breakpoint_signal();
+			vm -> write_measurements();
+			exit(0);
+		}
+
+		// conditions for validator nodes
+		if (control_server.producer_is_done_signal_was_received()) {
+			std::printf("leader terminated experiment, waiting for signal\n");
+			control_server.wait_for_breakpoint_signal();
+			vm -> write_measurements();
+			exit(0);
 		}
 	}
 }

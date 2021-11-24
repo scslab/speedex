@@ -1,5 +1,10 @@
 #pragma once
 
+#include <array>
+#include <cstddef>
+#include <stdexcept>
+#include <string>
+
 #include "utils/debug_macros.h"
 
 namespace speedex {
@@ -41,21 +46,25 @@ get_experiment_var(const char* var) {
 	return str;
 }
 
+[[maybe_unused]]
 static std::string
 get_config_file() {
 	return get_experiment_var(CONFIG_FILE_FILENAME);
 }
 
+[[maybe_unused]]
 static std::string
 get_speedex_options() {
 	return get_experiment_var(SPEEDEX_OPTIONS_FILENAME);
 }
 
+[[maybe_unused]]
 static std::string
 get_experiment_data_folder() {
 	return get_experiment_var(DATA_FOLDER_FILENAME);
 }
 
+[[maybe_unused]]
 static std::string
 get_experiment_results_folder() {
 	return get_experiment_var(RESULTS_FOLDER_FILENAME);

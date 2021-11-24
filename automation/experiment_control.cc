@@ -24,6 +24,28 @@ HotstuffVMControl_server::get_measurements() {
 	return std::make_unique<ExperimentResultsUnion>(vm -> get_measurements());
 }
 
+std::unique_ptr<uint32_t> 
+HotstuffVMControl_server::experiment_is_done() {
+	if (experiment_done_flag) {
+		return std::make_unique<uint32_t>(1);
+	}
+	if (vm -> experiment_is_done()) {
+		return std::make_unique<uint32_t>(1);
+	}
+	return std::make_unique<uint32_t>(0);
+}
+void 
+HotstuffVMControl_server::send_producer_is_done_signal()
+{
+	experiment_done_flag = true;
+}
+
+std::unique_ptr<uint64_t> 
+HotstuffVMControl_server::get_speedex_block_height() {
+	return std::make_unique<uint64_t>(vm -> get_committed_block_height());
+}
+
+
 void
 HotstuffVMControl_server::wait_for_breakpoint_signal() {
 	auto done_lambda = [this] () -> bool {

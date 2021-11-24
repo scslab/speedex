@@ -179,6 +179,7 @@ SRCS = \
 MAIN_CCS = \
 	main/clean_lmdbs.cc \
 	main/counting_vm_hotstuff.cc \
+	main/experiment_controller.cc \
 	main/overlay_sim.cc \
 	main/simple.cc \
 	main/replicated_simulation_experiment_controller.cc \
@@ -206,6 +207,7 @@ test_runner.cc : $(TEST_SRCS) $(XHFILES)
 bin_PROGRAMS = \
 	clean_lmdbs \
 	counting_vm_hotstuff \
+	experiment_controller \
 	overlay_sim \
 	simple \
 	replicated_simulation_experiment_controller \
@@ -217,6 +219,7 @@ bin_PROGRAMS = \
 
 clean_lmdbs_SOURCES = $(SRCS) main/clean_lmdbs.cc
 counting_vm_hotstuff_SOURCES = $(SRCS) main/counting_vm_hotstuff.cc
+experiment_controller_SOURCES = $(SRCS) main/experiment_controller.cc
 overlay_sim_SOURCES = $(SRCS) main/overlay_sim.cc
 simple_SOURCES = $(SRCS) main/simple.cc
 replicated_simulation_experiment_controller_SOURCES = $(SRCS) main/replicated_simulation_experiment_controller.cc

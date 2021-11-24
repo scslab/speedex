@@ -308,4 +308,10 @@ SpeedexVM::rewind_to_last_commit() {
 	rewind_structs_to_committed_height();
 }
 
+uint64_t 
+SpeedexVM::get_committed_block_height() {
+	std::lock_guard lock(confirmation_mtx);
+	return last_committed_block.block.blockNumber;
+}
+
 } /* speedex */

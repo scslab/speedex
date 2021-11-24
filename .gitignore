@@ -34,6 +34,7 @@ automation/speedex_options
 #binaries
 clean_lmdbs
 counting_vm_hotstuff
+experiment_controller
 overlay_sim
 solver_comparison
 speedex_vm_hotstuff

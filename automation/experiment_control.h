@@ -22,21 +22,31 @@ class HotstuffVMControl_server {
 	std::mutex mtx;
 	std::condition_variable cv;
 
+	std::atomic<bool> experiment_done_flag;
+
 
 public:
 	using rpc_interface_type = HotstuffVMControlV1;
 
 	HotstuffVMControl_server(std::shared_ptr<SpeedexVM> vm)
 		: vm(vm)
+		, bp_signalled(false)
+		, mtx()
+		, cv()
+		, experiment_done_flag(false)
 		{}
 
 	//rpc methods
 	void signal_breakpoint();
 	void write_measurements();
 	std::unique_ptr<ExperimentResultsUnion> get_measurements();
+	std::unique_ptr<uint32_t> experiment_is_done();
+	void send_producer_is_done_signal(); // receives this signal
+	std::unique_ptr<uint64_t> get_speedex_block_height();
 
 	//non-rpc methods
 	void wait_for_breakpoint_signal();
+	bool producer_is_done_signal_was_received() const;
 };
 
 class ExperimentController {
@@ -50,6 +60,10 @@ public:
 
 	void wait_for_breakpoint_signal() {
 		server.wait_for_breakpoint_signal();
+	}
+
+	bool producer_is_done_signal_was_received() const {
+		return server.producer_is_done_signal_was_received();
 	}
 };
 
