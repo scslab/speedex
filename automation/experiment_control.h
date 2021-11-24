@@ -40,13 +40,12 @@ public:
 	void signal_breakpoint();
 	void write_measurements();
 	std::unique_ptr<ExperimentResultsUnion> get_measurements();
-	std::unique_ptr<uint32_t> experiment_is_done();
+	std::unique_ptr<uint32_t> experiment_is_done() const;
 	void send_producer_is_done_signal(); // receives this signal
 	std::unique_ptr<uint64_t> get_speedex_block_height();
 
 	//non-rpc methods
 	void wait_for_breakpoint_signal();
-	bool producer_is_done_signal_was_received() const;
 };
 
 class ExperimentController {
@@ -63,7 +62,7 @@ public:
 	}
 
 	bool producer_is_done_signal_was_received() const {
-		return server.producer_is_done_signal_was_received();
+		return *server.experiment_is_done();
 	}
 };
 

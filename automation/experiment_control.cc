@@ -25,7 +25,7 @@ HotstuffVMControl_server::get_measurements() {
 }
 
 std::unique_ptr<uint32_t> 
-HotstuffVMControl_server::experiment_is_done() {
+HotstuffVMControl_server::experiment_is_done() const {
 	if (experiment_done_flag) {
 		return std::make_unique<uint32_t>(1);
 	}
