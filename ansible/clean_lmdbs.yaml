@@ -1,0 +1,9 @@
+---
+- name: clean lmdbs
+  hosts: all
+  tasks:
+          - name: make clean_lmdbs
+            shell: "cd ~/xfs/speedex && make clean_lmdbs -j"
+          - name: clean lmdbs
+            shell: "cd ~/xfs/speedex && ./clean_lmdbs"
+
