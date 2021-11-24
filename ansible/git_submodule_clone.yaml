@@ -1,0 +1,7 @@
+---
+- name: git submodule clone
+  hosts: all
+  tasks:
+          - name: git submodule clone
+            shell: "cd ~/xfs/speedex && git submodule update --init --recursive"
+
