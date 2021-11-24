@@ -64,6 +64,7 @@ void wait_for_all_online(const ReplicaConfig& config) {
 		if (!failed) {
 			return;
 		}
+		std::this_thread::sleep_for(1000ms);
 	}
 }
 
