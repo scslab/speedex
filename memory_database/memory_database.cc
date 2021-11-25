@@ -157,9 +157,13 @@ void MemoryDatabase::rollback_values() {
 }
 
 void MemoryDatabase::commit_new_accounts(uint64_t current_block_number) {
+
+	auto timestamp = init_time_measurement();
 	std::lock_guard lock1(db_thunks_mtx);
 	std::lock_guard lock2(committed_mtx);
 	std::lock_guard lock3(uncommitted_mtx);
+
+	std::printf("took %lf to acquire locks\n", measure_time(timestamp));
 
 	if ((account_creation_thunks.size() == 0 && account_lmdb_instance.get_persisted_round_number() + 1 != current_block_number)
 		|| (account_creation_thunks.size() > 0 && account_creation_thunks.back().current_block_number + 1 != current_block_number)) {
@@ -177,8 +181,14 @@ void MemoryDatabase::commit_new_accounts(uint64_t current_block_number) {
 		}
 	}
 
+	std::printf("took %lf to check thunk validity\n", measure_time(timestamp));
+
+
 	auto uncommitted_db_size = uncommitted_db.size();
 	database.reserve(database.size() + uncommitted_db_size);
+
+	std::printf("took %lf to reserve\n", measure_time(timestamp));
+
 	for (uint64_t i = 0; i < uncommitted_db_size; i++) {
 		uncommitted_db[i].commit();
 		database.emplace_back(std::move(uncommitted_db[i]));
@@ -190,7 +200,13 @@ void MemoryDatabase::commit_new_accounts(uint64_t current_block_number) {
 		//database.back().commit();
 		commitment_trie.insert(key_buf, DBStateCommitmentValueT(database.back().produce_commitment()));
 	}
+
+	std::printf("took %lf to insert to trie\n", measure_time(timestamp));
+
 	user_id_to_idx_map.insert(uncommitted_idx_map.begin(), uncommitted_idx_map.end());
+
+
+	std::printf("took %lf to insert to user idx map\n", measure_time(timestamp));
 
 	account_creation_thunks.push_back(AccountCreationThunk{current_block_number, uncommitted_db_size});
 	clear_internal_data_structures();
@@ -630,8 +646,12 @@ void MemoryDatabase::persist_lmdb(uint64_t current_block_number) {
 		AccountID owner = database[i].get_owner();
 		dbval key = dbval(&owner, sizeof(AccountID));//UserAccount::produce_lmdb_key(database[i].get_owner());
 
-
-		write_txn.put(account_lmdb_instance.get_data_dbi(), &key, &val);
+		try {
+			write_txn.put(account_lmdb_instance.get_data_dbi(), &key, &val);
+		} catch(...) {
+			std::printf("failed to insert to account lmdb\n");
+			throw;
+		}
 
 	}
 

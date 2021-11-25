@@ -36,7 +36,7 @@ Printouts include file/line information.
 
 #define INTEGRITY_CHECKS OFF
 
-#define MEMPOOL_DEBUG DEBUG_LEVEL_INFO
+#define MEMPOOL_DEBUG DEBUG_LEVEL_NONE
 
 #define HOTSTUFF_DEBUG DEBUG_LEVEL_INFO
 
