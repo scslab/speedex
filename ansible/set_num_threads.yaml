@@ -1,0 +1,7 @@
+---
+- name: set num threads
+  hosts: all
+  tasks: 
+          - name: set num threads
+            shell: "cd ~/xfs/speedex/automation && echo {{ num_threads }} > num_threads"
+

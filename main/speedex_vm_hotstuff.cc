@@ -25,6 +25,9 @@
 #include <getopt.h>
 #include <libfyaml.h>
 
+#include <tbb/global_control.h>
+
+
 using namespace hotstuff;
 using namespace speedex;
 
@@ -143,6 +146,8 @@ int main(int argc, char* const* argv)
 		experiment_results_folder = get_experiment_results_folder();
 	}
 
+	size_t num_threads = get_num_threads();
+
 	std::string experiment_params_file = experiment_data_folder + "params";
 
 	ExperimentParameters params = load_params(experiment_params_file);
@@ -170,6 +175,9 @@ int main(int argc, char* const* argv)
 
 	SyntheticDataStream data_stream(experiment_data_folder);
 	OverlayClientManager client_manager(config, *self_id, vm -> get_mempool());
+
+	tbb::global_control control(
+		tbb::global_control::max_allowed_parallelism, num_threads);
 
 	ExperimentController control_server(vm);
 	control_server.wait_for_breakpoint_signal();
