@@ -64,16 +64,16 @@ public:
 	}
 
 	void modify_db_entry(SerialAccountModificationLog& log, MemoryDatabase& db, AccountID acct, uint32_t asset, int64_t delta) {
-		account_db_idx idx;
-		TS_ASSERT(db.lookup_user_id(acct, &idx));
+		UserAccount* idx = db.lookup_user(acct);
+		TS_ASSERT(idx != nullptr);
 
 		db.transfer_available(idx, asset, delta);
 		log.log_self_modification(acct, 0);
 	}
 
 	void assert_balance(MemoryDatabase& db, AccountID acct, uint32_t asset, int64_t amount) {
-		account_db_idx idx;
-		TS_ASSERT(db.lookup_user_id(acct, &idx));
+		UserAccount* idx = db.lookup_user(acct);
+		TS_ASSERT(idx != nullptr);
 
 		TS_ASSERT_EQUALS(db.lookup_available_balance(idx, asset), amount);
 	}
@@ -85,16 +85,20 @@ public:
 
 		TS_ASSERT_EQUALS(db.size(), 10000u);
 
-		account_db_idx idx;
-		TS_ASSERT(db.lookup_user_id(0, &idx));
+		UserAccount* idx = db.lookup_user(0);
+		TS_ASSERT(idx != nullptr);
+		//TS_ASSERT(db.lookup_user_id(0, &idx));
 		TS_ASSERT_EQUALS(db.lookup_available_balance(idx, 0), 15);
 		TS_ASSERT_EQUALS(db.lookup_available_balance(idx, 1), 15);
 		TS_ASSERT_EQUALS(db.lookup_available_balance(idx, 10), 0);
 
-		TS_ASSERT(db.lookup_user_id(9999, &idx));
+		idx = db.lookup_user(9999);
+		TS_ASSERT(idx != nullptr);
 		TS_ASSERT_EQUALS(db.lookup_available_balance(idx, 5), 15);
 
-		TS_ASSERT(!db.lookup_user_id(10000, &idx));
+
+		idx = db.lookup_user(10000);
+		TS_ASSERT(idx == nullptr);
 	}
 
 	void test_rollback_account_values() {

@@ -27,7 +27,7 @@ clear_offer_full(
 	const Price& buyPrice, 
 	const uint8_t tax_rate, 
 	Database& db, 
-	const account_db_idx db_idx) {
+	UserAccount* db_idx) {
 
 	auto amount = FractionalAsset::from_integral(offer.amount);
 
@@ -57,7 +57,7 @@ clear_offer_partial(
 	const uint8_t tax_rate,
 	const FractionalAsset& remaining_to_clear, 
 	MemoryDatabase& db,
-	const account_db_idx db_idx,
+	UserAccount* db_idx,
 	int64_t& out_sell_amount, 
 	int64_t& out_buy_amount) {
 

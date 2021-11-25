@@ -2,6 +2,7 @@
 
 #include "utils/debug_macros.h"
 
+
 namespace speedex {
 
 TransactionProcessingStatus UserAccountView::conditional_escrow(
@@ -65,9 +66,28 @@ void UserAccountView::unwind() {
 	}
 }
 
-TransactionProcessingStatus BufferedMemoryDatabaseView::escrow(
-	account_db_idx account, AssetID asset, int64_t amount) {
-	if (account >= db_size) {
+TransactionProcessingStatus
+BufferedMemoryDatabaseView::escrow(
+	UserAccount* account, AssetID asset, int64_t amount) {
+	
+
+	for (auto& it : new_accounts) {
+		if (&(it.second) == account) {
+			auto res = account ->conditional_escrow(asset, amount);
+			if (res) {
+				return TransactionProcessingStatus::SUCCESS;
+			} else {
+				return TransactionProcessingStatus::INSUFFICIENT_BALANCE;
+			}
+		}
+	}
+	/*auto it = new_accounts.find(account);
+
+	if (it != new_accounts.end()) {
+		//newly created acct local to this db view
+		return (*it).second.second.conditional_escrow(asset, amount);
+	}*/
+	/*if (account >= db_size) {
 		TX_INFO("escrowing %ld units of %lu from local account_db_idx %lu", 
 			amount, asset, account);
 
@@ -83,7 +103,7 @@ TransactionProcessingStatus BufferedMemoryDatabaseView::escrow(
 		} else {
 			return TransactionProcessingStatus::INSUFFICIENT_BALANCE;
 		}
-	}
+	}*/
 	TX_INFO("escrowing %ld units of %lu from existing account_db_idx %lu", 
 		amount, asset, account);
 
@@ -104,8 +124,23 @@ TransactionProcessingStatus BufferedMemoryDatabaseView::escrow(
 
 TransactionProcessingStatus 
 BufferedMemoryDatabaseView::transfer_available(
-	account_db_idx account, AssetID asset, int64_t amount) {
+	UserAccount* account, AssetID asset, int64_t amount) {
 	
+	//auto it = new_accounts.find(account);
+
+	for (auto& it : new_accounts) {
+		if (&(it.second) == account) {
+			// using direct ptr method because account is not yet in main memdb
+			auto res = account ->conditional_transfer_available(asset, amount);
+
+			if (res) {
+				return TransactionProcessingStatus::SUCCESS;
+			} else {
+				return TransactionProcessingStatus::INSUFFICIENT_BALANCE;
+			}
+		}
+	}
+/*
 	if (account >= db_size) {
 		bool status = new_accounts.find(account)
 			->second.second.conditional_transfer_available(asset, amount);
@@ -120,19 +155,22 @@ BufferedMemoryDatabaseView::transfer_available(
 			// made in another thread.
 			// in fact this branch should never happen
 		}
-	}
+	}*/
 
 	auto& view = get_existing_account(account);
 	return view.transfer_available(asset, amount);
 }
 
 UserAccountView& 
-BufferedMemoryDatabaseView::get_existing_account(account_db_idx account) {
+BufferedMemoryDatabaseView::get_existing_account(UserAccount* account) {
 	auto iter = accounts.find(account);
 	if (iter != accounts.end()) {
 		return iter->second;
 	}
-	accounts.emplace(account, main_db.find_account(account));
+	if (account == nullptr) {
+		throw std::runtime_error("cant' deref null account ptr");
+	}
+	accounts.emplace(account, *account);//main_db.find_account(account));
 	return accounts.at(account);
 }
 
@@ -160,26 +198,47 @@ BufferedMemoryDatabaseView::unwind() {
 
 TransactionProcessingStatus 
 UnbufferedMemoryDatabaseView::escrow(
-	account_db_idx account, AssetID asset, int64_t amount) {
-	if (account < db_size) {
+	UserAccount* account, AssetID asset, int64_t amount) {
+
+	account -> escrow(asset, amount);
+
+	/*if (account < db_size) {
 		main_db.escrow(account, asset, amount);
 	} else {
 		new_accounts.find(account)->second.second.escrow(asset, amount);
-	}
+	}*/
 	return TransactionProcessingStatus::SUCCESS;
 }
 TransactionProcessingStatus 
 UnbufferedMemoryDatabaseView::transfer_available(
-	account_db_idx account, AssetID asset, int64_t amount) {
-	if (account < db_size) {
+	UserAccount* account, AssetID asset, int64_t amount) {
+	
+	account -> transfer_available(asset, amount);
+	/*if (account < db_size) {
 		main_db.transfer_available(account, asset, amount);
 	} else {
 		new_accounts.find(account)
 			->second.second.transfer_available(asset, amount);
-	}
+	} */
 	return TransactionProcessingStatus::SUCCESS;
 }
 
+
+UserAccount*
+AccountCreationView::lookup_user(AccountID account) {
+	auto* main_acct = main_db.lookup_user(account);
+	if (main_acct != nullptr) {
+		return main_acct;
+	}
+	
+	auto iter = temporary_idxs.find(account);
+	if (iter == temporary_idxs.end()) {
+		return nullptr;
+	}
+	return iter->second;
+
+}
+/*
 bool 
 AccountCreationView::lookup_user_id(
 	AccountID account, account_db_idx* index_out) {
@@ -194,22 +253,28 @@ AccountCreationView::lookup_user_id(
 	*index_out = iter->second;
 	return true;
 }
+ */
 
 TransactionProcessingStatus 
 AccountCreationView::create_new_account(
-	AccountID account, const PublicKey pk, account_db_idx* out) {
+	AccountID account, const PublicKey pk, UserAccount** out) {
 	auto status = main_db.reserve_account_creation(account);
 	if (status != TransactionProcessingStatus::SUCCESS) {
 		return status;
 	}
-	account_db_idx new_idx = temporary_idxs.size() + db_size;
-	temporary_idxs.emplace(account, new_idx);
-	new_accounts.emplace(std::piecewise_construct,
+
+	auto it = new_accounts.insert_after(new_accounts.before_begin(), {account, UserAccount(account, pk)});
+
+	//account_db_idx new_idx = temporary_idxs.size() + db_size;
+
+	*out = &((*it).second);
+	temporary_idxs.emplace(account, *out);
+	/*new_accounts.emplace(std::piecewise_construct,
 		std::forward_as_tuple(new_idx),
 		std::forward_as_tuple(std::piecewise_construct,
 			std::forward_as_tuple(account), 
 			std::forward_as_tuple(account, pk)));
-	*out = new_idx;
+	*out = new_idx;*/
 	return TransactionProcessingStatus::SUCCESS;
 }
 
@@ -217,10 +282,10 @@ void
 AccountCreationView::commit() {
 	for (auto iter = new_accounts.begin(); iter != new_accounts.end(); iter++) {
 		main_db.commit_account_creation(
-			iter->second.first, std::move(iter->second.second));
+			iter->first, std::move(iter->second));
 	}
 }
-
+/*
 TransactionProcessingStatus 
 UnlimitedMoneyBufferedMemoryDatabaseView::escrow(
 	account_db_idx account, AssetID asset, int64_t amount) {
@@ -252,6 +317,6 @@ UnlimitedMoneyBufferedMemoryDatabaseView::transfer_available(
 
 	return BufferedMemoryDatabaseView::transfer_available(
 		account, asset, amount);
-}
+} */
 
 } /* speedex */

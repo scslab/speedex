@@ -41,9 +41,9 @@ public:
 		if (offer.amount == 0) {
 			throw std::runtime_error("offer amount was 0!");
 		}
-		account_db_idx idx;
-		auto result = db.lookup_user_id(offer.owner, &idx);
-		if (!result) {
+		UserAccount* idx = db.lookup_user(offer.owner);
+		//auto result = db.lookup_user_id(offer.owner, &idx);
+		if (idx == nullptr) {
 			throw std::runtime_error("Offer in manager from nonexistent account");
 		}
 
@@ -618,9 +618,10 @@ bool Orderbook::tentative_clear_offers_for_validation(
 
 	int64_t partial_exec_sell_amount, partial_exec_buy_amount;
 
-	account_db_idx db_idx;
+	UserAccount* db_idx = db.lookup_user(partial_exec_offer.owner);
 
-	if (!db.lookup_user_id(partial_exec_offer.owner, &db_idx)) {
+	//if (!db.lookup_user_id(partial_exec_offer.owner, &db_idx)) {
+	if (db_idx == nullptr) {
 		std::printf("couldn't lookup user\n");
 		committed_offers.insert(local_clearing_log.partialExecThresholdKey, partial_exec_offer);
 		return false;
@@ -762,9 +763,10 @@ void Orderbook::process_clear_offers(
 
 	int64_t buy_amount, sell_amount;
 
-	account_db_idx idx;
-	auto result = db.lookup_user_id(partial_exec_offer.owner, &idx);
-	if (!result) {
+	UserAccount* idx = db.lookup_user(partial_exec_offer.owner);
+	//auto result = db.lookup_user_id(partial_exec_offer.owner, &idx);
+	//if (!result) {
+	if (idx == nullptr) {
 		throw std::runtime_error(
 			"(partialexec) Offer in manager from nonexistent account");
 	}

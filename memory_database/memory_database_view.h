@@ -17,9 +17,10 @@ takes care of this restriction.
 #include "xdr/types.h"
 #include "xdr/transaction.h"
 
+#include <cstdint>
+#include <forward_list>
 #include <unordered_map>
 #include <vector>
-#include <cstdint>
 
 
 
@@ -82,38 +83,47 @@ transaction until the block commits.
 class AccountCreationView {
 protected:
 	MemoryDatabase& main_db;
-	const account_db_idx db_size;
-	using new_account_pair_t = std::pair<AccountID, MemoryDatabase::DBEntryT>;
-	std::unordered_map<account_db_idx, new_account_pair_t> new_accounts;
+	
+	using new_account_pair_t = std::pair<AccountID, UserAccount>;
 
-	std::unordered_map<AccountID, account_db_idx> temporary_idxs;
+	std::forward_list<new_account_pair_t> new_accounts;
+	
+	//std::unordered_map<account_db_idx, new_account_pair_t> new_accounts;
+
+	std::unordered_map<AccountID, UserAccount*> temporary_idxs;
 
 	void commit();
 
 	AccountCreationView(MemoryDatabase& db)
 		: main_db(db),
-		db_size(db.size()),
+		//db_size(db.size()),
 		new_accounts(),
 		temporary_idxs() {}
 
 public:
+
+	UserAccount* lookup_user(AccountID account);
 	
-	bool lookup_user_id(AccountID account, account_db_idx* index_out);
+	//bool lookup_user_id(AccountID account, account_db_idx* index_out);
 
 	//! Create new account (id, pk).  Returns a database index
 	//! This index (out) is only usable in this account view.
 	TransactionProcessingStatus 
 	create_new_account(
-		AccountID account, const PublicKey pk, account_db_idx* out);
+		AccountID account, const PublicKey pk, UserAccount** out);
 
 	TransactionProcessingStatus 
-	reserve_sequence_number(account_db_idx idx, uint64_t sequence_number) {
+	reserve_sequence_number(UserAccount* idx, uint64_t sequence_number) {
 		return main_db.reserve_sequence_number(idx, sequence_number);
 	}
 
 	void 
-	commit_sequence_number(account_db_idx idx, uint64_t sequence_number) {
+	commit_sequence_number(UserAccount* idx, uint64_t sequence_number) {
 		main_db.commit_sequence_number(idx, sequence_number);
+	}
+
+	void release_sequence_number(UserAccount* idx, uint64_t sequence_number) {
+		main_db.release_sequence_number(idx, sequence_number);
 	}
 
 };
@@ -127,9 +137,9 @@ class BufferedMemoryDatabaseView : public AccountCreationView {
 
 
 protected:
-	std::unordered_map<account_db_idx, UserAccountView> accounts;
+	std::unordered_map<UserAccount*, UserAccountView> accounts;
 
-	UserAccountView& get_existing_account(account_db_idx account);
+	UserAccountView& get_existing_account(UserAccount* account);
 
 public:
 
@@ -140,12 +150,13 @@ public:
 	void unwind();
 
 	TransactionProcessingStatus escrow(
-		account_db_idx account, AssetID asset, int64_t amount);
+		UserAccount* account, AssetID asset, int64_t amount);
 	TransactionProcessingStatus transfer_available(
-		account_db_idx account, AssetID asset, int64_t amount);
+		UserAccount* account, AssetID asset, int64_t amount);
 
 	using AccountCreationView::reserve_sequence_number;
 	using AccountCreationView::commit_sequence_number;
+	using AccountCreationView::release_sequence_number;
 };
 
 /*! View of database that does not buffer negative side effects.
@@ -166,9 +177,9 @@ public:
 		: AccountCreationView(main_db) {}
 
 	TransactionProcessingStatus escrow(
-		account_db_idx account, AssetID asset, int64_t amount);
+		UserAccount* account, AssetID asset, int64_t amount);
 	TransactionProcessingStatus transfer_available(
-		account_db_idx account, AssetID asset, int64_t amount);
+		UserAccount* account, AssetID asset, int64_t amount);
 
 	uint64_t get_persisted_round_number() {
 		return main_db.get_persisted_round_number();
@@ -177,6 +188,7 @@ public:
 	using AccountCreationView::commit;
 	using AccountCreationView::reserve_sequence_number;
 	using AccountCreationView::commit_sequence_number;
+	using AccountCreationView::release_sequence_number;
 };
 
 /*! Mock database view that either acts as an unbuffered view or as a no-op,
@@ -196,12 +208,12 @@ public:
 		current_block_number, main_db) {}
 	
 	TransactionProcessingStatus 
-	escrow(account_db_idx account, AssetID asset, int64_t amount) {
+	escrow(UserAccount* account, AssetID asset, int64_t amount) {
 		return generic_do<&UnbufferedMemoryDatabaseView::escrow>(
 			account, asset, amount);
 	}
 	TransactionProcessingStatus 
-	transfer_available(account_db_idx account, AssetID asset, int64_t amount) {
+	transfer_available(UserAccount* account, AssetID asset, int64_t amount) {
 		return generic_do<&UnbufferedMemoryDatabaseView::transfer_available>(
 			account, asset, amount);
 	}
@@ -210,25 +222,35 @@ public:
 		return generic_do<&UnbufferedMemoryDatabaseView::commit>();
 	}
 
-	bool lookup_user_id(AccountID account, account_db_idx* index_out) {
+	UserAccount* lookup_user(AccountID account) {
+		return unconditional_do<&UnbufferedMemoryDatabaseView::lookup_user>(account);
+	}
+
+/*	bool lookup_user_id(AccountID account, account_db_idx* index_out) {
 		return generic_do<&UnbufferedMemoryDatabaseView::lookup_user_id>(
 			account, index_out);
-	}
+	} */
+
 	TransactionProcessingStatus 
 	create_new_account(
-		AccountID account, const PublicKey pk, account_db_idx* out) {
+		AccountID account, const PublicKey pk, UserAccount** out) {
 		return generic_do<&UnbufferedMemoryDatabaseView::create_new_account>(
 			account, pk, out);
 	}
 
 	TransactionProcessingStatus 
-	reserve_sequence_number(account_db_idx idx, uint64_t sequence_number) {
+	reserve_sequence_number(UserAccount* idx, uint64_t sequence_number) {
 		return generic_do<&UnbufferedMemoryDatabaseView::reserve_sequence_number>(
 			idx, sequence_number);
 	}
 
-	void commit_sequence_number(account_db_idx idx, uint64_t sequence_number) {
+	void commit_sequence_number(UserAccount* idx, uint64_t sequence_number) {
 		generic_do<&UnbufferedMemoryDatabaseView::commit_sequence_number>(
+			idx, sequence_number);
+	}
+
+	void release_sequence_number(UserAccount* idx, uint64_t sequence_number) {
+		generic_do<&UnbufferedMemoryDatabaseView::release_sequence_number>(
 			idx, sequence_number);
 	}
 };
@@ -240,6 +262,7 @@ we automatically grant money to accounts whenever they run out.
 
 Not for use in actual deployment.
 */
+/*
 class UnlimitedMoneyBufferedMemoryDatabaseView : public BufferedMemoryDatabaseView {
 
 public:
@@ -251,6 +274,6 @@ public:
 		account_db_idx account, AssetID asset, int64_t amount);
 	TransactionProcessingStatus transfer_available(
 		account_db_idx account, AssetID asset, int64_t amount);
-};
+}; */
 
 } /* speedex */

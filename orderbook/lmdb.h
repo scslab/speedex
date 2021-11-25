@@ -45,11 +45,10 @@ class OrderbookManagerLMDB {
 
 public:
 
-	/*! Initialize lmdb with mapsize of 2^30 (somewhat arbitrary choice)
-	Roughly 1 billion.
+	/*! Initialize lmdb with mapsize of 2^40 (somewhat arbitrary choice)
 	*/
 	OrderbookManagerLMDB(size_t num_orderbooks)
-		: base_instance{0x40000000, 400}
+		: base_instance{0x100'0000'0000, num_orderbooks + 1}
 		, num_orderbooks(num_orderbooks)
 		{}
 

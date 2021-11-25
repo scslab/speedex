@@ -85,13 +85,20 @@ bool SerialTransactionValidator<ManagerViewType>::validate_transaction(
 		return false;
 	}
 
-	account_db_idx source_account_idx;
+	UserAccount* source_account_idx = account_database.lookup_user(tx.metadata.sourceAccount);
+
+	if (source_account_idx == nullptr) {
+		TX_INFO("invalid userid lookup %lu", tx.metadata.sourceAccount);
+		return false;
+	}
+
+/*	account_db_idx source_account_idx;
 
 	if (!account_database.lookup_user_id(
 		tx.metadata.sourceAccount, &source_account_idx)) {
 		TX_INFO("invalid userid lookup %lu", tx.metadata.sourceAccount);
 		return false;
-	}
+	} */
 
 	OperationMetadata<UnbufferedViewT> op_metadata(
 		tx.metadata, source_account_idx, account_database, lmdb_args...);
@@ -200,16 +207,28 @@ SerialTransactionProcessor::process_transaction(
 		return TransactionProcessingStatus::INVALID_TX_FORMAT;
 	}
 
-	account_db_idx source_account_idx;
+	UserAccount* source_account_idx = account_database.lookup_user(tx.metadata.sourceAccount);
+	if (source_account_idx == nullptr) {
+		TX_INFO("invalid userid lookup %lu", tx.metadata.sourceAccount);
+		return TransactionProcessingStatus::SOURCE_ACCOUNT_NEXIST;
+	}
+
+/*	account_db_idx source_account_idx;
 
 	if (!account_database.lookup_user_id(
 			tx.metadata.sourceAccount, &source_account_idx)) {
 		TX_INFO("invalid userid lookup %lu", tx.metadata.sourceAccount);
 		return TransactionProcessingStatus::SOURCE_ACCOUNT_NEXIST;
-	}
+	} */
 
-	auto seq_num_status = account_database.reserve_sequence_number(
+	OperationMetadata<BufferedViewT> op_metadata(
+		tx.metadata, source_account_idx, account_database);
+
+	auto seq_num_status = op_metadata.db_view.reserve_sequence_number(
 		source_account_idx, tx.metadata.sequenceNumber);
+
+	//auto seq_num_status = account_database.reserve_sequence_number(
+	//	source_account_idx, tx.metadata.sequenceNumber);
 
 	if (seq_num_status != TransactionProcessingStatus::SUCCESS) {
 		TX_INFO("bad seq num on account %lu seqnum %lu", 
@@ -219,9 +238,6 @@ SerialTransactionProcessor::process_transaction(
 	}
 
 	TX_INFO("successfully reserved seq num %lu", tx.metadata.sequenceNumber);
-
-	OperationMetadata<BufferedViewT> op_metadata(
-		tx.metadata, source_account_idx, account_database);
 
 	for (uint64_t i = 0; i < tx_op_count; i++) {
 		TX_INFO("processing operation %lu, type %s", 
@@ -264,16 +280,18 @@ SerialTransactionProcessor::process_transaction(
 
 			TX_INFO("got bad status from an op");
 			unwind_transaction(tx, i-1);
-			op_metadata.unwind();
-			account_database.release_sequence_number(
+			op_metadata.db_view.release_sequence_number(
 				source_account_idx, tx.metadata.sequenceNumber);
+			op_metadata.unwind();
 			return status;
 		}
 	}
 
-	op_metadata.commit(stats);
-	account_database.commit_sequence_number(
+	op_metadata.db_view.commit_sequence_number(
+	//account_database.commit_sequence_number(
 		source_account_idx, tx.metadata.sequenceNumber);
+	op_metadata.commit(stats);
+
 	log_modified_accounts(signed_tx, serial_account_log);
 	return TransactionProcessingStatus::SUCCESS;
 }
@@ -283,12 +301,15 @@ SerialTransactionProcessor::unwind_transaction(
 	const Transaction& tx,
 	int last_valid_op) {
 
-	account_db_idx source_account_idx;
+	UserAccount* source_account_idx = account_database.lookup_user(tx.metadata.sourceAccount);
+	if (source_account_idx == nullptr) {
+		throw std::runtime_error("can't unwind tx from nonexistnet acct");
+	}
 
-	if (!account_database.lookup_user_id(
+	/*if (!account_database.lookup_user_id(
 		tx.metadata.sourceAccount, &source_account_idx)) {
 		throw std::runtime_error("cannot unwind tx from nonexistent acct");
-	}
+	}*/
 
 	OperationMetadata<UnbufferedViewT> op_metadata(
 		tx.metadata, source_account_idx, account_database);
@@ -351,7 +372,7 @@ SerialTransactionHandler<SerialManager>::process_operation(
 		return TransactionProcessingStatus::STARTING_BALANCE_TOO_LOW;
 	}
 
-	account_db_idx new_account_idx;
+	UserAccount* new_account_idx;
 	auto status = metadata.db_view.create_new_account(
 		op.newAccountId, op.newAccountPublicKey, &new_account_idx);
 	if (status != TransactionProcessingStatus::SUCCESS) {
@@ -490,10 +511,13 @@ TransactionProcessingStatus
 SerialTransactionHandler<SerialManager>::process_operation(
 	OperationMetadata<DatabaseView>& metadata,
 	const PaymentOp& op) {
+
+	UserAccount* target_account_idx = metadata.db_view.lookup_user(op.receiver);
 	
-	account_db_idx target_account_idx = -1;
-	if (!metadata.db_view.lookup_user_id(
-		op.receiver, &target_account_idx)) {
+	//account_db_idx target_account_idx = -1;
+	//if (!metadata.db_view.lookup_user_id(
+	//	op.receiver, &target_account_idx)) {
+	if (target_account_idx == nullptr) {
 		TX("failed to find target account idx");
 		return TransactionProcessingStatus::RECIPIENT_ACCOUNT_NEXIST;
 	}

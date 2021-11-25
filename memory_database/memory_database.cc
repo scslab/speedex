@@ -10,6 +10,7 @@
 
 namespace speedex {
 
+/*
 UserAccount& MemoryDatabase::find_account(account_db_idx user_index) {
 	uint64_t db_size = database.size();
 	if (user_index >= db_size) {
@@ -26,78 +27,68 @@ const UserAccount& MemoryDatabase::find_account(account_db_idx user_index) const
 		throw std::runtime_error("invalid db idx access");
 	}
 	return database[user_index];
-}
+} */
 
 void MemoryDatabase::transfer_available(
-	account_db_idx user_index, AssetID asset_type, int64_t change) {
-	find_account(user_index).transfer_available(asset_type, change);
+	UserAccount* user_index, AssetID asset_type, int64_t change) {
+	user_index -> transfer_available(asset_type, change);
+//	find_account(user_index).transfer_available(asset_type, change);
 }
 
 void MemoryDatabase::escrow(
-	account_db_idx user_index, AssetID asset_type, int64_t change) {
-	find_account(user_index).escrow(asset_type, change);
+	UserAccount* user_index, AssetID asset_type, int64_t change) {
+	user_index -> escrow(asset_type, change);
+	//find_account(user_index).escrow(asset_type, change);
 }
 
 bool MemoryDatabase::conditional_transfer_available(
-	account_db_idx user_index, AssetID asset_type, int64_t change) {
-	return find_account(user_index)
-		.conditional_transfer_available(asset_type, change);
+	UserAccount* user_index, AssetID asset_type, int64_t change) {
+	//return find_account(user_index)
+	return user_index ->
+		conditional_transfer_available(asset_type, change);
 }
 
 bool MemoryDatabase::conditional_escrow(
-	account_db_idx user_index, AssetID asset_type, int64_t change) {
-	return find_account(user_index).conditional_escrow(asset_type, change);
+	UserAccount* user_index, AssetID asset_type, int64_t change) {
+	//return find_account(user_index).conditional_escrow(asset_type, change);
+	return user_index -> conditional_escrow(asset_type, change);
 }
 
 TransactionProcessingStatus MemoryDatabase::reserve_sequence_number(
-	account_db_idx user_index, uint64_t sequence_number) {
-	return find_account(user_index).reserve_sequence_number(sequence_number);
+	UserAccount* user_index, uint64_t sequence_number) {
+	return user_index -> reserve_sequence_number(sequence_number);
+	//return find_account(user_index).reserve_sequence_number(sequence_number);
 }
 
 void MemoryDatabase::release_sequence_number(
-	account_db_idx user_index, uint64_t sequence_number) {
-	find_account(user_index).release_sequence_number(sequence_number);
+	UserAccount* user_index, uint64_t sequence_number) {
+	user_index -> release_sequence_number(sequence_number);
+	//find_account(user_index).release_sequence_number(sequence_number);
 }
 
 void MemoryDatabase::commit_sequence_number(
-	account_db_idx user_index, uint64_t sequence_number) {
-	find_account(user_index).commit_sequence_number(sequence_number);
+	UserAccount* user_index, uint64_t sequence_number) {
+	user_index -> commit_sequence_number(sequence_number);
+//	find_account(user_index).commit_sequence_number(sequence_number);
 }
 
 uint64_t 
-MemoryDatabase::get_last_committed_seq_number(account_db_idx idx) const
+MemoryDatabase::get_last_committed_seq_number(UserAccount* idx) const
 {
-	return find_account(idx).get_last_committed_seq_number();
+	return idx -> get_last_committed_seq_number();
+	//return find_account(idx).get_last_committed_seq_number();
 }
 
 
-/*
-//TODO this is not used in normal block processing, but seems generally useful
-account_db_idx MemoryDatabase::add_account_to_db(AccountID user_id, const PublicKey pk) {
-	auto idx_itr = user_id_to_idx_map.find(user_id);
-	if (idx_itr != user_id_to_idx_map.end()) {
-		return idx_itr -> second;
-	}
-
-	std::lock_guard lock(uncommitted_mtx);
-	idx_itr = uncommitted_idx_map.find(user_id);
-	if (idx_itr != uncommitted_idx_map.end()) {
-		return idx_itr -> second;
-	}
-	auto idx = database.size() + uncommitted_db.size();
-	uncommitted_idx_map[user_id] = idx;
-	uncommitted_db.emplace_back(user_id, pk);
-	return idx;
-} */
-
 int64_t MemoryDatabase::lookup_available_balance(
-	account_db_idx user_index, AssetID asset_type) {
-	return find_account(user_index).lookup_available_balance(asset_type);
+	UserAccount* user_index, AssetID asset_type) {
+	return user_index -> lookup_available_balance(asset_type);
+	//return find_account(user_index).lookup_available_balance(asset_type);
 }
 
 void MemoryDatabase::clear_internal_data_structures() {
 	uncommitted_db.clear();
-	uncommitted_idx_map.clear();
+	//uncommitted_idx_map.clear();
 	reserved_account_ids.clear();
 }
 
@@ -108,10 +99,16 @@ struct CommitValueLambda {
 	void operator() (const Applyable& work_root) {
 
 		auto lambda = [this] (const AccountID owner) {
-			account_db_idx idx;
+
+			UserAccount* ptr = db.lookup_user(owner);
+			if (ptr) {
+				db._commit_value(ptr);
+			}
+			/*account_db_idx idx;
 			if (db.lookup_user_id(owner, &idx)) {
 				db._commit_value(idx);
-			} else {
+			} */
+			else {
 				//Commit account creation should be done before
 				// calling commit values.
 				throw std::runtime_error(
@@ -138,7 +135,8 @@ void MemoryDatabase::commit_values() {
 		tbb::blocked_range<size_t>(0, db_size, 10000),
 		[this] (auto r) {
 			for (auto  i = r.begin(); i < r.end(); i++) {
-				database[i].commit();
+				database.get(i) -> commit();
+				//database[i].commit();
 			}
 		});
 }
@@ -150,7 +148,8 @@ void MemoryDatabase::rollback_values() {
 		tbb::blocked_range<std::size_t>(0, db_size, 10000),
 		[this] (auto r) {
 			for (auto  i = r.begin(); i < r.end(); i++) {
-				database[i].rollback();
+				database.get(i) -> rollback();
+				//database[i].rollback();
 			}
 		});
 
@@ -185,25 +184,26 @@ void MemoryDatabase::commit_new_accounts(uint64_t current_block_number) {
 
 
 	auto uncommitted_db_size = uncommitted_db.size();
-	database.reserve(database.size() + uncommitted_db_size);
+	//database.reserve(database.size() + uncommitted_db_size);
 
-	std::printf("took %lf to reserve\n", measure_time(timestamp));
+	std::printf("took %lf to compute uncommited_db.size\n", measure_time(timestamp));
 
 	for (uint64_t i = 0; i < uncommitted_db_size; i++) {
 		uncommitted_db[i].commit();
-		database.emplace_back(std::move(uncommitted_db[i]));
+		UserAccount* committed_acct = database.emplace_back(std::move(uncommitted_db[i]));
 
-		AccountID owner = database.back().get_owner();
+		AccountID owner = committed_acct -> get_owner(); // database.back().get_owner();
 
 		DBStateCommitmentTrie::prefix_t key_buf;
 		MemoryDatabase::write_trie_key(key_buf, owner);
 		//database.back().commit();
-		commitment_trie.insert(key_buf, DBStateCommitmentValueT(database.back().produce_commitment()));
+		commitment_trie.insert(key_buf, DBStateCommitmentValueT(committed_acct -> produce_commitment()));
+		user_id_to_idx_map[owner] = committed_acct;
 	}
 
 	std::printf("took %lf to insert to trie\n", measure_time(timestamp));
 
-	user_id_to_idx_map.insert(uncommitted_idx_map.begin(), uncommitted_idx_map.end());
+	//user_id_to_idx_map.insert(uncommitted_idx_map.begin(), uncommitted_idx_map.end());
 
 
 	std::printf("took %lf to insert to user idx map\n", measure_time(timestamp));
@@ -227,7 +227,7 @@ void MemoryDatabase::rollback_new_accounts_(uint64_t current_block_number) {
 			size_t db_size = database.size();
 			for (auto idx = db_size - thunk.num_accounts_created; idx < db_size; idx++) {
 
-				auto owner = database.at(idx).get_owner();
+				auto owner = database.get(idx)->get_owner();
 				user_id_to_idx_map.erase(owner);
 				
 				DBStateCommitmentTrie::prefix_t key_buf;
@@ -235,7 +235,9 @@ void MemoryDatabase::rollback_new_accounts_(uint64_t current_block_number) {
 				commitment_trie.perform_deletion(key_buf);
 			}
 
-			database.erase(database.begin() + (db_size - thunk.num_accounts_created), database.end());
+			database.erase(thunk.num_accounts_created);
+
+		//	database.erase(database.begin() + (db_size - thunk.num_accounts_created), database.end());
 
 			account_creation_thunks.erase(account_creation_thunks.begin() + i);
 		} else {
@@ -252,11 +254,18 @@ struct ValidityCheckLambda {
 	void operator() (const Applyable& work_root) {
 
 		auto lambda = [this] (const AccountID owner) {
-			account_db_idx idx;
-			db.lookup_user_id(owner, &idx);
-			if (!db._check_valid(idx)) {
+			UserAccount* idx = db.lookup_user(owner);
+			if (idx == nullptr) {
+				throw std::runtime_error("invalid db lookup");
+			}
+			if (! idx -> in_valid_state()) {
 				error_found.test_and_set();
 			}
+			//account_db_idx idx;
+			//db.lookup_user_id(owner, &idx);
+			//if (!db._check_valid(idx)) {
+			//	error_found.test_and_set();
+			//}
 		};
 
 		work_root . apply_to_keys(lambda);
@@ -290,6 +299,16 @@ bool MemoryDatabase::account_exists(AccountID account) {
 	return user_id_to_idx_map.find(account) != user_id_to_idx_map.end();
 }
 
+UserAccount*
+MemoryDatabase::lookup_user(AccountID account) const {
+	auto idx_itr = user_id_to_idx_map.find(account);
+
+	if (idx_itr != user_id_to_idx_map.end()) {
+		return idx_itr -> second;
+	}
+	return nullptr;
+}
+/*
 //returns index of user id.
 bool MemoryDatabase::lookup_user_id(AccountID account, uint64_t* index_out) const {
 	INFO("MemoryDatabase::lookup_user_id on account %ld", account);
@@ -302,7 +321,7 @@ bool MemoryDatabase::lookup_user_id(AccountID account, uint64_t* index_out) cons
 	}
 
 	return false;
-}
+} */
 
 TransactionProcessingStatus MemoryDatabase::reserve_account_creation(const AccountID account) {
 	if (user_id_to_idx_map.find(account) != user_id_to_idx_map.end()) {
@@ -323,8 +342,8 @@ void MemoryDatabase::release_account_creation(const AccountID account) {
 
 void MemoryDatabase::commit_account_creation(const AccountID account_id, DBEntryT&& account_data) {
 	std::lock_guard lock(uncommitted_mtx);
-	account_db_idx new_idx = uncommitted_db.size() + database.size();
-	uncommitted_idx_map.emplace(account_id, new_idx);
+	//account_db_idx new_idx = uncommitted_db.size() + database.size();
+	//uncommitted_idx_map.emplace(account_id, new_idx);
 	uncommitted_db.push_back(std::move(account_data));
 }
 
@@ -338,7 +357,8 @@ std::optional<PublicKey> MemoryDatabase::get_pk_nolock(AccountID account) const 
 	if (iter == user_id_to_idx_map.end()) {
 		return std::nullopt;
 	}
-	return database[iter->second].get_pk();
+	return iter->second -> get_pk();
+	//return database[iter->second].get_pk();
 }
 
 //rollback_for_validation should be called in advance of this
@@ -353,24 +373,25 @@ MemoryDatabase::finalize_produce_state_commitment() {
 }
 
 struct TentativeValueModifyLambda {
-	std::vector<MemoryDatabase::DBEntryT>& database;
+	AccountVector& database;
+	//std::vector<MemoryDatabase::DBEntryT>& database;
 	const MemoryDatabase::index_map_t& user_id_to_idx_map;
 
 	void operator() (AccountID owner, MemoryDatabase::DBStateCommitmentValueT& value) {
-		account_db_idx idx = user_id_to_idx_map.at(owner);
-		value = database[idx].tentative_commitment();
+		UserAccount* idx = user_id_to_idx_map.at(owner);
+		value = idx->tentative_commitment();
 	}
 };
 
 struct ProduceValueModifyLambda {
 	//relies on the fact that MemoryDatabase and AccountLog use the same key space
-	std::vector<MemoryDatabase::DBEntryT>& database;
+	AccountVector& database; //std::vector<MemoryDatabase::DBEntryT>& database;
 	const MemoryDatabase::index_map_t& user_id_to_idx_map;
 
 	void operator() (AccountID owner, MemoryDatabase::DBStateCommitmentValueT& value) {
 
-		account_db_idx idx = user_id_to_idx_map.at(owner);
-		value = database.at(idx).produce_commitment();
+		UserAccount* idx = user_id_to_idx_map.at(owner);
+		value = idx -> produce_commitment();
 	}
 };
 
@@ -456,8 +477,9 @@ MemoryDatabase::_produce_state_commitment(Hash& hash) {
 			DBStateCommitmentTrie local_trie;
 			for (auto i = r.begin(); i < r.end(); i++) {
 				tl_state_modified_count ++;
-				MemoryDatabase::write_trie_key(key_buf, database.at(i).get_owner());
-				local_trie.insert(key_buf, DBStateCommitmentValueT(database.at(i).produce_commitment()));
+				UserAccount* cur_account = database.get(i);
+				MemoryDatabase::write_trie_key(key_buf, cur_account->get_owner());
+				local_trie.insert(key_buf, DBStateCommitmentValueT(cur_account -> produce_commitment()));
 			}
 			commitment_trie.merge_in(std::move(local_trie));
 			state_modified_count.fetch_add(tl_state_modified_count, std::memory_order_relaxed);
@@ -512,7 +534,8 @@ void MemoryDatabase::clear_persistence_thunks_and_reload(uint64_t expected_persi
 							if (iter == user_id_to_idx_map.end()) {
 								throw std::runtime_error("invalid lookup to user_id_to_idx_map!");
 							}
-							database[iter->second] = UserAccount(commitment);
+							*(iter -> second) = UserAccount(commitment);
+							//database[iter->second] = UserAccount(commitment);
 						}
 					}
 				});
@@ -639,12 +662,12 @@ void MemoryDatabase::persist_lmdb(uint64_t current_block_number) {
 
 		modified_count++;
 
-		AccountCommitment commitment = database[i].produce_commitment();
+		AccountCommitment commitment = database.get(i) -> produce_commitment();
 
 		auto commitment_buf = xdr::xdr_to_opaque(commitment);
 		dbval val = dbval{commitment_buf.data(), commitment_buf.size()};
-		AccountID owner = database[i].get_owner();
-		dbval key = dbval(&owner, sizeof(AccountID));//UserAccount::produce_lmdb_key(database[i].get_owner());
+		AccountID owner = database.get(i)->get_owner();
+		dbval key = dbval(&owner, sizeof(AccountID));
 
 		try {
 			write_txn.put(account_lmdb_instance.get_data_dbi(), &key, &val);
@@ -691,8 +714,9 @@ void MemoryDatabase::load_lmdb_contents_to_memory() {
 		if (account_owner != owner) {
 			throw std::runtime_error("key read error");
 		}
-		user_id_to_idx_map.emplace(owner, database.size());
-		database.emplace_back(commitment);
+		UserAccount* acct = database.emplace_back(commitment);
+
+		user_id_to_idx_map.emplace(owner, acct);
 		++cursor;
 	}
 
@@ -722,8 +746,10 @@ void MemoryDatabase::values_log() {
 
 void KVAssignment::operator=(const AccountID account) {
 
-	account_db_idx idx;
-	if (!db.lookup_user_id(account, &idx)) {
+	UserAccount* idx = db.lookup_user(account);
+	//account_db_idx idx;
+	//if (!db.lookup_user_id(account, &idx)) {
+	if (idx == nullptr) {
 		throw std::runtime_error("can't commit invalid account");
 	}
 	AccountCommitment commitment = db.produce_commitment(idx);
@@ -761,15 +787,18 @@ MemoryDatabase::install_initial_accounts_and_commit(MemoryDatabaseGenesisData co
 		index_map_t& local_id_map, 
 		DBStateCommitmentTrie& local_commitment_trie) -> void 
 	{
-		local_id_map.emplace(id, next_idx);
-		database[next_idx].set_owner(id, pk, 0);
+		UserAccount* acct = database.get(next_idx);
+		//std::printf("for next_idx %lu got ptr %p\n", next_idx, acct);
+		local_id_map.emplace(id, acct);
+		acct -> set_owner(id, pk, 0);
+		//database[next_idx].set_owner(id, pk, 0);
 
-		account_init_lambda(database[next_idx]);
+		account_init_lambda(*acct);
 
 		DBStateCommitmentTrie::prefix_t key_buf;
 		MemoryDatabase::write_trie_key(key_buf, id);
 
-		local_commitment_trie.insert(key_buf, DBStateCommitmentValueT(database[next_idx].produce_commitment()));
+		local_commitment_trie.insert(key_buf, DBStateCommitmentValueT(acct -> produce_commitment()));
 	};
 
 	tbb::parallel_for(

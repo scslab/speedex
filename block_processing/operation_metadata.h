@@ -27,7 +27,8 @@ struct OperationMetadata {
 	const TransactionMetadata& tx_metadata;
 	//! database index of the source account.
 	//! (Saves repeated db lookups)
-	const account_db_idx source_account_idx;
+	UserAccount* source_account_idx;
+	//const account_db_idx source_account_idx;
 	//! View of the database for the transaction.
 	//! Tx processor should call commit or unwind
 	//! on this metadata object to commit/unwind the database view.
@@ -43,7 +44,8 @@ struct OperationMetadata {
 	template<typename... DBViewArgs>
 	OperationMetadata(
 		const TransactionMetadata& tx_metadata,
-		const account_db_idx source_account_idx,
+		UserAccount* source_account_idx,
+		//const account_db_idx source_account_idx,
 		MemoryDatabase& db,
 		DBViewArgs... args)
 	: tx_metadata(tx_metadata)

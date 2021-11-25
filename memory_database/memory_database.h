@@ -9,6 +9,7 @@
 
 #include "lmdb/lmdb_wrapper.h"
 
+#include "memory_database/account_vector.h"
 #include "memory_database/background_thunk_clearer.h"
 #include "memory_database/typedefs.h"
 #include "memory_database/user_account.h"
@@ -201,15 +202,16 @@ public:
 		buf = trie_prefix_t{account};
 	}
 
-	using index_map_t = std::map<AccountID, account_db_idx>;
+	using index_map_t = std::map<AccountID, UserAccount*>;
 
 private:
 
 	index_map_t user_id_to_idx_map;
-	index_map_t uncommitted_idx_map;
+	//index_map_t uncommitted_idx_map;
 	std::set<AccountID> reserved_account_ids;
 
-	std::vector<DBEntryT> database;
+	AccountVector database;
+	//std::vector<DBEntryT> database;
 	std::vector<DBEntryT> uncommitted_db;
 
 	mutable std::shared_mutex committed_mtx;
@@ -229,8 +231,8 @@ private:
 	MemoryDatabase(const MemoryDatabase&) = delete;
 	MemoryDatabase& operator=(const MemoryDatabase&) = delete;
 
-	UserAccount& find_account(account_db_idx user_index);
-	const UserAccount& find_account(account_db_idx user_index) const;
+	//UserAccount& find_account(account_db_idx user_index);
+	//const UserAccount& find_account(account_db_idx user_index) const;
 
 	friend class MemoryDatabaseView;
 
@@ -246,7 +248,7 @@ private:
 	friend class UnbufferedMemoryDatabaseView;
 	friend class BufferedMemoryDatabaseView;
 	friend class AccountCreationView;
-	friend class UnlimitedMoneyBufferedMemoryDatabaseView;
+	//friend class UnlimitedMoneyBufferedMemoryDatabaseView;
 
 	void _produce_state_commitment(Hash& hash);
 
@@ -257,8 +259,8 @@ private:
 
 	friend class ValidityCheckLambda;
 	//! Check whether one account (by db idx) is in a valid state.
-	bool _check_valid(account_db_idx account_idx) {
-		if (account_idx >= database.size()) {
+	//bool _check_valid(account_db_idx account_idx) {
+	//	if (account_idx >= database.size()) {
 			/*
 				Newly created accounts are always valid.
 				Transaction validation checks that ID is well formed,
@@ -272,10 +274,19 @@ private:
 				created the account, but receiving payments can't make an
 				account invalid.
 			*/
-			return true;
-		}
-		return database[account_idx].in_valid_state();
-	}
+	//		return true;
+	//	}
+	//	return database[account_idx].in_valid_state();
+	//}
+
+	TransactionProcessingStatus reserve_sequence_number(
+		UserAccount* user_index, uint64_t sequence_number);
+
+	void release_sequence_number(
+		UserAccount* user_index, uint64_t sequence_number);
+
+	void commit_sequence_number(
+		UserAccount* user_index, uint64_t sequence_number);
 public:
 
 	uint64_t get_persisted_round_number() {
@@ -284,7 +295,7 @@ public:
 
 	MemoryDatabase()
 		: user_id_to_idx_map(),
-		uncommitted_idx_map(),
+	//	uncommitted_idx_map(),
 		reserved_account_ids(),
 		database(),
 		uncommitted_db(),
@@ -304,17 +315,18 @@ public:
 
 	// Obviously not threadsafe with value modification
 
-	void commit(uint64_t current_block_number) {
-		commit_new_accounts(current_block_number);
-		commit_values();
-	}
+	//void commit(uint64_t current_block_number) {
+	//	commit_new_accounts(current_block_number);
+	//	commit_values();
+	//}
 
 	//! Commit changes to all of the values (account states)
 	//! logged as modified in dirty_accounts.
 	void commit_values(const AccountModificationLog& dirty_accounts);
 
-	void _commit_value(account_db_idx account_idx) {
-		database[account_idx].commit();
+	void _commit_value(UserAccount* account_idx) {
+		account_idx -> commit();
+		//database[account_idx].commit();
 	}
 
 	//! Commit changes to all accounts
@@ -377,36 +389,29 @@ public:
 
 	void load_lmdb_contents_to_memory();
 
-	bool lookup_user_id(AccountID account, account_db_idx* index_out) const;
+	UserAccount* lookup_user(AccountID account) const;
+
+	//bool lookup_user_id(AccountID account, account_db_idx* index_out) const;
 
 	//input to index is what is returned from lookup
 
 	void transfer_available(
-		account_db_idx user_index, AssetID asset_type, int64_t change);
+		UserAccount* user_index, AssetID asset_type, int64_t change);
 
 	void escrow(
-		account_db_idx user_index, AssetID asset_type, int64_t change);
+		UserAccount* user_index, AssetID asset_type, int64_t change);
 
 	bool conditional_transfer_available(
-		account_db_idx user_index, AssetID asset_type, int64_t change);
+		UserAccount* user_index, AssetID asset_type, int64_t change);
 	bool conditional_escrow(
-		account_db_idx user_index, AssetID asset_type, int64_t change);
+		UserAccount* user_index, AssetID asset_type, int64_t change);
 
 
 	int64_t lookup_available_balance(
-		account_db_idx user_index, AssetID asset_type);
-
-	TransactionProcessingStatus reserve_sequence_number(
-		account_db_idx user_index, uint64_t sequence_number);
-
-	void release_sequence_number(
-		account_db_idx user_index, uint64_t sequence_number);
-
-	void commit_sequence_number(
-		account_db_idx user_index, uint64_t sequence_number);
+		UserAccount* user_index, AssetID asset_type);
 
 	//! should not be used concurrently with commit on a UserAccount
-	uint64_t get_last_committed_seq_number(account_db_idx idx) const;
+	uint64_t get_last_committed_seq_number(UserAccount* idx) const;
 
 	//! Get the public key associated with an account.
 	//! Returns nullopt if no such account exists.
@@ -427,8 +432,9 @@ public:
 	*/
 	bool check_valid_state(const AccountModificationLog& dirty_accounts);
 
-	AccountCommitment produce_commitment(account_db_idx idx) const {
-		return database[idx].produce_commitment();
+	AccountCommitment produce_commitment(UserAccount* idx) const {
+		return idx -> produce_commitment();
+		//return database[idx].produce_commitment();
 	}
 
 	/*! Generate a peristence thunk given a log of which accounts were modified.

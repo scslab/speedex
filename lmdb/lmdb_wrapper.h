@@ -210,6 +210,12 @@ struct LMDBLoadingWrapper {
     return generic_success<ret_type>::success();
   }
 
+  template<auto func, typename... Args>
+  auto
+  unconditional_do(Args... args) {
+    return (wrapped.*func)(args...);
+  }
+
   template<typename... Args>
   LMDBLoadingWrapper(const uint64_t current_block_number, Args&... args)
     : wrapped(args...)
