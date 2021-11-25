@@ -29,7 +29,7 @@ AccountVector::AccountVectorRow::resize(size_t sz) {
 		throw std::runtime_error("assigned past max");
 	}
 	size_t remaining = ACCOUNTS_PER_ROW - num_active_entries;
-	size_t num_addable = std::max(sz, remaining);
+	size_t num_addable = std::min(sz, remaining);
 	num_active_entries += num_addable;
 	return num_addable;
 }
@@ -92,11 +92,16 @@ AccountVector::resize(size_t sz) {
 			if (accounts.size() == next_open_idx) {
 				accounts.push_back(std::make_unique<AccountVectorRow>());
 			}
+		} else {
+			if (num_to_add != 0) {
+				throw std::runtime_error("resize error");
+			}
 		}
 	}
 	if (sz != _size) {
-		throw std::runtime_error("resize error");
+		throw std::runtime_error("overall resize error");
 	}
+	std::printf("resized to %lu\n", sz);
 }
 
 

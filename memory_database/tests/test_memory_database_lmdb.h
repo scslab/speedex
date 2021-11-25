@@ -101,6 +101,22 @@ public:
 		TS_ASSERT(idx == nullptr);
 	}
 
+	void test_set_big_genesis() {
+		MemoryDatabase db;
+
+		init_memdb(db, 1000000, 10, 15);
+
+		TS_ASSERT_EQUALS(db.size(), 1'000'000u);
+
+		for (size_t i = 0; i < 1'000'000; i += 1000) {
+			UserAccount* idx = db.lookup_user(i);
+			TS_ASSERT(idx != nullptr);
+		}
+
+		UserAccount* idx = db.lookup_user(1'000'000);
+		TS_ASSERT(idx == nullptr);
+	}
+
 	void test_rollback_account_values() {
 
 		MemoryDatabase db;
