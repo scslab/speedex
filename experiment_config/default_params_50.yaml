@@ -1,0 +1,7 @@
+protocol: 
+  tax_rate: 15
+  smooth_mult: 10
+  num_assets: 50
+
+speedex-node:
+  persistence_frequency: 5
