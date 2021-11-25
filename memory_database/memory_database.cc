@@ -256,7 +256,10 @@ struct ValidityCheckLambda {
 		auto lambda = [this] (const AccountID owner) {
 			UserAccount* idx = db.lookup_user(owner);
 			if (idx == nullptr) {
-				throw std::runtime_error("invalid db lookup");
+				// This occurs when owner is a newly created account this block.
+				// Newly created account validity is enforced by tx semantics.
+				return;
+				//throw std::runtime_error("invalid db lookup");
 			}
 			if (! idx -> in_valid_state()) {
 				error_found.test_and_set();
