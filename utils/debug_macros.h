@@ -36,7 +36,9 @@ Printouts include file/line information.
 
 #define INTEGRITY_CHECKS OFF
 
-#define MEMPOOL_DEBUG DEBUG_LEVEL_NONE
+#define MEMPOOL_DEBUG DEBUG_LEVEL_INFO
+
+#define OVERLAY_DEBUG DEBUG_LEVEL_NONE
 
 #define HOTSTUFF_DEBUG DEBUG_LEVEL_INFO
 
@@ -168,6 +170,13 @@ Printouts include file/line information.
 #define MEMPOOL_INFO_F(s) (void)0
 #endif
 
+#if OVERLAY_DEBUG <= DEBUG_LEVEL_INFO
+#define OVERLAY_INFO(s, ...) LOG(s, __VA_ARGS__)
+#define OVERLAY_INFO_F(s) s
+#else
+#define OVERLAY_INFO(s, ...) (void)0
+#define OVERLAY_INFO_F(s) (void)0
+#endif
 
 #if HOTSTUFF_DEBUG <= DEBUG_LEVEL_INFO
 #define HOTSTUFF_INFO(s, ...) LOG(s, __VA_ARGS__)

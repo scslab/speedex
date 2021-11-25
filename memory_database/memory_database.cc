@@ -162,8 +162,6 @@ void MemoryDatabase::commit_new_accounts(uint64_t current_block_number) {
 	std::lock_guard lock2(committed_mtx);
 	std::lock_guard lock3(uncommitted_mtx);
 
-	std::printf("took %lf to acquire locks\n", measure_time(timestamp));
-
 	if ((account_creation_thunks.size() == 0 && account_lmdb_instance.get_persisted_round_number() + 1 != current_block_number)
 		|| (account_creation_thunks.size() > 0 && account_creation_thunks.back().current_block_number + 1 != current_block_number)) {
 
@@ -180,13 +178,9 @@ void MemoryDatabase::commit_new_accounts(uint64_t current_block_number) {
 		}
 	}
 
-	std::printf("took %lf to check thunk validity\n", measure_time(timestamp));
-
 
 	auto uncommitted_db_size = uncommitted_db.size();
 	//database.reserve(database.size() + uncommitted_db_size);
-
-	std::printf("took %lf to compute uncommited_db.size\n", measure_time(timestamp));
 
 	for (uint64_t i = 0; i < uncommitted_db_size; i++) {
 		uncommitted_db[i].commit();
@@ -201,12 +195,8 @@ void MemoryDatabase::commit_new_accounts(uint64_t current_block_number) {
 		user_id_to_idx_map[owner] = committed_acct;
 	}
 
-	std::printf("took %lf to insert to trie\n", measure_time(timestamp));
-
 	//user_id_to_idx_map.insert(uncommitted_idx_map.begin(), uncommitted_idx_map.end());
 
-
-	std::printf("took %lf to insert to user idx map\n", measure_time(timestamp));
 
 	account_creation_thunks.push_back(AccountCreationThunk{current_block_number, uncommitted_db_size});
 	clear_internal_data_structures();
