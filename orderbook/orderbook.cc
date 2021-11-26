@@ -411,6 +411,86 @@ Orderbook::get_supply_bounds(
 	return std::make_pair(lower_bound, upper_bound);
 }
 
+void 
+Orderbook::calculate_demands_and_supplies_times_prices(
+	const Price* prices, 
+	uint128_t* demands_workspace, 
+	uint128_t* supplies_workspace,
+	const uint8_t smooth_mult) {
+
+	auto [full_exec_p, partial_exec_p] = get_execution_prices(prices, smooth_mult);
+	
+	auto sell_price = prices[category.sellAsset];
+	auto buy_price = prices[category.buyAsset];
+
+	auto metadata_partial = get_metadata(partial_exec_p);
+	auto metadata_full = metadata_partial;
+	if (smooth_mult) /* partial_exec_p != full_exec_p */{
+		metadata_full = get_metadata(full_exec_p);
+	}
+
+	calculate_demands_and_supplies_times_prices_from_metadata(prices, demands_workspace, supplies_workspace, smooth_mult, metadata_partial, metadata_full);
+}
+
+void Orderbook::calculate_demands_and_supplies_times_prices_from_metadata(
+	const Price* prices,
+	uint128_t* demands_workspace,
+	uint128_t* supplies_workspace,
+	const uint8_t smooth_mult,
+	const EndowAccumulator& metadata_partial,
+	const EndowAccumulator& metadata_full) {
+
+
+	Price sell_price = prices[category.sellAsset];
+	Price buy_price = prices[category.buyAsset];
+
+	//demands_workspace & supplies_workspace will output quantities of (endowment * price)
+	// same "units" as partial exec metadata.  That is, radix of PRICE_RADIX, and are (64 + PRICE_BIT_LEN)-bit integers.
+
+	uint64_t full_exec_endow = metadata_full.endow;
+	uint64_t partial_exec_endow = metadata_partial.endow - full_exec_endow;
+
+	uint128_t full_exec_endow_times_price = metadata_full.endow_times_price;
+	uint128_t partial_exec_endow_times_price = metadata_partial.endow_times_price - full_exec_endow_times_price;
+	
+	if (metadata_full.endow_times_price > metadata_partial.endow_times_price) {
+		throw std::runtime_error("This should absolutely never happen, and means indexed_metadata or binary search is broken (or maybe an overflow)");
+	}
+
+	uint128_t full_exec_trade_volume = static_cast<uint128_t>(full_exec_endow) * static_cast<uint128_t>(sell_price);
+	uint128_t partial_exec_trade_volume = 0;
+
+	auto wide_multiply_safe = [] (uint128_t const& endow_times_limit_price, uint64_t const& price) -> uint128_t {
+		uint128_t upper = endow_times_limit_price >> 64;
+		uint128_t lower = endow_times_limit_price & UINT64_MAX;
+
+		upper *= price;
+		lower *= price;
+
+		return (upper << (64 - price::PRICE_RADIX)) + (lower >> price::PRICE_RADIX);
+	};
+
+	if (smooth_mult > 0) {
+		// REQUIRE: smooth_mult + price::PRICE_BIT_LEN <= 63
+		// e.g. smooth_mult <= 15
+
+		uint128_t part1 = (static_cast<uint128_t>(sell_price) * static_cast<uint128_t>(partial_exec_endow));
+		uint128_t part2 = wide_multiply_safe(partial_exec_endow_times_price, buy_price);
+
+		if (part1 < part2) {
+			throw std::runtime_error("arithmetic error");
+		}
+		partial_exec_trade_volume = (part1 - part2) << smooth_mult;
+	}
+
+	uint128_t total_trade_volume = full_exec_trade_volume + partial_exec_trade_volume;
+
+	demands_workspace[category.buyAsset] += total_trade_volume;
+	supplies_workspace[category.sellAsset] += total_trade_volume;
+
+
+}
+
 void Orderbook::calculate_demands_and_supplies_from_metadata(
 	const Price* prices, 
 	uint128_t* demands_workspace,

@@ -103,6 +103,9 @@ ORDERBOOK_SRCS = \
 	orderbook/orderbook.cc \
 	orderbook/orderbook_manager.cc
 
+ORDERBOOK_TEST_SRCS = \
+	orderbook/tests/test_demand_calc.h
+
 OVERLAY_SRCS = \
 	overlay/overlay_client.cc \
 	overlay/overlay_client_manager.cc \
@@ -199,6 +202,7 @@ TEST_SRCS = \
 	$(HEADER_HASH_TEST_SRCS) \
 	$(HOTSTUFF_TEST_SRCS) \
 	$(MEMORY_DATABASE_TEST_SRCS) \
+	$(ORDERBOOK_TEST_SRCS) \
 	$(SIMPLEX_TEST_SRCS) \
 	$(TRIE_TEST_SRCS)
 

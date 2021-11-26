@@ -233,6 +233,12 @@ public:
 		uint128_t* supplies_workspace,
 		const uint8_t smooth_mult);
 
+	void calculate_demands_and_supplies_times_prices(
+		const Price* prices, 
+		uint128_t* demands_workspace, 
+		uint128_t* supplies_workspace,
+		const uint8_t smooth_mult);
+
 	//! Calculate demand and supply at given set of prices,
 	//! given that the endow calculations (the binary searches) have already
 	//! been done.
@@ -241,6 +247,14 @@ public:
 		uint128_t* demands_workspace,
 		uint128_t* supplies_workspace,
 		const uint8_t smooth_mult, 
+		const EndowAccumulator& metadata_partial,
+		const EndowAccumulator& metadata_full);
+
+	void calculate_demands_and_supplies_times_prices_from_metadata(
+		const Price* prices,
+		uint128_t* demands_workspace,
+		uint128_t* supplies_workspace,
+		const uint8_t smooth_mult,
 		const EndowAccumulator& metadata_partial,
 		const EndowAccumulator& metadata_full);
 
