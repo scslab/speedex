@@ -39,5 +39,7 @@ overlay_sim
 solver_comparison
 speedex_vm_hotstuff
 synthetic_data_gen
+tatonnement_experiment_data_gen
+tatonnement_mega_graph
 trie_comparison
 

@@ -144,9 +144,12 @@ struct GeneratorState {
 	AssetID gen_asset();
 	Operation make_sell_offer(int64_t amount, double ratio, const OfferCategory& category);
 
+	std::vector<Operation>
+	gen_good_offer_cycle(const std::vector<AssetID>& assets, const std::vector<double>& prices);
 	//Does NOT fill in sequence numbers!  None of these tx gen methods do
 	std::vector<SignedTransaction> 
 	gen_good_tx_cycle(const std::vector<AssetID>& assets, const std::vector<double>& prices);
+	Operation gen_bad_offer(const std::vector<double>& prices);
 	SignedTransaction gen_bad_tx(const std::vector<double>& prices);
 	SignedTransaction gen_account_creation_tx();
 	SignedTransaction gen_payment_tx();
@@ -183,8 +186,10 @@ public:
 			gen_new_accounts(options.num_accounts);
 		}
 
+	void make_offer_set(const std::vector<double>& prices);
 	void make_block(const std::vector<double>& prices);
 
+	void make_offer_sets();
 	void make_blocks();
 
 	void dump_account_list(std::string accounts_filename);

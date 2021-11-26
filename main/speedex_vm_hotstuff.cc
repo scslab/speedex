@@ -160,7 +160,7 @@ int main(int argc, char* const* argv)
 	}
 
 	if (config.nreplicas != params.n_replicas) {
-		throw std::runtime_error("mismatch between experiment data sharding and num replicas");
+		std::printf("WARNING: mismatch between experiment data sharding and num replicas\n");
 	}
 
 	auto vm = std::make_shared<SpeedexVM>(params, speedex_options, experiment_results_folder);

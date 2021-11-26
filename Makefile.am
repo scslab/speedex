@@ -38,9 +38,7 @@ CRYPTO_SRCS = \
 	crypto/crypto_utils.cc
 
 EXPERIMENTS_SRCS = \
-	experiments/producer_node.cc \
-	experiments/validator_node.cc \
-	experiments/singlenode_init.cc
+	experiments/tatonnement_sim_experiment.cc
 
 HEADER_HASH_SRCS = \
 	header_hash/block_header_hash_map.cc
@@ -166,6 +164,7 @@ SRCS = \
 	$(BLOCK_PROCESSING_SRCS) \
 	$(CONFIG_SRCS) \
 	$(CRYPTO_SRCS) \
+	$(EXPERIMENTS_SRCS) \
 	$(HEADER_HASH_SRCS) \
 	$(HOTSTUFF_SRCS) \
 	$(LMDB_SRCS) \
@@ -190,6 +189,8 @@ MAIN_CCS = \
 	main/solver_comparison.cc \
 	main/speedex_vm_hotstuff.cc \
 	main/synthetic_data_gen_from_params.cc \
+	main/tatonnement_experiment_data_gen_from_params.cc \
+	main/tatonnement_mega_graph.cc \
 	main/trie_comparison.cc 
 
 AM_CPPFLAGS = $(libcrypto_CFLAGS) $(gsl_CFLAGS) $(xdrpp_CFLAGS) $(libsodium_CFLAGS) $(LIBFYAML_CFLAGS) $(lmdb_CFLAGS)
@@ -219,6 +220,8 @@ bin_PROGRAMS = \
 	solver_comparison \
 	speedex_vm_hotstuff \
 	synthetic_data_gen \
+	tatonnement_experiment_data_gen \
+	tatonnement_mega_graph \
 	trie_comparison \
 	test
 
@@ -231,6 +234,8 @@ replicated_simulation_experiment_controller_SOURCES = $(SRCS) main/replicated_si
 solver_comparison_SOURCES = $(SRCS) main/solver_comparison.cc
 speedex_vm_hotstuff_SOURCES = $(SRCS) main/speedex_vm_hotstuff.cc
 synthetic_data_gen_SOURCES = $(SRCS) main/synthetic_data_gen_from_params.cc
+tatonnement_experiment_data_gen_SOURCES = $(SRCS) main/tatonnement_experiment_data_gen_from_params.cc
+tatonnement_mega_graph_SOURCES = $(SRCS) main/tatonnement_mega_graph.cc
 trie_comparison_SOURCES = $(SRCS) main/trie_comparison.cc
 
 test_SOURCES = $(SRCS) test_runner.cc

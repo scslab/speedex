@@ -60,7 +60,11 @@ struct MultifuncTatonnementObjective {
 		double acc_l8 = 0;
 		for (size_t i = 0; i < num_assets; i++) {
 			double diff = price::amount_to_double(supplies[i], price::PRICE_RADIX) - price::amount_to_double(demands[i], price::PRICE_RADIX);
-			diff *= price::to_double(prices[i]);
+			
+			#ifndef USE_DEMAND_MULT_PRICES
+				diff *= price::to_double(prices[i]);
+			#endif
+			
 			double diff_sq = diff * diff;
 			acc_l2 += diff_sq;
 			acc_l8 += diff_sq * diff_sq * diff_sq * diff_sq;
@@ -172,6 +176,10 @@ class TatonnementOracle {
 	//! Run one Tatonnement query with a given set of control params.
 	//! return true if this thread is the first to find successful equilibrium
 	bool grid_search_tatonnement_query(
+		TatonnementControlParameters& control_params, 
+		Price* prices_workspace, 
+		std::unique_ptr<LPInstance>& lp_instance);
+	bool better_grid_search_tatonnement_query(
 		TatonnementControlParameters& control_params, 
 		Price* prices_workspace, 
 		std::unique_ptr<LPInstance>& lp_instance);

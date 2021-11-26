@@ -25,6 +25,15 @@ Otherwise, sleep as a regular AsyncWorker.
 
 Each worker should be assigned to only one ParallelDemandOracle.
 */
+
+#define USE_DEMAND_MULT_PRICES
+
+#ifdef USE_DEMAND_MULT_PRICES
+constexpr static auto demand_func = &Orderbook::calculate_demands_and_supplies_times_prices;
+#else
+constexpr static auto demand_func = &Orderbook::calculate_demands_and_supplies;
+#endif
+
 class DemandOracleWorker : public AsyncWorker {
 	using AsyncWorker::cv;
 	using AsyncWorker::mtx;
@@ -83,10 +92,9 @@ class DemandOracleWorker : public AsyncWorker {
 		const uint8_t smooth_mult) {
 			
 			for (size_t i = starting_work_unit; i < ending_work_unit; i++) {
-				work_units[i].calculate_demands_and_supplies(active_prices, demands, supplies, smooth_mult);
+				(work_units[i].*demand_func) (active_prices, demands, supplies, smooth_mult);
 			}
 	}
-
 
 	void run() {
 		std::unique_lock lock(mtx);
@@ -109,7 +117,6 @@ class DemandOracleWorker : public AsyncWorker {
 					get_supply_demand(query_prices, supplies, demands, *query_work_units, query_smooth_mult);
 					signal_round_compute_done();
 				}
-				
 			}
 			cv.notify_all();
 		}
@@ -249,7 +256,7 @@ public:
 
 		// Do work in main thread
 		for (size_t i = main_thread_start_idx; i < main_thread_end_idx; i++) {
-			work_units[i].calculate_demands_and_supplies(active_prices, demands, supplies, smooth_mult);
+			(work_units[i].*demand_func)(active_prices, demands, supplies, smooth_mult);
 		}
 
 		// Gather results from workers

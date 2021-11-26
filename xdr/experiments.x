@@ -73,6 +73,11 @@ struct PriceComputationExperiment {
 	
 };
 
+struct TatonnementExperimentData {
+	uint32 num_assets;
+	Offer offers<>;
+};
+
 typedef string ExperimentName<200>;
 
 struct ExperimentConfig {

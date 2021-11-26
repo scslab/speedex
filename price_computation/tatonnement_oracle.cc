@@ -77,7 +77,12 @@ Price get_trial_price(const uint128_t& demand, const uint128_t& supply, const Pr
 		uint128_t diff = demand - supply; // 64 + 24 bits
 
 		uint128_t p_times_step = ((uint128_t)step) * ((uint128_t) old_price);
+
+		#ifdef USE_DEMAND_MULT_PRICES
+		uint128_t p_times_diff = (applied_relativizer) * diff;
+		#else
 		uint128_t p_times_diff = ((uint128_t) old_price * applied_relativizer) * diff;
+		#endif
 
 		Price delta = price::safe_multiply_and_drop_lowbits(p_times_step, p_times_diff, control_params.step_radix + price::PRICE_RADIX);
 
@@ -86,8 +91,13 @@ Price get_trial_price(const uint128_t& demand, const uint128_t& supply, const Pr
 		uint128_t diff = supply - demand;
 
 		uint128_t p_times_step = ((uint128_t)step) * ((uint128_t) old_price);
+		
+		#ifdef USE_DEMAND_MULT_PRICES
+		uint128_t p_times_diff = (applied_relativizer) * diff;
+		#else
 		uint128_t p_times_diff = ((uint128_t) old_price * applied_relativizer) * diff;
-
+		#endif
+		
 		Price delta = price::safe_multiply_and_drop_lowbits(p_times_step, p_times_diff, control_params.step_radix + price::PRICE_RADIX);
 
 		if (delta >= old_price) {
@@ -388,7 +398,11 @@ void TatonnementOracle::run_tatonnement_thread(TatonnementControlParameters* con
 		num_active_threads ++;
 		lock.unlock();
 
-		auto success = grid_search_tatonnement_query(control_params, local_price_workspace.data(), instance);
+		#ifdef USE_DEMAND_MULT_PRICES
+			auto success = better_grid_search_tatonnement_query(control_params, local_price_workspace.data(), instance);
+		#else 
+			auto success = grid_search_tatonnement_query(control_params, local_price_workspace.data(), instance);
+		#endif
 
 		lock.lock();
 		num_active_threads --;
@@ -593,10 +607,15 @@ TatonnementOracle::normalize_prices(
 }
 
 bool
-TatonnementOracle::grid_search_tatonnement_query(
+TatonnementOracle::better_grid_search_tatonnement_query(
 	TatonnementControlParameters& control_params,
 	Price* prices_workspace,
-	std::unique_ptr<LPInstance>& lp_instance) {
+	std::unique_ptr<LPInstance>& lp_instance)
+{
+
+	#ifndef USE_DEMAND_MULT_PRICES
+		throw std::runtime_error("oracle invalid");
+	#endif
 
 	Price* trial_prices = new Price[num_assets];
 
@@ -607,9 +626,6 @@ TatonnementOracle::grid_search_tatonnement_query(
 	uint64_t step = min_step;// 1/2^value
 
 	const uint8_t step_adjust_radix = control_params.step_adjust_radix;
-
-	//TAT_INFO("step up:%f", (1.2 * ((double) (((uint16_t)1) << step_adjust_radix))));
-	//was: up 1.4, down 0.8
 	
 	const uint16_t step_up = (uint16_t) (1.4 * ((double) (((uint16_t)1) << step_adjust_radix)));
 	const uint16_t step_down = (uint16_t) (0.8 * ((double) (((uint16_t)1) << step_adjust_radix)));
@@ -620,14 +636,6 @@ TatonnementOracle::grid_search_tatonnement_query(
 	uint128_t* supplies_search = new uint128_t[num_assets];
 	uint128_t* demands_search = new uint128_t[num_assets];
 
-
-	//ObjectiveFunctionInputs function_inputs(num_assets);
-	//for (int i = 0; i < num_assets; i++) {
-	//	TAT_INFO("Starting prices:%lu %f", prices_workspace[i], PriceUtils::to_double(prices_workspace[i]));
-	//}
-
-	//std::lock_guard lock = work_unit_manager.get_lock();
-
 	auto& work_units = work_unit_manager.get_orderbooks();
 
 	clear_supply_demand_workspaces(supplies_search, demands_search);
@@ -635,15 +643,11 @@ TatonnementOracle::grid_search_tatonnement_query(
 	auto& demand_oracle = *(control_params.oracle);
 	demand_oracle.activate_oracle();
 
-
 	demand_oracle.
 		get_supply_demand(prices_workspace, supplies_search, demands_search, work_units, active_approx_params.smooth_mult);//, function_inputs);
 
-
 	MultifuncTatonnementObjective prev_objective;
 	prev_objective.eval(supplies_search, demands_search, prices_workspace, num_assets);
-
-	//auto prev_objective = get_objective(supplies_search, demands_search, prices_workspace, function_inputs);
 
 	int round_number = 0;
 
@@ -659,9 +663,7 @@ TatonnementOracle::grid_search_tatonnement_query(
 			if (solver_res) {
 				clearing = true;
 				TAT_INFO("clearing because lp solver found valid solution: lp time %lf", measure_time(timestamp));
-			} //else {
-			//	TAT_INFO("solver failed");
-			//}
+			}
 		}
 
 		if (clearing) {
@@ -722,7 +724,200 @@ TatonnementOracle::grid_search_tatonnement_query(
 		MultifuncTatonnementObjective new_objective;
 		new_objective.eval(supplies_workspace, demands_workspace, prices_workspace, num_assets);
 
-//		auto new_objective = get_objective(supplies_workspace, demands_workspace, prices_workspace, function_inputs);
+		if (round_number % 10000 == 9999) {
+			auto other_finisher = done_tatonnement_flag.load(std::memory_order_acquire);
+			if (other_finisher) {
+				delete[] trial_prices;
+				delete[] supplies_workspace;
+				delete[] demands_workspace;
+				delete[] supplies_search;
+				delete[] demands_search;
+
+				TAT_INFO("thread ending, num rounds was %lu", round_number);
+				demand_oracle.deactivate_oracle();
+				return false;
+			}
+		}
+		if (round_number % 100000 == -1) {
+			TAT_INFO("ROUND %5d step_size %lf (%lu) objective %lf step_radix %lu", round_number, price::amount_to_double(step, step_radix), step, prev_objective.l2norm_sq, step_radix);
+			for (size_t i = 0; i < num_assets; i++) {
+				double demand = price::amount_to_double(demands_search[i], price::PRICE_RADIX);
+				demand = demand - price::amount_to_double(demands_search[i], price::PRICE_RADIX + active_approx_params.tax_rate);
+				double delta = demand - price::amount_to_double(supplies_search[i], price::PRICE_RADIX);
+				TAT_INFO("original: %d\t%11.3f\t%11.3f\t%4.3f\t(%8lu)",
+					i, 
+					price::amount_to_double(demands_search[i],price::PRICE_RADIX), 
+					price::amount_to_double(supplies_search[i],price::PRICE_RADIX), 
+					price::to_double(prices_workspace[i]),
+					prices_workspace[i]);
+				TAT_INFO("new:      \t%11.3f\t%11.3f\t%5.3f\t(%8lu)\t%11.3f",
+					price::amount_to_double(demands_workspace[i],price::PRICE_RADIX), 
+					price::amount_to_double(supplies_workspace[i],price::PRICE_RADIX), 
+					price::to_double(trial_prices[i])
+					, trial_prices[i]
+					, delta);
+			}
+			TAT_INFO("any change: %d force step %d", any_change, force_step_rounds);
+		}
+		bool recalc_obj = false;
+
+		if (new_objective.is_better_than(prev_objective) /*new_objective <= prev_objective * 1.1 */|| step < min_step || clearing || (force_step_rounds > 0)) { /* 1.0001 */
+			for (size_t i = 0; i < num_assets; i++) {
+				prices_workspace[i] = trial_prices[i];
+				supplies_search[i] = supplies_workspace[i];
+				demands_search[i] = demands_workspace[i];
+			}
+			if (force_step_rounds > 0) {
+				force_step_rounds--;
+			}
+			prev_objective = new_objective;
+			step = increment_step(step, step_up, step_adjust_radix);
+		} else {
+			step = decrement_step(step, step_down, step_adjust_radix);
+		}
+
+		if (round_number % 1000 == 0) {
+			int adjust = normalize_prices(prices_workspace);
+			if (adjust != 0) {
+				//TAT_INFO("normalize prices %d", adjust);
+				recalc_obj = true;
+				if (adjust > 0) {
+					step >>= adjust;
+				} else {
+					step <<= adjust;
+				}
+				if (step < min_step) {
+					step = min_step;
+				}
+			}
+		}
+
+		if (recalc_obj) {
+			prev_objective.eval(supplies_workspace, demands_workspace, prices_workspace, num_assets);
+		}
+	}
+}
+
+bool
+TatonnementOracle::grid_search_tatonnement_query(
+	TatonnementControlParameters& control_params,
+	Price* prices_workspace,
+	std::unique_ptr<LPInstance>& lp_instance) {
+
+	#ifdef USE_DEMAND_MULT_PRICES
+		throw std::runtime_error("oracle invalid");
+	#endif
+
+	Price* trial_prices = new Price[num_assets];
+
+	const uint8_t step_radix = control_params.step_radix;
+
+	const uint64_t min_step =  control_params.min_step;
+
+	uint64_t step = min_step;// 1/2^value
+
+	const uint8_t step_adjust_radix = control_params.step_adjust_radix;
+	
+	const uint16_t step_up = (uint16_t) (1.4 * ((double) (((uint16_t)1) << step_adjust_radix)));
+	const uint16_t step_down = (uint16_t) (0.8 * ((double) (((uint16_t)1) << step_adjust_radix)));
+
+	uint128_t* supplies_workspace = new uint128_t[num_assets];
+	uint128_t* demands_workspace = new uint128_t[num_assets];
+
+	uint128_t* supplies_search = new uint128_t[num_assets];
+	uint128_t* demands_search = new uint128_t[num_assets];
+
+	//std::lock_guard lock = work_unit_manager.get_lock();
+
+	auto& work_units = work_unit_manager.get_orderbooks();
+
+	clear_supply_demand_workspaces(supplies_search, demands_search);
+
+	auto& demand_oracle = *(control_params.oracle);
+	demand_oracle.activate_oracle();
+
+
+	demand_oracle.
+		get_supply_demand(prices_workspace, supplies_search, demands_search, work_units, active_approx_params.smooth_mult);//, function_inputs);
+
+
+	MultifuncTatonnementObjective prev_objective;
+	prev_objective.eval(supplies_search, demands_search, prices_workspace, num_assets);
+
+	int round_number = 0;
+
+	bool clearing = false;
+
+	int force_step_rounds = 0;
+
+	while (true) {
+
+		if (round_number % LP_CHECK_FREQ == LP_CHECK_FREQ - 1) {
+			TAT_INFO_F(auto timestamp = init_time_measurement());
+			auto solver_res = solver.check_feasibility(trial_prices, lp_instance, active_approx_params);
+			if (solver_res) {
+				clearing = true;
+				TAT_INFO("clearing because lp solver found valid solution: lp time %lf", measure_time(timestamp));
+			}
+		}
+
+		if (clearing) {
+
+			auto not_first_clear = done_tatonnement_flag.exchange(true, std::memory_order_acq_rel);
+
+			if (!not_first_clear) {
+
+				TAT_INFO("CLEARING");
+
+				TAT_INFO("ROUND %5d step_size %lf (%lu) objective %lf", round_number, price::amount_to_double(step, step_radix), step, prev_objective.l2norm_sq);
+				TAT_INFO("Asset\tdemand\tsupply\tprice\ttax revenue\toversupply");
+				for (size_t i = 0; i < num_assets; i++) {
+					double demand = price::amount_to_double(demands_search[i], price::PRICE_RADIX);
+					demand = demand - price::amount_to_double(demands_search[i], price::PRICE_RADIX + active_approx_params.tax_rate);
+					double delta = demand - price::amount_to_double(supplies_search[i], price::PRICE_RADIX);
+					TAT_INFO("%d\t%010.3f\t%010.3f\t%010.3f\t(%8lu)\t\t%010.3f\t%010.3f", 
+						i, 
+						price::amount_to_double(demands_search[i],price::PRICE_RADIX), 
+						price::amount_to_double(supplies_search[i],price::PRICE_RADIX), 
+						price::to_double(prices_workspace[i]),
+						prices_workspace[i],
+						price::amount_to_double(demands_search[i], price::PRICE_RADIX + active_approx_params.tax_rate),
+						delta);
+				}
+				TAT_INFO("tax_rate %lu smooth_mult %lu", active_approx_params.tax_rate, active_approx_params.smooth_mult);
+				for (size_t i = 0; i < num_assets; i++) {
+					prices_workspace[i] = trial_prices[i];
+				}
+				internal_measurements.num_rounds = round_number;
+				internal_measurements.step_radix = step_radix;
+			}
+			delete[] trial_prices;
+			delete[] supplies_workspace;
+			delete[] demands_workspace;
+			delete[] supplies_search;
+			delete[] demands_search;
+
+			demand_oracle.deactivate_oracle();
+			return !not_first_clear;
+		}
+		round_number++;
+
+
+		bool any_change = set_trial_prices(prices_workspace, trial_prices, step, control_params, demands_search, supplies_search);
+
+		if (!any_change) {
+			force_step_rounds = 10;
+		}
+
+		clear_supply_demand_workspaces(supplies_workspace, demands_workspace);
+
+		demand_oracle.
+			get_supply_demand(trial_prices, supplies_workspace, demands_workspace, work_units, active_approx_params.smooth_mult);
+
+		clearing = check_clearing(demands_workspace, supplies_workspace, active_approx_params.tax_rate, num_assets);
+
+		MultifuncTatonnementObjective new_objective;
+		new_objective.eval(supplies_workspace, demands_workspace, prices_workspace, num_assets);
 
 		if (round_number % 10000 == 9999) {
 			auto other_finisher = done_tatonnement_flag.load(std::memory_order_acquire);

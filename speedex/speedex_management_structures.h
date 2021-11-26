@@ -75,11 +75,11 @@ struct TatonnementManagementStructures {
 
 	//! Init tatonnment objects using supplied speedex objects.
 	TatonnementManagementStructures(
-		SpeedexManagementStructures& management_structures)
-		: lp_solver(management_structures.orderbook_manager)
-		, oracle(management_structures.orderbook_manager, lp_solver)
+		OrderbookManager& orderbook_manager)
+		: lp_solver(orderbook_manager)
+		, oracle(orderbook_manager, lp_solver)
 		, rolling_averages(
-			management_structures.orderbook_manager.get_num_assets()) {}
+			orderbook_manager.get_num_assets()) {}
 };
 
 } /* speedex */

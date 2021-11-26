@@ -245,6 +245,18 @@ GeneratorState<random_generator>::make_sell_offer(int64_t amount, double ratio, 
 	return tx_formatter::make_operation(op);
 }
 
+Offer
+sell_offer_op_to_offer(Operation op, AccountID owner, uint64_t& seqNum) {
+	Offer out;
+	out.category = op.body.createSellOfferOp().category;
+	out.amount = op.body.createSellOfferOp().amount;
+	out.minPrice = op.body.createSellOfferOp().minPrice;
+	out.owner = owner;
+	out.offerId = seqNum;
+	seqNum++;
+	return out;
+}
+
 template<typename random_generator>
 double 
 GeneratorState<random_generator>::gen_good_price(double exact_price) {
@@ -255,6 +267,28 @@ template<typename random_generator>
 double 
 GeneratorState<random_generator>::gen_bad_price(double exact_price) {
 	return exact_price + (1.0 + gen_tolerance());
+}
+
+template<typename random_generator>
+std::vector<Operation>
+GeneratorState<random_generator>::gen_good_offer_cycle(const std::vector<AssetID>& assets, const std::vector<double>& prices) {
+	std::vector<Operation> output;
+
+	int64_t endow = gen_endowment(prices[assets[0]]);
+
+	std::vector<std::pair<double, int64_t>> prev_endows;
+
+	for (unsigned int i = 0; i < assets.size(); i++) {
+		OfferCategory category(assets.at(i), assets.at((i+1)%assets.size()), OfferType::SELL);
+		if (category.buyAsset == category.sellAsset) {
+			throw std::runtime_error("shouldn't have identical buy and sell assets");
+		}
+		double min_price = get_exact_price(prices, category);
+
+		auto offer = make_sell_offer(endow, gen_good_price(min_price), category);
+		output.push_back(offer);
+	}
+	return output;
 }
 
 
@@ -359,6 +393,23 @@ GeneratorState<random_generator>::gen_asset() {
 		std::exponential_distribution<> asset_dist(options.asset_bias);
 		return (static_cast<AssetID>(std::floor(asset_dist(gen)))) % options.num_assets;
 	}
+}
+
+template<typename random_generator>
+Operation
+GeneratorState<random_generator>::gen_bad_offer(const std::vector<double>& prices) {
+	OfferCategory category;
+	category.type = OfferType::SELL;
+	category.sellAsset = gen_asset();
+	category.buyAsset = category.sellAsset;
+	while (category.sellAsset == category.buyAsset) {
+		category.buyAsset = gen_asset();
+	}
+
+	double exact_price = get_exact_price(prices, category);
+	double bad_price = gen_bad_price(exact_price);
+
+	return make_sell_offer(gen_endowment(prices[category.sellAsset]), bad_price, category);
 }
 
 template<typename random_generator>
@@ -623,6 +674,44 @@ void GeneratorState<random_generator>::make_block(const std::vector<double>& pri
 	cancellation_flags.resize(txs.size(), false);
 }
 
+
+template<typename random_generator>
+void GeneratorState<random_generator>::make_offer_set(const std::vector<double>& prices) {
+	normalize_asset_probabilities();
+
+	TatonnementExperimentData sim_data;
+
+
+	uint64_t seqNum = 0;
+	double bad_frac = 0;
+	while(sim_data.offers.size() < options.block_size) {
+		if (bad_frac > 1) {
+			bad_frac -= 1.0;
+			sim_data.offers.push_back(sell_offer_op_to_offer(gen_bad_offer(prices), 0, seqNum));
+		} else {
+			auto asset_cycle = gen_asset_cycle();
+			bad_frac += asset_cycle.size() * options.bad_tx_fraction;
+			auto offer_cycle = gen_good_offer_cycle(asset_cycle, prices);
+
+			for (auto offer : offer_cycle) {
+				sim_data.offers.push_back(sell_offer_op_to_offer(offer, 0, seqNum));
+			}
+		}
+	}
+
+	std::string filename = output_directory + std::to_string(block_state.block_number) + ".offers";
+	block_state.block_number ++;
+
+	sim_data.num_assets = options.num_assets;
+
+	std::printf("made %lu offers\n", sim_data.offers.size());
+
+	if (save_xdr_to_file(sim_data, filename.c_str())) {
+		throw std::runtime_error("was not able to save file!");
+	}
+}
+
+
 template<typename random_generator>
 void 
 GeneratorState<random_generator>::make_blocks() {
@@ -630,6 +719,18 @@ GeneratorState<random_generator>::make_blocks() {
 
 	for (size_t i = 0; i < options.num_blocks; i++) {
 		make_block(prices);
+		modify_prices(prices);
+		print_prices(prices);
+	}
+}
+
+template<typename random_generator>
+void
+GeneratorState<random_generator>::make_offer_sets() {
+	std::vector<double> prices = gen_prices();
+
+	for (size_t i = 0; i < options.num_blocks; i++) {
+		make_offer_set(prices);
 		modify_prices(prices);
 		print_prices(prices);
 	}
