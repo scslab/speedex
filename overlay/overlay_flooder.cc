@@ -1,5 +1,7 @@
 #include "overlay/overlay_flooder.h"
 
+#include "utils/debug_macros.h"
+
 #include <thread>
 
 using namespace std::chrono_literals;
@@ -21,9 +23,10 @@ OverlayFlooder::background_flood_thread() {
 		if (sz < FLOOD_THRESHOLD) {
 			auto data = data_stream.load_txs_unparsed();
 			if (data.data) {
+				OVERLAY_INFO("forwarding tx input buffer number %lu", data.buffer_number);
 				client_manager.send_txs(data);
 			} else {
-				std::printf("done loading txs, terminating overlay flooder\n");
+				OVERLAY_INFO("done loading txs, terminating overlay flooder");
 				return;
 			}
 		} else {
