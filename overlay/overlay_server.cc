@@ -49,7 +49,7 @@ OverlayHandler::get_min_max_seen_batch_nums() const
 	uint32_t min_max = UINT32_MAX;
 	for (auto const& kv : max_seen_batch_nums) {
 		min_max = std::min(kv.second.load(std::memory_order_relaxed), min_max);
-		std::printf("got %lu from %lu\n", kv.second, kv.first);
+		std::printf("got %lu from %lu\n", kv.second.load(std::memory_order_relaxed), kv.first);
 	}
 	return min_max;
 }
