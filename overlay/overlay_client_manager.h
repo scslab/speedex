@@ -2,6 +2,8 @@
 
 #include "overlay/overlay_client.h"
 
+#include "synthetic_data_generator/data_stream.h"
+
 #include <cstdint>
 #include <vector>
 
@@ -20,7 +22,7 @@ public:
 		{}
 
 	uint64_t get_mempool_size() const;
-	void send_txs(std::pair<uint32_t, std::shared_ptr<xdr::opaque_vec<>>> txs);
+	void send_txs(DataBuffer data);
 };
 
 class OverlayClientManager {
@@ -36,7 +38,7 @@ public:
 
 	void poll_foreign_mempool_size();
 
-	void send_txs(std::pair<uint32_t, std::shared_ptr<xdr::opaque_vec<>>> txs);
+	void send_txs(DataBuffer data);
 
 };
 

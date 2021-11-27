@@ -10,19 +10,30 @@
 
 namespace speedex {
 
+struct DataBuffer {
+	size_t num_txs;
+	std::shared_ptr<xdr::opaque_vec<>> data;
+	size_t buffer_number;
+};
+
 class DataStream {
 
 public:
 
-	virtual std::pair<uint32_t, std::shared_ptr<xdr::opaque_vec<>>> 
+	virtual DataBuffer
 	load_txs_unparsed() = 0;
 };
 
 class MockDataStream : public DataStream {
+	size_t count;
 
 public:
 
-	std::pair<uint32_t, std::shared_ptr<xdr::opaque_vec<>>> 
+	MockDataStream()
+		: count(0)
+		{}
+
+	DataBuffer
 	load_txs_unparsed() override final {
 		ExperimentBlock block;
 
@@ -33,8 +44,9 @@ public:
 		std::shared_ptr<xdr::opaque_vec<>> v = std::make_shared<xdr::opaque_vec<>>();
 
 		*v = xdr::xdr_to_opaque(block);
+		count++;
 
-		return {sz, v};
+		return DataBuffer{sz, v, count};
 	}
 
 };

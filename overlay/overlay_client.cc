@@ -23,7 +23,7 @@ void
 OverlayClient::send_txs(forward_t txs) {
 	std::lock_guard lock(mtx);
 	txs_to_forward.push_back(txs);
-	local_buffer_size.fetch_add(txs.first, std::memory_order_relaxed);
+	local_buffer_size.fetch_add(txs.num_txs, std::memory_order_relaxed);
 	cv.notify_all();
 }
 
@@ -36,7 +36,7 @@ void
 OverlayClient::run()
 {
 	while(true) {
-		std::vector<std::pair<uint32_t, std::shared_ptr<ForwardingTxs>>> to_forward;
+		std::vector<forward_t> to_forward;
 		{
 			std::unique_lock lock(mtx);
 			if ((!done_flag) && (!exists_work_to_do())) {
@@ -56,9 +56,9 @@ OverlayClient::run()
 			bool success = try_action_void(
 				[this, &to_forward] {
 					auto front = to_forward.front();
-					client -> forward_txs(*(front.second));
-					local_buffer_size.fetch_sub(front.first);
-					foreign_mempool_size.fetch_add(front.first);
+					client -> forward_txs(*(front.data));
+					local_buffer_size.fetch_sub(front.num_txs);
+					foreign_mempool_size.fetch_add(front.num_txs);
 				});
 
 			if (success) {

@@ -20,7 +20,7 @@ OverlayFlooder::background_flood_thread() {
 		size_t sz = client_manager.get_min_mempool_size();
 		if (sz < FLOOD_THRESHOLD) {
 			auto data = data_stream.load_txs_unparsed();
-			if (data.second) {
+			if (data.data) {
 				client_manager.send_txs(data);
 			} else {
 				std::printf("done loading txs, terminating overlay flooder\n");

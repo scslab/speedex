@@ -41,7 +41,8 @@ public:
 		delete buffer;
 	}
 
-	std::pair<uint32_t, std::shared_ptr<xdr::opaque_vec<>>> load_txs_unparsed() override final;
+	DataBuffer 
+	load_txs_unparsed() override final;
 
 };
 

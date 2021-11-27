@@ -10,10 +10,10 @@ SelfOverlayClient::get_mempool_size() const {
 }
 
 void 
-SelfOverlayClient::send_txs(std::pair<uint32_t, std::shared_ptr<xdr::opaque_vec<>>> txs) {
+SelfOverlayClient::send_txs(DataBuffer data) {
 	xdr::xvector<SignedTransaction> blk;
 	try {
-		xdr::xdr_from_opaque(*(txs.second), blk);
+		xdr::xdr_from_opaque(*(data.data), blk);
 	} catch (...) {
 		return;
 	}
@@ -59,12 +59,12 @@ OverlayClientManager::poll_foreign_mempool_size() {
 }
 
 void 
-OverlayClientManager::send_txs(std::pair<uint32_t, std::shared_ptr<xdr::opaque_vec<>>> txs)
+OverlayClientManager::send_txs(DataBuffer data)
 {
-	self_client.send_txs(txs);
+	self_client.send_txs(data);
 
 	for (auto& other_client : other_clients) {
-		other_client->send_txs(txs);
+		other_client->send_txs(data);
 	}
 }
 

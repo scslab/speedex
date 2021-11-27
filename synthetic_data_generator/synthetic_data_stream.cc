@@ -9,7 +9,7 @@ tx_filename(std::string const& root, uint64_t block_number) {
 	return root + std::to_string(block_number) + std::string(".txs");
 }
 
-std::pair<uint32_t, std::shared_ptr<xdr::opaque_vec<>>>
+DataBuffer
 SyntheticDataStream::load_txs_unparsed() {
 	std::shared_ptr<xdr::opaque_vec<>> data = std::make_shared<xdr::opaque_vec<>>();
 	auto filename = tx_filename(folder, cur_block_number);
@@ -30,7 +30,7 @@ SyntheticDataStream::load_txs_unparsed() {
 
 	xdr::xdr_argpack_archive(g, num_txs);
 
-	return {num_txs, data};
+	return DataBuffer{num_txs, data, cur_block_number - 1};
 }
 
 

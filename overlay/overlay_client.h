@@ -1,5 +1,7 @@
 #pragma once
 
+#include "synthetic_data_generator/data_stream.h"
+
 #include "utils/nonblocking_rpc_client.h"
 
 #include "rpc/rpcconfig.h"
@@ -22,7 +24,7 @@ class OverlayClient : public NonblockingRpcClient<xdr::srpc_client<OverlayV1>> {
 	std::atomic<uint64_t> local_buffer_size;
 	std::atomic<bool> connected_to_foreign_mempool;
 
-	using forward_t = std::pair<uint32_t, std::shared_ptr<ForwardingTxs>>;
+	using forward_t = DataBuffer;
 
 	std::vector<forward_t> txs_to_forward;
 
