@@ -42,7 +42,7 @@ HotstuffVMControl_server::send_producer_is_done_signal()
 
 std::unique_ptr<uint64_t> 
 HotstuffVMControl_server::get_speedex_block_height() {
-	return std::make_unique<uint64_t>(vm -> get_committed_block_height());
+	return std::make_unique<uint64_t>(vm -> get_lead_block_height());
 }
 
 

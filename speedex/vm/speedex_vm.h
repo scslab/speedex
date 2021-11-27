@@ -113,7 +113,7 @@ public:
 		return experiment_done;
 	}
 
-	uint64_t get_committed_block_height();
+	uint64_t get_lead_block_height();
 
 	Mempool& get_mempool() {
 		return mempool_structs.mempool;

@@ -152,13 +152,14 @@ send_all_experiment_done_signals(const ReplicaConfig& config) {
 std::optional<uint64_t>
 get_num_blocks(const ReplicaInfo& info) {
 	try {
-		std::printf("querying to see if node %s marked experiment done\n", info.hostname.c_str());
+		std::printf("querying to get node %s num blocks\n", info.hostname.c_str());
 		auto fd = xdr::tcp_connect(info.hostname.c_str(), EXPERIMENT_CONTROL_PORT);
 		auto client = xdr::srpc_client<HotstuffVMControlV1>(fd.get());
 		auto res = client.get_speedex_block_height();
 		if (!res) {
 			return std::nullopt;
 		}
+		std::printf("got %lu from %s\n", *res, info.hostname.c_str());
 		return {*res};
 	} catch(...) {
 		std::printf("node %s is not responding to messages\n", info.hostname.c_str());
@@ -188,6 +189,7 @@ wait_for_all_same_height(const ReplicaConfig& config) {
 			}
 		}
 		if ((!comm_failure) && (!mismatch)) {
+			std::printf("common height was %lu\n", *height);
 			return;
 		}
 		std::this_thread::sleep_for(1000ms);

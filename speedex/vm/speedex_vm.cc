@@ -309,9 +309,10 @@ SpeedexVM::rewind_to_last_commit() {
 }
 
 uint64_t 
-SpeedexVM::get_committed_block_height() {
-	std::lock_guard lock(confirmation_mtx);
-	return last_committed_block.block.blockNumber;
+SpeedexVM::get_lead_block_height() {
+	std::lock_guard lock(operation_mtx);
+	std::lock_guard lock2(confirmation_mtx);
+	return proposal_base_block.block.blockNumber;
 }
 
 } /* speedex */

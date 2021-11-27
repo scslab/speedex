@@ -27,6 +27,7 @@ experiment_results/
 #automation
 automation/config_file
 automation/data_folder
+automation/num_threads
 automation/results_folder
 automation/replica
 automation/speedex_options
