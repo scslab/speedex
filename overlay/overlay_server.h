@@ -53,7 +53,7 @@ public:
 	OverlayServer(Mempool& mempool, ReplicaConfig& config);
 
 	uint32_t tx_batch_limit() const {
-		return handler.get_min_max_seen_batch_nums() + 2;
+		return handler.get_min_max_seen_batch_nums() + 1;
 	}
 
 	OverlayHandler& get_handler() {
