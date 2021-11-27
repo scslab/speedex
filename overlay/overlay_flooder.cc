@@ -27,11 +27,14 @@ OverlayFlooder::background_flood_thread() {
 				buffer = data_stream.load_txs_unparsed();
 			}
 			if (buffer->buffer_number <= server.tx_batch_limit()) {
-				if (buffer ->data) {
+				if (buffer -> data) {
 					OVERLAY_INFO("forwarding tx input buffer number %lu", buffer -> buffer_number);
 					client_manager.send_txs(*buffer);
-					buffer = std::nullopt;
 				}
+				buffer = std::nullopt;
+
+			} else {
+				std::this_thread::sleep_for(500ms);
 			}
 			if (buffer -> finished) {
 				OVERLAY_INFO("done loading txs, terminating overlay flooder");
