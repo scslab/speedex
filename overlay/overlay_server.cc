@@ -17,14 +17,12 @@ OverlayHandler::mempool_size() {
 
 void
 OverlayHandler::log_batch_receipt(ReplicaID source, uint32_t batch_num) {
-	std::printf("logging receipt of batch %lu from %lu\n", batch_num, source);
 	auto it = max_seen_batch_nums.find(source);
 	if (it == max_seen_batch_nums.end())
 	{
 		return;
 	}
 	it -> second = std::max(it -> second.load(std::memory_order_relaxed), batch_num);
-	//max_seen_batch_num.at(*sender) = std::max(max_seen_batch_num.at(source), *tx_batch_num);
 }
 
 void
