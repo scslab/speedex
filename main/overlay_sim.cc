@@ -1,3 +1,6 @@
+#include "automation/get_experiment_vars.h"
+#include "automation/get_replica_id.h"
+
 #include "overlay/overlay_client_manager.h"
 #include "overlay/overlay_server.h"
 #include "overlay/overlay_flooder.h"
@@ -60,11 +63,11 @@ int main(int argc, char **argv)
 	}
 
 	if (!self_id) {
-		usage();
+		self_id = get_replica_id();
 	}
 
 	if (config_file.empty()) {
-		usage();
+		config_file = get_config_file();
 	}
 
 	ReplicaConfig config;
