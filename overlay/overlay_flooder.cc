@@ -33,8 +33,6 @@ OverlayFlooder::background_flood_thread() {
 				}
 				buffer = std::nullopt;
 
-			} else {
-				std::this_thread::sleep_for(500ms);
 			}
 			if (buffer -> finished) {
 				OVERLAY_INFO("done loading txs, terminating overlay flooder");
