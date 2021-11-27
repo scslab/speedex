@@ -46,12 +46,12 @@ class OverlayClient : public NonblockingRpcClient<xdr::srpc_client<OverlayV1>> {
 
 public:
 
-	OverlayClient(const ReplicaInfo& info)
+	OverlayClient(const ReplicaInfo& info, ReplicaID self_id)
 		: NonblockingRpcClient<client_t>(info)
 		, foreign_mempool_size(0)
 		, connected_to_foreign_mempool(false)
 		, force_repoll(false)
-		, self_id(info.id)
+		, self_id(self_id)
 		{
 			start_async_thread([this] {run();});
 		}
