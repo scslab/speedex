@@ -1,6 +1,7 @@
 #pragma once
 
 #include "overlay/overlay_client_manager.h"
+#include "overlay/overlay_server.h"
 
 #include "synthetic_data_generator/data_stream.h"
 
@@ -13,6 +14,7 @@ class OverlayFlooder {
 
 	DataStream& data_stream;
 	OverlayClientManager& client_manager;
+	OverlayServer& server;
 
 	std::atomic<bool> done_flag;
 
@@ -26,7 +28,7 @@ class OverlayFlooder {
 
 public:
 
-	OverlayFlooder(DataStream& data_stream, OverlayClientManager& client_manager, size_t flood_threshold);
+	OverlayFlooder(DataStream& data_stream, OverlayClientManager& client_manager, OverlayServer& server, size_t flood_threshold);
 
 	~OverlayFlooder()
 	{

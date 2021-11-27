@@ -1,6 +1,7 @@
 #pragma once
 
 #include "overlay/overlay_client.h"
+#include "overlay/overlay_server.h"
 
 #include "synthetic_data_generator/data_stream.h"
 
@@ -14,11 +15,15 @@ class Mempool;
 class SelfOverlayClient {
 
 	Mempool& mempool;
+	OverlayHandler& handler;
+	ReplicaID self_id;
 
 public:
 
-	SelfOverlayClient(Mempool& mempool)
+	SelfOverlayClient(Mempool& mempool, OverlayHandler& handler, ReplicaID self_id)
 		: mempool(mempool)
+		, handler(handler)
+		, self_id(self_id)
 		{}
 
 	uint64_t get_mempool_size() const;
@@ -32,7 +37,7 @@ class OverlayClientManager {
 
 public:
 	
-	OverlayClientManager(ReplicaConfig const& config, ReplicaID self_id, Mempool& mempool);
+	OverlayClientManager(ReplicaConfig const& config, ReplicaID self_id, Mempool& mempool, OverlayHandler& handler);
 
 	uint64_t get_min_mempool_size() const;
 

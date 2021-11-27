@@ -15,7 +15,8 @@ SyntheticDataStream::load_txs_unparsed() {
 	auto filename = tx_filename(folder, cur_block_number);
 
 	if(load_xdr_from_file_fast(*data, filename.c_str(), buffer, BUFFER_SIZE) != 0) {
-		return {0, nullptr};
+		finished = true;
+		return {0, nullptr, cur_block_number, finished};
 	}
 
 	cur_block_number ++;
@@ -23,14 +24,15 @@ SyntheticDataStream::load_txs_unparsed() {
 	uint32_t num_txs;
 
 	if (data -> size() < 4) {
-		return {0, nullptr};
+		finished = true;
+		return {0, nullptr, cur_block_number - 1, finished};
 	}
 
 	xdr::xdr_get g(data->data(), data -> data() + 4);
 
 	xdr::xdr_argpack_archive(g, num_txs);
 
-	return DataBuffer{num_txs, data, cur_block_number - 1};
+	return DataBuffer{num_txs, data, cur_block_number - 1, finished};
 }
 
 

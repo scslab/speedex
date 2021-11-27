@@ -81,13 +81,13 @@ int main(int argc, char **argv)
 	config.parse(fyd, *self_id);
 
 	Mempool mp(10'000, 2'000'000);
-	OverlayServer server(mp);
+	OverlayServer server(mp, config);
 
-	OverlayClientManager client_manager(config, *self_id, mp);
+	OverlayClientManager client_manager(config, *self_id, mp, server.get_handler());
 
 	MockDataStream data_stream;
 
-	OverlayFlooder flooder(data_stream, client_manager, 1'000'000);
+	OverlayFlooder flooder(data_stream, client_manager, server, 1'000'000);
 
 	while (true) {
 		std::cin.get();

@@ -18,14 +18,22 @@ OverlayFlooder::background_poll_thread() {
 
 void
 OverlayFlooder::background_flood_thread() {
+
+	std::optional<DataBuffer> buffer;
 	while(!is_done()) {
 		size_t sz = client_manager.get_min_mempool_size();
 		if (sz < FLOOD_THRESHOLD) {
-			auto data = data_stream.load_txs_unparsed();
-			if (data.data) {
-				OVERLAY_INFO("forwarding tx input buffer number %lu", data.buffer_number);
-				client_manager.send_txs(data);
-			} else {
+			if (!buffer) {
+				buffer = data_stream.load_txs_unparsed();
+			}
+			if (buffer->buffer_number <= server.tx_batch_limit()) {
+				if (buffer ->data) {
+					OVERLAY_INFO("forwarding tx input buffer number %lu", buffer -> buffer_number);
+					client_manager.send_txs(*buffer);
+					buffer = std::nullopt;
+				}
+			}
+			if (buffer -> finished) {
 				OVERLAY_INFO("done loading txs, terminating overlay flooder");
 				return;
 			}
@@ -35,9 +43,10 @@ OverlayFlooder::background_flood_thread() {
 	}
 }
 
-OverlayFlooder::OverlayFlooder(DataStream& data_stream, OverlayClientManager& client_manager, size_t flood_threshold)
+OverlayFlooder::OverlayFlooder(DataStream& data_stream, OverlayClientManager& client_manager, OverlayServer& server, size_t flood_threshold)
 	: data_stream(data_stream)
 	, client_manager(client_manager)
+	, server(server)
 	, done_flag(false)
 	, FLOOD_THRESHOLD(flood_threshold)
 	{

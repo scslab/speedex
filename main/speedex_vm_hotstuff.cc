@@ -174,7 +174,12 @@ int main(int argc, char* const* argv)
 	}
 
 	SyntheticDataStream data_stream(experiment_data_folder);
-	OverlayClientManager client_manager(config, *self_id, vm -> get_mempool());
+
+	auto& mp = vm -> get_mempool();
+
+	OverlayServer server(mp, config);
+
+	OverlayClientManager client_manager(config, *self_id, mp, server.get_handler());
 
 	tbb::global_control control(
 		tbb::global_control::max_allowed_parallelism, num_threads);
@@ -182,7 +187,7 @@ int main(int argc, char* const* argv)
 	ExperimentController control_server(vm);
 	control_server.wait_for_breakpoint_signal();
 
-	OverlayFlooder flooder(data_stream, client_manager, 2'000'000);
+	OverlayFlooder flooder(data_stream, client_manager, server, 2'000'000);
 
 	PaceMakerWaitQC pmaker(app);
 

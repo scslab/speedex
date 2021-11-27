@@ -14,6 +14,7 @@ struct DataBuffer {
 	size_t num_txs;
 	std::shared_ptr<xdr::opaque_vec<>> data;
 	size_t buffer_number;
+	bool finished;
 };
 
 class DataStream {
@@ -46,7 +47,7 @@ public:
 		*v = xdr::xdr_to_opaque(block);
 		count++;
 
-		return DataBuffer{sz, v, count};
+		return DataBuffer{sz, v, count, false};
 	}
 
 };

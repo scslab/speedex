@@ -25,6 +25,8 @@ class SyntheticDataStream : public DataStream {
 	std::string folder;
 	uint64_t cur_block_number;
 
+	bool finished;
+
 	unsigned char * const buffer;
 
 public:
@@ -33,6 +35,7 @@ public:
 		: DataStream()
 		, folder(root_folder)
 		, cur_block_number{1}
+		, finished(false)
 		, buffer(new unsigned char[BUFFER_SIZE])
 		{}
 

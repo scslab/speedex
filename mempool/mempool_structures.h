@@ -4,8 +4,6 @@
 #include "mempool/mempool_cleaner.h"
 #include "mempool/mempool_transaction_filter.h"
 
-#include "overlay/overlay_server.h"
-
 namespace speedex {
 
 class MempoolStructures {
@@ -16,14 +14,12 @@ public:
 private:
 	MempoolCleaner background_cleaner;
 	MempoolFilterExecutor filter;
-	OverlayServer overlay_server;
 public:
 
 	MempoolStructures(const SpeedexManagementStructures& management_structures, size_t target_chunk_size, size_t max_mempool_size)
 		: mempool(target_chunk_size, max_mempool_size)
 		, background_cleaner(mempool)
 		, filter(management_structures, mempool)
-		, overlay_server(mempool)
 		{}
 	
 	void pre_validation_stop_background_filtering() {

@@ -20,11 +20,13 @@ SelfOverlayClient::send_txs(DataBuffer data) {
 
 	OVERLAY_INFO("(self) got %lu new txs for mempool, cur size %lu", blk.size(), mempool.total_size());
 
+	handler.log_batch_receipt(self_id, data.buffer_number);
+
 	mempool.chunkify_and_add_to_mempool_buffer(std::move(blk));
 }
 
-OverlayClientManager::OverlayClientManager(ReplicaConfig const& config, ReplicaID self_id, Mempool& mempool)
-	: self_client(mempool)
+OverlayClientManager::OverlayClientManager(ReplicaConfig const& config, ReplicaID self_id, Mempool& mempool, OverlayHandler& handler)
+	: self_client(mempool, handler, self_id)
 	, other_clients()
 	{
 		auto infos = config.list_info();

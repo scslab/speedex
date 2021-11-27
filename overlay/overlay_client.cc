@@ -56,7 +56,7 @@ OverlayClient::run()
 			bool success = try_action_void(
 				[this, &to_forward] {
 					auto front = to_forward.front();
-					client -> forward_txs(*(front.data));
+					client -> forward_txs(*(front.data), front.buffer_number, self_id);
 					local_buffer_size.fetch_sub(front.num_txs);
 					foreign_mempool_size.fetch_add(front.num_txs);
 				});
