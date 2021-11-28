@@ -66,6 +66,11 @@ public:
         expected_hash = hotstuff_app.do_propose();
         //TODO reset any timeout
     }
+
+    void do_empty_propose() {
+        proposer = hotstuff_app.get_self_id();
+        expected_hash = hotstuff_app.do_empty_propose();
+    }
 };
 
 } /* hotstuff */

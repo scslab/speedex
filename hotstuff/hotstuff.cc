@@ -81,6 +81,29 @@ HotstuffAppBase::do_propose()
 	return b_leaf -> get_hash();
 }
 
+speedex::Hash
+HotstuffAppBase::do_empty_propose()
+{
+	std::lock_guard lock(proposal_mutex);
+
+	uint64_t new_block_height = b_leaf -> get_height() + 1;
+
+	HOTSTUFF_INFO("PROPOSE: new height %lu", new_block_height);
+
+	auto body = get_next_vm_block(false, new_block_height);
+
+	auto newly_minted_block = HotstuffBlock::mint_block(std::move(body), hqc.second, b_leaf->get_hash(), self_id);
+
+	if (block_store.insert_block(newly_minted_block)) {
+		throw std::runtime_error("failed to insert newly minted block?");
+	}
+
+	b_leaf = newly_minted_block;
+
+	protocol_manager.broadcast_proposal(newly_minted_block);
+	return b_leaf -> get_hash();
+}
+
 void 
 HotstuffAppBase::on_new_qc(speedex::Hash const& hash)
 {

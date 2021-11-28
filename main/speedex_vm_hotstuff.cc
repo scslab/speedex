@@ -214,6 +214,15 @@ int main(int argc, char* const* argv)
 		}
 		if (app.proposal_buffer_is_empty()) {
 			std::printf("done with experiment\n");
+
+			//flush proposal buffers
+			pmaker.do_empty_propose();
+			pmaker.wait_for_qc();
+			pmaker.do_empty_propose();
+			pmaker.wait_for_qc();
+			pmaker.do_empty_propose();
+			pmaker.wait_for_qc();
+
 			control_server.wait_for_breakpoint_signal();
 			vm -> write_measurements();
 			exit(0);

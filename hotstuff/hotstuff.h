@@ -55,6 +55,7 @@ public:
 
 	void do_vote(block_ptr_t block, speedex::ReplicaID proposer) override final;
 	speedex::Hash do_propose();
+	speedex::Hash do_empty_propose();
 
 	bool wait_for_new_qc(speedex::Hash const& expected_next_qc);
 	void cancel_wait_for_new_qc();

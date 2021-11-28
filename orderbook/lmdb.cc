@@ -2,6 +2,8 @@
 
 #include "utils/price.h"
 
+#include <set>
+
 namespace speedex {
 
 
@@ -61,7 +63,7 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, dbenv::wtxn& wt
 	if (print)
 		std::printf("phase 1\n");
 
-	std::unordered_set<prefix_t> keys_that_will_be_later_deleted;
+	std::set<prefix_t> keys_that_will_be_later_deleted;
 
 	for (size_t i = 0; i < relevant_thunks.size(); i++) {
 		auto& thunk = relevant_thunks[i];
