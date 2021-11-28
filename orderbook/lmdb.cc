@@ -61,6 +61,8 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, dbenv::wtxn& wt
 	if (print)
 		std::printf("phase 1\n");
 
+	std::unordered_set<prefix_t> keys_that_will_be_later_deleted;
+
 	for (size_t i = 0; i < relevant_thunks.size(); i++) {
 		auto& thunk = relevant_thunks[i];
 		if (thunk.current_block_number > current_block_number) {
@@ -76,7 +78,10 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, dbenv::wtxn& wt
 			auto& delete_key = delete_kv.first;
 			auto bytes = delete_key.get_bytes_array();
 			dbval key = dbval{bytes};
-			wtx.del(get_data_dbi(), key);
+			if (!wtx.del(get_data_dbi(), key) )
+			{
+				keys_that_will_be_later_deleted.insert(delete_key);
+			}
 		}
 
 		if (thunk.get_exists_partial_exec()) {
@@ -186,6 +191,7 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, dbenv::wtxn& wt
 			}
 			
 			if (cur_offer.minPrice >= min_exec_price) {
+
 				generate_orderbook_trie_key(cur_offer, offer_key_buf);
 				bool db_put = false;
 				if (cur_offer.minPrice > min_exec_price) {
@@ -196,6 +202,12 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, dbenv::wtxn& wt
 						db_put = true;
 					}
 				}
+
+				if (keys_that_will_be_later_deleted.find(offer_key_buf) != keys_that_will_be_later_deleted.end()) {
+					db_put = false;
+				}
+
+
 				if (db_put) {
 
 					auto offer_key_buf_bytes = offer_key_buf.get_bytes_array();
