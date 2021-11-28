@@ -80,7 +80,7 @@ public:
 	}
 	bool proposal_buffer_is_empty() const {
 		std::lock_guard lock(mtx);
-		return proposal_buffer.empty() && (PROPOSAL_BUFFER_TARGET == 0);
+		return proposal_buffer.empty() && (PROPOSAL_BUFFER_TARGET == 0) && (additional_proposal_requests == 0);
 	}
 	void stop_proposals() {
 		std::lock_guard lock(mtx);
