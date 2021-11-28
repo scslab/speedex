@@ -77,6 +77,8 @@ new_measurements(NodeType state)
 {
 	TaggedSingleBlockResults res;
 	res.results.type(state);
+	auto ts = init_time_measurement();
+	res.startTimeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(ts.time_since_epoch()).count();
 	return res;
 }
 

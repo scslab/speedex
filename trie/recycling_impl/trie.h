@@ -371,13 +371,11 @@ public:
 
 		auto iter = children.find(branch_bits);
 		if (iter == children.end()) {
-			throw std::runtime_error("can't propagate metadata to nonexistent node");
+			throw std::runtime_error("can't propagate metadata to nonexistent node (recycling impl)");
 		}
 
 		alter_size(delta);
 
-
-		//update_metadata(branch_bits, metadata);
 		allocator.get_object((*iter).second).propagate_sz_delta(target, delta, allocator);
 	}
 

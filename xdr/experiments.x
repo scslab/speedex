@@ -49,6 +49,7 @@ union SingleBlockResultsUnion switch(NodeType type) {
 struct TaggedSingleBlockResults {
 	SingleBlockResultsUnion results;
 	uint64 blockNumber;
+	uint64 startTimeStamp;
 };
 
 struct ExperimentResultsUnion {

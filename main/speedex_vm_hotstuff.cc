@@ -197,6 +197,8 @@ int main(int argc, char* const* argv)
 
 	std::this_thread::sleep_for(2000ms);
 
+	bool self_signalled_end = false;
+
 	while (true) {
 		if (pmaker.should_propose()) {
 			app.put_vm_in_proposer_mode();
@@ -211,6 +213,7 @@ int main(int argc, char* const* argv)
 		// conditions only activate for current producer
 		if (vm -> experiment_is_done()) {
 			app.stop_proposals();
+			self_signalled_end = true;
 		}
 		if (app.proposal_buffer_is_empty()) {
 			std::printf("done with experiment\n");
@@ -229,7 +232,7 @@ int main(int argc, char* const* argv)
 		}
 
 		// conditions for validator nodes
-		if (control_server.producer_is_done_signal_was_received()) {
+		if (control_server.producer_is_done_signal_was_received() && (!self_signalled_end)) {
 			std::printf("leader terminated experiment, waiting for signal\n");
 			control_server.wait_for_breakpoint_signal();
 			vm -> write_measurements();
