@@ -298,6 +298,8 @@ SpeedexVM::write_measurements() {
 
 	auto out = get_measurements_nolock();
 
+	mkdir_safe(filename.c_str());
+
 	if (save_xdr_to_file(out, filename.c_str())) {
 		BLOCK_INFO("failed to save measurements file %s", filename.c_str());
 	}

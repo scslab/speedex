@@ -53,6 +53,8 @@ GeneratorState<random_generator>::dump_account_list(std::string accounts_filenam
 		list.push_back(acct);
 	}
 
+	std::shuffle(list.begin(), list.end(), gen);
+
 	if (save_xdr_to_file(list, accounts_filename.c_str())) {
 		throw std::runtime_error("could not save accounts list!");
 	}

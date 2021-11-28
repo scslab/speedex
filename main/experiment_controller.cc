@@ -197,7 +197,7 @@ wait_for_all_same_height(const ReplicaConfig& config) {
 }
 
 std::string get_measurements_filename(std::string const& folder, ReplicaInfo const& info) {
-	return folder + std::string("measurements_") + std::to_string(info.id);
+	return folder + std::string("measurements_") + std::to_string(info.id) + std::string("_") + std::to_string(get_num_threads());
 }
 
 bool save_measurement(std::string const& folder, const ReplicaInfo& info) {
