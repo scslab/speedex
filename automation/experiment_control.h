@@ -46,6 +46,9 @@ public:
 
 	//non-rpc methods
 	void wait_for_breakpoint_signal();
+	bool got_experiment_done_flag() const {
+		return experiment_done_flag;
+	}
 };
 
 class ExperimentController {
@@ -62,7 +65,7 @@ public:
 	}
 
 	bool producer_is_done_signal_was_received() const {
-		return *server.experiment_is_done();
+		return server.got_experiment_done_flag();
 	}
 };
 
