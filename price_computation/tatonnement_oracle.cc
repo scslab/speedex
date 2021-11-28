@@ -71,7 +71,7 @@ TatonnementOracle::check_clearing(
 
 Price get_trial_price(const uint128_t& demand, const uint128_t& supply, const Price& old_price, const uint64_t& step, const uint16_t volume_relativizer, const TatonnementControlParameters& control_params) {
 
-	uint16_t applied_relativizer = control_params.use_volume_relativizer ? volume_relativizer : 1;
+	uint16_t applied_relativizer = volume_relativizer;//control_params.use_volume_relativizer ? volume_relativizer : 1;
 
 	if (demand > supply) {
 		uint128_t diff = demand - supply; // 64 + 24 bits
@@ -114,12 +114,13 @@ bool TatonnementOracle::set_trial_prices(
 	uint64_t step, 
 	const TatonnementControlParameters& control_params, 
 	uint128_t* demands, 
-	uint128_t* supplies) {
+	uint128_t* supplies,
+	uint16_t* relativizers) {
 
 	//uint8_t step_radix = control_params.step_radix;
 	bool changed = false;
 	for (size_t i = 0; i < num_assets; i++) {
-		new_prices[i] = get_trial_price(demands[i], supplies[i], old_prices[i], step, volume_relativizers[i], control_params);
+		new_prices[i] = get_trial_price(demands[i], supplies[i], old_prices[i], step, relativizers[i], control_params);
 		if (new_prices[i] != old_prices[i]) {
 			changed = true;
 		}	
@@ -440,7 +441,9 @@ void TatonnementOracle::start_tatonnement_threads() {
 		params->diff_reduction = 0;//5*(3-i);
 		params->use_in_case_of_timeout = first; // only one thread should be set to true.
 		first = false;
-		
+
+		params -> use_dynamic_relativizer = true;
+
 		worker_threads.emplace_back(std::thread(
 			[this] (TatonnementControlParameters* params) {
 				run_tatonnement_thread(params);
@@ -457,6 +460,7 @@ void TatonnementOracle::start_tatonnement_threads() {
 		params->use_in_case_of_timeout = false;
 
 		params->use_volume_relativizer = true;
+		params->use_dynamic_relativizer = true;
 
 		worker_threads.emplace_back(std::thread(
 			[this, params] {
@@ -606,6 +610,44 @@ TatonnementOracle::normalize_prices(
 	return 0;
 }
 
+void set_relativizers(
+	TatonnementControlParameters const& control_params, 
+	uint16_t* relativizers_out, 
+	const uint16_t* volume_relativizers, 
+	size_t num_assets, 
+	const uint128_t* demands, 
+	const uint128_t* supplies)
+{
+	uint128_t max_min_demand = 0;
+	for (size_t i = 0; i < num_assets; i++) {
+		max_min_demand = std::max(max_min_demand, std::min(demands[i], supplies[i]));
+	}
+
+	constexpr static float MAX_MUL = 1000;
+
+	auto impose_max = [](float mul, uint16_t base) -> uint16_t {
+		mul = std::min(mul, MAX_MUL);
+		uint32_t b = mul * base;
+		return (b > UINT16_MAX)? UINT16_MAX : b;
+	};
+
+	for (size_t i = 0; i < num_assets; i++) {
+		uint128_t cur_min_demand = std::min(demands[i], supplies[i]);
+		uint16_t base_vol_rel = control_params.use_volume_relativizer ? volume_relativizers[i] : 1;
+
+		if (control_params.use_dynamic_relativizer) {
+			if (cur_min_demand == 0) {
+				relativizers_out[i] = impose_max(MAX_MUL, base_vol_rel);
+			} else {
+				relativizers_out[i] = impose_max(((float) max_min_demand) / ((float) cur_min_demand), base_vol_rel);
+			}
+		} else {
+			relativizers_out[i] = base_vol_rel;
+		}
+	//	std::printf("mul %d is %u\n", i, relativizers_out[i]);
+	}
+}
+
 bool
 TatonnementOracle::better_grid_search_tatonnement_query(
 	TatonnementControlParameters& control_params,
@@ -639,6 +681,12 @@ TatonnementOracle::better_grid_search_tatonnement_query(
 	auto& work_units = work_unit_manager.get_orderbooks();
 
 	clear_supply_demand_workspaces(supplies_search, demands_search);
+
+	uint16_t* relativizers = new uint16_t[num_assets];
+
+	for (size_t i = 0; i < num_assets; i++) {
+		relativizers[i] = volume_relativizers[i];
+	}
 
 	auto& demand_oracle = *(control_params.oracle);
 	demand_oracle.activate_oracle();
@@ -701,14 +749,19 @@ TatonnementOracle::better_grid_search_tatonnement_query(
 			delete[] demands_workspace;
 			delete[] supplies_search;
 			delete[] demands_search;
+			delete[] relativizers;
 
 			demand_oracle.deactivate_oracle();
 			return !not_first_clear;
 		}
 		round_number++;
 
+		if (round_number % 10 == 9) {
+			set_relativizers(control_params, relativizers, volume_relativizers, num_assets, demands_search, supplies_search);
+		}
 
-		bool any_change = set_trial_prices(prices_workspace, trial_prices, step, control_params, demands_search, supplies_search);
+
+		bool any_change = set_trial_prices(prices_workspace, trial_prices, step, control_params, demands_search, supplies_search, relativizers);
 
 		if (!any_change) {
 			force_step_rounds = 10;
@@ -732,25 +785,26 @@ TatonnementOracle::better_grid_search_tatonnement_query(
 				delete[] demands_workspace;
 				delete[] supplies_search;
 				delete[] demands_search;
+				delete[] relativizers;
 
 				TAT_INFO("thread ending, num rounds was %lu", round_number);
 				demand_oracle.deactivate_oracle();
 				return false;
 			}
 		}
-		if (round_number % 100000 == -1) {
+		if (round_number % 1000 == -1) {
 			TAT_INFO("ROUND %5d step_size %lf (%lu) objective %lf step_radix %lu", round_number, price::amount_to_double(step, step_radix), step, prev_objective.l2norm_sq, step_radix);
 			for (size_t i = 0; i < num_assets; i++) {
 				double demand = price::amount_to_double(demands_search[i], price::PRICE_RADIX);
 				demand = demand - price::amount_to_double(demands_search[i], price::PRICE_RADIX + active_approx_params.tax_rate);
 				double delta = demand - price::amount_to_double(supplies_search[i], price::PRICE_RADIX);
-				TAT_INFO("original: %d\t%11.3f\t%11.3f\t%4.3f\t(%8lu)",
+				TAT_INFO("old: %d\t%15.3f\t%15.3f\t%4.3f\t(%8lu)",
 					i, 
 					price::amount_to_double(demands_search[i],price::PRICE_RADIX), 
 					price::amount_to_double(supplies_search[i],price::PRICE_RADIX), 
 					price::to_double(prices_workspace[i]),
 					prices_workspace[i]);
-				TAT_INFO("new:      \t%11.3f\t%11.3f\t%5.3f\t(%8lu)\t%11.3f",
+				TAT_INFO("new:      \t%15.3f\t%15.3f\t%5.3f\t(%8lu)\t%11.3f",
 					price::amount_to_double(demands_workspace[i],price::PRICE_RADIX), 
 					price::amount_to_double(supplies_workspace[i],price::PRICE_RADIX), 
 					price::to_double(trial_prices[i])
@@ -903,7 +957,7 @@ TatonnementOracle::grid_search_tatonnement_query(
 		round_number++;
 
 
-		bool any_change = set_trial_prices(prices_workspace, trial_prices, step, control_params, demands_search, supplies_search);
+		bool any_change = set_trial_prices(prices_workspace, trial_prices, step, control_params, demands_search, supplies_search, volume_relativizers);
 
 		if (!any_change) {
 			force_step_rounds = 10;

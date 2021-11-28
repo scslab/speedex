@@ -42,6 +42,7 @@ struct TatonnementControlParameters {
 	uint8_t diff_reduction = 0;
 	bool use_in_case_of_timeout = false;
 	bool use_volume_relativizer = false;
+	bool use_dynamic_relativizer = false;
 	std::optional<ParallelDemandOracle<NUM_DEMAND_WORKERS>> oracle;
 
 	TatonnementControlParameters() : oracle(std::nullopt) {}
@@ -150,7 +151,8 @@ class TatonnementOracle {
 		uint64_t step, 
 		const TatonnementControlParameters& control_params, 
 		uint128_t* demands, 
-		uint128_t* supplies);
+		uint128_t* supplies,
+		uint16_t* relativizers);
 
 	void clear_supply_demand_workspaces(uint128_t* supplies, uint128_t* demands);
 	//void get_supply_demand(

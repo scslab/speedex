@@ -25,7 +25,7 @@ TatonnementSimExperiment::run_current_trial(std::unique_ptr<OrderbookManager>& m
 	auto lp_results = tatonnement.lp_solver.solve(prices.data(), current_approx_params, !timeout_flag);
 
 	if (!timeout_flag) {
-		std::printf("time per thread (micros): %lf\n", res.runtime * 1'000'000.0 / (res.num_rounds * 1.0));
+		std::printf("time per round (micros): %lf\n", res.runtime * 1'000'000.0 / (res.num_rounds * 1.0));
 	}
 
 	auto feasible_first = manager_ptr -> get_max_feasible_smooth_mult(lp_results, prices.data());

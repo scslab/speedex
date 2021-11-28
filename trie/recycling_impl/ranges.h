@@ -292,6 +292,19 @@ struct AccountBatchMergeRange {
 				throw std::runtime_error("what the fuck");
 			}
 
+
+			/* entry_points are pairs of [nodes on the "main" trie, tries to be merged into said node]
+
+			The new node "steals" some of these entry points from the main node.
+			This means taking both control of the entrypoints (on the main trie), and the associated corresponding subtries to be merged in.
+
+
+			Entrypoints only go up when they're merged into.  So we merge in the subtries to the entrypoint, then propagate the size delta from 
+			the root to the entrypoint.
+
+			   
+
+			*/
 			auto original_sz = other.num_children;
 
 			while (num_children < original_sz /2) {
@@ -333,7 +346,8 @@ struct AccountBatchMergeRange {
 				//std::printf("tries at entry point in other: %lu\n", other.entry_points.begin()->second.size());
 
 
-	//			prefix_t steal_prefix{0};
+
+
 
 				while (num_children + 10 < other.num_children) { // + 10 for rounding error
 					

@@ -74,8 +74,15 @@ int main(int argc, char* const* argv)
 		std::printf("failed to parse experiment options file\n");
 		return 1;
 	}
-	std::printf("setting options.num_accounts to 1 for convenience\n");
+	std::printf("setting options.num_accounts to 1 and block_size to 500k for convenience\n");
 	options.num_accounts = 1;
+	options.block_size = 500'000;
+
+	std::printf("Setting options.num_blocks to 5 for convenience\n");
+	options.num_blocks = 5;
+
+	std::printf("setting asset bias high\n");
+	options.asset_bias = 0.4;
 
 	std::string output_root = options.output_prefix + experiment_name + std::string("/");
 

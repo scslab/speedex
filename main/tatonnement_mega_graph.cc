@@ -18,7 +18,7 @@ int main(int argc, char const *argv[])
 
 	std::string experiment_root = std::string(argv[1]) + "/";
 
-	bool small = false;
+	bool small = true;
 
 	std::vector <size_t> num_tx_list = small ?
 		std::vector<size_t>({500, 1'000, 5'000, 10'000, 20'000, 50'000, 100'000, 200'000, 500'000}) :

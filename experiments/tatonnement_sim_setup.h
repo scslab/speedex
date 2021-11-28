@@ -10,6 +10,7 @@
 
 namespace speedex {
 
+[[maybe_unused]]
 static std::unique_ptr<OrderbookManager>
 load_experiment_data(TatonnementExperimentData const& data, size_t num_offers_to_load) {
 	auto manager = std::make_unique<OrderbookManager>(data.num_assets);
