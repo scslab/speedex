@@ -30,7 +30,7 @@ experiment:
   new_account_balance: 100000000
   cancel_delay_rounds_min: 5
   cancel_delay_rounds_max: 50
-  bad_offer_cancel_chance: 0.5
-  good_offer_cancel_chance: 0.1
+  bad_offer_cancel_chance: 0.7
+  good_offer_cancel_chance: 0.7
   do_shuffle: 1.0
 

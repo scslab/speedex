@@ -117,6 +117,10 @@ SpeedexVM::exec_block(const block_type& blk) {
 
 	last_committed_block.block = corrected_next_block;
 	last_committed_block.hash = hash_xdr(corrected_next_block);
+
+	if (proposal_base_block.block.blockNumber < last_committed_block.block.blockNumber) {
+		proposal_base_block = last_committed_block;
+	}
 	
 	if (!res) {
 		mempool_structs.post_validation_cleanup();
