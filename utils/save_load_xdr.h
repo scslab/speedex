@@ -386,7 +386,7 @@ mkdir_safe(const char* dirname) {
 	if (errno == EEXIST) {
 		return true;
 	}
-	threrror("mkdir");
+	threrror(std::string("mkdir ") + std::string(dirname));
 }
 
 }
