@@ -420,9 +420,6 @@ Orderbook::calculate_demands_and_supplies_times_prices(
 
 	auto [full_exec_p, partial_exec_p] = get_execution_prices(prices, smooth_mult);
 	
-	auto sell_price = prices[category.sellAsset];
-	auto buy_price = prices[category.buyAsset];
-
 	auto metadata_partial = get_metadata(partial_exec_p);
 	auto metadata_full = metadata_partial;
 	if (smooth_mult) /* partial_exec_p != full_exec_p */{

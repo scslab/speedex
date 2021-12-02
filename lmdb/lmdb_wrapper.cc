@@ -32,8 +32,11 @@ BaseLMDBInstance::get_persisted_round_number() const {
     return 0;
   }
   auto rtx = env.rbegin();
-  auto persisted_round_number = *rtx.get(metadata_dbi, dbval("persisted block"));
-  uint64_t out = persisted_round_number.uint64();
+  auto persisted_round_number = rtx.get(metadata_dbi, dbval("persisted block"));
+  if (!persisted_round_number) {
+    return 0;
+  }
+  uint64_t out = persisted_round_number->uint64();
   rtx.commit();
   return out;
 }

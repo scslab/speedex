@@ -403,7 +403,11 @@ public:
 
 	//! Truncate the prefix to a defined length
 	void truncate(const PrefixLenBits truncate_point) {
-		prefix &= (UINT64_MAX << (64 - truncate_point.len));
+		if (truncate_point.len == 0) {
+			prefix = 0;
+		} else {
+			prefix &= (UINT64_MAX << (64 - truncate_point.len));
+		}
 	}
 
 	//! Convert prefix to an array of bytes.
