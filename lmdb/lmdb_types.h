@@ -62,12 +62,7 @@ struct dbval : MDB_val {
   }
 
   //assumes we don't copy db contents to different endian system
-  uint64_t uint64() const {
-    if (mv_size != sizeof(uint64_t)) {
-      throw dberror(0, "dbval::uint64 wrong size");
-    }
-    return *static_cast<uint64_t *>(mv_data);
-  }
+  uint64_t uint64() const;
 
   friend bool operator==(const dbval &a, const dbval &b) {
     return a.mv_size == b.mv_size &&

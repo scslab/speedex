@@ -40,6 +40,18 @@ dbval::hex() const
   return hexdump(mv_data, mv_size);
 }
 
+uint64_t
+dbval::uint64() const
+{
+  if (mv_size != sizeof(uint64_t)) {
+    throw dberror(0, "dbval::uint64 wrong size");
+  }
+
+  uint64_t out;
+  memcpy(&out, mv_data, sizeof(uint64_t));
+  return out;//return *static_cast<uint64_t *>(mv_data);
+}
+
 dbenv::dbenv(size_t mapsize, size_t maxdbs) {
   MDB_env *env;
   check(mdb_env_create(&env), "mdb_env_create");
