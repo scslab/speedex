@@ -24,7 +24,7 @@ SpeedexVM::SpeedexVM(
 	, last_committed_block() // genesis
 	, async_persister(management_structures)
 	, measurements_log(params)
-	, measurement_output_prefix(measurement_output_prefix)
+	, measurement_output_folder(measurement_output_folder)
 	, options(options)
 	, params(params)
 	, tatonnement_structs(management_structures.orderbook_manager)
@@ -38,6 +38,8 @@ SpeedexVM::SpeedexVM(
 		for (auto i = 0u; i < num_assets; i++) {
 			prices[i] = price::from_double(1.0);
 		}
+
+		mkdir_safe(measurement_output_folder.c_str());
 	}
 
 void 
@@ -297,8 +299,6 @@ SpeedexVM::write_measurements() {
 	auto filename = overall_measurement_filename();
 
 	auto out = get_measurements_nolock();
-
-	mkdir_safe(filename.c_str());
 
 	if (save_xdr_to_file(out, filename.c_str())) {
 		BLOCK_INFO("failed to save measurements file %s", filename.c_str());

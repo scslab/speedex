@@ -2,6 +2,16 @@
 
 namespace speedex {
 
+SpeedexMeasurements::SpeedexMeasurements(const ExperimentParameters& params)
+	: params(params)
+	, measurements()
+	, mtx()
+	, uncled_measurements()
+	{
+
+		
+	}
+
 void SpeedexMeasurements::add_measurement(TaggedSingleBlockResults const& res)
 {
 	std::lock_guard lock(mtx);

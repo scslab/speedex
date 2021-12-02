@@ -21,12 +21,7 @@ class SpeedexMeasurements {
 
 public:
 
-	SpeedexMeasurements(const ExperimentParameters& params)
-		: params(params)
-		, measurements()
-		, mtx()
-		, uncled_measurements()
-		{}
+	SpeedexMeasurements(const ExperimentParameters& params);
 
 	void add_measurement(TaggedSingleBlockResults const& res);
 

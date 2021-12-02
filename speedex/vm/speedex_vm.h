@@ -40,7 +40,7 @@ class SpeedexVM {
 	
 	SpeedexMeasurements measurements_log;
 
-	std::string measurement_output_prefix;
+	std::string measurement_output_folder;
 
 	const SpeedexOptions& options;
 	const ExperimentParameters& params;
@@ -82,7 +82,7 @@ public:
 	SpeedexVM(
 		const ExperimentParameters& params,
 		const SpeedexOptions& options,
-		std::string measurement_output_prefix);
+		std::string measurement_output_folder);
 
 	std::unique_ptr<block_type> propose();
 
@@ -95,7 +95,7 @@ public:
 
 	std::string 
 	overall_measurement_filename() const {
-		return measurement_output_prefix + "results";
+		return measurement_output_folder + "results";
 	}
 
 	~SpeedexVM() {
