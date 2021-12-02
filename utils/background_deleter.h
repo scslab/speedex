@@ -43,10 +43,11 @@ class BackgroundDeleter : public AsyncWorker {
 					});
 			}
 
-			if (done_flag) return;
+			if (done_flag) break;
 			do_deletions();
 			cv.notify_all();
 		}
+		signal_async_thread_shutdown();
 	}
 
 public:
@@ -59,6 +60,7 @@ public:
 	~BackgroundDeleter() {
 		wait_for_async_task();
 		end_async_thread();
+		wait_for_async_thread_terminate();
 	}
 	
 	//! Delete a single pointer

@@ -29,6 +29,9 @@ protected:
 	//! Flag for signaling worker thread to terminate
 	std::atomic<bool> done_flag = false;
 
+	//! Flag for signaling that worker thread has shut down
+	std::atomic<bool> worker_shutdown = false;
+
 public:
 
 	//! extenders override this to tell worker when there's work waiting to be done.
@@ -51,6 +54,19 @@ public:
 		std::lock_guard lock(mtx);
 		done_flag = true;
 		cv.notify_all();
+	}
+
+	void signal_async_thread_shutdown() {
+		std::lock_guard lock(mtx);
+		worker_shutdown = true;
+		cv.notify_all();		
+	}
+
+	void wait_for_async_thread_terminate() {
+		std::unique_lock lock(mtx);
+		if (!worker_shutdown) {
+			cv.wait(lock, [this] () -> bool { return worker_shutdown;});
+		}
 	}
 };
 

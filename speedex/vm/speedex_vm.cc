@@ -15,7 +15,7 @@ namespace speedex {
 SpeedexVM::SpeedexVM(
 		const ExperimentParameters& params,
 		const SpeedexOptions& options,
-		std::string measurement_output_prefix)
+		std::string measurement_output_folder)
 	: PERSIST_BATCH(options.persistence_frequency)
 	, management_structures(options.num_assets, options.get_approx_params())
 	, operation_mtx()
