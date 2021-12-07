@@ -1,4 +1,5 @@
-#include "serial_transaction_processor.h"
+#include "block_processing/serial_transaction_processor.h"
+#include "crypto/crypto_utils.h"
 
 namespace speedex {
 
@@ -89,6 +90,10 @@ bool SerialTransactionValidator<ManagerViewType>::validate_transaction(
 
 	if (source_account_idx == nullptr) {
 		TX_INFO("invalid userid lookup %lu", tx.metadata.sourceAccount);
+		return false;
+	}
+
+	if (!sig_check(tx, signed_tx.signature, source_account_idx -> get_pk())) {
 		return false;
 	}
 
@@ -212,6 +217,11 @@ SerialTransactionProcessor::process_transaction(
 		TX_INFO("invalid userid lookup %lu", tx.metadata.sourceAccount);
 		return TransactionProcessingStatus::SOURCE_ACCOUNT_NEXIST;
 	}
+
+	if (!sig_check(tx, signed_tx.signature, source_account_idx -> get_pk())) {
+		return TransactionProcessingStatus::BAD_SIGNATURE;
+	}
+
 
 /*	account_db_idx source_account_idx;
 

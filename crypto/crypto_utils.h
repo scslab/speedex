@@ -13,9 +13,19 @@ keys makes setup vastly simpler)
 #include <sodium.h>
 #include <array>
 
+#include <xdrpp/marshal.h>
+
 namespace speedex {
 
 class SpeedexManagementStructures;
+
+template<typename xdr_type>
+bool sig_check(const xdr_type& data, const Signature& sig, const PublicKey& pk) {
+	auto buf = xdr::xdr_to_opaque(data);
+
+	return crypto_sign_verify_detached(
+		sig.data(), buf.data(), buf.size(), pk.data()) == 0;
+}
 
 class BlockSignatureChecker {
 
