@@ -1,0 +1,9 @@
+---
+- name: cryptocoin data gen
+  hosts: all
+  tasks:
+          - name: formatting data
+            shell: cd ~/xfs/speedex && python3 cryptocoin_experiment_formatter.py
+          - name: cryptocoin data gen
+            shell: "cd ~/xfs/speedex && ./cryptocoin_dataset_gen --exp_options=cryptocoin_params.yaml --exp_name={{ exp_name }}"
+
