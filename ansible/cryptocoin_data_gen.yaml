@@ -2,6 +2,8 @@
 - name: cryptocoin data gen
   hosts: all
   tasks:
+          - name: pip
+            shell: python3 -m pip install python-dateutil
           - name: formatting data
             shell: cd ~/xfs/speedex && python3 cryptocoin_experiment_formatter.py
           - name: cryptocoin data gen
