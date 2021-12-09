@@ -195,6 +195,7 @@ int main(int argc, char* const* argv)
 			generator.make_block(prices);
 		}
 	}
+	generator.dump_account_list(params.account_list_filename);
 
 	return 0;
 }
