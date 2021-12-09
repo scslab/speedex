@@ -171,6 +171,12 @@ GeneratorState<random_generator>::gen_endowment(double price) {
 template<typename random_generator>
 AccountID 
 GeneratorState<random_generator>::gen_account() {
+	if (options.account_dist_param == 0) {
+		std::uniform_int_distribution<> account_dist(0, num_active_accounts);
+		uint64_t idx = account_dist(gen);
+		return existing_accounts_map.at(idx);
+	}
+
 	std::exponential_distribution<> account_dist(options.account_dist_param);
 
 	uint64_t account_idx = static_cast<uint64_t>(std::floor(account_dist(gen))) % num_active_accounts;
