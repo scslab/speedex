@@ -8,7 +8,8 @@ namespace speedex {
 inline uint8_t 
 get_seq_num_offset(uint64_t sequence_number, uint64_t last_committed_id) {
 
-	return (((sequence_number - last_committed_id) / MAX_OPS_PER_TX) - 1);
+	uint64_t offset = (((sequence_number - last_committed_id) / MAX_OPS_PER_TX) - 1);
+	return (offset >= 64 ? 255 : offset);
 }
 
 inline uint64_t 

@@ -286,18 +286,22 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number, dbenv::wtxn& wt
 
 		//Offer partial_exec_offer = thunks[i].preexecute_partial_exec_offer;
 
+		if (relevant_thunks[i].partial_exec_amount < 0) {
+			//allowed to be 0 if no partial exec
+			std::printf("thunks[i].partial_exec_amount = %ld\n", relevant_thunks[i].partial_exec_amount);
+			throw std::runtime_error("invalid thunks[i].partial_exec_amount");
+		}
+
 		if ((uint64_t)relevant_thunks[i].partial_exec_amount > partial_exec_offer.amount) {
+			std::printf("relevant thunks[i].partial_exec_amount = %lu partial_exec_offer.amount = %lu\n", 
+				relevant_thunks[i].partial_exec_amount, partial_exec_offer.amount);
 			throw std::runtime_error("can't have partial exec offer.amount < thunk[i].partial_exec_amount");
 		}
 
 		partial_exec_offer.amount -= relevant_thunks[i].partial_exec_amount;
 
 
-		if (relevant_thunks[i].partial_exec_amount < 0) {
-			//allowed to be 0 if no partial exec
-			std::printf("thunks[i].partial_exec_amount = %ld\n", relevant_thunks[i].partial_exec_amount);
-			throw std::runtime_error("invalid thunks[i].partial_exec_amount");
-		}
+		
 
 		if (partial_exec_offer.amount < 0) {	
 			std::printf("partial_exec_offer.amount = %ld]n", partial_exec_offer.amount);

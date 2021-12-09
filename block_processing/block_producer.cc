@@ -122,6 +122,8 @@ public:
 		, serial_processor_cache(x.serial_processor_cache)
 		, remaining_block_space(x.remaining_block_space)
 		, total_block_size(x.total_block_size)
+		, status_counts()
+		, stats()
 			{};
 
 	void join(BlockProductionReduce& other) {
@@ -144,6 +146,8 @@ public:
 		, serial_processor_cache(serial_processor_cache)
 		, remaining_block_space(remaining_block_space)
 		, total_block_size(total_block_size)
+		, status_counts()
+		, stats()
 		{}
 };
 
