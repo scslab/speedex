@@ -193,9 +193,7 @@ int main(int argc, char* const* argv)
 	for (size_t i = 0; i < num_coin_datapts; i++) {
 		generator.asset_probabilities = get_cumulative_volumes(experiment, i);
 		auto prices = get_prices(experiment, i);
-		for (size_t j = 0; j < 5; j++) {
-			generator.make_block(prices);
-		}
+		generator.make_block(prices);
 	}
 
 	return 0;
