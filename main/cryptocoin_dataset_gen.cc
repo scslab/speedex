@@ -188,6 +188,8 @@ int main(int argc, char* const* argv)
 
 	GeneratorState generator (gen, options, output_root);
 
+	generator.dump_account_list(params.account_list_filename);
+
 	for (size_t i = 0; i < num_coin_datapts; i++) {
 		generator.asset_probabilities = get_cumulative_volumes(experiment, i);
 		auto prices = get_prices(experiment, i);
@@ -195,7 +197,6 @@ int main(int argc, char* const* argv)
 			generator.make_block(prices);
 		}
 	}
-	generator.dump_account_list(params.account_list_filename);
 
 	return 0;
 }
