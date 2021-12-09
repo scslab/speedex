@@ -7,5 +7,5 @@
           - name: formatting data
             shell: cd ~/xfs/speedex && python3 cryptocoin_experiment_formatter.py
           - name: cryptocoin data gen
-            shell: "cd ~/xfs/speedex && ./cryptocoin_dataset_gen --exp_options=cryptocoin_params.yaml --exp_name={{ exp_name }}"
+            shell: "cd ~/xfs/speedex && ./cryptocoin_dataset_gen --exp_options=synthetic_data_config/cryptocoin_params.yaml --exp_name={{ exp_name }}"
 
