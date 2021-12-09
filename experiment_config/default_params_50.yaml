@@ -2,6 +2,8 @@ protocol:
   tax_rate: 15
   smooth_mult: 10
   num_assets: 50
+  block_size: 500000
 
 speedex-node:
   persistence_frequency: 5
+  mempool_target: 2000000

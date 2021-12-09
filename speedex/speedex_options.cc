@@ -21,15 +21,17 @@ void SpeedexOptions::parse_options(const char* filename) {
 		fyd,
 		"/protocol/tax_rate %u "
 		"/protocol/smooth_mult %u "
-		"/protocol/num_assets %u",
-		&tax_rate, &smooth_mult, &num_assets);
+		"/protocol/num_assets %u "
+		"/protocol/block_size %u",
+		&tax_rate, &smooth_mult, &num_assets, &block_size);
 
 	count += fy_document_scanf(
 		fyd,
-		"/speedex-node/persistence_frequency %lu",
-		&persistence_frequency);
+		"/speedex-node/persistence_frequency %lu "
+		"/speedex-node/mempool_target %lu",
+		&persistence_frequency, &mempool_target);
 
-	if (count != 4) {
+	if (count != 6) {
 		throw std::runtime_error("failed to parse options yaml");
 	}
 	fy_document_destroy(fyd);

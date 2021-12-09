@@ -13,9 +13,11 @@ struct SpeedexOptions {
 	uint8_t tax_rate;
 	uint8_t smooth_mult;
 	uint16_t num_assets;
+	uint32_t block_size;
 
 	// operational parameters
 	size_t persistence_frequency;
+	size_t mempool_target;
 
 	void parse_options(const char* configfile);
 

@@ -27,6 +27,8 @@ SpeedexVM::SpeedexVM(
 	, measurement_output_folder(measurement_output_folder)
 	, options(options)
 	, params(params)
+	, TARGET_BLOCK_SIZE(options.block_size)
+	, MEMPOOL_TARGET_SIZE(options.mempool_target)
 	, tatonnement_structs(management_structures.orderbook_manager)
 	, mempool_structs(management_structures, MEMPOOL_CHUNK_SIZE, MEMPOOL_TARGET_SIZE)
 	, log_merge_worker(management_structures.account_modification_log)

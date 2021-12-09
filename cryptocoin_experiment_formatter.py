@@ -95,12 +95,10 @@ def load_coin(coin_name, length):
 		y = DateSnapshot.new()
 
 		if not idx in output.keys():
-			#print (idx, coin)
-			#print (output.keys())
+			#coingecko seems to have some data issues for SHIB
 			if (discontinuity):
 				print(idx, coin)
 				print("using previous day's volume")
-				#raise ValueError("not enough data in " + str(coin_name))
 		else:
 			(price, volume) = output[idx]
 			discontinuity = True

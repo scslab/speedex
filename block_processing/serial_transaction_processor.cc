@@ -298,7 +298,6 @@ SerialTransactionProcessor::process_transaction(
 	}
 
 	op_metadata.db_view.commit_sequence_number(
-	//account_database.commit_sequence_number(
 		source_account_idx, tx.metadata.sequenceNumber);
 	op_metadata.commit(stats);
 
@@ -315,11 +314,6 @@ SerialTransactionProcessor::unwind_transaction(
 	if (source_account_idx == nullptr) {
 		throw std::runtime_error("can't unwind tx from nonexistnet acct");
 	}
-
-	/*if (!account_database.lookup_user_id(
-		tx.metadata.sourceAccount, &source_account_idx)) {
-		throw std::runtime_error("cannot unwind tx from nonexistent acct");
-	}*/
 
 	OperationMetadata<UnbufferedViewT> op_metadata(
 		tx.metadata, source_account_idx, account_database);

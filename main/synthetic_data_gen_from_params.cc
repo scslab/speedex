@@ -86,8 +86,6 @@ int main(int argc, char* const* argv)
 
 	std::optional<std::pair<ReplicaID, ReplicaConfig>> conf_pair;
 	
-	//if (config_file.has_value()) {
-
 	if (!config_file) {
 		config_file = get_config_file();
 	}
@@ -107,8 +105,6 @@ int main(int argc, char* const* argv)
 	}
 
 	conf_pair->second.parse(fyd, conf_pair->first);
-	
-	//}
 
 	if (experiment_options_file.size() == 0) {
 		usage();
