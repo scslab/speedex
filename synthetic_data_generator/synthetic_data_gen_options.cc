@@ -166,6 +166,8 @@ bool GenerationOptions::parse(const char* filename) {
 
 	output_prefix = std::string(filename_buf);
 
+	std::printf("output prefix is %s\n", output_prefix.c_str());
+
 	auto status = cycle_dist.parse(fyd, num_assets);
 
 	if (!status) {

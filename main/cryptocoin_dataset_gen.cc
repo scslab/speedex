@@ -170,8 +170,6 @@ int main(int argc, char* const* argv)
 	params.num_blocks = options.num_blocks;
 	params.n_replicas = conf_pair -> second.nreplicas;
 
-	std::string output_exp_name = std::string(argv[3]);
-
 	if (mkdir_safe(options.output_prefix.c_str())) {
 		std::printf("directory %s already exists, continuing\n", options.output_prefix.c_str());
 	}
