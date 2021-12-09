@@ -172,7 +172,7 @@ template<typename random_generator>
 AccountID 
 GeneratorState<random_generator>::gen_account() {
 	if (options.account_dist_param == 0) {
-		std::uniform_int_distribution<> account_dist(0, num_active_accounts);
+		std::uniform_int_distribution<> account_dist(0, num_active_accounts - 1);
 		uint64_t idx = account_dist(gen);
 		return existing_accounts_map.at(idx);
 	}
