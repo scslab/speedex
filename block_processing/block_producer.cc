@@ -16,6 +16,7 @@ namespace speedex {
 bool delete_tx_from_mempool(TransactionProcessingStatus status) {
 	switch(status) {
 		case SUCCESS:
+			return true;
 		case SEQ_NUM_TOO_HIGH:
 		case SEQ_NUM_TEMP_IN_USE:
 		case NEW_ACCOUNT_TEMP_RESERVED:
@@ -176,7 +177,7 @@ BlockProducer::build_block(
 
 	tbb::blocked_range<size_t> range(0, mempool.num_chunks());
 
-	BLOCK_INFO("starting produce block from mempool");
+	BLOCK_INFO("starting produce block from mempool, max size=%ld", max_block_size);
 
 	auto timestamp = init_time_measurement();
 

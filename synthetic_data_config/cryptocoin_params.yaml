@@ -1,8 +1,8 @@
 experiment:
   output_prefix: "experiment_data/"
   num_assets: 50
-  num_accounts: 10000000
-  account_dist_param: 0.0000001
+  num_accounts: 1000000
+  account_dist_param: 0
   block_size: 50000
   num_blocks: 500
   bad_tx_fraction: 0.1
