@@ -302,25 +302,30 @@ Orderbook::satisfied_and_lost_utility(
 
 	auto max_clearing = get_metadata(exact_exchange_rate);
 
-	EndowAccumulator realized_clearing = indexed_metadata[0].metadata;
+	size_t realized_idx = 0;
+
 
 	Price max_activated_price = 0;
 
 	int mp = (end + start) /2;
 	while (true) {
 		if (end == start) {
-			if (indexed_metadata[end].metadata.endow > amount) {
+			realized_idx = end;
+			//realized_clearing = indexed_metadata[end].metadata;
+
+
+		/*	if (indexed_metadata[end].metadata.endow >= amount) {
 				realized_clearing = indexed_metadata[end].metadata;
 			} else {
 				if (end + 1 == indexed_metadata.size()) {
 					realized_clearing = indexed_metadata.back().metadata;
 				}
 				realized_clearing = indexed_metadata[end+1].metadata;
-			}
+			} */
 			break;
 		}
 
-		if (amount >= indexed_metadata[mp].metadata.endow) {
+		if (amount > indexed_metadata[mp].metadata.endow) {
 			start = mp + 1;
 		} else {
 			end = mp;
@@ -328,12 +333,31 @@ Orderbook::satisfied_and_lost_utility(
 		mp = (start + end) / 2;
 	}
 
+	auto realized_clearing = indexed_metadata[realized_idx].metadata;
 
-	double satisfied_utility = (realized_clearing.endow * price::to_double(exact_exchange_rate))
-		- ((double) realized_clearing.endow_times_price);
+	double total_utility = (((double) max_clearing.endow) * price::to_double(exact_exchange_rate))
+		- price::amount_times_price_to_double(max_clearing.endow_times_price);
 
-	double total_utility = (max_clearing.endow * price::to_double(exact_exchange_rate))
-		- ((double) max_clearing.endow_times_price);
+	if (amount == 0) {
+		return {0, total_utility};
+	}
+	if (realized_idx == 0) {
+		throw std::runtime_error("invalid");
+	}
+
+	auto fully_realized_clearing = indexed_metadata[realized_idx - 1].metadata;
+
+	std::printf("%lu %lu %lf\n", realized_clearing.endow, max_clearing.endow, price::to_double(exact_exchange_rate));
+
+
+	double satisfied_utility = (fully_realized_clearing.endow * price::to_double(exact_exchange_rate))
+		- price::amount_times_price_to_double(fully_realized_clearing.endow_times_price);
+
+
+	int64_t partial_amount = amount - fully_realized_clearing.endow;
+
+	satisfied_utility += (partial_amount * price::to_double(exact_exchange_rate))
+		- (partial_amount * price::to_double(indexed_metadata[realized_idx].key));
 
 	return {satisfied_utility, total_utility - satisfied_utility};
 }

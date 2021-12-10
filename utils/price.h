@@ -50,6 +50,13 @@ to_double(const Price& price) {
 	return (double)price / (double) ((uint64_t)1<<PRICE_RADIX);
 }
 
+[[maybe_unused]]
+inline static double
+amount_times_price_to_double(const uint128_t& amount_times_price)
+{
+	return ((double) amount_times_price) /  ((double) ((uint64_t)1<<PRICE_RADIX));
+}
+
 //! Double representation of a price to a fixed-point representation
 //! (rounding away the low bits from the double).
 inline static Price 

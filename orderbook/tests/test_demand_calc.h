@@ -250,4 +250,43 @@ public:
 
 	}
 
+	void test_utility() {
+
+		OrderbookManager manager(2);
+
+		make_basic_orderbook(manager);
+		
+		Price prices[2];
+
+		prices[1] = 100;
+		prices[0] = 500;
+
+		auto& orderbooks = manager.get_orderbooks();
+
+		auto res = orderbooks[0].satisfied_and_lost_utility(500, prices);
+		std::pair<double, double> expect = {1000, 0};
+
+		TS_ASSERT_EQUALS(res, expect);
+		
+		res = orderbooks[0].satisfied_and_lost_utility(499, prices);
+		expect = {1000, 0};
+
+		TS_ASSERT_EQUALS(res, expect);
+
+		res = orderbooks[0].satisfied_and_lost_utility(350, prices);
+		expect = {950, 50};
+
+		TS_ASSERT_EQUALS(res, expect);
+		
+		res = orderbooks[0].satisfied_and_lost_utility(150, prices);
+		expect = {550, 450};
+
+		TS_ASSERT_EQUALS(res, expect);
+
+
+		//TS_ASSERT_EQUALS(orderbooks[0].max_feasible_smooth_mult(701, prices), 255);
+		//TS_ASSERT_EQUALS(orderbooks[0].max_feasible_smooth_mult(700, prices), 255);
+		//TS_ASSERT_EQUALS(orderbooks[0].max_feasible_smooth_mult(699, prices), 3);
+	}
+
 };
