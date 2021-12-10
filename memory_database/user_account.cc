@@ -5,6 +5,27 @@
 
 namespace speedex {
 
+UserAccount::UserAccount(AccountID owner, PublicKey public_key)
+	: uncommitted_assets_mtx()
+	, owned_assets()
+	, uncommitted_assets()
+	, sequence_number_vec(0)
+	, last_committed_id(0)
+	, owner(owner)
+	, pk(public_key)
+{}
+
+UserAccount::UserAccount()
+	: uncommitted_assets_mtx()
+	, owned_assets()
+	, uncommitted_assets()
+	, sequence_number_vec(0)
+	, last_committed_id(UINT64_MAX)
+	, owner()
+	, pk()
+{}
+
+
 inline uint8_t 
 get_seq_num_offset(uint64_t sequence_number, uint64_t last_committed_id) {
 

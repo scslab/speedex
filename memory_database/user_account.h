@@ -94,20 +94,10 @@ class UserAccount {
 public:
 
 	//! Create a new account with a given public key.
-	UserAccount(AccountID owner, PublicKey public_key)
-		: uncommitted_assets_mtx()
-		, last_committed_id(0)
-		, owner(owner)
-		, pk(public_key)
-	{}
-
+	UserAccount(AccountID owner, PublicKey public_key);
+	
 	//! During genesis init, preallocate data and then later finish initialization with set_owner
-	UserAccount()
-		: uncommitted_assets_mtx()
-		, last_committed_id(UINT64_MAX)
-		, owner()
-		, pk()
-	{}
+	UserAccount();
 
 	void set_owner(AccountID _owner, PublicKey const& _pk, uint64_t _last_committed_id);
 
