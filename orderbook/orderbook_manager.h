@@ -232,6 +232,9 @@ public:
 	uint8_t get_max_feasible_smooth_mult(
 		const ClearingParams& clearing_params, Price* prices);
 
+	std::pair<double, double>
+	satisfied_and_lost_utility(const ClearingParams& clearing_params, Price* prices) const;
+
 	//! Compute a volume-weighted price asymmetry metric.
 	//! Used when tatonnement times out to quantify efficienty loss.
 	double

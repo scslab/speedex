@@ -280,6 +280,64 @@ Orderbook::max_feasible_smooth_mult(
 	return 0;
 }
 
+std::pair<double, double>
+Orderbook::satisfied_and_lost_utility(
+	int64_t amount, const Price* prices) const {
+
+	size_t start = 1;
+	size_t end = indexed_metadata.size() - 1;
+
+	Price sell_price = prices[category.sellAsset];
+	Price buy_price = prices[category.buyAsset];
+
+	Price exact_exchange_rate = divide_prices(sell_price, buy_price);
+
+	if (end == 0) {
+		return {0, 0};
+	}
+
+	if (amount > indexed_metadata[end].metadata.endow) {
+		throw std::runtime_error("invalid clearing amount");
+	}
+
+	auto max_clearing = get_metadata(exact_exchange_rate);
+
+	EndowAccumulator realized_clearing = indexed_metadata[0].metadata;
+
+	Price max_activated_price = 0;
+
+	int mp = (end + start) /2;
+	while (true) {
+		if (end == start) {
+			if (indexed_metadata[end].metadata.endow > amount) {
+				realized_clearing = indexed_metadata[end].metadata;
+			} else {
+				if (end + 1 == indexed_metadata.size()) {
+					realized_clearing = indexed_metadata.back().metadata;
+				}
+				realized_clearing = indexed_metadata[end+1].metadata;
+			}
+			break;
+		}
+
+		if (amount >= indexed_metadata[mp].metadata.endow) {
+			start = mp + 1;
+		} else {
+			end = mp;
+		}
+		mp = (start + end) / 2;
+	}
+
+
+	double satisfied_utility = (realized_clearing.endow * price::to_double(exact_exchange_rate))
+		- ((double) realized_clearing.endow_times_price);
+
+	double total_utility = (max_clearing.endow * price::to_double(exact_exchange_rate))
+		- ((double) max_clearing.endow_times_price);
+
+	return {satisfied_utility, total_utility - satisfied_utility};
+}
+
 size_t 
 Orderbook::num_open_offers() const {
 	return committed_offers.size();

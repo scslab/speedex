@@ -196,6 +196,12 @@ speedex_block_creation_logic(
 	BLOCK_INFO("regular Tat vol metric: timeout %lu %lf", 
 		!use_lower_bound, vol_metric);
 
+	auto [satisfied, lost] = management_structures.orderbook_manager
+		.satisfied_and_lost_utility(lp_results, price_workspace.data());
+
+	BLOCK_INFO("satisfied and lost utility: timeout %lu satisfied %lf lost %lf",
+		!use_lower_bound, satisfied, lost);
+
 	if (!clearing_check) {
 		std::fflush(stdout);
 		throw std::runtime_error("The prices we computed did not result in clearing!!!");

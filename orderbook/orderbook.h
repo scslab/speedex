@@ -263,6 +263,9 @@ public:
 	double max_feasible_smooth_mult_double(
 		int64_t amount, const Price* prices) const;
 
+	std::pair<double, double> satisfied_and_lost_utility(
+		int64_t amount, const Price* prices) const;
+
 	size_t num_open_offers() const;
 
 	std::pair<uint64_t, uint64_t> get_supply_bounds(

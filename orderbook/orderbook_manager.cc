@@ -404,6 +404,20 @@ OrderbookManager::get_max_feasible_smooth_mult(
 	return max;
 }
 
+std::pair<double, double>
+OrderbookManager::satisfied_and_lost_utility(const ClearingParams& clearing_params, Price* prices) const
+{
+	double satisfied = 0, lost = 0;
+	for (size_t i = 0; i < orderbooks.size(); i++) {
+		auto& orderbook = orderbooks[i];
+		auto [s, l] = orderbook.satisfied_and_lost_utility(
+			clearing_params.orderbook_params[i].supply_activated.ceil(), prices);
+		satisfied += s;
+		lost += l;
+	}
+	return {satisfied, lost};
+}
+
 double 
 OrderbookManager::get_weighted_price_asymmetry_metric(
 	const ClearingParams& clearing_params,
