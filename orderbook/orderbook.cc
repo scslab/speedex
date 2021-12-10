@@ -347,7 +347,7 @@ Orderbook::satisfied_and_lost_utility(
 
 	auto fully_realized_clearing = indexed_metadata[realized_idx - 1].metadata;
 
-	std::printf("%lu %lu %lf\n", realized_clearing.endow, max_clearing.endow, price::to_double(exact_exchange_rate));
+	//std::printf("%lu %lu %lf\n", realized_clearing.endow, max_clearing.endow, price::to_double(exact_exchange_rate));
 
 
 	double satisfied_utility = (fully_realized_clearing.endow * price::to_double(exact_exchange_rate))
