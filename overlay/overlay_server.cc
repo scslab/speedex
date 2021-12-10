@@ -22,6 +22,7 @@ OverlayHandler::log_batch_receipt(ReplicaID source, uint32_t batch_num) {
 	{
 		return;
 	}
+	std::printf("received batch %lu from %lu\n", batch_num, source);
 	it -> second = std::max(it -> second.load(std::memory_order_relaxed), batch_num);
 }
 
