@@ -145,6 +145,7 @@ class SerialTransactionProcessor
 	using BufferedViewT = BufferedMemoryDatabaseView;
 	using UnbufferedViewT = UnbufferedMemoryDatabaseView;
 	using BaseT::log_modified_accounts;
+	using BaseT::check_sigs;
 	using BaseT::serial_manager;
 
 	//! Unwind the creation of a sell offer, when undoing a failed
@@ -199,6 +200,7 @@ class SerialTransactionValidator
 	using Database = typename BaseT::Database;
 	using BaseT::log_modified_accounts;
 	using BaseT::serial_manager;
+	using BaseT::check_sigs;
 	using UnbufferedViewT 	
 		= typename std::conditional<
 				std::is_same<ManagerViewType, OrderbookManager>::value,
