@@ -5,6 +5,8 @@
 #include "hotstuff/network_event_queue.h"
 
 #include "utils/debug_macros.h"
+#include "utils/debug_utils.h"
+
 
 namespace hotstuff {
 
