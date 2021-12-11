@@ -115,11 +115,6 @@ PRICE_COMPUTATION_SRCS = \
 	price_computation/normalization_rolling_average.cc \
 	price_computation/tatonnement_oracle.cc
 
-RPC_SRCS = \
-	rpc/block_forwarder.cc \
-	rpc/consensus_api.cc \
-	rpc/consensus_api_server.cc
-
 SIMPLEX_SRCS = \
 	simplex/allocator.cc \
 	simplex/bitcompressed_row.cc \
@@ -186,7 +181,6 @@ MAIN_CCS = \
 	main/experiment_controller.cc \
 	main/overlay_sim.cc \
 	main/simple.cc \
-	main/replicated_simulation_experiment_controller.cc \
 	main/solver_comparison.cc \
 	main/speedex_vm_hotstuff.cc \
 	main/synthetic_data_gen_from_params.cc \
@@ -218,7 +212,6 @@ bin_PROGRAMS = \
 	experiment_controller \
 	overlay_sim \
 	simple \
-	replicated_simulation_experiment_controller \
 	solver_comparison \
 	speedex_vm_hotstuff \
 	synthetic_data_gen \
@@ -233,7 +226,6 @@ cryptocoin_dataset_gen_SOURCES = $(SRCS) main/cryptocoin_dataset_gen.cc
 experiment_controller_SOURCES = $(SRCS) main/experiment_controller.cc
 overlay_sim_SOURCES = $(SRCS) main/overlay_sim.cc
 simple_SOURCES = $(SRCS) main/simple.cc
-replicated_simulation_experiment_controller_SOURCES = $(SRCS) main/replicated_simulation_experiment_controller.cc
 solver_comparison_SOURCES = $(SRCS) main/solver_comparison.cc
 speedex_vm_hotstuff_SOURCES = $(SRCS) main/speedex_vm_hotstuff.cc
 synthetic_data_gen_SOURCES = $(SRCS) main/synthetic_data_gen_from_params.cc
