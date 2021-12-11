@@ -72,7 +72,7 @@ AsyncPersister::run() {
 		phase2_persist.do_async_persist_phase2(
 			std::move(persistence_callback));
 
-		cv.notify_one();
+		cv.notify_all();
 	}
 }
 
@@ -93,7 +93,7 @@ AsyncPersister::do_async_persist(
 		}
 		persistence_callback = std::move(callback);
 	}
-	cv.notify_one();
+	cv.notify_all();
 }
 
 
@@ -145,7 +145,7 @@ AsyncPersisterPhase2::do_async_persist_phase2(
 	std::lock_guard lock(mtx);
 	persistence_callback = std::move(callback);
 
-	cv.notify_one();
+	cv.notify_all();
 }
 
 
@@ -199,7 +199,7 @@ AsyncPersisterPhase3::do_async_persist_phase3(
 
 	std::lock_guard lock(mtx);
 	persistence_callback = std::move(callback);
-	cv.notify_one();
+	cv.notify_all();
 }
 
 void
