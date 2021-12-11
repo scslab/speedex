@@ -53,6 +53,8 @@ protected:
 	SerialManager serial_manager;
 	Database& account_database;
 
+	const bool check_sigs;
+
 	//! Create an account
 	template<typename DatabaseView>
 	TransactionProcessingStatus process_operation(
@@ -116,6 +118,7 @@ public:
 		SerialManager&& serial_manager)
 		: serial_manager(std::move(serial_manager))
 		, account_database(management_structures.db)
+		, check_sigs(management_structures.configs.check_sigs)
 		{}
 
 	//void clear() {

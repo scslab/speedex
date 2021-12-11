@@ -14,6 +14,7 @@ constexpr static const char* SPEEDEX_OPTIONS_FILENAME = "automation/speedex_opti
 constexpr static const char* DATA_FOLDER_FILENAME = "automation/data_folder";
 constexpr static const char* RESULTS_FOLDER_FILENAME = "automation/results_folder";
 constexpr static const char* NUM_THREADS_FILENAME = "automation/num_threads";
+constexpr static const char* CHECK_SIGS_FILENAME = "automation/check_sigs";
 
 static std::string
 get_experiment_var(const char* var) {
@@ -75,6 +76,12 @@ get_experiment_results_folder() {
 static uint32_t
 get_num_threads() {
 	return std::stoi(get_experiment_var(NUM_THREADS_FILENAME));
+}
+
+[[maybe_unused]]
+static bool
+get_check_sigs() {
+	return (std::stoi(get_experiment_var(CHECK_SIGS_FILENAME)) == 1);
 }
 
 } /* speedex */

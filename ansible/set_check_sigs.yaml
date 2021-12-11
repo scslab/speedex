@@ -1,0 +1,7 @@
+---
+- name: set check sigs on
+  hosts: all
+  tasks: 
+          - name: set check sigs on
+            shell: "cd ~/xfs/speedex/automation && echo 1 > check_sigs"
+

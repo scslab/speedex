@@ -25,6 +25,7 @@ experiment_data/
 experiment_results/
 
 #automation
+automation/check_sigs
 automation/config_file
 automation/data_folder
 automation/num_threads

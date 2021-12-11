@@ -93,8 +93,10 @@ bool SerialTransactionValidator<ManagerViewType>::validate_transaction(
 		return false;
 	}
 
-	if (!sig_check(tx, signed_tx.signature, source_account_idx -> get_pk())) {
-		return false;
+	if (check_sigs) {
+		if (!sig_check(tx, signed_tx.signature, source_account_idx -> get_pk())) {
+			return false;
+		}
 	}
 
 /*	account_db_idx source_account_idx;
@@ -218,8 +220,10 @@ SerialTransactionProcessor::process_transaction(
 		return TransactionProcessingStatus::SOURCE_ACCOUNT_NEXIST;
 	}
 
-	if (!sig_check(tx, signed_tx.signature, source_account_idx -> get_pk())) {
-		return TransactionProcessingStatus::BAD_SIGNATURE;
+	if (check_sigs) {
+		if (!sig_check(tx, signed_tx.signature, source_account_idx -> get_pk())) {
+			return TransactionProcessingStatus::BAD_SIGNATURE;
+		}
 	}
 
 

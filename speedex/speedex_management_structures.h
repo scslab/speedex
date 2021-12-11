@@ -6,6 +6,8 @@ Store all of the data structures used in Speedex in one convenient
 wrapper class.
 */
 
+#include "automation/get_experiment_vars.h"
+
 #include "header_hash/block_header_hash_map.h"
 
 #include "memory_database/memory_database.h"
@@ -22,6 +24,14 @@ wrapper class.
 
 namespace speedex {
 
+struct SpeedexRuntimeConfigs {
+	bool check_sigs;
+
+	SpeedexRuntimeConfigs()
+		: check_sigs(get_check_sigs())
+		{}
+};
+
 //! All of the data structures involved in running a SPEEDEX instance.
 struct SpeedexManagementStructures {
 	MemoryDatabase db;
@@ -29,6 +39,8 @@ struct SpeedexManagementStructures {
 	AccountModificationLog account_modification_log;
 	BlockHeaderHashMap block_header_hash_map;
 	ApproximationParameters approx_params;
+
+	SpeedexRuntimeConfigs configs;
 
 
 	//! Open all of the lmdb environment instances in Speedex.
@@ -63,7 +75,8 @@ struct SpeedexManagementStructures {
 		, orderbook_manager(num_assets)
 		, account_modification_log()
 		, block_header_hash_map()
-		, approx_params(approx_params) {}
+		, approx_params(approx_params)
+		, configs() {}
 };
 
 
