@@ -101,10 +101,12 @@ BlockFetchManager::add_fetch_request(speedex::Hash const& requested_block, Repli
 
 std::vector<NetEvent>
 BlockFetchManager::deliver_block(block_ptr_t blk) {
-	auto it = outstanding_reqs.find(blk -> get_hash());
+	auto hash = blk -> get_hash();
+
+	auto it = outstanding_reqs.find(hash);
 
 	if (it == outstanding_reqs.end()) {
-		HOTSTUFF_INFO("received block with no pending request");
+		HOTSTUFF_INFO("received block %s with no pending request", debug::array_to_str(hash.data(), hash.size()).c_str());
 		return {};
 	}
 

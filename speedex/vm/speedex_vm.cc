@@ -47,6 +47,8 @@ SpeedexVM::SpeedexVM(
 void 
 SpeedexVM::rewind_structs_to_committed_height() 
 {
+	BLOCK_INFO("rewinding speedex vm to committed height");
+
 	uint64_t committed_round_number = last_committed_block.block.blockNumber;
 
 	management_structures.db.commit_persistence_thunks(committed_round_number);
@@ -89,8 +91,12 @@ new_measurements(NodeType state)
 void
 SpeedexVM::exec_block(const block_type& blk) {
 
+	BLOCK_INFO("begin exec_block on %lu", blk.hashedBlock.block.blockNumber);
+
 	std::lock_guard lock(operation_mtx);
 	std::lock_guard lock2(confirmation_mtx);
+
+	BLOCK_INFO("got locks for vm on %lu", blk.hashedBlock.block.blockNumber);
 
 	if (last_committed_block.block.blockNumber + 1 != blk.hashedBlock.block.blockNumber) {
 		BLOCK_INFO("incorrect block height appended to speedex vm chain -- no-op, except incrementing blockNumber");

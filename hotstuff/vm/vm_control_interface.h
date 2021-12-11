@@ -210,7 +210,9 @@ VMControlInterface<VMType>::run() {
 			if (block_to_validate) {
 				// exec_block is responsible for reverting any speculative state
 				// left over from calls to propose()
+				HOTSTUFF_INFO("VM INTERFACE: start exec_block");
 				vm_instance -> exec_block(*block_to_validate);
+				HOTSTUFF_INFO("VM INTERFACE: end exec block");
 			}
 		} else if (highest_committed_id) {
 			vm_instance -> log_commitment(*highest_committed_id);

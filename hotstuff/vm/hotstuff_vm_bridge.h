@@ -99,6 +99,8 @@ public:
 				return;
 			}
 
+			VM_BRIDGE_INFO("rewinding vm");
+
 			revert_to_last_commitment();
 			vm_interface.finish_work_and_force_rewind();
 		}
@@ -106,7 +108,9 @@ public:
 		VM_BRIDGE_INFO("adding height entry for %lu", blk -> get_height());
 		speculation_map.add_height_pair(blk -> get_height(), blk_id);
 
+		VM_BRIDGE_INFO("submitting height %lu for exec", blk -> get_height());
 		vm_interface.submit_block_for_exec(std::move(blk_value));
+		VM_BRIDGE_INFO("done submit for exec %lu", blk -> get_height());
 	}
 
 	void notify_vm_of_commitment(block_ptr_t blk) {
