@@ -75,7 +75,7 @@ GenericEventQueue<EventT>::run() {
 			if (done_flag) return;
 			work_list = std::move(events);
 			events.clear();
-			cv.notify_one();
+			cv.notify_all();
 		}
 		run_events(work_list);
 	}
