@@ -199,11 +199,9 @@ VMControlInterface<VMType>::run() {
 
 		if (done_flag) return;
 
-		if (!blocks_to_validate.empty()) {
+		while (!blocks_to_validate.empty()) {
 			auto block_to_validate = std::move(blocks_to_validate.front());
 			blocks_to_validate.erase(blocks_to_validate.begin());
-
-			lock.unlock();
 
 			//block_to_validate is nullptr iff parsing failed.
 			//In this case, vm doesn't do anything.
@@ -214,10 +212,12 @@ VMControlInterface<VMType>::run() {
 				vm_instance -> exec_block(*block_to_validate);
 				HOTSTUFF_INFO("VM INTERFACE: end exec block");
 			}
-		} else if (highest_committed_id) {
+		} 
+		if (highest_committed_id) {
 			vm_instance -> log_commitment(*highest_committed_id);
 			highest_committed_id = std::nullopt;
-		} else {
+		}
+		if (additional_proposal_requests > 0) {
 			//get additional proposals
 			if (!is_proposer) {
 				throw std::runtime_error("vm thread woke up early");

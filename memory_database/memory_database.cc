@@ -539,6 +539,7 @@ void MemoryDatabase::clear_persistence_thunks_and_reload(uint64_t expected_persi
 
 void MemoryDatabase::commit_persistence_thunks(uint64_t max_round_number) {
 
+	BLOCK_INFO("start memorydatabase::commit_persistence_thunks");
 	// Gather all the thunks that can be persisted at once, 
 	// to minimize time spent locking the persistence thunks
 	// mutex (which block creation acquires occasionally).
@@ -569,11 +570,15 @@ void MemoryDatabase::commit_persistence_thunks(uint64_t max_round_number) {
 	// counter used to enforce sequentiality of commitment
 	auto current_block_number = get_persisted_round_number();
 
+	BLOCK_INFO("gathered thunks to commit");
+
 	dbenv::wtxn write_txn{nullptr};
 	if (account_lmdb_instance)
 	{
 		write_txn = account_lmdb_instance.wbegin();
 	}
+
+	BLOCK_INFO("opened account db wtxn");
 
 	for (size_t i = 0; i < thunks_to_commit.size(); i++) {
 
@@ -612,7 +617,11 @@ void MemoryDatabase::commit_persistence_thunks(uint64_t max_round_number) {
 		current_block_number = thunk.current_block_number;
 	}
 
+	BLOCK_INFO("built wtxn");
+
 	account_lmdb_instance.commit_wtxn(write_txn, current_block_number, false);
+
+	BLOCK_INFO("committed wtxn");
 
 	{
 		std::lock_guard lock(db_thunks_mtx);
@@ -626,7 +635,11 @@ void MemoryDatabase::commit_persistence_thunks(uint64_t max_round_number) {
 		}
 	}
 
+	BLOCK_INFO("cleared account creation thunks");
+
 	background_thunk_clearer.clear_batch(std::move(thunks_to_commit));
+
+	BLOCK_INFO("cleared background data");
 
 	// this check no longer valid if gaps in thunks are allowed
 	//if (current_block_number != max_round_number) {
