@@ -68,7 +68,7 @@ HotstuffProtocolClient::run()
 			todo = std::move(work);
 			work.clear();
 			// used for shutdown wait
-			cv.notify_one();
+			cv.notify_all();
 		}
 		//wait_for_try_open_connection();
 
