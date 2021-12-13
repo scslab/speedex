@@ -1,0 +1,46 @@
+---
+- name: aws init
+  hosts: all
+  tasks:
+          - name: mdadm
+            shell: "sudo mdadm -C /dev/md127 -l 0 -n 4 /dev/nvme1n1 /dev/nvme0n1 /dev/nvme3n1 /dev/nvme4n1"
+          - name: mkfs
+            shell: "sudo mkfs.xfs /dev/md127 -f && sudo mount /dev/md127 xfs -o discard"
+          - name: chmod
+            shell: "sudo chmod -R 0777 xfs"
+          - name: clone
+            shell: "cd xfs && git clone --recursive https://www.github.com/scslab/speedex.git"
+          - name: autogen configure
+            shell: "cd xfs/speedex && ./autogen.sh && ./configure"
+
+- name: init host 0
+  hosts: host0
+  tasks:
+          - name: set node name
+            shell: "cd xfs/speedex && echo \"node-0\n\" > automation/replica"
+
+- name: init host 1
+  hosts: host1
+  tasks:
+          - name: set node name
+            shell: "cd xfs/speedex && echo \"node-1\n\" > automation/replica"
+
+- name: init host 2
+  hosts: host2
+  tasks:
+          - name: set node name
+            shell: "cd xfs/speedex && echo \"node-2\n\" > automation/replica"
+
+- name: init host 3
+  hosts: host3
+  tasks:
+          - name: set node name
+            shell: "cd xfs/speedex && echo \"node-3\n\" > automation/replica"
+
+- name: set config
+  hosts: all
+  tasks:
+          - name: set config
+            shell: "cd xfs/speedex && echo \"config/config_geoff_aws.yaml\" > automation/config_file"
+
+
