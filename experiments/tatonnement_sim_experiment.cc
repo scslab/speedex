@@ -14,7 +14,7 @@ TatonnementSimExperiment::run_current_trial(std::unique_ptr<OrderbookManager>& m
 
 	TatonnementManagementStructures tatonnement(*manager_ptr);
 
-	std::thread th = tatonnement.oracle.launch_timeout_thread(5000, cancel_timeout_thread, timeout_flag);
+	std::thread th = tatonnement.oracle.launch_timeout_thread(3000, timeout_flag, cancel_timeout_thread);
 
 	auto res = tatonnement.oracle.compute_prices_grid_search(prices.data(), current_approx_params);
 
@@ -116,7 +116,12 @@ TatonnementSimExperiment::run_experiment(
 			current_approx_params.tax_rate = tax_rate;
 			current_approx_params.smooth_mult = smooth_mult;
 			
-			auto current_results = run_current_trial(manager_ptr, prices);
+			auto current_results = std::nullopt;
+			try {
+				current_results = run_current_trial(manager_ptr, prices);
+			} catch(...) {
+				std::printf("probably a rounding error\n");
+			}
 
 			if (current_results) {
 				results.experiments[i].results.push_back(*current_results);

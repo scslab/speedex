@@ -152,7 +152,7 @@ public:
 		}
 
 	//! Return the public key associated with the account.
-	PublicKey get_pk() const {
+	const PublicKey& get_pk() const {
 		return pk;
 	}
 

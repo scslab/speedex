@@ -81,9 +81,6 @@ int main(int argc, char* const* argv)
 	std::printf("Setting options.num_blocks to 5 for convenience\n");
 	options.num_blocks = 5;
 
-	std::printf("setting asset bias high\n");
-	options.asset_bias = 0.4;
-
 	std::string output_root = options.output_prefix + experiment_name + std::string("/");
 
 	if (mkdir_safe(options.output_prefix.c_str())) {
