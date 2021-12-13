@@ -468,4 +468,47 @@ public:
 		std::function<void(UserAccount&)> account_init_lambda);
 };
 
+class NullDB : public MemoryDatabase {
+
+	UserAccount* mockAccount;
+public:
+
+	NullDB()
+		: MemoryDatabase()
+		, mockAccount(new UserAccount())
+		{}
+	~NullDB()
+	{
+		delete mockAccount;
+	}
+
+	UserAccount* lookup_user([[maybe_unused]] AccountID account) const {
+		return mockAccount;
+	}
+
+	void transfer_available(
+		[[maybe_unused]] UserAccount*, 
+		[[maybe_unused]] AssetID asset_type, 
+		[[maybe_unused]] int64_t change) {}
+
+	void escrow(
+		[[maybe_unused]] UserAccount*, 
+		[[maybe_unused]] AssetID asset_type, 
+		[[maybe_unused]] int64_t change) {}
+
+	bool conditional_transfer_available(
+		[[maybe_unused]] UserAccount*, 
+		[[maybe_unused]] AssetID asset_type, 
+		[[maybe_unused]] int64_t change) {
+		return true;
+	}
+
+	bool conditional_escrow(
+		[[maybe_unused]] UserAccount*, 
+		[[maybe_unused]] AssetID asset_type, 
+		[[maybe_unused]] int64_t change) {
+		return true;
+	}
+};
+
 } /* speedex */

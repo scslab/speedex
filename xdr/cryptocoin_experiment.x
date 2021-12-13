@@ -47,6 +47,7 @@ struct ExchangeOrderbookSnapshot {
 };
 
 struct CancelEvent {
+	OfferCategory category;
 	uint64 cancelledOfferId;
 	Price cancelledOfferPrice;
 };

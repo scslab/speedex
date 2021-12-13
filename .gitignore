@@ -37,6 +37,7 @@ automation/speedex_options
 clean_lmdbs
 counting_vm_hotstuff
 cryptocoin_dataset_gen
+exchange_data_experiment
 experiment_controller
 overlay_sim
 solver_comparison

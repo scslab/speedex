@@ -116,7 +116,7 @@ TatonnementSimExperiment::run_experiment(
 			current_approx_params.tax_rate = tax_rate;
 			current_approx_params.smooth_mult = smooth_mult;
 			
-			auto current_results = std::nullopt;
+			std::optional<TatonnementMeasurements> current_results = std::nullopt;
 			try {
 				current_results = run_current_trial(manager_ptr, prices);
 			} catch(...) {
