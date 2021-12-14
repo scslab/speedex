@@ -4,7 +4,7 @@ experiment:
   num_accounts: 10000000
   account_dist_param: 0.0000001
   block_size: 100000
-  num_blocks: 50
+  num_blocks: 500
   bad_tx_fraction: 0.1
   prices:
     price_tolerance_min: 0.00
