@@ -258,8 +258,6 @@ struct AccountBatchMergeRange {
 		return (num_children >= 100) && (entry_points.size() != 0);
 	}
 
-	std::shared_ptr<std::mutex> mtx;
-
 	AccountBatchMergeRange (ptr_t root, std::vector<ptr_t> merge_in_list, allocator_t& allocator, context_cache_t& cache)
 		: allocator(allocator)
 		, cache(cache)
@@ -267,7 +265,6 @@ struct AccountBatchMergeRange {
 		, banned_branches()
 		, root(root)
 		, num_children(allocator.get_object(root).size())
-		, mtx(std::make_shared<std::mutex>())
 		{
 
 			map_value_t value;
@@ -285,11 +282,10 @@ struct AccountBatchMergeRange {
 		, banned_branches(other.banned_branches)
 		, root (other.root)
 		, num_children(0)
-		, mtx(other.mtx)
 		 {
 			if (other.entry_points.size() == 0) {
 				std::printf("other entry pts is nonzero!\n");
-				throw std::runtime_error("what the fuck");
+				throw std::runtime_error("other entry pts is nonzero!");
 			}
 
 
@@ -298,11 +294,8 @@ struct AccountBatchMergeRange {
 			The new node "steals" some of these entry points from the main node.
 			This means taking both control of the entrypoints (on the main trie), and the associated corresponding subtries to be merged in.
 
-
-			Entrypoints only go up when they're merged into.  So we merge in the subtries to the entrypoint, then propagate the size delta from 
+			Entrypoints can only go up when they're merged into.  So we merge in the subtries to the entrypoint, then propagate the size delta from 
 			the root to the entrypoint.
-
-			   
 
 			*/
 			auto original_sz = other.num_children;
@@ -311,8 +304,12 @@ struct AccountBatchMergeRange {
 				if (other.entry_points.size() > 1) {
 					auto iter = other.entry_points.begin();
 					auto& entry_pt = allocator.get_object((*iter).first);
-					num_children += entry_pt.size();
-					other.num_children -= entry_pt.size();
+					
+					// Note: the size tracking accuracy doens't matter for correctness
+					// we just need a very rough estimate for load balancing
+					size_t entry_sz = entry_pt.size();
+					num_children += entry_sz;
+					other.num_children -= entry_sz;
 
 					entry_points.emplace((*iter).first, (*iter). second);
 					other.entry_points.erase(iter);
@@ -332,10 +329,14 @@ struct AccountBatchMergeRange {
 				}
 				ptr_t theft_root = other.entry_points.begin()->first;
 
+				auto* theft_root_ptr = &allocator.get_object(theft_root);
+
+				auto lk = theft_root_ptr -> unique_lock();
+
 				std::vector<std::pair<uint8_t, ptr_t>> stealable_subnodes;
 
 				//other entry_points is a single TrieT*.
-				//We will iterate through the children of this node, stealing until we size is high enough.
+				//We will iterate through the children of this node, stealing until the size is high enough.
 				//A stolen child of theft_root (theft_candidate) becomes an entry point for us, and a banned subnode for them.
 				// The TrieT*s in the map corresponding to theft_candidate are the children of the merge_in tries that correspond to theft_candidate.
 				//Anything that matches theft_root + candidate branch bits can get merged in to theft_candidate.
@@ -345,36 +346,38 @@ struct AccountBatchMergeRange {
 				map_value_t merge_in_tries = other.entry_points.begin() -> second;
 				//std::printf("tries at entry point in other: %lu\n", other.entry_points.begin()->second.size());
 
+				// An earlier version locked and unlocked theft_root at every loop iteration.
+				// This is incorrect.  Some other thread might modify theft_root in
+				// the meantime, which could decrease theft_root's prefix_len.
+				// This would corrupt the branch_bits stored in stealable_subnodes (the first of each pair).
+				// This could cause steal_prefix to be set incorrectly (so as to not actually match a prefix of theft_candidate's prefix).
 
-
-
-
-				while (num_children + 10 < other.num_children) { // + 10 for rounding error
+				while (num_children + 10 < other.num_children) { // + 10 for rounding error.  Actual split amounts do not matter for correctness.
 					
 
 					if (stealable_subnodes.size() > 1) {
-						auto& theft_root_ref = allocator.get_object(theft_root);
-						auto lk = theft_root_ref.lock();
+						//auto& theft_root_ref = allocator.get_object(theft_root);
+						//auto lk = theft_root_ref.lock();
 
 						auto [stolen_bb, theft_candidate] = stealable_subnodes.back();
 						stealable_subnodes.pop_back();
 						//do steal
 						other.banned_branches.insert(theft_candidate);
 						std::vector<ptr_t> stolen_merge_in_tries;
-						prefix_t steal_prefix = theft_root_ref.get_prefix();
+						prefix_t steal_prefix = theft_root_ptr -> get_prefix();
 
 						for (auto iter = merge_in_tries.begin(); iter != merge_in_tries.end(); iter++) {
 
-							if (theft_root_ref.is_leaf()) {
+							if (theft_root_ptr -> is_leaf()) {
 								break;
 							}
 		
-							steal_prefix.set_next_branch_bits(theft_root_ref.get_prefix_len(), stolen_bb);
+							steal_prefix.set_next_branch_bits(theft_root_ptr -> get_prefix_len(), stolen_bb);
 	
 							auto [do_steal_entire_subtree, metadata_delta, theft_result] 
 								= (allocator.get_object(*iter).destructive_steal_child(
 										steal_prefix, 
-										theft_root_ref.get_prefix_len() + TrieT::BRANCH_BITS, 
+										theft_root_ptr -> get_prefix_len() + TrieT::BRANCH_BITS, 
 										cache.get(allocator).get_allocation_context()));
 							if (theft_result.non_null()) {
 								
@@ -399,14 +402,17 @@ struct AccountBatchMergeRange {
 						if (stealable_subnodes.size() != 0) {
 							theft_root = stealable_subnodes.back().second;
 							stealable_subnodes.pop_back();
+
+							theft_root_ptr = &allocator.get_object(theft_root);
+							lk = theft_root_ptr -> unique_lock();
 						}
 
-						auto& theft_root_ref = allocator.get_object(theft_root);
+						//auto& theft_root_ref = allocator.get_object(theft_root);
 
-						auto lk = theft_root_ref.lock();
+					//	auto lk = theft_root_ref.lock();
 
-						stealable_subnodes = theft_root_ref.children_list_with_branch_bits_nolock();
-						if (theft_root_ref.is_leaf()) {
+						stealable_subnodes = theft_root_ptr -> children_list_with_branch_bits_nolock();
+						if (theft_root_ptr -> is_leaf()) {
 							return;
 						}
 						//filter stealable

@@ -105,18 +105,14 @@ private:
 
 	// should all fit in 1 cache line
 
-	children_map_t children; // 9 bytes  old:should be 64 + 3 bytes
+	children_map_t children; // 9 bytes
 
 	std::atomic<bool> hash_valid = false; // 1
 	SpinMutex mtx; // 1
 	
 	PrefixLenBits prefix_len; // 2, could be made 1
 
-	std::atomic<int32_t> size_ = 0; // 4
-
-	//ptr_t this_ptr = UINT32_MAX; // 4
-	
-
+	std::atomic<int32_t> size_ = 0; // 4	
 
 	prefix_t prefix; // 8
 
@@ -293,6 +289,10 @@ public:
 
 	SpinLockGuard lock() const {
 		return SpinLockGuard(mtx);
+	}
+
+	SpinUniqueLock unique_lock() const {
+		return SpinUniqueLock(mtx);
 	}
 
 	bool is_leaf() const {

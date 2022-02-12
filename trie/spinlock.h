@@ -39,9 +39,50 @@ public:
 		: mtx(mtx) {
 			mtx.lock();
 		}
+
+	SpinLockGuard(const SpinLockGuard&) = delete;
+	SpinLockGuard(SpinLockGuard&&) = delete;
+
 	~SpinLockGuard() {
 		mtx.unlock();
 	}
 };
+
+//! Automatically unlocking unique lock wrapper around SpinMutex
+class SpinUniqueLock {
+	const SpinMutex* mtx;
+	bool locked = false;
+public:
+	SpinUniqueLock(const SpinMutex& mtx_) 
+		: mtx(&mtx_) {
+			mtx->lock();
+			locked=true;
+		}
+
+	SpinUniqueLock(const SpinUniqueLock&) = delete;
+	SpinUniqueLock(SpinUniqueLock&&) = delete;
+	
+	SpinUniqueLock&
+	operator=(SpinUniqueLock&& other) {
+		if (locked) {
+			mtx->unlock();
+			locked = false;
+		}
+		mtx = other.mtx;
+		locked = other.locked;
+
+		other.mtx = nullptr;
+		other.locked = false;
+
+		return *this;
+	}
+
+	~SpinUniqueLock() {
+		if (locked) {
+			mtx->unlock();
+		}
+	}
+};
+
 
 } /* speedex */
