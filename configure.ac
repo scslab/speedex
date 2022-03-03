@@ -23,7 +23,9 @@ dnl PKG_CHECK_MODULES([libcrypto], [libcrypto])
 PKG_CHECK_MODULES([gsl], [gsl])
 PKG_CHECK_MODULES([libsodium], [libsodium])
 PKG_CHECK_MODULES([lmdb], [lmdb])
+PKG_CHECK_MODULES(LEMON, [lemon], HAVE_LEMON=1, HAVE_LEMON=0)
 
+AC_DEFINE_UNQUOTED([HAVE_LEMON], [$HAVE_LEMON], [Define to 1 if you have lemon available])
 
 PKG_CHECK_MODULES(LIBFYAML, [ libfyaml ], HAVE_LIBFYAML=1, HAVE_LIBFYAML=0)
 
