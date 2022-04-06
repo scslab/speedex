@@ -6,4 +6,4 @@ protocol:
 
 speedex-node:
   persistence_frequency: 5
-  mempool_target: 200000
+  mempool_target: 50000
