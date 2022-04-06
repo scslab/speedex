@@ -45,7 +45,7 @@ struct TatonnementControlParameters {
 	bool use_dynamic_relativizer = false;
 	std::optional<ParallelDemandOracle<NUM_DEMAND_WORKERS>> oracle;
 
-	TatonnementControlParameters() : oracle(std::nullopt) {}
+	//TatonnementControlParameters() : oracle(std::nullopt) {}
 
 	TatonnementControlParameters(size_t num_assets, size_t num_work_units)
 		: oracle(std::make_optional<ParallelDemandOracle<NUM_DEMAND_WORKERS>>(num_work_units, num_assets)) {}
@@ -121,6 +121,9 @@ class TatonnementOracle {
 	uint16_t* volume_relativizers;
 
 	TatonnementMeasurements internal_measurements;
+
+	double current_best_utility_ratio = -1;
+	bool found_success = false;
 
 	constexpr static size_t LP_CHECK_FREQ = 1000;
 

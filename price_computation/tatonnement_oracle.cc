@@ -408,6 +408,36 @@ void TatonnementOracle::run_tatonnement_thread(TatonnementControlParameters* con
 		lock.lock();
 		num_active_threads --;
 
+		if (success && !found_success)
+		{
+			found_success = true;
+			for(size_t i = 0; i < num_assets; i++) {
+				internal_shared_price_workspace[i] = local_price_workspace[i];	
+			}
+			results_ready = true;
+		}
+
+		if (!found_success)
+		{	
+			auto clearing_params = solver.solve(local_price_workspace.data(), active_approx_params, false /* use_lower_bound */);
+			auto [sat, lost] = work_unit_manager.satisfied_and_lost_utility(clearing_params, local_price_workspace.data());
+
+			double my_utility_ratio = lost / sat;
+			
+			if ((current_best_utility_ratio < 0) || (my_utility_ratio < current_best_utility_ratio))
+			{
+				current_best_utility_ratio = lost/sat;
+				for(size_t i = 0; i < num_assets; i++) {
+					internal_shared_price_workspace[i] = local_price_workspace[i];	
+				}
+			}
+		}
+
+		if (num_active_threads == 0)
+		{
+			results_ready = true;
+		}
+/*
 		if (success || (timeout_happened && control_params.use_in_case_of_timeout)) {
 
 			if (success) {
@@ -417,7 +447,8 @@ void TatonnementOracle::run_tatonnement_thread(TatonnementControlParameters* con
 				internal_shared_price_workspace[i] = local_price_workspace[i];
 			}
 			results_ready = true;
-		}
+		} */
+
 		finished_cv.notify_all();
 	}
 }
@@ -437,7 +468,7 @@ void TatonnementOracle::start_tatonnement_threads() {
 		params->min_step = ((uint64_t)1) << 7; // 7
 		params->step_adjust_radix = 5; // 5
 
-		params->step_radix = 95 - 11*i;
+		params->step_radix = 110 - 16*i;
 		params->diff_reduction = 0;//5*(3-i);
 		params->use_in_case_of_timeout = first; // only one thread should be set to true.
 		first = false;
@@ -455,7 +486,7 @@ void TatonnementOracle::start_tatonnement_threads() {
 		params -> min_step = ((uint64_t)1)<<7;
 		params->step_adjust_radix = 5;
 
-		params -> step_radix = 95-11*i;
+		params -> step_radix = 110-16*i;
 		params->diff_reduction = 0;
 		params->use_in_case_of_timeout = false;
 
@@ -487,6 +518,10 @@ void TatonnementOracle::start_tatonnement_query() {
 	done_tatonnement_flag = false;
 	results_ready = false;
 	timeout_happened = false;
+	
+	current_best_utility_ratio = -1;
+	found_success = false;
+	
 	start_cv.notify_all();
 }
 
@@ -792,7 +827,7 @@ TatonnementOracle::better_grid_search_tatonnement_query(
 				return false;
 			}
 		}
-		if (round_number % 1000 == -1) {
+		if (round_number % 100 == -1) {
 			TAT_INFO("ROUND %5d step_size %lf (%lu) objective %lf step_radix %lu", round_number, price::amount_to_double(step, step_radix), step, prev_objective.l2norm_sq, step_radix);
 			for (size_t i = 0; i < num_assets; i++) {
 				double demand = price::amount_to_double(demands_search[i], price::PRICE_RADIX);
