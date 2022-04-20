@@ -359,7 +359,12 @@ Orderbook::satisfied_and_lost_utility(
 	satisfied_utility += (partial_amount * price::to_double(exact_exchange_rate))
 		- (partial_amount * price::to_double(indexed_metadata[realized_idx].key));
 
-	return {satisfied_utility, total_utility - satisfied_utility};
+	double lost_utility = total_utility - satisfied_utility;
+
+	double sell_price_d = price::to_double(sell_price);
+
+
+	return {sell_price_d * satisfied_utility, sell_price_d * lost_utility};
 }
 
 size_t 

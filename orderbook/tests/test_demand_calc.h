@@ -264,22 +264,22 @@ public:
 		auto& orderbooks = manager.get_orderbooks();
 
 		auto res = orderbooks[0].satisfied_and_lost_utility(500, prices);
-		std::pair<double, double> expect = {1000, 0};
+		std::pair<double, double> expect = {1000 * price::to_double(500), 0};
 
 		TS_ASSERT_EQUALS(res, expect);
 		
 		res = orderbooks[0].satisfied_and_lost_utility(499, prices);
-		expect = {1000, 0};
+		expect = {1000 * price::to_double(500), 0};
 
 		TS_ASSERT_EQUALS(res, expect);
 
 		res = orderbooks[0].satisfied_and_lost_utility(350, prices);
-		expect = {950, 50};
+		expect = {950 * price::to_double(500), 50 * price::to_double(500)};
 
 		TS_ASSERT_EQUALS(res, expect);
 		
 		res = orderbooks[0].satisfied_and_lost_utility(150, prices);
-		expect = {550, 450};
+		expect = {550 * price::to_double(500), 450 * price::to_double(500)};
 
 		TS_ASSERT_EQUALS(res, expect);
 
