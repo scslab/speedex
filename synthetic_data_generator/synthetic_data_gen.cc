@@ -121,8 +121,17 @@ GeneratorState<random_generator>::gen_asset_cycle() {
 	std::uniform_real_distribution<> size_rand (0.0, 1.0);
 	size_t size = options.cycle_dist.get_size(size_rand(gen));
 
+	if (options.reserve_currency) {
+		AssetID candidate = 0;
+		while (candidate == 0) {
+			candidate = gen_asset();
+		}
+		return {0, candidate};
+	}
+
 	//if (options.asset_bias != 0) {
 		std::vector<AssetID> output;
+		//std::printf("gen cycle size %lu\n", size);
 		for (size_t i = 0; i < size; i++) {
 			while(true) {
 				AssetID candidate = gen_asset();
@@ -132,6 +141,7 @@ GeneratorState<random_generator>::gen_asset_cycle() {
 				}
 			}
 		}
+	//std::printf("done\n");
 		return output;
 	//}
 
@@ -682,6 +692,34 @@ void GeneratorState<random_generator>::make_block(const std::vector<double>& pri
 	cancellation_flags.resize(txs.size(), false);
 }
 
+template<typename random_generator>
+xdr::xvector<Offer>
+GeneratorState<random_generator>::make_offer_list(const std::vector<double>& prices, size_t num_offers)
+{
+	normalize_asset_probabilities();
+	
+	xdr::xvector<Offer> offers;
+	uint64_t seqNum = 0;
+	double bad_frac = 0;
+
+	while(offers.size() < num_offers) {
+		if (bad_frac > 1) {
+			bad_frac -= 1.0;
+			AccountID acct = gen_account();
+			offers.push_back(sell_offer_op_to_offer(gen_bad_offer(prices), acct, seqNum));
+		} else {
+			auto asset_cycle = gen_asset_cycle();
+			bad_frac += asset_cycle.size() * options.bad_tx_fraction;
+			auto offer_cycle = gen_good_offer_cycle(asset_cycle, prices);
+
+			for (auto offer : offer_cycle) {
+
+				offers.push_back(sell_offer_op_to_offer(offer, gen_account(), seqNum));
+			}
+		}
+	}
+	return offers;
+}
 
 template<typename random_generator>
 void GeneratorState<random_generator>::make_offer_set(const std::vector<double>& prices) {
@@ -689,23 +727,7 @@ void GeneratorState<random_generator>::make_offer_set(const std::vector<double>&
 
 	TatonnementExperimentData sim_data;
 
-
-	uint64_t seqNum = 0;
-	double bad_frac = 0;
-	while(sim_data.offers.size() < options.block_size) {
-		if (bad_frac > 1) {
-			bad_frac -= 1.0;
-			sim_data.offers.push_back(sell_offer_op_to_offer(gen_bad_offer(prices), 0, seqNum));
-		} else {
-			auto asset_cycle = gen_asset_cycle();
-			bad_frac += asset_cycle.size() * options.bad_tx_fraction;
-			auto offer_cycle = gen_good_offer_cycle(asset_cycle, prices);
-
-			for (auto offer : offer_cycle) {
-				sim_data.offers.push_back(sell_offer_op_to_offer(offer, 0, seqNum));
-			}
-		}
-	}
+	sim_data.offers = make_offer_list(prices, options.block_size);
 
 	std::string filename = output_directory + std::to_string(block_state.block_number) + ".offers";
 	block_state.block_number ++;

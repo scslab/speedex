@@ -21,8 +21,8 @@ typedef unsigned __int128 uint128_t;
 namespace price {
 
 namespace {
-constexpr static uint64_t low_mask = 0x00000000FFFFFFFF;
-constexpr static uint64_t high_mask = 0xFFFFFFFF00000000;
+constexpr static uint64_t price_lowbits_mask = 0x0000'00FF'FFFF;
+constexpr static uint64_t price_highbits_mask = 0xFFFF'FF00'0000;
 }
 
 //! Number of bits below the decimal point
@@ -253,6 +253,23 @@ safe_multiply_and_drop_lowbits(
 	}
 	return out;
 }
+
+// breaks if amount could overflow a uint64_t
+inline static
+uint64_t
+round_up_price_times_amount(uint128_t p_times_amount)
+{
+	//std::printf("%llx\n", p_times_amount);
+	//uint64_t check = p_times_amount & price_lowbits_mask;
+	//std::printf("%llx\n", check);
+	if (p_times_amount & price_lowbits_mask)
+	{
+	//	std::printf("whee\n");
+		return (p_times_amount >> PRICE_RADIX) + 1;
+	}
+	return p_times_amount >> PRICE_RADIX;
+}
+
 } /* price */
 
 } /* speedex */

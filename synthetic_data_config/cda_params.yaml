@@ -1,0 +1,32 @@
+experiment:
+  output_prefix: "experiment_data/"
+  num_assets: 2
+  num_accounts: 100000
+  account_dist_param: 0.00001
+  block_size: 500000
+  num_blocks: 30
+  bad_tx_fraction: 0.1
+  prices:
+    price_tolerance_min: 0.00
+    price_tolerance_max: 0.02
+    price_min: 1
+    price_max: 100
+    exp_param: 0.0
+    per_block_delta: 0.1
+  cycle_size_dist:
+    dist_max: 2
+    2: 1000
+  block_boundary_crossing_fraction: 0.1
+  initial_endow_min: 1000
+  initial_endow_max: 100000
+  payment_rate: 0.0
+  create_offer_rate: 1.0
+  account_creation_rate: 0.0
+  new_account_balance: 100000000
+  cancel_delay_rounds_min: 1
+  cancel_delay_rounds_max: 5
+  bad_offer_cancel_chance: 0.0
+  good_offer_cancel_chance: 0.0
+  do_shuffle: 1
+  
+

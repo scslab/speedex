@@ -31,6 +31,10 @@ BLOCK_PROCESSING_SRCS = \
 	block_processing/block_validator.cc \
 	block_processing/serial_transaction_processor.cc
 
+CDA_SRCS = \
+	cda/serial_ob.cc \
+	cda/serial_ob_experiment.cc
+
 CONFIG_SRCS = \
 	config/replica_config.cc
 
@@ -157,6 +161,7 @@ UTILS_SRCS = \
 SRCS = \
 	$(AUTOMATION_SRCS) \
 	$(BLOCK_PROCESSING_SRCS) \
+	$(CDA_SRCS) \
 	$(CONFIG_SRCS) \
 	$(CRYPTO_SRCS) \
 	$(EXPERIMENTS_SRCS) \
@@ -175,6 +180,7 @@ SRCS = \
 	$(UTILS_SRCS)
 
 MAIN_CCS = \
+	main/cda_experiment.cc \
 	main/clean_lmdbs.cc \
 	main/counting_vm_hotstuff.cc \
 	main/cryptocoin_dataset_gen.cc \
@@ -206,6 +212,7 @@ test_runner.cc : $(TEST_SRCS) $(XHFILES)
 	cxxtestgen --error-printer -o test_runner.cc $(TEST_SRCS)
 
 bin_PROGRAMS = \
+	cda_experiment \
 	clean_lmdbs \
 	counting_vm_hotstuff \
 	cryptocoin_dataset_gen \
@@ -220,6 +227,7 @@ bin_PROGRAMS = \
 	trie_comparison \
 	test
 
+cda_experiment_SOURCES = $(SRCS) main/cda_experiment.cc
 clean_lmdbs_SOURCES = $(SRCS) main/clean_lmdbs.cc
 counting_vm_hotstuff_SOURCES = $(SRCS) main/counting_vm_hotstuff.cc
 cryptocoin_dataset_gen_SOURCES = $(SRCS) main/cryptocoin_dataset_gen.cc

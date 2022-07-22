@@ -69,6 +69,8 @@ struct GenerationOptions {
 
 	bool do_shuffle;
 
+	bool reserve_currency = false;
+
 
 	bool parse(const char* filename);
 };

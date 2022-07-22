@@ -91,7 +91,7 @@ struct GeneratorState {
 
 	std::string output_directory;
 
-	std::vector<AccountID> existing_accounts_map; // map from index [0, num_accounts) to accountID
+	xdr::xvector<AccountID> existing_accounts_map; // map from index [0, num_accounts) to accountID
 
 	std::unordered_set<AccountID> existing_accounts_set;
 
@@ -186,6 +186,9 @@ public:
 			gen_new_accounts(options.num_accounts);
 		}
 
+	xdr::xvector<Offer>
+	make_offer_list(const std::vector<double>& prices, size_t num_offers);
+
 	void make_offer_set(const std::vector<double>& prices);
 	void make_block(const std::vector<double>& prices);
 
@@ -193,6 +196,11 @@ public:
 	void make_blocks();
 
 	void dump_account_list(std::string accounts_filename);
+
+	xdr::xvector<AccountID> const& get_accounts()
+	{
+		return existing_accounts_map;
+	}
 };
 
 }

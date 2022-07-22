@@ -23,6 +23,7 @@ README
 databases/
 experiment_data/
 experiment_results/
+*~
 
 #automation
 automation/check_sigs

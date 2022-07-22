@@ -171,10 +171,29 @@ public:
 	*/
 	template<bool is_const>
 	struct iterator_ {
-		bv_t bv;
 
 		using ptr_t = typename std::conditional<
 			is_const, const underlying_ptr_t, underlying_ptr_t>::type;
+
+		iterator_(bv_t bv, ptr_t* map)
+			: bv(bv) 
+			, map(map)
+			{}
+
+		/*template<bool x = is_const>
+		iterator_(std::enable_if<x, iterator_<true>>::type const& o)
+			: bv(o.bv)
+			, map(o.map)
+			{}
+		*/
+
+		iterator_(iterator_ const& o)
+			: bv(o.bv)
+			, map(o.map)
+			{}
+
+
+		bv_t bv;
 
 		ptr_t* map;
 

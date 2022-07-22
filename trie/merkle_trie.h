@@ -324,7 +324,7 @@ public:
 			}
 		}
 
-		typename children_map_t::iterator local_iter;
+		typename children_map_t::const_iterator local_iter;
 
 		std::unique_ptr<iterator> child_iter;
 

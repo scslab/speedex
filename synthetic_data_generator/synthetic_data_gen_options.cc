@@ -11,6 +11,7 @@ void CycleDistribution::create_acc_probabilities(
 		throw std::runtime_error("invalid cycle size distribution");
 	}
 	for (int i = 0; i < individual_scores_size; i++) {
+		//std::printf("sum =%lf individual_scores[i]=%lf\n", sum, individual_scores[i]);
 		sum += individual_scores[i];
 		acc_probabilities.push_back(sum);
 	}
@@ -50,15 +51,20 @@ CycleDistribution::parse_cycle_dist(
 	int score_buf_idx = 0;
 
 	for (int i = 2; i <= *distribution_size; i++) {
-		sprintf(buf, "experiment/cycle_size_dist/%u %%f", i);
+		sprintf(buf, "experiment/cycle_size_dist/%u %%u", i);
 
-		double val;
+		uint32_t val;
 		count = fy_document_scanf(fyd,
 			buf,
 			&val);
 		if (count != 1) {
 			return false;
 		}
+		if (val == 0)
+		{
+			return false;
+		}
+		//std::printf("got idx %lu i %lu val %lf\n", score_buf_idx, i, val);
 		score_buf[score_buf_idx] = val;
 		score_buf_idx ++;
 	}
