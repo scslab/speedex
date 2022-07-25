@@ -19,19 +19,6 @@ void BlockHeaderHashMap::insert(const Block& block, bool res) {
 	uint64_t block_number = block.blockNumber;
 	if (block_number == 0) {
 		throw std::runtime_error("should never insert genesis hash!");
-/*
-		if (last_committed_block_number != 0 || block_map.size() != 0) {
-			throw std::runtime_error(
-				"can't insert prev block 0 if we already have elements in block hash map");
-		}
-		Hash zero_hash;
-		zero_hash.fill(0);
-		if (zero_hash != block_hash) {
-		//if (memcmp(block_hash.data(), zero_hash.data(), zero_hash.size()) != 0) {
-			throw std::runtime_error("can't have genesis block with nonzero hash");
-		}
-		//prev block is genesis block, do nothing
-		return;*/
 	}
 
 	// block header hash map requires strict sequentiality, unlike memdb thunks & orderbook thunks
@@ -49,7 +36,6 @@ void BlockHeaderHashMap::insert(const Block& block, bool res) {
 
 	block_map.insert(key_buf, ValueT(value));
 	
-	// Difference between production and validation is here.
 	last_committed_block_number = block_number;
 }
 
@@ -111,59 +97,6 @@ BlockHeaderHashMap::rollback_to_committed_round(uint64_t committed_block_number)
 	last_committed_block_number = committed_block_number;//(committed_block_number == 0) ? 0 : committed_block_number - 1;
 }
 
-/*
-
-bool 
-BlockHeaderHashMap::tentative_insert_for_validation(
-	uint64_t block_number, const Hash& block_hash) 
-{
-	if (block_number == 0) {
-		if (last_committed_block_number != 0 || block_map.size() != 0) {
-			throw std::runtime_error(
-				"can't insert prev block 0 if we already have elements in block hash map");
-		}
-		Hash zero_hash;
-		zero_hash.fill(0);
-		if (memcmp(
-				block_hash.data(), 
-				zero_hash.data(), 
-				zero_hash.size()) != 0) {
-			throw std::runtime_error(
-				"can't have genesis block with nonzero hash");
-		}
-		//validation prev block is genesis block, do nothing
-		return true;
-	}
-
-
-
-	//input block number corresponds to previous block.
-	if (block_number != last_committed_block_number) {
-		return false;
-	}
-
-	prefix_t key_buf;
-
-	write_unsigned_big_endian(key_buf, block_number);
-
-	block_map.insert(key_buf, HashWrapper(block_hash));
-
-	return true;
-}
-void BlockHeaderHashMap::rollback_validation() {
-	
-	prefix_t key_buf;
-	write_unsigned_big_endian(key_buf, last_committed_block_number + 1);
-
-	block_map.perform_deletion(key_buf);
-}
-void BlockHeaderHashMap::finalize_validation(uint64_t finalized_block_number) {
-	if (finalized_block_number < last_committed_block_number) {
-		throw std::runtime_error("can't finalize prior block");
-	}
-	last_committed_block_number = finalized_block_number;
-} */
-
 void BlockHeaderHashMap::load_lmdb_contents_to_memory() {
 	auto rtx = lmdb_instance.rbegin();
 
@@ -179,7 +112,7 @@ void BlockHeaderHashMap::load_lmdb_contents_to_memory() {
 		if (round_number > lmdb_instance.get_persisted_round_number()) {
 
 			std::printf(
-				"round number: %lu persisted_round_number: %lu\n", 
+				"round number: %" PRIu64 " persisted_round_number: %" PRIu64 "\n", 
 				round_number, 
 				lmdb_instance.get_persisted_round_number());
 			std::fflush(stdout);

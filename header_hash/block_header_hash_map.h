@@ -77,21 +77,6 @@ public:
 	*/
 	void insert(const Block& block, bool validation_success);
 
-/*
-	//! Insert hash of a block when validating a block.
-	//! Difference with production is some minor accounting related to rolling
-	//! back an insertion.
-	//! Should be followed either by rollback_validation() or
-	//! finalize_validation() 
-	bool tentative_insert_for_validation(
-		uint64_t block_number, const Hash& block_hash);
-	//! Undo the last block hash insertion (i.e. if subsequent, unrelated
-	//! validation checks failed)
-	void rollback_validation();
-	//! Finalize the insertion of a block hash (when validating a block).
-	void finalize_validation(uint64_t finalized_block_number);
-*/
-
 	//! Hash the merkle trie.
 	void hash(Hash& hash) {
 		block_map.hash(hash);
