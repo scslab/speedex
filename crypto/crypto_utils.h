@@ -17,6 +17,10 @@ keys makes setup vastly simpler)
 
 namespace speedex {
 
+void 
+__attribute__((constructor)) 
+initialize_crypto();
+
 class SpeedexManagementStructures;
 
 template<typename xdr_type>
@@ -41,7 +45,6 @@ public:
 
 	bool check_all_sigs(const SerializedBlock& block);
 };
-
 
 struct DeterministicKeyGenerator {
 

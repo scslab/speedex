@@ -8,6 +8,15 @@
 
 namespace speedex {
 
+void 
+initialize_crypto()
+{
+	if (sodium_init() == -1) {
+		throw std::runtime_error("failed to init sodium");
+	}
+	std::printf("initialized sodium\n");
+}
+
 class SigCheckReduce {
 	const SpeedexManagementStructures& management_structures;
 	const SignedTransactionList& block;
@@ -16,22 +25,22 @@ public:
 
 	bool valid = true;
 
-	void operator() (const tbb::blocked_range<size_t> r) {
+	void operator() (const tbb::blocked_range<uint64_t> r) {
 		if (!valid) return;
 
 		bool temp_valid = true;
 
-		for (size_t i = r.begin(); i < r.end(); i++) {
+		for (uint64_t i = r.begin(); i < r.end(); i++) {
 			auto sender_acct = block[i].transaction.metadata.sourceAccount;
 			auto pk_opt =  management_structures.db.get_pk_nolock(sender_acct);
 			if (!pk_opt) {
 
-				std::printf("no pk! account %lu\n", sender_acct);
+				std::printf("no pk! account %" PRIu64 "\n", sender_acct);
 				temp_valid = false;
 				break;
 			}
 			if (!sig_check(block[i].transaction, block[i].signature, *pk_opt)) {
-				std::printf("tx %lu failed, %lu\n", i, sender_acct);
+				std::printf("tx %" PRIu64 "failed, %" PRIu64 "\n", i, sender_acct);
 				temp_valid = false;
 				break;
 			}
@@ -62,7 +71,7 @@ BlockSignatureChecker::check_all_sigs(const SerializedBlock& block) {
 
 	auto checker = SigCheckReduce(management_structures, txs);
 
-	tbb::parallel_reduce(tbb::blocked_range<size_t>(0, txs.size(), 2000), checker);
+	tbb::parallel_reduce(tbb::blocked_range<uint64_t>(0, txs.size(), 2000), checker);
 
 	return checker.valid;
 }
