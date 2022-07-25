@@ -8,26 +8,9 @@
 
 #include <atomic>
 
+#include <inttypes.h>
+
 namespace speedex {
-
-/*
-UserAccount& MemoryDatabase::find_account(account_db_idx user_index) {
-	uint64_t db_size = database.size();
-	if (user_index >= db_size) {
-		std::printf("invalid db access: %lu of %lu\n", user_index, db_size);
-		throw std::runtime_error("invalid db idx access");
-	}
-	return database[user_index];
-}
-
-const UserAccount& MemoryDatabase::find_account(account_db_idx user_index) const {
-	uint64_t db_size = database.size();
-	if (user_index >= db_size) {
-		std::printf("invalid db access: %lu of %lu\n", user_index, db_size);
-		throw std::runtime_error("invalid db idx access");
-	}
-	return database[user_index];
-} */
 
 void MemoryDatabase::transfer_available(
 	UserAccount* user_index, AssetID asset_type, int64_t change) {
@@ -155,9 +138,8 @@ void MemoryDatabase::rollback_values() {
 
 }
 
-void MemoryDatabase::commit_new_accounts(uint64_t current_block_number) {
-
-	auto timestamp = init_time_measurement();
+void MemoryDatabase::commit_new_accounts(uint64_t current_block_number)
+{
 	std::lock_guard lock1(db_thunks_mtx);
 	std::lock_guard lock2(committed_mtx);
 	std::lock_guard lock3(uncommitted_mtx);
@@ -426,7 +408,7 @@ void MemoryDatabase::tentative_produce_state_commitment(Hash& hash, const Accoun
 
 	ParallelApplyLambda<TentativeValueModifyLambda> apply_lambda{commitment_trie, func};
 
-	std::printf("starting tentative_produce_state_commitment, size =%lu\n", commitment_trie.size());
+	std::printf("starting tentative_produce_state_commitment, size = %" PRIu64 "\n", commitment_trie.size());
 
 	log.parallel_iterate_over_log(apply_lambda);
 
@@ -439,7 +421,7 @@ void MemoryDatabase::set_trie_commitment_to_user_account_commits(const AccountMo
 
 	ParallelApplyLambda<ProduceValueModifyLambda> apply_lambda{commitment_trie, func};
 
-	std::printf("starting produce_state_commitment, size =%lu\n", commitment_trie.size());
+	std::printf("starting produce_state_commitment, size = %" PRIu64 "\n", commitment_trie.size());
 
 	log.parallel_iterate_over_log(apply_lambda);
 }
@@ -478,7 +460,7 @@ MemoryDatabase::_produce_state_commitment(Hash& hash) {
 			state_modified_count.fetch_add(tl_state_modified_count, std::memory_order_relaxed);
 		});
 
-	BLOCK_INFO("state modified count = %d", state_modified_count.load());
+	BLOCK_INFO("state modified count = %" PRId32, state_modified_count.load());
 
 	commitment_trie.hash(hash);
 
@@ -580,7 +562,7 @@ void MemoryDatabase::commit_persistence_thunks(uint64_t max_round_number) {
 
 	BLOCK_INFO("opened account db wtxn");
 
-	for (size_t i = 0; i < thunks_to_commit.size(); i++) {
+	for (uint32_t i = 0; i < static_cast<uint32_t>(thunks_to_commit.size()); i++) {
 
 		auto& thunk = thunks_to_commit.at(i);
 
@@ -591,20 +573,23 @@ void MemoryDatabase::commit_persistence_thunks(uint64_t max_round_number) {
 		// Used to require strict sequentiality, now gaps allowed in case of validation failures
 		// due to byzantine proposers.
 		if (thunk.current_block_number < current_block_number + 1) {
-			std::printf("i = %lu thunks[i].current_block_number= %lu current_block_number = %lu\n", i, thunk.current_block_number, current_block_number);
+			std::printf("i = %" PRIu32 " thunks[i].current_block_number= %" PRIu64 " current_block_number = %" PRIu64 "\n", 
+				i, 
+				thunk.current_block_number, 
+				current_block_number);
 			throw std::runtime_error("can't persist blocks in wrong order!!!");
 		}
 
 		size_t thunk_sz = thunk.kvs ->size();
 		for (size_t i = 0; i < thunk_sz; i++) {
 
-			auto& kv = (*thunk.kvs)[i];
+			ThunkKVPair const& kv = (*thunk.kvs)[i];
 		
 			dbval key = dbval{&kv.key, sizeof(AccountID)};//UserAccount::produce_lmdb_key(kv.key);
 
 			if (!(kv.msg.size())) {
-				std::printf("missing value for kv %lu\n", kv.key);
-				std::printf("thunk.kvs.size() = %lu\n", thunk.kvs->size());
+				std::printf("missing value for kv %" PRIu64 "\n", kv.key);
+				std::printf("thunk.kvs.size() = %" PRIu32 "\n", static_cast<uint32_t>(thunk.kvs->size()));
 				throw std::runtime_error("failed to accumulate value in persistence thunk");
 			}
 
@@ -648,7 +633,7 @@ void MemoryDatabase::commit_persistence_thunks(uint64_t max_round_number) {
 	//}
 	if (account_lmdb_instance) {
 		auto stats = account_lmdb_instance.stat();
-		BLOCK_INFO("db size: %lu", stats.ms_entries);
+		BLOCK_INFO("db size: %" PRIu64 , stats.ms_entries);
 	}
 }
 
@@ -660,10 +645,10 @@ void MemoryDatabase::persist_lmdb(uint64_t current_block_number) {
 	std::printf("writing entire database\n");
 
 
-	int modified_count = 0;
+	int32_t modified_count = 0;
 	for (account_db_idx i = 0; i < database.size(); i++) {
 		if (i % 100000 == 0) {
-			std::printf("%ld\n", i);
+			std::printf("%" PRId64 "\n", i);
 		}
 
 		modified_count++;
@@ -684,12 +669,12 @@ void MemoryDatabase::persist_lmdb(uint64_t current_block_number) {
 
 	}
 
-	BLOCK_INFO("modified count = %d", modified_count);
+	BLOCK_INFO("modified count = %" PRId32, modified_count);
 
 	account_lmdb_instance.commit_wtxn(write_txn, current_block_number);
 
 	auto stats = account_lmdb_instance.stat();
-	BLOCK_INFO("db size: %lu", stats.ms_entries);
+	BLOCK_INFO("db size: %" PRIu32, static_cast<uint32_t>(stats.ms_entries));
 	INFO_F(log());
 }
 
@@ -698,7 +683,7 @@ void MemoryDatabase::load_lmdb_contents_to_memory() {
 
 	auto stats = account_lmdb_instance.stat();
 
-	std::printf("db size: %lu\n", stats.ms_entries);
+	std::printf("db size: %" PRIu32 "\n", static_cast<uint32_t>(stats.ms_entries));
 
 	auto rtx = account_lmdb_instance.rbegin();
 
