@@ -45,7 +45,7 @@ public:
 		return pk;
 	}
 
-	void sign_block(ExperimentBlock& txs);
+	void sign_block(ExperimentBlock& txs) const;
 };
 
 struct BlockState {
@@ -152,7 +152,6 @@ struct GeneratorState {
 	Operation gen_bad_offer(const std::vector<double>& prices);
 	SignedTransaction gen_bad_tx(const std::vector<double>& prices);
 	SignedTransaction gen_account_creation_tx();
-	SignedTransaction gen_payment_tx();
 	SignedTransaction gen_cancel_tx(const SignedTransaction& creation_tx);
 
 	bool good_offer_cancel();
@@ -195,11 +194,23 @@ public:
 	void make_offer_sets();
 	void make_blocks();
 
+	void shuffle_block(ExperimentBlock& block);
+	void write_block(ExperimentBlock& block);
+
+	SignedTransaction gen_payment_tx(int64_t amount = -1);
+
+	size_t gen_random_index(size_t length);
+
 	void dump_account_list(std::string accounts_filename);
 
 	xdr::xvector<AccountID> const& get_accounts()
 	{
 		return existing_accounts_map;
+	}
+
+	const SyntheticDataGenSigner& get_signer() const
+	{
+		return signer;
 	}
 };
 

@@ -48,7 +48,12 @@ public:
 		AccountTrieNodeAllocator<ObjType>& allocator) 
 		: cur_buffer_offset_and_index(cur_buffer_offset_and_index)
 		, value_buffer_offset_and_index(value_buffer_offset_and_index)
-		, allocator(allocator) {}
+		, allocator(allocator) {
+			print_allocator("ctor");
+		}
+
+	AllocationContext(const AllocationContext& other) = delete;
+	AllocationContext& operator=(const AllocationContext& other) = delete;
 
 	uint32_t allocate(uint8_t num_nodes) {
 		if (((cur_buffer_offset_and_index + num_nodes) & OFFSET_MASK) > BUF_SIZE) {
@@ -77,7 +82,14 @@ public:
 		value_buffer_offset_and_index = value;
 	}
 
+	void
+	print_allocator(std::string prefix)
+	{
+		std::printf("%s allocator = (%" PRIx32 " %" PRIx32 ")\n", prefix.c_str(), cur_buffer_offset_and_index, value_buffer_offset_and_index);
+	}
+
 	uint32_t init_root_node() {
+		print_allocator("init root node");
 		auto ptr = allocate(1);
 		auto& node = get_object(ptr);
 		node.set_as_empty_node();
@@ -90,6 +102,11 @@ public:
 
 	value_t& get_value(uint32_t ptr) const {
 		return allocator.get_value(ptr);
+	}
+
+	AccountTrieNodeAllocator<ObjType>& 
+	to_allocator() {
+		return allocator;
 	}
 };
 
@@ -200,14 +217,14 @@ public:
 	ObjType& get_object(uint32_t ptr) const {
 		uint8_t idx = ptr >> OFFSET_BITS;
 		uint32_t offset = ptr & OFFSET_MASK;
-		return (*buffers[idx])[offset];
+		return (*buffers.at(idx)).at(offset);
 	}
 
 	//! Access a particular trie value, given a handle
 	value_t& get_value(uint32_t value_ptr) const {
 		uint8_t idx = value_ptr >> OFFSET_BITS;
 		uint32_t offset = value_ptr & OFFSET_MASK;
-		return (*value_buffers[idx])[offset];
+		return (*value_buffers.at(idx)).at(offset);
 	}
 
 	//! Reset the allocator.  All contexts should be cleared or deleted.

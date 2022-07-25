@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <optional>
 #include <vector>
+#include <inttypes.h>
 
 #include <sodium.h>
 
@@ -58,7 +59,7 @@ struct ApplyableSubnodeRef {
 	uint32_t ptr;
 	const AccountTrieNodeAllocator<ValueType>& allocator;
 
-	template<typename ApplyFn>
+	template<typename ApplyFn>	
 	void apply(ApplyFn& fn) const {
 		allocator.get_object(ptr).apply(fn, allocator);
 	}
@@ -380,7 +381,7 @@ public:
 	}
 
 	template <typename ApplyFn>
-	void apply(ApplyFn& fn, const allocator_t& allocator) const {
+	void apply(ApplyFn& fn, const allocator_t& allocator) {
 		if (prefix_len == MAX_KEY_LEN_BITS) {
 			fn(children.value(allocator));
 			return;
@@ -407,7 +408,7 @@ public:
 	void sz_check(const allocator_t& allocator) {
 		if (prefix_len == MAX_KEY_LEN_BITS) {
 			if (size() != 1) {
-				log("bad node", allocator);
+				log("invalid leaf ", allocator);
 				throw std::runtime_error("value didn't have sz 1!");
 			}
 			return;
@@ -419,12 +420,36 @@ public:
 			allocator.get_object((*iter).second).sz_check(allocator);
 		}
 		if (size() != children_sz) {
-			log("bad node", allocator);
+			log("bad node ", allocator);
 			std::fflush(stdout);
 			throw std::runtime_error("children sz mismatch");
 		}
 	}
 
+	const ValueType* get_value(const prefix_t& query, const allocator_t& allocator) const
+	{
+		auto prefix_match_len = get_prefix_match_len(query);
+
+		if (prefix_len == MAX_KEY_LEN_BITS)
+		{
+			if (prefix_match_len != prefix_len)
+			{
+				return nullptr;
+			}
+			return &children.value(allocator);
+		}
+
+		auto branch_bits = get_branch_bits(query);
+
+		auto iter = children.find(branch_bits);
+
+		if (iter != children.end()) {
+			auto& child = allocator.get_object((*iter).second);
+			return child.get_value(query, allocator);
+		} else {
+			return nullptr;
+		}
+	}
 };
 
 
@@ -450,6 +475,7 @@ public:
 	SerialAccountTrie(AccountTrieNodeAllocator<node_t>& allocator) 
 		: allocation_context(allocator.get_new_allocator())
 		, root(UINT32_MAX) {
+			std::printf("Creating new SerialAccountTrie\n");
 			acquire_new_root();
 	}
 
@@ -466,7 +492,9 @@ public:
 	}
 
 	void acquire_new_root() {
+		std::printf("acquire new root: old root = %lx\n", root);
 		root = allocation_context.init_root_node();
+		std::printf("new root: %lx\n", root);
 	}
 
 	void set_root(ptr_t new_root) {
@@ -499,6 +527,12 @@ public:
 	AllocationContext<node_t>& get_allocation_context() {
 		return allocation_context;
 	}
+
+	void sz_check() {
+		std::printf("top level serial size check: size = %lu\n", size());
+		allocation_context.get_object(root).sz_check(allocation_context.to_allocator());
+	}
+
 };
 
 template<typename MergeFn>
@@ -514,6 +548,7 @@ public:
 	using node_t = AccountTrieNode<ValueType>;
 	using ptr_t = node_t::ptr_t;
 	using serial_trie_t = SerialAccountTrie<ValueType>;
+	using prefix_t = node_t::prefix_t;
 private:
 
 	AccountTrieNodeAllocator<node_t> allocator;
@@ -546,6 +581,10 @@ private:
 	template<typename MergeFn = OverwriteMergeFn>
 	void merge_in_nolock(serial_trie_t& trie) {
 
+		std::printf("start merge_in_nolock\n");
+		std::printf("trie.size() %lu size() %lu\n", trie.size(), size());
+		std::printf("root = %lx\n", root);
+
 		if (trie.size() == 0) {
 			return;
 		}
@@ -553,12 +592,15 @@ private:
 		invalidate_hash();
 
 		if (root == UINT32_MAX) {
+			std::printf("stealing root\n");
 			root = trie.root;
 			trie.acquire_new_root();
+			std::printf("self stolen root: %lx\n", root);
 			return;
 		}
 
 		auto& obj = allocator.get_object(root);
+		std::printf("recursion approach\n");
 		obj.template merge_in<MergeFn>(trie.root, trie.allocation_context);
 		trie.acquire_new_root();
 	}
@@ -617,15 +659,21 @@ public:
 		std::vector<ptr_t> ptrs;
 		for (auto& serial : serial_tries) {
 			if (serial) {
+				std::printf("cur size: %lu to merge in sz: %lu\n", size(), serial -> size());
+				sz_check();
 				if (size() > 0) {
 					ptrs.push_back(serial->extract_root());
 				} else {
+					std::printf("merging in serial\n");
 					merge_in_nolock<MergeFn>(*serial);
 				}
 			}
 		}
+		std::printf("final size check\n");
+		sz_check();
 
 		if (ptrs.size() == 0) {
+			std::printf("nothing to merge in, returning\n");
 			return;
 		}
 
@@ -634,6 +682,16 @@ public:
 		AccountBatchMergeReduction<MergeFn> reduction{};
 
 		tbb::parallel_reduce(range, reduction);
+	}
+
+	template<typename ValueModifyFn>
+	void parallel_apply(ValueModifyFn const& fn) const
+	{
+		auto apply_lambda = [&fn] (ApplyableSubnodeRef<node_t>& work_root)
+		{
+			work_root.apply(fn);
+		};
+		parallel_batch_value_modify(apply_lambda);
 	}
 
 	template<typename ValueModifyFn>
@@ -674,6 +732,15 @@ public:
 			return;
 		}
 		allocator.get_object(root).sz_check(allocator);
+	}
+	
+	const ValueType* get_value(const prefix_t& query) const
+	{
+		if (root == UINT32_MAX)
+		{
+			return nullptr;
+		}
+		return allocator.get_object(root).get_value(query, allocator);
 	}
 
 };

@@ -181,4 +181,14 @@ UserAccount::set_owner(AccountID _owner, PublicKey const& _pk, uint64_t _last_co
 	last_committed_id = _last_committed_id;
 }
 
+void 
+UserAccount::log() const
+{
+	for (unsigned int i = 0; i < owned_assets.size(); i++) {
+		std::printf (
+			"%u=%ld ", i, owned_assets[i].lookup_available_balance());
+	}
+	std::printf("\n");
+}
+
 } /* speedex */

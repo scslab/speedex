@@ -195,7 +195,7 @@ struct AccountApplyRange {
 		, work_size(0) 
 		, allocator(other.allocator) {
 
-			auto original_sz = other.work_size;
+			const auto original_sz = other.work_size;
 			if (original_sz == 0) {
 				return;
 			}
@@ -209,7 +209,11 @@ struct AccountApplyRange {
 					if (other.work_list.at(0) == UINT32_MAX) {
 						throw std::runtime_error("found nullptr in ApplyRange!");
 					}
+					allocator.get_object(other.work_list.at(0)).sz_check(allocator);
 					other.work_list = allocator.get_object(other.work_list.at(0)).children_list_nolock();
+					if (other.work_list.size() == 0) {
+						std::printf("other work list is still 0!  other.size == %lu (original %lu)\n", other.work_size, original_sz);
+					}
 				} else {
 					work_list.push_back(other.work_list.at(0));
 					other.work_list.erase(other.work_list.begin());

@@ -128,7 +128,7 @@ public:
 
 	//! Return the available balance (with current round's modifications
 	//! applied).
-	int64_t lookup_available_balance() {
+	int64_t lookup_available_balance() const {
 		return available.load(read_order);
 	}
 

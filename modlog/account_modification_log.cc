@@ -30,7 +30,6 @@ AccountModificationLog::hash(Hash& hash) {
 	BLOCK_INFO("acct log hash: hash/normalize %lf acc vals %lf", res, res2);
 }
 
-
 void AccountModificationLog::merge_in_log_batch() {
 	std::lock_guard lock(mtx);
 

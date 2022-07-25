@@ -215,8 +215,14 @@ public:
 	}
 
 	//! Returns an account's available balance of some asset.
-	amount_t lookup_available_balance(unsigned int asset) {
-		[[maybe_unused]]
+	amount_t lookup_available_balance(unsigned int asset) const {
+
+		if (asset >= owned_assets.size())
+		{
+			return 0;
+		}
+		return owned_assets[asset].lookup_available_balance();
+		/*[[maybe_unused]]
 		amount_t unused = 0;
 		return operate_on_asset<amount_t>(
 			asset, 
@@ -224,6 +230,8 @@ public:
 			[] (RevertableAsset& asset, [[maybe_unused]] const amount_t& _) {
 				return asset.lookup_available_balance();
 			});
+			*/
+		
 	}
 
 	//! Reserves a sequence number on this account
@@ -253,17 +261,16 @@ public:
 	//! Generate an account commitment (for hashing)
 	//! based on uncommitted account balances.
 	AccountCommitment tentative_commitment() const;
+	//! not threadsafe with modifications
+	uint64_t get_last_committed_seqno() const
+	{
+		return last_committed_id;
+	}
 
 	//! Convert an lmdb key (byte string) into an account id.
 	static AccountID read_lmdb_key(const dbval& key);
 	
-	void log() {
-		for (unsigned int i = 0; i < owned_assets.size(); i++) {
-			std::printf (
-				"%u=%ld ", i, owned_assets[i].lookup_available_balance());
-		}
-		std::printf("\n");
-	}
+	void log() const;
 };
 
 }

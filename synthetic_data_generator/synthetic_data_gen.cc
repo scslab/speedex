@@ -7,7 +7,7 @@ namespace speedex {
 template class GeneratorState<std::minstd_rand>;
 
 void
-SyntheticDataGenSigner::sign_block(ExperimentBlock& txs) {
+SyntheticDataGenSigner::sign_block(ExperimentBlock& txs) const {
 
 	Signature s;
 	if (s.size() != crypto_sign_BYTES) {
@@ -154,6 +154,14 @@ GeneratorState<random_generator>::gen_asset_cycle() {
 
 	//return std::vector(output.begin(), output.begin() + size);
 }
+template<typename random_generator>
+size_t 
+GeneratorState<random_generator>::gen_random_index(size_t length)
+{
+	std::uniform_int_distribution<> size_dist(0, length);
+	return size_dist(gen);
+}
+
 
 template<typename random_generator>
 int64_t 
@@ -484,11 +492,13 @@ GeneratorState<random_generator>::gen_account_creation_tx() {
 
 template<typename random_generator>
 SignedTransaction 
-GeneratorState<random_generator>::gen_payment_tx() {
+GeneratorState<random_generator>::gen_payment_tx(int64_t amount) {
 	AccountID sender = gen_account();
 	AccountID receiver = gen_account();
 	AssetID asset = gen_asset();
-	int64_t amount = gen_endowment(1);
+	if (amount < 0) {
+		amount = gen_endowment(1);
+	}
 	PaymentOp op;
 	op.receiver = receiver;
 	op.asset = asset;
@@ -664,23 +674,26 @@ void GeneratorState<random_generator>::make_block(const std::vector<double>& pri
 	output.insert(output.end(), txs.begin(), txs.begin() + options.block_size);
 	filter_by_replica_id(output);
 	
-	std::printf("writing block %lu\n", block_state.block_number);
+	//std::printf("writing block %lu\n", block_state.block_number);
 
-	std::string filename = output_directory + std::to_string(block_state.block_number) + ".txs";
-	block_state.block_number ++;
+	//std::string filename = output_directory + std::to_string(block_state.block_number) + ".txs";
+	//block_state.block_number ++;
 
 
 	if (options.do_shuffle) {
-		std::shuffle(output.begin(), output.end(), gen);
+		shuffle_block(output);
+		//std::shuffle(output.begin(), output.end(), gen);
 	}
 
 	signer.sign_block(output);
 
-	xdr::opaque_vec<> serialized_output = xdr::xdr_to_opaque(output);
+	//xdr::opaque_vec<> serialized_output = xdr::xdr_to_opaque(output);
 
-	if (save_xdr_to_file(serialized_output, filename.c_str())) {
-		throw std::runtime_error("was not able to save file!");
-	}
+//	if (save_xdr_to_file(serialized_output, filename.c_str())) {
+//		throw std::runtime_error("was not able to save file!");
+//	}
+
+	write_block(output);
 
 
 	txs.erase(txs.begin(), txs.begin() + options.block_size);
@@ -690,6 +703,27 @@ void GeneratorState<random_generator>::make_block(const std::vector<double>& pri
 
 	txs.insert(txs.end(), cancel_txs.begin(), cancel_txs.end());
 	cancellation_flags.resize(txs.size(), false);
+}
+
+template<typename random_generator>
+void
+GeneratorState<random_generator>::write_block(ExperimentBlock& block)
+{
+	std::printf("writing block %lu\n", block_state.block_number);
+	std::string filename = output_directory + std::to_string(block_state.block_number) + ".txs";
+	block_state.block_number ++;
+	xdr::opaque_vec<> serialized_output = xdr::xdr_to_opaque(block);
+
+	if (save_xdr_to_file(serialized_output, filename.c_str())) {
+		throw std::runtime_error("was not able to save file!");
+	}
+}
+
+template<typename random_generator>
+void 
+GeneratorState<random_generator>::shuffle_block(ExperimentBlock& block)
+{
+	std::shuffle(block.begin(), block.end(), gen);
 }
 
 template<typename random_generator>

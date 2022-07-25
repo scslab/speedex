@@ -141,7 +141,7 @@ public:
 		if (tag != VALUE) {
 			value_ = allocator.allocate_value();
 			auto& ref = allocator.get_value(value_);
-			ref = value_input; // TODO std::move?
+			ref = ValueType(value_input); // TODO std::move?
 			tag = VALUE;
 		}
 	}
@@ -296,7 +296,7 @@ public:
 
 	void map_guard() {
 		if (tag != MAP) {
-			throw std::runtime_error("accessed MAP method when MAP not set!");
+			throw std::runtime_error("accessed MAP method when MAP not set! tag was " + std::to_string(tag));
 		}
 	}
 

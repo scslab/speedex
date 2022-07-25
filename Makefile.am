@@ -44,6 +44,10 @@ CRYPTO_SRCS = \
 EXPERIMENTS_SRCS = \
 	experiments/tatonnement_sim_experiment.cc
 
+FILTERING_SRCS = \
+	filtering/account_filter_entry.cc \
+	filtering/filter_log.cc
+ 
 HEADER_HASH_SRCS = \
 	header_hash/block_header_hash_map.cc
 
@@ -165,6 +169,7 @@ SRCS = \
 	$(CONFIG_SRCS) \
 	$(CRYPTO_SRCS) \
 	$(EXPERIMENTS_SRCS) \
+	$(FILTERING_SRCS) \
 	$(HEADER_HASH_SRCS) \
 	$(HOTSTUFF_SRCS) \
 	$(LMDB_SRCS) \
@@ -186,6 +191,8 @@ MAIN_CCS = \
 	main/cryptocoin_dataset_gen.cc \
 	main/exchange_data_experiment.cc \
 	main/experiment_controller.cc \
+	main/filtering_experiment.cc \
+	main/filtering_experiment_gen.cc \
 	main/overlay_sim.cc \
 	main/solver_comparison.cc \
 	main/speedex_vm_hotstuff.cc \
@@ -218,6 +225,8 @@ bin_PROGRAMS = \
 	cryptocoin_dataset_gen \
 	exchange_data_experiment \
 	experiment_controller \
+	filtering_experiment \
+	filtering_experiment_gen \
 	overlay_sim \
 	solver_comparison \
 	speedex_vm_hotstuff \
@@ -233,6 +242,8 @@ counting_vm_hotstuff_SOURCES = $(SRCS) main/counting_vm_hotstuff.cc
 cryptocoin_dataset_gen_SOURCES = $(SRCS) main/cryptocoin_dataset_gen.cc
 exchange_data_experiment_SOURCES = $(SRCS) main/exchange_data_experiment.cc
 experiment_controller_SOURCES = $(SRCS) main/experiment_controller.cc
+filtering_experiment_SOURCES = $(SRCS) main/filtering_experiment.cc
+filtering_experiment_gen_SOURCES = $(SRCS) main/filtering_experiment_gen.cc
 overlay_sim_SOURCES = $(SRCS) main/overlay_sim.cc
 solver_comparison_SOURCES = $(SRCS) main/solver_comparison.cc
 speedex_vm_hotstuff_SOURCES = $(SRCS) main/speedex_vm_hotstuff.cc
