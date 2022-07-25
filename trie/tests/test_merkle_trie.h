@@ -44,7 +44,7 @@ public:
 			trie.insert(key_buf);
 		}
 
-		TS_ASSERT_EQUALS(10, trie.uncached_size());
+		TS_ASSERT_EQUALS(10u, trie.uncached_size());
 	}
 
 	void test_short_key() {
@@ -56,12 +56,12 @@ public:
 			write_unsigned_big_endian(key_buf, i);
 			trie.insert(key_buf);
 		}
-		TS_ASSERT_EQUALS(10, trie.uncached_size());
+		TS_ASSERT_EQUALS(10u, trie.uncached_size());
 		for (unsigned char i = 0; i < 100; i += 10) {
 			write_unsigned_big_endian(key_buf, i);
 			trie.insert(key_buf);
 		}
-		TS_ASSERT_EQUALS(10, trie.uncached_size());
+		TS_ASSERT_EQUALS(10u, trie.uncached_size());
 	}
 
 	void test_hash() {
@@ -77,7 +77,7 @@ public:
 			write_unsigned_big_endian(key_buf, i);
 			trie.insert(key_buf);
 		}
-		TS_ASSERT_EQUALS(50, trie.uncached_size());
+		TS_ASSERT_EQUALS(50u, trie.uncached_size());
 
 		trie.hash(hash1);
 		
@@ -85,7 +85,7 @@ public:
 			write_unsigned_big_endian(key_buf, i);
 			trie.insert(key_buf);
 		}
-		TS_ASSERT_EQUALS(50, trie.uncached_size());
+		TS_ASSERT_EQUALS(50u, trie.uncached_size());
 		trie.hash(hash2);
 
 		TS_ASSERT_EQUALS(hash1, hash2);
@@ -112,8 +112,8 @@ public:
 			trie.insert(key_buf);
 			trie2.insert(key_buf);
 		}
-		TS_ASSERT_EQUALS(5, trie.uncached_size());
-		TS_ASSERT_EQUALS(5, trie2.uncached_size());
+		TS_ASSERT_EQUALS(5u, trie.uncached_size());
+		TS_ASSERT_EQUALS(5u, trie2.uncached_size());
 
 		trie.hash(hash1);
 		trie2.hash(hash2);
@@ -144,17 +144,19 @@ public:
 			trie.insert(key_buf);
 			trie2.insert(key_buf);
 		}
-		TS_ASSERT_EQUALS(5, trie.uncached_size());
-		TS_ASSERT_EQUALS(5, trie2.uncached_size());
+		TS_ASSERT_EQUALS(5u, trie.uncached_size());
+		TS_ASSERT_EQUALS(5u, trie2.uncached_size());
 
 		trie.hash(hash1);
 		trie2.hash(hash2);
-		TS_ASSERT_EQUALS(0, memcmp(hash1.data(), hash2.data(), 32));
+		TS_ASSERT_EQUALS(hash1, hash2);
+		//TS_ASSERT_EQUALS(0, memcmp(hash1.data(), hash2.data(), 32));
 
 		trie.merge_in(std::move(trie2));
 
 		trie.hash(hash2);
-		TS_ASSERT_EQUALS(0, memcmp(hash1.data(), hash2.data(), 32));
+		TS_ASSERT_EQUALS(hash1, hash2);
+		//TS_ASSERT_EQUALS(0, memcmp(hash1.data(), hash2.data(), 32));
 
 		TS_ASSERT(trie.metadata_integrity_check());
 	}
@@ -258,14 +260,14 @@ public:
 			trie.insert(key_buf);
 		}
 
-		TS_ASSERT_EQUALS(50, trie.uncached_size());
+		TS_ASSERT_EQUALS(50u, trie.uncached_size());
 
 		for (uint16_t i = 0; i < 1000; i += 40) {
 			write_unsigned_big_endian(key_buf, i);
 			TS_ASSERT(trie.perform_deletion(key_buf));
 		}
 
-		TS_ASSERT_EQUALS(25, trie.uncached_size());
+		TS_ASSERT_EQUALS(25u, trie.uncached_size());
 	}
 
 	using OfferWrapper = XdrTypeWrapper<Offer>;
@@ -285,26 +287,26 @@ public:
 			write_unsigned_big_endian(key_buf, i);
 			trie.insert(key_buf, OfferWrapper(offer));
 		}
-		TS_ASSERT_EQUALS(50, trie.size());
+		TS_ASSERT_EQUALS(50u, trie.size());
 
 		auto split = trie.endow_split(5);//trie.metadata_split<EndowmentPredicate>(5);
 
-		TS_ASSERT_EQUALS(split.size(), 0);
+		TS_ASSERT_EQUALS(split.size(), 0u);
 
 		auto split2 = trie.endow_split(10);//metadata_split<EndowmentPredicate>(10);
 		
-		TS_ASSERT_EQUALS(split2.size(), 1);
-		TS_ASSERT_EQUALS(trie.size(), 49);
+		TS_ASSERT_EQUALS(split2.size(), 1u);
+		TS_ASSERT_EQUALS(trie.size(), 49u);
 
 
 		auto split3 = trie.endow_split(15);//metadata_split<EndowmentPredicate>(15);
-		TS_ASSERT_EQUALS(split3.size(), 1);
-		TS_ASSERT_EQUALS(trie.size(), 48);
+		TS_ASSERT_EQUALS(split3.size(), 1u);
+		TS_ASSERT_EQUALS(trie.size(), 48u);
 
 		auto split4 = trie.endow_split(252);//metadata_split<EndowmentPredicate>(252);
 
-		TS_ASSERT_EQUALS(split4.size(), 25);
-		TS_ASSERT_EQUALS(trie.size(), 23);
+		TS_ASSERT_EQUALS(split4.size(), 25u);
+		TS_ASSERT_EQUALS(trie.size(), 23u);
 
 		TS_ASSERT(trie.metadata_integrity_check());
 	}
@@ -326,7 +328,7 @@ public:
 			write_unsigned_big_endian(buf, i);
 			trie.insert(buf, XdrTypeWrapper<Offer>(offer));
 		}
-		TS_ASSERT_EQUALS(50, trie.size());
+		TS_ASSERT_EQUALS(50u, trie.size());
 
 		uint16_t threshold = 35;
 		write_unsigned_big_endian(buf, threshold);

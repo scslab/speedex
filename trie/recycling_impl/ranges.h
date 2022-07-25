@@ -211,9 +211,6 @@ struct AccountApplyRange {
 					}
 					allocator.get_object(other.work_list.at(0)).sz_check(allocator);
 					other.work_list = allocator.get_object(other.work_list.at(0)).children_list_nolock();
-					if (other.work_list.size() == 0) {
-						std::printf("other work list is still 0!  other.size == %lu (original %lu)\n", other.work_size, original_sz);
-					}
 				} else {
 					work_list.push_back(other.work_list.at(0));
 					other.work_list.erase(other.work_list.begin());

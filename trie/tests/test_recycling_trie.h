@@ -62,9 +62,9 @@ public:
 		using serial_trie_t = trie_t::serial_trie_t;
 		using serial_cache_t = ThreadlocalCache<serial_trie_t>;
 
-		std::vector<size_t> cnts = {1,2,4,8,16};
+		std::vector<uint32_t> cnts = {1,2,4,8,16};
 
-		for (auto cnt : cnts)
+		for (uint32_t cnt : cnts)
 		{
 			serial_cache_t cache;
 
@@ -72,6 +72,8 @@ public:
 
 			uint64_t experiment_sz = 10'000'000;
 
+			tbb::global_control control(
+				tbb::global_control::max_allowed_parallelism, cnt);
 
 			auto ts = init_time_measurement();
 
@@ -90,7 +92,7 @@ public:
 
 			auto runtime = measure_time(ts);
 
-			std::printf("runtime %u = threads %f %f\n", cnt, inittime, runtime);
+			std::printf("runtime %" PRIu32 " = threads %f %f\n", cnt, inittime, runtime);
 
 			TS_ASSERT_EQUALS(trie.size(), experiment_sz);
 		}

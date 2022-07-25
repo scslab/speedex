@@ -97,8 +97,8 @@ public:
 		
 		orderbooks[unit_idx].calculate_demands_and_supplies(prices, demands, supplies, approx_params.smooth_mult);
 
-		TS_ASSERT_EQUALS(supplies[0], 0);
-		TS_ASSERT_EQUALS(demands[1], 0);
+		TS_ASSERT_EQUALS(supplies[0], 0u);
+		TS_ASSERT_EQUALS(demands[1], 0u);
 
 		supplies[0] = 0;
 		demands[1] = 0;
@@ -156,8 +156,8 @@ public:
 		
 		orderbooks[unit_idx].calculate_demands_and_supplies_times_prices(prices, demands, supplies, approx_params.smooth_mult);
 
-		TS_ASSERT_EQUALS(supplies[0], 0);
-		TS_ASSERT_EQUALS(demands[1], 0);
+		TS_ASSERT_EQUALS(supplies[0], 0llu);
+		TS_ASSERT_EQUALS(demands[1], 0llu);
 
 		supplies[0] = 0;
 		demands[1] = 0;

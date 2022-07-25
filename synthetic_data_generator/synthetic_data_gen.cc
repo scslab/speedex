@@ -1,6 +1,7 @@
 #include "synthetic_data_gen.h"
 
 #include <algorithm>
+#include <cinttypes>
 
 namespace speedex {
 
@@ -709,7 +710,7 @@ template<typename random_generator>
 void
 GeneratorState<random_generator>::write_block(ExperimentBlock& block)
 {
-	std::printf("writing block %lu\n", block_state.block_number);
+	std::printf("writing block %" PRIu64 "\n", block_state.block_number);
 	std::string filename = output_directory + std::to_string(block_state.block_number) + ".txs";
 	block_state.block_number ++;
 	xdr::opaque_vec<> serialized_output = xdr::xdr_to_opaque(block);

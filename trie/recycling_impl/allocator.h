@@ -49,7 +49,6 @@ public:
 		: cur_buffer_offset_and_index(cur_buffer_offset_and_index)
 		, value_buffer_offset_and_index(value_buffer_offset_and_index)
 		, allocator(allocator) {
-			print_allocator("ctor");
 		}
 
 	AllocationContext(const AllocationContext& other) = delete;
@@ -89,7 +88,6 @@ public:
 	}
 
 	uint32_t init_root_node() {
-		print_allocator("init root node");
 		auto ptr = allocate(1);
 		auto& node = get_object(ptr);
 		node.set_as_empty_node();
