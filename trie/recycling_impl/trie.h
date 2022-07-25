@@ -475,7 +475,6 @@ public:
 	SerialAccountTrie(AccountTrieNodeAllocator<node_t>& allocator) 
 		: allocation_context(allocator.get_new_allocator())
 		, root(UINT32_MAX) {
-			std::printf("Creating new SerialAccountTrie\n");
 			acquire_new_root();
 	}
 
@@ -492,9 +491,7 @@ public:
 	}
 
 	void acquire_new_root() {
-		std::printf("acquire new root: old root = %lx\n", root);
 		root = allocation_context.init_root_node();
-		std::printf("new root: %lx\n", root);
 	}
 
 	void set_root(ptr_t new_root) {
@@ -529,7 +526,6 @@ public:
 	}
 
 	void sz_check() {
-		std::printf("top level serial size check: size = %lu\n", size());
 		allocation_context.get_object(root).sz_check(allocation_context.to_allocator());
 	}
 
@@ -581,10 +577,6 @@ private:
 	template<typename MergeFn = OverwriteMergeFn>
 	void merge_in_nolock(serial_trie_t& trie) {
 
-		std::printf("start merge_in_nolock\n");
-		std::printf("trie.size() %lu size() %lu\n", trie.size(), size());
-		std::printf("root = %lx\n", root);
-
 		if (trie.size() == 0) {
 			return;
 		}
@@ -592,15 +584,12 @@ private:
 		invalidate_hash();
 
 		if (root == UINT32_MAX) {
-			std::printf("stealing root\n");
 			root = trie.root;
 			trie.acquire_new_root();
-			std::printf("self stolen root: %lx\n", root);
 			return;
 		}
 
 		auto& obj = allocator.get_object(root);
-		std::printf("recursion approach\n");
 		obj.template merge_in<MergeFn>(trie.root, trie.allocation_context);
 		trie.acquire_new_root();
 	}
@@ -659,21 +648,15 @@ public:
 		std::vector<ptr_t> ptrs;
 		for (auto& serial : serial_tries) {
 			if (serial) {
-				std::printf("cur size: %lu to merge in sz: %lu\n", size(), serial -> size());
-				sz_check();
 				if (size() > 0) {
 					ptrs.push_back(serial->extract_root());
 				} else {
-					std::printf("merging in serial\n");
 					merge_in_nolock<MergeFn>(*serial);
 				}
 			}
 		}
-		std::printf("final size check\n");
-		sz_check();
 
 		if (ptrs.size() == 0) {
-			std::printf("nothing to merge in, returning\n");
 			return;
 		}
 
