@@ -1,12 +1,6 @@
 [submodule "xdrpp"]
 	path = xdrpp
 	url = http://github.com/gramseyer/xdrpp.git
-[submodule "libhotstuff"]
-	path = libhotstuff
-	url = git@github.com:hot-stuff/libhotstuff.git
-[submodule "merkle_trie_toolkit"]
-	path = merkle_trie_toolkit
-	url = git@github.com:gramseyer/merkle_trie_toolkit.git
 [submodule "lib/hotstuff"]
 	path = lib/hotstuff
 	url = git@github.com:gramseyer/hotstuff.git
