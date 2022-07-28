@@ -24,6 +24,8 @@ databases/
 experiment_data/
 experiment_results/
 *~
+test-driver
+*.dSYM/*
 
 #automation
 automation/check_sigs
@@ -35,11 +37,14 @@ automation/replica
 automation/speedex_options
 
 #binaries
+cda_experiment
 clean_lmdbs
 counting_vm_hotstuff
 cryptocoin_dataset_gen
 exchange_data_experiment
 experiment_controller
+filtering_experiment
+filtering_experiment_gen
 overlay_sim
 solver_comparison
 speedex_vm_hotstuff
