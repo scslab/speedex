@@ -7,6 +7,8 @@
 #include "speedex/speedex_options.h"
 #include "utils/save_load_xdr.h"
 
+#include "hotstuff/config/replica_config.h"
+
 #include "xdr/cryptocoin_experiment.h"
 
 #include <cstddef>
@@ -72,7 +74,7 @@ int main(int argc, char* const* argv)
 	std::string experiment_options_file;
 	std::string experiment_name;
 
-	std::optional<ReplicaID> self_id;
+	std::optional<hotstuff::ReplicaID> self_id;
 	std::optional<std::string> config_file;
 	
 	int opt;
@@ -105,19 +107,16 @@ int main(int argc, char* const* argv)
 	if (experiment_name.size() == 0) {
 		usage();
 	}
-
-	std::optional<std::pair<ReplicaID, ReplicaConfig>> conf_pair;
 	
 	if (!config_file) {
 		config_file = get_config_file();
 	}
 	
-	conf_pair = std::make_optional<std::pair<ReplicaID, ReplicaConfig>>();
-
+	ReplicaID rid;
 	if (self_id) {
-		conf_pair->first = *self_id;
+		rid = *self_id;
 	} else {
-		conf_pair->first = get_replica_id();
+		rid = get_replica_id();
 	}
 
 	struct fy_document* fyd = fy_document_build_from_file(NULL, config_file->c_str());
@@ -126,7 +125,8 @@ int main(int argc, char* const* argv)
 		usage();
 	}
 
-	conf_pair->second.parse(fyd, conf_pair->first);
+	auto [conf, _] = speedex::parse_replica_config(fyd, rid);
+
 
 	CryptocoinExperiment experiment;
 
@@ -168,7 +168,7 @@ int main(int argc, char* const* argv)
 	params.account_list_filename = output_root + "accounts";
 	params.default_amount = options.new_account_balance;
 	params.num_blocks = options.num_blocks;
-	params.n_replicas = conf_pair -> second.nreplicas;
+	params.n_replicas = conf.nreplicas;
 
 	if (mkdir_safe(options.output_prefix.c_str())) {
 		std::printf("directory %s already exists, continuing\n", options.output_prefix.c_str());
@@ -186,6 +186,7 @@ int main(int argc, char* const* argv)
 
 	std::minstd_rand gen(0);
 
+	//TODO do we care about splitting between replicas here?  we don't pass conf_pair into generator
 	GeneratorState generator (gen, options, output_root);
 
 	generator.dump_account_list(params.account_list_filename);

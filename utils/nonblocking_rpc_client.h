@@ -1,6 +1,7 @@
 #pragma once
 
 #include "config/replica_config.h"
+#include "hotstuff/config/replica_config.h"
 
 #include "utils/async_worker.h"
 #include "utils/debug_macros.h"
@@ -22,7 +23,7 @@ protected:
 	using AsyncWorker::mtx;
 	using AsyncWorker::cv;
 
-	ReplicaInfo info;
+	hotstuff::ReplicaInfo info;
 
 	//not threadsafe to access outside of a try_action call
 	std::unique_ptr<client_t> client;
@@ -44,7 +45,7 @@ protected:
 
 	virtual const char* get_service() const = 0;
 
-	NonblockingRpcClient(ReplicaInfo const& info)
+	NonblockingRpcClient(hotstuff::ReplicaInfo const& info)
 		: AsyncWorker()
 		, socket()
 		, info(info)

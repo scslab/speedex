@@ -10,6 +10,7 @@
 
 #include <optional>
 #include <string>
+#include <cinttypes>
 
 #include <getopt.h>
 #include <libfyaml.h>
@@ -17,6 +18,7 @@
 #include <xdrpp/srpc.h>
 
 using namespace speedex;
+using namespace hotstuff;
 
 using namespace std::chrono_literals;
 
@@ -42,12 +44,13 @@ static const struct option opts[] = {
 
 bool node_is_online(const ReplicaInfo& info) {
 	try {
-		std::printf("querying to see if node %s is ready\n", info.hostname.c_str());
-		auto fd = xdr::tcp_connect(info.hostname.c_str(), EXPERIMENT_CONTROL_PORT);
-		auto client = xdr::srpc_client<HotstuffVMControlV1>(fd.get());
+		std::printf("querying to see if node %s is ready\n", info.get_hostname().c_str());
+		auto fd = info.tcp_connect(EXPERIMENT_CONTROL_PORT);
+		//auto fd = xdr::tcp_connect(info.hostname.c_str(), EXPERIMENT_CONTROL_PORT);
+		//auto client = xdr::srpc_client<HotstuffVMControlV1>(fd.get());
 		return true;
 	} catch(...) {
-		std::printf("node %s is not yet responding to messages\n", info.hostname.c_str());
+		std::printf("node %s is not yet responding to messages\n", info.get_hostname().c_str());
 		return false;
 	}
 }
@@ -70,12 +73,13 @@ void wait_for_all_online(const ReplicaConfig& config) {
 
 bool send_one_breakpoint(const ReplicaInfo& info) {
 	try {
-		auto fd = xdr::tcp_connect(info.hostname.c_str(), EXPERIMENT_CONTROL_PORT);
+		auto fd = info.tcp_connect(EXPERIMENT_CONTROL_PORT);
+		//auto fd = xdr::tcp_connect(info.hostname.c_str(), EXPERIMENT_CONTROL_PORT);
 		auto client = xdr::srpc_client<HotstuffVMControlV1>(fd.get());
 		client.signal_breakpoint();
 		return true;
 	} catch(...) {
-		std::printf("node %s is not responding to messages\n", info.hostname.c_str());
+		std::printf("node %s is not responding to messages\n", info.get_hostname().c_str());
 		return false;
 	}
 }
@@ -89,8 +93,9 @@ void send_all_breakpoints(const ReplicaConfig& config) {
 
 bool experiment_done(const ReplicaInfo& info) {
 	try {
-		std::printf("querying to see if node %s marked experiment done\n", info.hostname.c_str());
-		auto fd = xdr::tcp_connect(info.hostname.c_str(), EXPERIMENT_CONTROL_PORT);
+		std::printf("querying to see if node %s marked experiment done\n", info.get_hostname().c_str());
+		auto fd = info.tcp_connect(EXPERIMENT_CONTROL_PORT);
+		//auto fd = xdr::tcp_connect(info.hostname.c_str(), EXPERIMENT_CONTROL_PORT);
 		auto client = xdr::srpc_client<HotstuffVMControlV1>(fd.get());
 		auto res = client.experiment_is_done();
 		if (!res) {
@@ -98,7 +103,7 @@ bool experiment_done(const ReplicaInfo& info) {
 		}
 		return *res;
 	} catch(...) {
-		std::printf("node %s is not responding to messages\n", info.hostname.c_str());
+		std::printf("node %s is not responding to messages\n", info.get_hostname().c_str());
 		return false;
 	}
 }
@@ -121,13 +126,14 @@ void wait_for_one_experiment_done(const ReplicaConfig& config) {
 
 bool send_experiment_done_signal(const ReplicaInfo& info) {
 	try {
-		std::printf("querying to see if node %s marked experiment done\n", info.hostname.c_str());
-		auto fd = xdr::tcp_connect(info.hostname.c_str(), EXPERIMENT_CONTROL_PORT);
+		std::printf("querying to see if node %s marked experiment done\n", info.get_hostname().c_str());
+		auto fd = info.tcp_connect(EXPERIMENT_CONTROL_PORT);
+		//auto fd = xdr::tcp_connect(info.hostname.c_str(), EXPERIMENT_CONTROL_PORT);
 		auto client = xdr::srpc_client<HotstuffVMControlV1>(fd.get());
 		client.send_producer_is_done_signal();
 		return true;
 	} catch(...) {
-		std::printf("node %s is not responding to messages\n", info.hostname.c_str());
+		std::printf("node %s is not responding to messages\n", info.get_hostname().c_str());
 		return false;
 	}
 }
@@ -152,17 +158,18 @@ send_all_experiment_done_signals(const ReplicaConfig& config) {
 std::optional<uint64_t>
 get_num_blocks(const ReplicaInfo& info) {
 	try {
-		std::printf("querying to get node %s num blocks\n", info.hostname.c_str());
-		auto fd = xdr::tcp_connect(info.hostname.c_str(), EXPERIMENT_CONTROL_PORT);
+		std::printf("querying to get node %s num blocks\n", info.get_hostname().c_str());
+		auto fd = info.tcp_connect(EXPERIMENT_CONTROL_PORT);
+		//auto fd = xdr::tcp_connect(info.hostname.c_str(), EXPERIMENT_CONTROL_PORT);
 		auto client = xdr::srpc_client<HotstuffVMControlV1>(fd.get());
 		auto res = client.get_speedex_block_height();
 		if (!res) {
 			return std::nullopt;
 		}
-		std::printf("got %lu from %s\n", *res, info.hostname.c_str());
+		std::printf("got %" PRIu64 " from %s\n", *res, info.get_hostname().c_str());
 		return {*res};
 	} catch(...) {
-		std::printf("node %s is not responding to messages\n", info.hostname.c_str());
+		std::printf("node %s is not responding to messages\n", info.get_hostname().c_str());
 		return std::nullopt;
 	}
 }
@@ -189,7 +196,7 @@ wait_for_all_same_height(const ReplicaConfig& config) {
 			}
 		}
 		if ((!comm_failure) && (!mismatch)) {
-			std::printf("common height was %lu\n", *height);
+			std::printf("common height was %" PRIu64 "\n", *height);
 			return;
 		}
 		std::this_thread::sleep_for(1000ms);
@@ -202,8 +209,9 @@ std::string get_measurements_filename(std::string const& folder, ReplicaInfo con
 
 bool save_measurement(std::string const& folder, const ReplicaInfo& info) {
 	try {
-		std::printf("querying to see if node %s marked experiment done\n", info.hostname.c_str());
-		auto fd = xdr::tcp_connect(info.hostname.c_str(), EXPERIMENT_CONTROL_PORT);
+		std::printf("querying to see if node %s marked experiment done\n", info.get_hostname().c_str());
+		auto fd = info.tcp_connect(EXPERIMENT_CONTROL_PORT);
+		//auto fd = xdr::tcp_connect(info.hostname.c_str(), EXPERIMENT_CONTROL_PORT);
 		auto client = xdr::srpc_client<HotstuffVMControlV1>(fd.get());
 		client.write_measurements();
 		auto measurements = client.get_measurements();
@@ -217,7 +225,7 @@ bool save_measurement(std::string const& folder, const ReplicaInfo& info) {
 		}
 		return true;
 	} catch(...) {
-		std::printf("node %s is not responding to messages\n", info.hostname.c_str());
+		std::printf("node %s is not responding to messages\n", info.get_hostname().c_str());
 		return false;
 	}
 }
@@ -273,15 +281,13 @@ int main(int argc, char* const* argv)
 		std::printf("output directory %s already exists, continuing\n", output_folder.c_str());
 	}
 
-	ReplicaConfig config;
-
 	struct fy_document* fyd = fy_document_build_from_file(NULL, config_file.c_str());
 	if (fyd == NULL) {
 		std::printf("Failed to build doc from file \"%s\"\n", config_file.c_str());
 		usage();
 	}
 
-	config.parse(fyd, 0);
+	ReplicaConfig config = parse_replica_config(fyd, 0).first;
 
 	fy_document_destroy(fyd);
 

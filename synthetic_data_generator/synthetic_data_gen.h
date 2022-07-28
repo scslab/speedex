@@ -87,7 +87,9 @@ struct GeneratorState {
 
 	BlockState block_state;
 
-	std::optional<std::pair<ReplicaID, ReplicaConfig>> conf_pair;
+	using config_pair_t = std::pair<hotstuff::ReplicaID, hotstuff::ReplicaConfig>;
+
+	std::optional<config_pair_t> conf_pair;
 
 	std::string output_directory;
 
@@ -174,7 +176,7 @@ public:
 		random_generator& gen, 
 		const GenerationOptions& options, 
 		std::string output_directory, 
-		std::optional<std::pair<ReplicaID, ReplicaConfig>> conf_pair = std::nullopt) 
+		std::optional<config_pair_t> conf_pair = std::nullopt) 
 		: type_dist(0.0, 1.0) 
 		, num_active_accounts(0)
 		, gen(gen)

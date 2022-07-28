@@ -37,7 +37,7 @@ class OverlayClientManager {
 
 public:
 	
-	OverlayClientManager(ReplicaConfig const& config, ReplicaID self_id, Mempool& mempool, OverlayHandler& handler);
+	OverlayClientManager(hotstuff::ReplicaConfig const& config, hotstuff::ReplicaID self_id, Mempool& mempool, OverlayHandler& handler);
 
 	uint64_t get_min_mempool_size() const;
 

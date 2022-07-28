@@ -1,6 +1,6 @@
 #pragma once
 
-#include "config/replica_config.h"
+#include "hotstuff/config/replica_config.h"
 
 #include "xdr/overlay.h"
 
@@ -17,11 +17,11 @@ class OverlayHandler {
 
 	Mempool& mempool;
 
-	std::unordered_map<ReplicaID, std::atomic<uint32_t>> max_seen_batch_nums;
+	std::unordered_map<hotstuff::ReplicaID, std::atomic<uint32_t>> max_seen_batch_nums;
 
 public:
 
-	OverlayHandler(Mempool& mempool, ReplicaConfig& config)
+	OverlayHandler(Mempool& mempool, hotstuff::ReplicaConfig& config)
 		: mempool(mempool)
 		, max_seen_batch_nums()
 		{
@@ -34,7 +34,7 @@ public:
 	using rpc_interface_type = OverlayV1;
 
 	std::unique_ptr<uint64_t> mempool_size();
-	void forward_txs(std::unique_ptr<ForwardingTxs> txs, std::unique_ptr<uint32_t> tx_batch_num, std::unique_ptr<ReplicaID> sender);
+	void forward_txs(std::unique_ptr<ForwardingTxs> txs, std::unique_ptr<uint32_t> tx_batch_num, std::unique_ptr<hotstuff::ReplicaID> sender);
 
 	//non-rpc methods
 	uint32_t get_min_max_seen_batch_nums() const;
@@ -50,7 +50,7 @@ class OverlayServer {
 
 public:
 
-	OverlayServer(Mempool& mempool, ReplicaConfig& config);
+	OverlayServer(Mempool& mempool, hotstuff::ReplicaConfig& config);
 
 	uint32_t tx_batch_limit() const {
 		return handler.get_min_max_seen_batch_nums() + 1;

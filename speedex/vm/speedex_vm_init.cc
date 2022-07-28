@@ -2,7 +2,7 @@
 
 #include "crypto/crypto_utils.h"
 
-#include "hotstuff/lmdb.h"
+#include "hotstuff/log_access_wrapper.h"
 
 #include "speedex/reload_from_hotstuff.h"
 
@@ -52,13 +52,14 @@ SpeedexVM::init_clean() {
 }
 
 void
-SpeedexVM::init_from_disk(hotstuff::HotstuffLMDB const& decided_block_cache)
+SpeedexVM::init_from_disk(hotstuff::LogAccessWrapper const& decided_block_cache)
 {
 	management_structures.open_lmdb_env();
 	management_structures.open_lmdb();
 
 	auto top_block = speedex_load_persisted_data(management_structures, block_validator, decided_block_cache);
 	last_committed_block = top_block;
+	last_persisted_block_number = last_committed_block.block.blockNumber;
 	proposal_base_block = top_block;
 }
 

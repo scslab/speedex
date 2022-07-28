@@ -1,18 +1,20 @@
+#include "hotstuff/config/replica_config.h"
 #include "config/replica_config.h"
 
-#include "hotstuff/hotstuff.h"
+#include "hotstuff/hotstuff_app.h"
 #include "hotstuff/liveness.h"
-#include "hotstuff/vm/counting_vm.h"
+#include "generic/counting_vm.h"
 
-#include "xdr/hotstuff.h"
+//#include "xdr/hotstuff.h"
 
 #include <optional>
+#include <chrono>
+#include <thread>
 
 #include <getopt.h>
 #include <libfyaml.h>
 
 using namespace hotstuff;
-using namespace speedex;
 
 using namespace std::chrono_literals;
 
@@ -72,24 +74,26 @@ int main(int argc, char **argv)
 		usage();
 	}
 
-	ReplicaConfig config;
-
 	struct fy_document* fyd = fy_document_build_from_file(NULL, config_file.c_str());
 	if (fyd == NULL) {
 		std::printf("Failed to build doc from file \"%s\"\n", config_file.c_str());
 		usage();
 	}
 
-	auto sk = config.parse(fyd, *self_id);
+	auto [config, sk] = speedex::parse_replica_config(fyd, *self_id);
+
+	//auto sk = config.parse(fyd, *self_id);
 
 	auto vm = std::make_shared<CountingVM>();
 
-	HotstuffApp app(config, *self_id, sk, vm);
+	auto app = make_speculative_hotstuff_instance(config, *self_id, sk, vm);
+
+	//HotstuffApp app(config, *self_id, sk, vm);
 
 	if (load_from_lmdb) {
-		app.init_from_disk();
+		app->init_from_disk();
 	} else {
-		app.init_clean();
+		app->init_clean();
 	}
 
 	std::printf("finished initializing HotstuffApp\n");
@@ -102,7 +106,7 @@ int main(int argc, char **argv)
 	while (true) {
 		if (pmaker.should_propose()) {
 			std::printf("attempting propose\n");
-			app.put_vm_in_proposer_mode();
+			app->put_vm_in_proposer_mode();
 			pmaker.do_propose();
 			pmaker.wait_for_qc();
 		} else {

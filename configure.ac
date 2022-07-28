@@ -7,7 +7,7 @@ dnl note to future geoff: -flto seems to break lmdb, so don't use it -- 12/2/202
 OPT_FLAGS="-march=native -O3 -flto"
 DEBUG_FLAGS="-ggdb -O0"
 
-CXXFLAGS="-std=gnu++2a -fcoroutines $OPT_FLAGS $CXXFLAGS"
+CXXFLAGS="-std=gnu++2a -fcoroutines $DEBUG_FLAGS $CXXFLAGS"
 CXX="g++"
 
 AC_PROG_CXX
@@ -23,6 +23,7 @@ dnl PKG_CHECK_MODULES([libcrypto], [libcrypto])
 PKG_CHECK_MODULES([gsl], [gsl])
 PKG_CHECK_MODULES([libsodium], [libsodium])
 PKG_CHECK_MODULES([lmdb], [lmdb])
+PKG_CHECK_MODULES([tbb], [tbb])
 PKG_CHECK_MODULES(LEMON, [lemon], HAVE_LEMON=1, HAVE_LEMON=0)
 
 AC_DEFINE_UNQUOTED([HAVE_LEMON], [$HAVE_LEMON], [Define to 1 if you have lemon available])
@@ -83,6 +84,19 @@ if test -z "$XDRC"; then
 fi
 AC_MSG_RESULT($XDRC)
 AC_SUBST(XDRC)
+
+ABS_TOP_DIR=$ac_pwd
+export ABS_TOP_DIR
+
+AX_PKGCONFIG_SUBDIR(lib/hotstuff)
+
+export xdrpp_INTERNAL
+global_xdrpp_CFLAGS=$xdrpp_CFLAGS
+global_xdrpp_LIBS=$xdrpp_LIBS
+global_XDRC=$XDRC
+export global_xdrpp_CFLAGS
+export global_xdrpp_LIBS
+export global_XDRC
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])

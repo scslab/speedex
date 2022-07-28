@@ -4,6 +4,9 @@
 
 namespace speedex {
 
+using hotstuff::ReplicaConfig;
+using hotstuff::ReplicaID;
+
 uint64_t
 SelfOverlayClient::get_mempool_size() const {
 	return mempool.total_size();

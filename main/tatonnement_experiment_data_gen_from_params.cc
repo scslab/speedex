@@ -81,6 +81,8 @@ int main(int argc, char* const* argv)
 	std::printf("Setting options.num_blocks to 5 for convenience\n");
 	options.num_blocks = 5;
 
+	options.reserve_currency = true;
+
 	std::string output_root = options.output_prefix + experiment_name + std::string("/");
 
 	if (mkdir_safe(options.output_prefix.c_str())) {

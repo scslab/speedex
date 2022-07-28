@@ -10,6 +10,7 @@
 #include "speedex/speedex_management_structures.h"
 
 #include "utils/debug_macros.h"
+#include "utils/manage_data_dirs.h"
 #include "utils/save_load_xdr.h"
 
 #include "xdr/cryptocoin_experiment.h"
@@ -25,6 +26,7 @@ void add_one_round_of_events(OrderbookManager& manager, size_t start_idx, size_t
 	ProcessingSerialManager serial_manager(manager);
 
 	end_idx = std::min(end_idx, events.size());
+	size_t failed_cancels = 0, successful_cancels = 0, new_offers = 0;
 
 	for (size_t i = start_idx; i < end_idx; i++)
 	{
@@ -36,6 +38,7 @@ void add_one_round_of_events(OrderbookManager& manager, size_t start_idx, size_t
 			//new offer
 			auto idx = manager.look_up_idx(event.newOffer().category);
 			serial_manager.add_offer(idx, event.newOffer(), dummyarg, dummyarg);
+			new_offers++;
 		} 
 		else 
 		{
@@ -43,10 +46,14 @@ void add_one_round_of_events(OrderbookManager& manager, size_t start_idx, size_t
 			auto idx = manager.look_up_idx(event.cancel().category);
 			auto res = serial_manager.delete_offer(idx, event.cancel().cancelledOfferPrice, 0, event.cancel().cancelledOfferId);
 			if (!res) {
-				std::printf("failed to cancel offer %lu\n", event.cancel().cancelledOfferId);
+				failed_cancels++;
+			//	std::printf("failed to cancel offer %lu %lu\n", event.cancel().cancelledOfferPrice, event.cancel().cancelledOfferId);
+			} else {
+				successful_cancels++;
 			}
 		}
 	}
+	std::printf("new offers %lu, successful cancels: %lu, failed cancels: %lu\n",new_offers, successful_cancels, failed_cancels);
 }
 
 int main(int argc, char const *argv[])
@@ -55,17 +62,23 @@ int main(int argc, char const *argv[])
 
 	ExchangeExperiment experiment;
 
-	if (!load_xdr_from_file(experiment, "exchange_formatted_results")) {
+	if (load_xdr_from_file(experiment, "exchange_formatted_results")) {
 		throw std::runtime_error("failed to load data");
 	}
 
 
 	size_t num_assets = 8;
 
-	size_t batch_size = 10'000;
+	size_t batch_size = 50'000;
 
 
 	OrderbookManager manager(num_assets);
+
+	clear_orderbook_lmdb_dir();
+	make_orderbook_lmdb_dir();
+
+	manager.open_lmdb_env();
+	manager.create_lmdb();
 
 	for (auto const& snapshot : experiment.initial_snapshots)
 	{
@@ -80,6 +93,7 @@ int main(int argc, char const *argv[])
 		for (auto const& offer : snapshot.offers)
 		{
 			serial_manager.add_offer(idx, offer, dummyarg, dummyarg);
+		//	std::printf("adding offer minPrice %lu account %lu id %lu\n", offer.minPrice, offer.owner, offer.offerId);
 		}
 
 
@@ -87,13 +101,17 @@ int main(int argc, char const *argv[])
 	}
 
 	uint64_t round_number = 1;
+
+	manager.commit_for_production(round_number);
+	round_number++;
+
 	size_t cur_idx = 0;
 
 	TatonnementManagementStructures tatonnement(manager);
 
 	ApproximationParameters approx_params {
-		.tax_rate = 15,
-		.smooth_mult = 10
+		.tax_rate = 10,
+		.smooth_mult = 15
 	};
 
 	auto const& events = experiment.event_stream;
@@ -104,7 +122,10 @@ int main(int argc, char const *argv[])
 		prices[i] = price::from_double(1.0);
 	}
 
+	size_t timeouts = 0, successes = 0;
+
 	while(cur_idx < events.size()) {
+		std::printf("current idx: %lu events.size() %lu\n", cur_idx, events.size());
 		add_one_round_of_events(manager, cur_idx, cur_idx + batch_size, events);
 		cur_idx += batch_size;
 
@@ -126,13 +147,16 @@ int main(int argc, char const *argv[])
 		auto lp_results = tatonnement.lp_solver.solve(prices.data(), approx_params, !timeout_flag);
 
 		if (!timeout_flag) {
+			successes++;
 			std::printf("time per round (micros): %lf\n", res.runtime * 1'000'000.0 / (res.num_rounds * 1.0));
+		} else {
+			timeouts++;
 		}
 
 		auto feasible_first = manager.get_max_feasible_smooth_mult(lp_results, prices.data());
 		std::printf("feasible smooth mult:%u\n", feasible_first);
 
-		//auto clearing_check = lp_results.check_clearing(prices);
+		lp_results.check_clearing(prices);
 
 		double vol_metric = manager
 			.get_weighted_price_asymmetry_metric(lp_results, prices);
@@ -170,6 +194,8 @@ int main(int argc, char const *argv[])
 
 		manager.persist_lmdb(round_number);
 		round_number++;
+
+		std::printf("after round %lu: successes %lu timeouts %lu\n", round_number, successes, timeouts);
 	}
 
 }

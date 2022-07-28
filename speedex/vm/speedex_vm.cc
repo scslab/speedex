@@ -1,7 +1,5 @@
 #include "speedex/vm/speedex_vm.h"
 
-#include "hotstuff/lmdb.h"
-
 #include "speedex/speedex_management_structures.h"
 #include "speedex/speedex_operation.h"
 
@@ -22,6 +20,7 @@ SpeedexVM::SpeedexVM(
 	, confirmation_mtx()
 	, proposal_base_block()
 	, last_committed_block() // genesis
+	, last_persisted_block_number(0)
 	, async_persister(management_structures)
 	, measurements_log(params)
 	, measurement_output_folder(measurement_output_folder)
@@ -68,12 +67,37 @@ SpeedexVM::rewind_structs_to_committed_height()
 void
 SpeedexVM::log_commitment(const block_id& id) {
 	std::lock_guard lock(confirmation_mtx);
-	if (id.value) {
-		last_committed_block = *(id.value);
+
+	if (id) {
+	//if (id.value) {
+
+		while (!pending_proposed_ids.empty())
+		{
+			auto front = *pending_proposed_ids.begin();
+			pending_proposed_ids.pop_front();
+			if (front == id)
+			{
+				xdr::xdr_from_opaque(*(id.value), last_committed_block);
+				break;
+			}
+		}
+
+		// only need to update last_committed_block when the block was from a propose(),
+		// not from a validate.  When block was from a validate() (an exec_block()),
+		// we should _NOT_ update last_committed_block, because exec_block performs some corrections
+		// to block headers (to make recovery easier).
+
+		//last_committed_block = *(id.value);
+
+
 		auto last_committed_block_number = last_committed_block.block.blockNumber;
-		if (last_committed_block_number % PERSIST_BATCH == 0) {
+
+		//if (last_committed_block_number % PERSIST_BATCH == 0) {
+		if (last_committed_block_number >= last_persisted_block_number + PERSIST_BATCH)
+		{
 			async_persister.do_async_persist(
 				std::make_unique<PersistenceMeasurementLogCallback>(measurements_log, last_committed_block_number));
+			last_persisted_block_number = last_committed_block_number;
 		}
 	}
 }
@@ -89,7 +113,10 @@ new_measurements(NodeType state)
 }
 
 void
-SpeedexVM::exec_block(const block_type& blk) {
+SpeedexVM::exec_block(const hotstuff::VMBlock& blk_unparsed) {
+
+	auto const& blk_ = static_cast<const block_type&>(blk_unparsed);
+	auto const& blk = blk_.data;
 
 	BLOCK_INFO("begin exec_block on %lu", blk.hashedBlock.block.blockNumber);
 
@@ -205,7 +232,7 @@ void write_tx_data(SignedTransactionList& tx_data, const AccountModificationBloc
 	}
 }
 
-std::unique_ptr<SpeedexVM::block_type>
+std::unique_ptr<hotstuff::VMBlock>
 SpeedexVM::propose()
 {
 	auto start_time = init_time_measurement();
@@ -265,9 +292,9 @@ SpeedexVM::propose()
 	current_measurements.mempool_wait_time = measure_time(mempool_wait_ts);
 	
 	auto out = std::make_unique<block_type>();
-	out->hashedBlock = proposal_base_block;
-	out -> txList.reserve(block_size);
-	write_tx_data(out->txList, *output_tx_block);
+	out->data.hashedBlock = proposal_base_block;
+	out -> data.txList.reserve(block_size);
+	write_tx_data(out->data.txList, *output_tx_block);
 
 	current_measurements.serialize_time = measure_time(mempool_wait_ts);
 
@@ -275,6 +302,8 @@ SpeedexVM::propose()
 	current_measurements.total_time = measure_time(start_time);
 
 	measurements_log.add_measurement(measurements_base);
+
+	pending_proposed_ids.insert_after(pending_proposed_ids.end(), out -> get_id());
 
 	return out;
 }

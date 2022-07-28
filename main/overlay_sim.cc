@@ -20,6 +20,7 @@
 
 
 using namespace speedex;
+using namespace hotstuff;
 
 [[noreturn]]
 static void usage() {
@@ -70,7 +71,7 @@ int main(int argc, char **argv)
 		config_file = get_config_file();
 	}
 
-	ReplicaConfig config;
+	//ReplicaConfig config;
 
 	struct fy_document* fyd = fy_document_build_from_file(NULL, config_file.c_str());
 	if (fyd == NULL) {
@@ -78,7 +79,9 @@ int main(int argc, char **argv)
 		usage();
 	}
 
-	config.parse(fyd, *self_id);
+	ReplicaConfig config = parse_replica_config(fyd, *self_id).first;
+
+	//config.parse(fyd, *self_id);
 
 	Mempool mp(10'000, 2'000'000);
 	OverlayServer server(mp, config);

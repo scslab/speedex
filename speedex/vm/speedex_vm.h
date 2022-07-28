@@ -10,22 +10,56 @@
 #include "speedex/speedex_management_structures.h"
 #include "speedex/speedex_options.h"
 #include "speedex/speedex_persistence.h"
-#include "speedex/vm/speedex_vm_block_id.h"
+//#include "speedex/vm/speedex_vm_block_id.h"
+
+#include "hotstuff/vm/vm_base.h"
 
 #include "xdr/block.h"
 
 #include <mutex>
 
 
-namespace hotstuff {
-class HotstuffLMDB;
-} /* hotstuff */
+//namespace hotstuff {
+//class HotstuffLMDB;
+//} /* hotstuff */
 
 namespace speedex {
 
 class ExperimentParameters;
 
-class SpeedexVM {
+struct SpeedexVMBlock : public hotstuff::VMBlock
+{
+	HashedBlockTransactionListPair data;
+
+	SpeedexVMBlock(HashedBlockTransactionListPair const& data)
+		: data(data)
+		{}
+
+	SpeedexVMBlock(xdr::opaque_vec<> const& vec)
+		: data()
+		{
+			xdr::xdr_from_opaque(vec, data);
+		}
+
+	SpeedexVMBlock()
+		: data()
+		{}
+
+	hotstuff::VMBlockID 
+	get_id() const override final
+	{
+		xdr::opaque_vec<> out = xdr::xdr_to_opaque(data.hashedBlock);
+		return hotstuff::VMBlockID(out);
+	}
+
+	xdr::opaque_vec<> serialize() const override final
+	{
+		return xdr::xdr_to_opaque(data);
+	}
+};
+
+
+class SpeedexVM : public hotstuff::VMBase {
 	const size_t PERSIST_BATCH;
 	
 	SpeedexManagementStructures management_structures;
@@ -35,6 +69,7 @@ class SpeedexVM {
 
 	HashedBlock proposal_base_block;
 	HashedBlock last_committed_block;
+	uint64_t last_persisted_block_number;
 
 	AsyncPersister async_persister;
 	
@@ -69,27 +104,44 @@ class SpeedexVM {
 	ExperimentResultsUnion 
 	get_measurements_nolock();
 
-public:
-	using block_type = HashedBlockTransactionListPair;
-	using block_id = SpeedexVMBlockID;
+	std::forward_list<hotstuff::VMBlockID> pending_proposed_ids; 
 
-	static block_id nonempty_block_id(const block_type& blk) {
+public:
+	using block_type = SpeedexVMBlock;
+	using block_id = hotstuff::VMBlockID;
+	//using block_type = HashedBlockTransactionListPair;
+	//using block_id = SpeedexVMBlockID;
+
+	/*static block_id nonempty_block_id(const block_type& blk) {
 		return SpeedexVMBlockID(blk.hashedBlock);
 	}
 	static block_id empty_block_id() {
 		return SpeedexVMBlockID();
-	}
+	}*/
 
 	SpeedexVM(
 		const ExperimentParameters& params,
 		const SpeedexOptions& options,
 		std::string measurement_output_folder);
 
-	std::unique_ptr<block_type> propose();
+	std::unique_ptr<hotstuff::VMBlock>
+	try_parse(xdr::opaque_vec<> const& body) override final
+	{
+		HashedBlockTransactionListPair out;
+		try {
+			xdr::xdr_from_opaque(body, out);
+			return std::make_unique<SpeedexVMBlock>(out);
+		} catch(...)
+		{
+			return nullptr;
+		}
+	}
 
-	void exec_block(const block_type& blk);
+	std::unique_ptr<hotstuff::VMBlock> propose() override final;
 
-	void log_commitment(const block_id& id);
+	void exec_block(const hotstuff::VMBlock&) override final;
+
+	void log_commitment(const block_id& id) override final;
 
 	void write_measurements();
 	ExperimentResultsUnion get_measurements();
@@ -99,14 +151,14 @@ public:
 		return measurement_output_folder + "results";
 	}
 
-	~SpeedexVM() {
+	~SpeedexVM() override final {
 		write_measurements();
 	}
 
 	void rewind_to_last_commit();
 
-	void init_clean();
-	void init_from_disk(hotstuff::HotstuffLMDB const& decided_block_cache);
+	void init_clean() override final;
+	void init_from_disk(hotstuff::LogAccessWrapper const& decided_block_cache) override final;
 
 
 	// expose state to non-hotstuff components

@@ -171,7 +171,6 @@ SRCS = \
 	$(EXPERIMENTS_SRCS) \
 	$(FILTERING_SRCS) \
 	$(HEADER_HASH_SRCS) \
-	$(HOTSTUFF_SRCS) \
 	$(LMDB_SRCS) \
 	$(MEMORY_DATABASE_SRCS) \
 	$(MEMPOOL_SRCS) \
@@ -183,6 +182,9 @@ SRCS = \
 	$(SPEEDEX_SRCS) \
 	$(SYNTHETIC_DATA_GEN_SRCS) \
 	$(UTILS_SRCS)
+
+GENERIC_CCS = \
+	generic/counting_vm.cc
 
 MAIN_CCS = \
 	main/cda_experiment.cc \
@@ -201,15 +203,26 @@ MAIN_CCS = \
 	main/tatonnement_mega_graph.cc \
 	main/trie_comparison.cc 
 
-AM_CPPFLAGS = $(libcrypto_CFLAGS) $(gsl_CFLAGS) $(xdrpp_CFLAGS) $(libsodium_CFLAGS) $(LIBFYAML_CFLAGS) $(lmdb_CFLAGS) $(lemon_CFLAGS)
-LDADD = $(libcrypto_LIBS) $(gsl_LIBS) $(xdrpp_LIBS) -ltbb -lglpk $(libsodium_LIBS) $(LIBFYAML_LIBS) $(lmdb_LIBS) $(lemon_LIBS)
+AM_CPPFLAGS = \
+	$(libcrypto_CFLAGS) \
+	$(gsl_CFLAGS) \
+	$(xdrpp_CFLAGS) \
+	$(libsodium_CFLAGS) \
+	$(LIBFYAML_CFLAGS) \
+	$(tbb_CFLAGS) \
+	$(lmdb_CFLAGS) $(lemon_CFLAGS) $(hotstuff_CFLAGS)
+LDADD = \
+	$(libcrypto_LIBS) \
+	$(gsl_LIBS) \
+	$(xdrpp_LIBS) \
+	-lglpk $(libsodium_LIBS) $(LIBFYAML_LIBS) $(tbb_LIBS) $(lmdb_LIBS) $(lemon_LIBS) $(hotstuff_LIBS)
 
 $(SRCS:.cc=.o) : $(XH_FILES)
 $(MAIN_CCS:.cc=.o) : $(XH_FILES)
+$(GENERIC_CCS:.cc=.o) : $(XH_FILES)
 
 TEST_SRCS = \
 	$(HEADER_HASH_TEST_SRCS) \
-	$(HOTSTUFF_TEST_SRCS) \
 	$(MEMORY_DATABASE_TEST_SRCS) \
 	$(ORDERBOOK_TEST_SRCS) \
 	$(SIMPLEX_TEST_SRCS) \
@@ -238,7 +251,7 @@ bin_PROGRAMS = \
 
 cda_experiment_SOURCES = $(SRCS) main/cda_experiment.cc
 clean_lmdbs_SOURCES = $(SRCS) main/clean_lmdbs.cc
-counting_vm_hotstuff_SOURCES = $(SRCS) main/counting_vm_hotstuff.cc
+counting_vm_hotstuff_SOURCES = $(SRCS) $(GENERIC_CCS) main/counting_vm_hotstuff.cc
 cryptocoin_dataset_gen_SOURCES = $(SRCS) main/cryptocoin_dataset_gen.cc
 exchange_data_experiment_SOURCES = $(SRCS) main/exchange_data_experiment.cc
 experiment_controller_SOURCES = $(SRCS) main/experiment_controller.cc

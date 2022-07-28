@@ -10,6 +10,9 @@
 
 namespace speedex {
 
+using hotstuff::ReplicaID;
+using hotstuff::ReplicaConfig;
+
 std::unique_ptr<uint64_t> 
 OverlayHandler::mempool_size() {
 	return std::make_unique<uint64_t>(mempool.total_size());

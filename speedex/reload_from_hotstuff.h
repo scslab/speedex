@@ -1,7 +1,7 @@
 #pragma once
 
 namespace hotstuff {
-	class HotstuffLMDB;
+	class LogAccessWrapper;
 }
 
 namespace speedex {
@@ -16,6 +16,6 @@ HashedBlock
 speedex_load_persisted_data(
 	SpeedexManagementStructures& management_structures,
 	BlockValidator& validator,
-	hotstuff::HotstuffLMDB const& decided_block_cache);
+	hotstuff::LogAccessWrapper const& decided_block_cache);
 
 } /* speedex */

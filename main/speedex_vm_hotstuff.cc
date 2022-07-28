@@ -4,7 +4,7 @@
 
 #include "config/replica_config.h"
 
-#include "hotstuff/hotstuff.h"
+#include "hotstuff/hotstuff_app.h"
 #include "hotstuff/liveness.h"
 
 #include "overlay/overlay_client_manager.h"
@@ -18,7 +18,6 @@
 #include "utils/save_load_xdr.h"
 
 #include "xdr/experiments.h"
-#include "xdr/hotstuff.h"
 
 #include <optional>
 
@@ -121,18 +120,15 @@ int main(int argc, char* const* argv)
 		config_file = get_config_file();
 	}
 
-	ReplicaConfig config;
-
 	struct fy_document* fyd = fy_document_build_from_file(NULL, config_file->c_str());
 	if (fyd == NULL) {
 		std::printf("Failed to build doc from file \"%s\"\n", config_file->c_str());
 		usage();
 	}
 
-	auto sk = config.parse(fyd, *self_id);
+	auto [config, sk] = parse_replica_config(fyd, *self_id);
 
 	fy_document_destroy(fyd);
-
 
 	if (speedex_options_file.size() == 0) {
 		speedex_options_file = get_speedex_options();
@@ -165,12 +161,14 @@ int main(int argc, char* const* argv)
 
 	auto vm = std::make_shared<SpeedexVM>(params, speedex_options, experiment_results_folder);
 
-	HotstuffApp app(config, *self_id, sk, vm);
+	auto app = hotstuff::make_speculative_hotstuff_instance(config, *self_id, sk, vm);
+
+//	HotstuffApp app(config, *self_id, sk, vm);
 
 	if (load_from_lmdb) {
-		app.init_from_disk();
+		app->init_from_disk();
 	} else {
-		app.init_clean();
+		app->init_clean();
 	}
 
 	SyntheticDataStream data_stream(experiment_data_folder);
@@ -185,7 +183,7 @@ int main(int argc, char* const* argv)
 		tbb::global_control::max_allowed_parallelism, num_threads);
 
 	ExperimentController control_server(vm);
-	control_server.wait_for_breakpoint_signal();
+	//control_server.wait_for_breakpoint_signal();
 
 	OverlayFlooder flooder(data_stream, client_manager, server, 2'000'000);
 
@@ -201,7 +199,7 @@ int main(int argc, char* const* argv)
 
 	while (true) {
 		if (pmaker.should_propose()) {
-			app.put_vm_in_proposer_mode();
+			app->put_vm_in_proposer_mode();
 			pmaker.do_propose();
 			pmaker.wait_for_qc();
 		} else {
@@ -212,10 +210,10 @@ int main(int argc, char* const* argv)
 
 		// conditions only activate for current producer
 		if (vm -> experiment_is_done()) {
-			app.stop_proposals();
+			app->stop_proposals();
 			self_signalled_end = true;
 		}
-		if (app.proposal_buffer_is_empty()) {
+		if (app->proposal_buffer_is_empty()) {
 			std::printf("done with experiment\n");
 
 			//flush proposal buffers
@@ -226,7 +224,7 @@ int main(int argc, char* const* argv)
 			pmaker.do_empty_propose();
 			pmaker.wait_for_qc();
 
-			control_server.wait_for_breakpoint_signal();
+			//control_server.wait_for_breakpoint_signal();
 			vm -> write_measurements();
 			exit(0);
 		}

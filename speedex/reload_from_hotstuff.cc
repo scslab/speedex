@@ -2,12 +2,14 @@
 
 #include "block_processing/block_validator.h"
 
-#include "hotstuff/lmdb.h"
+//#include "hotstuff/lmdb.h"
+#include "hotstuff/log_access_wrapper.h"
 
 #include "speedex/speedex_management_structures.h"
 #include "speedex/speedex_operation.h"
 #include "speedex/speedex_persistence.h"
 #include "speedex/vm/speedex_vm_block_id.h"
+#include "speedex/vm/speedex_vm.h"
 
 #include "utils/debug_macros.h"
 #include "utils/hash.h"
@@ -124,7 +126,7 @@ HashedBlock
 speedex_load_persisted_data(
 	SpeedexManagementStructures& management_structures,
 	BlockValidator& validator,
-	hotstuff::HotstuffLMDB const& decided_block_cache) {
+	hotstuff::LogAccessWrapper const& decided_block_cache) {
 
 	management_structures.db.load_lmdb_contents_to_memory();
 	management_structures.orderbook_manager.load_lmdb_contents_to_memory();
@@ -160,18 +162,18 @@ speedex_load_persisted_data(
 
 	BLOCK_INFO("replaying rounds [%lu, %lu]", start_round, end_round);
 
-	auto cursor = decided_block_cache.forward_cursor();
+	//auto cursor = decided_block_cache.forward_cursor();
 
 	uint64_t cur_block = start_round;
 
 	HashedBlock top_block;
 
-	auto iter = cursor.begin();
+	auto iter = decided_block_cache.begin();
 
 	uint64_t nonempty_block_index = 0; // speedex vm height
 
-	for (; iter != cursor.end(); ++iter) {
-		auto [hs_hash, block_id] = iter.template get_hs_hash_and_vm_data<SpeedexVMBlockID>();
+	for (; iter != decided_block_cache.end(); ++iter) {
+		auto [hs_hash, block_id] = iter.get_hs_hash_and_vm_data();
 
 		if (block_id) {
 			nonempty_block_index ++;
@@ -180,12 +182,15 @@ speedex_load_persisted_data(
 				continue;
 			}
 
+			// TODO check whether block_id matches loaded block header? unnecessary unless disk tampered with or something unrecoverable happened
+			// begs the question of whether hotstuff even needs to store block ids in lmdb (still needs them in speculative execution gadget).
+
 			auto correct_header = management_structures.block_header_hash_map.get(nonempty_block_index);
 			if (!correct_header) {
 				throw std::runtime_error("failed to load expected hash from header hash map");
 			}
 
-			HashedBlockTransactionListPair speedex_data = decided_block_cache.template load_vm_block<HashedBlockTransactionListPair>(hs_hash);
+			HashedBlockTransactionListPair speedex_data = decided_block_cache.template load_vm_block<SpeedexVMBlock>(hs_hash).data;
 
 			if (correct_header->validation_success) {
 				speedex_replay_trusted_round_success(management_structures, speedex_data);
@@ -208,11 +213,11 @@ speedex_load_persisted_data(
 
 	//replay remaining blocks, untrusted
 
-	for (;iter != cursor.end(); ++iter) {
-		auto [hs_hash, block_id] = iter.template get_hs_hash_and_vm_data<SpeedexVMBlockID>();
+	for (;iter != decided_block_cache.end(); ++iter) {
+		auto [hs_hash, block_id] = iter.get_hs_hash_and_vm_data();
 
 		if (block_id) {
-			auto speedex_data = decided_block_cache.template load_vm_block<HashedBlockTransactionListPair>(hs_hash);
+			auto speedex_data = decided_block_cache.template load_vm_block<SpeedexVMBlock>(hs_hash).data;
 
 			auto [corrected_next_block, _] = try_replay_saved_block(management_structures, validator, top_block, speedex_data);
 			top_block.block = corrected_next_block;

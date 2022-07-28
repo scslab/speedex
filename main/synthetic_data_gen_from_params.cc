@@ -84,18 +84,19 @@ int main(int argc, char* const* argv)
 		}
 	}
 
-	std::optional<std::pair<ReplicaID, ReplicaConfig>> conf_pair;
+	//std::optional<std::pair<ReplicaID, ReplicaConfig>> conf_pair;
 	
 	if (!config_file) {
 		config_file = get_config_file();
 	}
 	
-	conf_pair = std::make_optional<std::pair<ReplicaID, ReplicaConfig>>();
+	//conf_pair = std::make_optional<std::pair<ReplicaID, ReplicaConfig>>();
 
+	ReplicaID rid;
 	if (self_id) {
-		conf_pair->first = *self_id;
+		rid = *self_id;
 	} else {
-		conf_pair->first = get_replica_id();
+		rid = get_replica_id();
 	}
 
 	struct fy_document* fyd = fy_document_build_from_file(NULL, config_file->c_str());
@@ -104,7 +105,9 @@ int main(int argc, char* const* argv)
 		usage();
 	}
 
-	conf_pair->second.parse(fyd, conf_pair->first);
+	auto config = parse_replica_config(fyd, rid).first;
+
+//	conf_pair->second.parse(fyd, conf_pair->first);
 
 	if (experiment_options_file.size() == 0) {
 		usage();
@@ -131,7 +134,7 @@ int main(int argc, char* const* argv)
 	params.account_list_filename = output_root + "accounts";
 	params.default_amount = 100'000'000;
 	params.num_blocks = options.num_blocks;
-	params.n_replicas = conf_pair -> second.nreplicas;
+	params.n_replicas = config.nreplicas;
 
 	if (mkdir_safe(options.output_prefix.c_str())) {
 		std::printf("directory %s already exists, continuing\n", options.output_prefix.c_str());
@@ -145,7 +148,7 @@ int main(int argc, char* const* argv)
 		throw std::runtime_error("failed to save params file");
 	}
 
-	GeneratorState generator (gen, options, output_root, conf_pair);
+	GeneratorState generator (gen, options, output_root, std::make_pair(rid, config));
 	generator.dump_account_list(params.account_list_filename);
 
 	if (!just_params) {
