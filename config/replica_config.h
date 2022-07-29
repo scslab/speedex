@@ -8,10 +8,9 @@
 
 #include "hotstuff/config/replica_config.h"
 
-namespace speedex
-{
+namespace speedex {
 
 std::pair<hotstuff::ReplicaConfig, SecretKey>
 parse_replica_config(fy_document* config_yaml, ReplicaID self_id);
 
-} /* speedex */
+} // namespace speedex
