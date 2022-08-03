@@ -186,12 +186,21 @@ AM_CPPFLAGS = \
 	$(libsodium_CFLAGS) \
 	$(LIBFYAML_CFLAGS) \
 	$(tbb_CFLAGS) \
-	$(lmdb_CFLAGS) $(lemon_CFLAGS) $(hotstuff_CFLAGS)
+	$(lmdb_CFLAGS) \
+	$(lemon_CFLAGS) \
+	$(hotstuff_CFLAGS)
+
 LDADD = \
 	$(libcrypto_LIBS) \
 	$(gsl_LIBS) \
 	$(xdrpp_LIBS) \
-	-lglpk $(libsodium_LIBS) $(LIBFYAML_LIBS) $(tbb_LIBS) $(lmdb_LIBS) $(lemon_LIBS) $(hotstuff_LIBS)
+	$(libsodium_LIBS) \
+	$(LIBFYAML_LIBS) \
+	$(tbb_LIBS) \
+	$(lmdb_LIBS) \
+	$(lemon_LIBS) \
+	$(hotstuff_LIBS) \
+	-lglpk
 
 $(SRCS:.cc=.o) : $(XH_FILES)
 $(MAIN_CCS:.cc=.o) : $(XH_FILES)
