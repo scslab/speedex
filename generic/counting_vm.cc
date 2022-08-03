@@ -23,9 +23,9 @@ CountingVM::exec_block(const VMBlock& blk) {
 	const CountingVMBlock& blk_ = static_cast<const CountingVMBlock&>(blk);
 	if (blk_.value == state + 1) {
 		state ++;
-		HOTSTUFF_INFO("VM: applied update, now at %lu", state);
+//		HOTSTUFF_INFO("VM: applied update, now at %lu", state);
 	} else {
-		HOTSTUFF_INFO("VM: got invalid input state, no op");
+//		HOTSTUFF_INFO("VM: got invalid input state, no op");
 	}
 }
 
@@ -35,13 +35,13 @@ CountingVM::log_commitment(const VMBlockID& id) {
 		uint64_t res;
 		xdr::xdr_from_opaque(*(id.value), res);
 		last_committed_state = res;//*(id.value);
-		HOTSTUFF_INFO("VM: confirmed up to %lu", last_committed_state);
+//		HOTSTUFF_INFO("VM: confirmed up to %lu", last_committed_state);
 	}
 }
 
 void
 CountingVM::rewind_to_last_commit() {
-	HOTSTUFF_INFO("VM: rewind to %lu", last_committed_state);
+//	HOTSTUFF_INFO("VM: rewind to %lu", last_committed_state);
 	state = last_committed_state;
 }
 

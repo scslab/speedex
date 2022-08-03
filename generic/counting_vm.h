@@ -1,6 +1,5 @@
 #pragma once
 
-#include "hotstuff/hotstuff_debug_macros.h"
 #include "hotstuff/vm/vm_block_id.h"
 #include "hotstuff/vm/vm_base.h"
 
@@ -80,7 +79,7 @@ public:
 
 	std::unique_ptr<VMBlock> propose() override final {
 		state++;
-		HOTSTUFF_INFO("VM: proposing value %lu", state);
+		//HOTSTUFF_INFO("VM: proposing value %lu", state);
 		return std::make_unique<CountingVMBlock>(state);
 	}
 
