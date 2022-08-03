@@ -1,7 +1,7 @@
 #include "speedex/vm/speedex_vm.h"
 
-#include "speedex/speedex_management_structures.h"
 #include "speedex/speedex_operation.h"
+#include "speedex/speedex_options.h"
 
 #include "utils/hash.h"
 #include "utils/save_load_xdr.h"

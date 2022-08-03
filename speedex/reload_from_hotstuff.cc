@@ -2,13 +2,11 @@
 
 #include "block_processing/block_validator.h"
 
-//#include "hotstuff/lmdb.h"
 #include "hotstuff/log_access_wrapper.h"
 
 #include "speedex/speedex_management_structures.h"
 #include "speedex/speedex_operation.h"
 #include "speedex/speedex_persistence.h"
-#include "speedex/vm/speedex_vm_block_id.h"
 #include "speedex/vm/speedex_vm.h"
 
 #include "utils/debug_macros.h"

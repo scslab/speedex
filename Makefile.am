@@ -119,7 +119,6 @@ SPEEDEX_SRCS = \
 	speedex/speedex_options.cc \
 	speedex/speedex_persistence.cc \
 	speedex/vm/speedex_vm.cc \
-	speedex/vm/speedex_vm_block_id.cc \
 	speedex/vm/speedex_vm_init.cc
 
 SYNTHETIC_DATA_GEN_SRCS = \

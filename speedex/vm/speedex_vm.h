@@ -8,9 +8,7 @@
 #include "modlog/log_merge_worker.h"
 
 #include "speedex/speedex_management_structures.h"
-#include "speedex/speedex_options.h"
 #include "speedex/speedex_persistence.h"
-//#include "speedex/vm/speedex_vm_block_id.h"
 
 #include "hotstuff/vm/vm_base.h"
 
@@ -26,6 +24,7 @@
 namespace speedex {
 
 class ExperimentParameters;
+class SpeedexOptions;
 
 struct SpeedexVMBlock : public hotstuff::VMBlock
 {
