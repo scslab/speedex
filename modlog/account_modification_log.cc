@@ -171,9 +171,9 @@ AccountModificationLog::diff_with_prev_log(uint64_t block_number) {
 			}
 			if (found_dif) {
 				for (unsigned int j = 0; j < p.new_transactions_self.size(); j++) {
-					std::printf("new_transactions_self_seqnum %lu prev_seqnum %lu\n", 
+					std::printf("new_transactions_self prev_seqnum %" PRIu64 " current_seqnum %" PRIu64 "\n", 
 						p.new_transactions_self[j].transaction.metadata.sequenceNumber, c.new_transactions_self[j].transaction.metadata.sequenceNumber);
-					std::printf("new_transactions_self owner %lu pref_wner %lu\n", 
+					std::printf("new_transactions_self prev_owner %" PRIu64 " current_owner %" PRIu64 "\n", 
 						p.new_transactions_self[j].transaction.metadata.sourceAccount, c.new_transactions_self[j].transaction.metadata.sourceAccount);
 				}
 			}
@@ -192,10 +192,10 @@ AccountModificationLog::diff_with_prev_log(uint64_t block_number) {
 				}
 			}
 			if (found_dif) {
-			std::printf("%lu (account prev %lu / current %lu) different identifiers_self\n", i, p.owner, c.owner);
+			std::printf("%lu (account prev %" PRIu64 " / current %" PRIu64 ") different identifiers_self\n", i, p.owner, c.owner);
 			for (size_t j = 0; j < p.identifiers_self.size(); j++) {
 				//if (p.identifiers_self[j] != c.identifiers_self[j]) {
-					std::printf("%lu %lu identifiers_self_seqnum %lu prev_seqnum %lu\n", i, j, p.identifiers_self[j], c.identifiers_self[j]);
+					std::printf("%lu %lu identifiers_self_prev_seqnum %" PRIu64 " current_seqnum %" PRIu64 "\n", i, j, p.identifiers_self[j], c.identifiers_self[j]);
 				//}
 			}
 			}
