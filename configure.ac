@@ -19,11 +19,11 @@ AS_IF([test -z "${WFLAGS+set}"], AX_APPEND_COMPILE_FLAGS([-Wall], WFLAGS))
 CXXFLAGS="$CXXFLAGS $WFLAGS"
 
 PKG_PROG_PKG_CONFIG
-dnl PKG_CHECK_MODULES([libcrypto], [libcrypto])
 PKG_CHECK_MODULES([gsl], [gsl])
 PKG_CHECK_MODULES([libsodium], [libsodium])
 PKG_CHECK_MODULES([lmdb], [lmdb])
 PKG_CHECK_MODULES([tbb], [tbb])
+PKG_CHECK_MODULES([Catch2], [Catch2])
 PKG_CHECK_MODULES(LEMON, [lemon], HAVE_LEMON=1, HAVE_LEMON=0)
 
 AC_DEFINE_UNQUOTED([HAVE_LEMON], [$HAVE_LEMON], [Define to 1 if you have lemon available])

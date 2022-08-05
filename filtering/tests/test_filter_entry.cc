@@ -1,0 +1,135 @@
+#include <catch2/catch_test_macros.hpp>
+
+#include "crypto/crypto_utils.h"
+#include "memory_database/memory_database.h"
+
+#include "filtering/account_filter_entry.h"
+
+#include "xdr/types.h"
+
+namespace speedex
+{
+
+void make_pks(MemoryDatabaseGenesisData& data)
+{
+	DeterministicKeyGenerator key_gen;
+
+	data.pk_list.resize(data.id_list.size());
+	tbb::parallel_for(
+		tbb::blocked_range<size_t>(0, data.id_list.size()),
+		[&key_gen, &data](auto r) {
+			for (size_t i = r.begin(); i < r.end(); i++) {
+				data.pk_list[i] = key_gen.deterministic_key_gen(data.id_list[i]).second;
+			}
+		});
+}
+
+Operation make_payment_op(AccountID const& to, AssetID asset, int64_t amount)
+{
+	Operation out;
+	out.body.type(PAYMENT);
+	out.body.paymentOp().receiver = to;
+	out.body.paymentOp().asset = asset;
+	out.body.paymentOp().amount = amount;
+	return out;
+}
+
+SignedTransaction
+make_payment_tx(AccountID const& from, uint64_t seqno, uint64_t fee, AccountID const& to, AssetID asset, int64_t amount)
+{
+	DeterministicKeyGenerator key_gen;
+	auto sk = key_gen.deterministic_key_gen(from).first;
+
+	SignedTransaction out;
+	out.transaction.operations.push_back(make_payment_op(to, asset, amount));
+	out.transaction.metadata.sourceAccount = from;
+	out.transaction.metadata.sequenceNumber = seqno;
+	out.transaction.fee = fee;
+	sign_transaction(out, sk);
+
+	return out;
+}
+
+SignedTransaction
+make_empty_tx(AccountID const& from, uint64_t seqno, uint64_t fee)
+{
+	DeterministicKeyGenerator key_gen;
+	auto sk = key_gen.deterministic_key_gen(from).first;
+
+	SignedTransaction out;
+	out.transaction.metadata.sourceAccount = from;
+	out.transaction.metadata.sequenceNumber = seqno;
+	out.transaction.fee = fee;
+	sign_transaction(out, sk);
+
+	return out;
+}
+
+TEST_CASE("single account", "[filtering]")
+{
+	const AccountID id = 0x1234;
+	AccountFilterEntry entry(id);
+
+	MemoryDatabase db;
+	MemoryDatabaseGenesisData memdb_genesis;
+	memdb_genesis.id_list.push_back(id);
+
+	make_pks(memdb_genesis);
+	int64_t default_amount = 10;
+	size_t num_assets = 5;
+
+	uint64_t initial_seqno = 50 * 256;
+
+	auto account_init_lambda = [&] (UserAccount& user_account) -> void {
+		for (auto i = 0u; i < num_assets; i++) {
+			user_account.transfer_available(i, default_amount);
+		}
+		REQUIRE(user_account.reserve_sequence_number(initial_seqno) == TransactionProcessingStatus::SUCCESS);
+		user_account.commit_sequence_number(initial_seqno);
+		user_account.commit();
+	};
+
+	db.install_initial_accounts_and_commit(memdb_genesis, account_init_lambda);
+
+	SECTION("uncomputed, throws")
+	{
+		REQUIRE_THROWS(entry.check_valid());
+	}
+
+	SECTION("no txs, is valid")
+	{
+		entry.compute_validity(db);
+		REQUIRE(entry.check_valid());
+	}
+
+	SECTION("empty tx, just fee (payable)")
+	{
+		auto tx = make_empty_tx(id, initial_seqno + 10 * 256, 10);
+		entry.add_tx(tx, db);
+		entry.compute_validity(db);
+		REQUIRE(entry.check_valid());
+	}
+	SECTION("empty tx, just fee (not payable)")
+	{
+		auto tx = make_empty_tx(id, initial_seqno + 10 * 256, 100000);
+		entry.add_tx(tx, db);
+		entry.compute_validity(db);
+		REQUIRE(!entry.check_valid());
+	}
+	SECTION("empty tx, just fee (bad seqno)")
+	{
+		auto tx = make_empty_tx(id, initial_seqno - 10 * 256, 10);
+		entry.add_tx(tx, db);
+		entry.compute_validity(db);
+		REQUIRE(entry.check_valid());
+	}
+	SECTION("empty tx, just fee (bad seqno, bad fee ignored)")
+	{
+		auto tx = make_empty_tx(id, initial_seqno - 10 * 256, 10000000);
+		entry.add_tx(tx, db);
+		entry.compute_validity(db);
+		REQUIRE(entry.check_valid());
+	}
+}
+
+}

@@ -1,6 +1,7 @@
 #include "memory_database/user_account.h"
 
 #include <xdrpp/marshal.h>
+#include <cinttypes>
 
 
 namespace speedex {
@@ -184,9 +185,9 @@ UserAccount::set_owner(AccountID _owner, PublicKey const& _pk, uint64_t _last_co
 void 
 UserAccount::log() const
 {
-	for (unsigned int i = 0; i < owned_assets.size(); i++) {
-		std::printf (
-			"%u=%ld ", i, owned_assets[i].lookup_available_balance());
+	for (uint32_t i = 0; i < owned_assets.size(); i++) {
+		std::printf(
+			"%" PRIu32 "=%" PRId64 " ", i, owned_assets[i].lookup_available_balance());
 	}
 	std::printf("\n");
 }

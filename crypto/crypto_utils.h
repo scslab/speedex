@@ -61,4 +61,7 @@ struct DeterministicKeyGenerator {
 	gen_key_pair_list(size_t num_accounts);
 };
 
+void
+sign_transaction(SignedTransaction& tx, SecretKey const& sk);
+
 } /* speedex */

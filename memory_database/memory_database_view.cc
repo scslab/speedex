@@ -15,8 +15,8 @@ TransactionProcessingStatus UserAccountView::conditional_escrow(
 	int64_t current_available_buffer = available_buffer[asset];
 	int64_t new_buffer = current_available_buffer - amount;
 	if (new_buffer < 0) {
-		INFO("new_buffer = %ld", new_buffer);
-		INFO("current amount:%ld", main.lookup_available_balance(asset));
+		MEMDB_INFO("new_buffer = %ld", new_buffer);
+		MEMDB_INFO("current amount:%ld", main.lookup_available_balance(asset));
 		auto result = main.conditional_escrow(asset, -new_buffer);
 		if (!result) {
 			return TransactionProcessingStatus::INSUFFICIENT_BALANCE;

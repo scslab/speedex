@@ -1,0 +1,77 @@
+The following MIP formulation is based on https://github.com/gnosis/dex-research/blob/master/BatchAuctionOptimization/batchauctions.pdf
+This does not appear to be what is exclusively used in practice (see https://dune.com/gnosis.protocol/Gnosis-Protocol-V2)
+but it does win their solving competition at times and is the only formulation that I can find that closely tracks anything like
+an Arrow-Debreu exchange market model (all others are heuristic approaches designed to match 1 or two trades against AMMs.  The exception
+is the "quasimodo" solver, for which I can't find any information or source code online).
+
+I've simplified the model to just include sell offers.  The problem description gives several approaches; I've used the one that
+they find experimentally to perform best (MIP model 1, "Big-M" approach).
+	Note: Should there be more details on choice of "M"? Or is that something that a solver can just choose internally?  There do not appear
+	to be auxiliary variables, so its not clear to me how this is a big-M design.
+	In general, it's not obvious to me that their approach is *correct*.
+
+Input:
+For each offer i:
+	Sell asset: S_i
+	Buy asset: B_i
+	Max Sell amount: X_i
+	Min Price: r_i
+For each asset A:
+	p_{A, Max}
+	p_{A, Min}
+Constants:
+	Some small epsilon (choice of epsilon is totally unspecified and unmotivated in the writeup, unfortunately).
+
+Variables for each offer i:
+	volume amount: v_i (real)
+	decision variable: z_i (binary, 0 or 1)
+
+Variables for each asset A:
+	price p_A (real)
+
+Constraints for each asset A:
+	p_{A, Min} <= p_A <= p_{A, Max}
+	Sum_{i : S_i = A} v_i = Sum_{i : B_i = A} v_i
+
+Constraints for each offer i:
+	r_i p_{B_i} <= p_{S_i} + (1-z_i) (r_i p_{S_i, Max} - p_{B_i, Min})
+	(r_i + epsilon) p_{B_i} >= p_{S_i} + z_i((r_i + epsilon)p_{S_i, Max} - p_{B_i, Min})
+
+	0 <= v_i <= X_i p_{S_i} z_i
+
+	z_i = 0 OR 1 (i.e. z_i can't be 1/2)
+
+Objective:
+	Max Sum_i v_i
+
+Some optimizations that they claim help:
+	More important:
+		- For every asset pair (A, B), sort the offers selling A for B by their limit prices.
+			If r_j < r_i, then z_i <= z_j 
+				(if j has a lower limit price than i, then i can't sell if j does not).
+			They insert only a linear number of inequalities, not a quadratic number
+			(i.e. for r_1 < r_2 <..., they include z_1 >= z_2, z_2 >= z_3,...).
+		- For every k- cycle of orders (i_1, ... i_k) with B_{i_j} = S_{i_{j+1}},
+		compute the product r=\Pi_j r_{i_j} of the minimum prices along the cycle.
+			If r>1, then it must be the case that not all of the offers along the cycle can
+			simultaneously execute.
+				Then add the constraint Sum_j z_{i_j} <= k-1.
+			If r<1, then at least one of the offers can execute.
+				Add the constraint Sum_j z_{i_j} >= 1.
+			
+			They implement this optimization for k=2,3
+
+	Less important:
+		- Identify one of the prices (or a weighted average of prices) as 1
+			(care must be taken in this case with the price bounds)
+
+Notes:
+	original constraints for offer i:
+		p_j <= pi p_k  + (1-z) (p_j_max - pi p_k_min)
+			when z=0, we have p_j <= pi (p_k - p_k_min) + p_j_max
+
+
+
+
+
+	

@@ -76,7 +76,7 @@ int main(int argc, char* const* argv)
 		});
 
 	size_t num_assets = 50;
-	size_t default_amount = 5;
+	size_t default_amount = 0;
 
 	for (size_t trial = 1; ; trial++)
 	{
@@ -93,7 +93,6 @@ int main(int argc, char* const* argv)
 
 		xdr::opaque_vec<> vec;
 		ExperimentBlock block;
-
 		std::string filename = experiment_root + "/" + std::to_string(trial) + ".txs";
 
 		if (load_xdr_from_file(vec, filename.c_str())) {
@@ -107,17 +106,41 @@ int main(int argc, char* const* argv)
 		tbb::global_control control(
 			tbb::global_control::max_allowed_parallelism, 1);
 
+		auto ts = init_time_measurement();
 
 		FilterLog log;
 		log.add_txs(block, db);
 
+		auto res = measure_time(ts);
+
+		std::printf("duration: %lf\n", res);
+
+		size_t num_valid_with_txs = 0, num_invalid = 0;
+
 		for (auto const& acct : memdb_genesis.id_list)
 		{
-			if (!log.check_valid_account(acct))
+
+			switch(log.check_valid_account(acct))
 			{
-				std::printf("invalid\n");
+				case FilterResult::VALID_NO_TXS:
+				{
+					break;
+				}
+				case FilterResult::VALID_HAS_TXS:
+				{
+					num_valid_with_txs++;
+					break;
+				}
+				case FilterResult::INVALID:
+				{
+					num_invalid++;
+					break;
+				}
+				default:
+					throw std::runtime_error("invalid filter result");
 			}
 		}
+		std::printf("stats: num_valid_with_txs %lu num_invalid %lu total %lu\n", num_valid_with_txs, num_invalid, num_valid_with_txs + num_invalid);
 	}
 
 }

@@ -4,6 +4,8 @@
 
 #include <tbb/parallel_reduce.h>
 
+#include <xdrpp/marshal.h>
+
 #include <cstddef>
 
 namespace speedex {
@@ -114,6 +116,21 @@ DeterministicKeyGenerator::deterministic_key_gen(uint64_t seed) {
 	}
 
 	return std::make_pair(sk, pk);
+}
+
+void
+sign_transaction(SignedTransaction& tx, SecretKey const& sk)
+{
+	auto msg = xdr::xdr_to_opaque(tx.transaction);
+	if (crypto_sign_detached(
+		tx.signature.data(), //signature
+		nullptr, //optional siglen ptr
+		msg.data(), //msg
+		msg.size(), //msg len
+		sk.data())) //sk
+	{
+		throw std::runtime_error("failed to sign!");
+	}
 }
 
 

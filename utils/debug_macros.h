@@ -38,7 +38,11 @@ Printouts include file/line information.
 
 #define MEMPOOL_DEBUG DEBUG_LEVEL_INFO
 
+#define ORDERBOOK_DEBUG DEBUG_LEVEL_INFO
+
 #define OVERLAY_DEBUG DEBUG_LEVEL_NONE
+
+#define MEMDB_DEBUG DEBUG_LEVEL_NONE
 
 #define HOTSTUFF_DEBUG DEBUG_LEVEL_INFO
 
@@ -74,6 +78,7 @@ Printouts include file/line information.
 #define TX_INFO_F(s) (void)0
 #endif
 
+/*
 #if DEBUG_LEVEL <= DEBUG_LEVEL_INFO
 #define INFO(s, ...) LOG(s, __VA_ARGS__)
 #define INFO_F(s) s
@@ -81,6 +86,7 @@ Printouts include file/line information.
 #define INFO(s, ...) (void)0
 #define INFO_F(s) (void)0
 #endif
+*/
 
 #if DEBUG_LEVEL <= DEBUG_LEVEL_WARN
 #define WARN(s, ...) LOG(s, __VA_ARGS__)
@@ -95,7 +101,7 @@ Printouts include file/line information.
 #define TRACE_F(s) s
 #else
 #define TRACE(s, ...) (void)0
-#define TRACE_F (void)0
+#define TRACE_F(s) (void)0
 #endif
 
 #if TRIE_DEBUG <= DEBUG_LEVEL_ERROR
@@ -170,12 +176,28 @@ Printouts include file/line information.
 #define MEMPOOL_INFO_F(s) (void)0
 #endif
 
+#if ORDERBOOK_DEBUG <= DEBUG_LEVEL_INFO
+#define ORDERBOOK_INFO(s, ...) LOG(s, __VA_ARGS__)
+#define ORDERBOOK_INFO_F(s) s
+#else
+#define ORDERBOOK_INFO(s, ...) (void)0
+#define ORDERBOOK_INFO_F(s) (void)0
+#endif
+
 #if OVERLAY_DEBUG <= DEBUG_LEVEL_INFO
 #define OVERLAY_INFO(s, ...) LOG(s, __VA_ARGS__)
 #define OVERLAY_INFO_F(s) s
 #else
 #define OVERLAY_INFO(s, ...) (void)0
 #define OVERLAY_INFO_F(s) (void)0
+#endif
+
+#if MEMDB_DEBUG <= DEBUG_LEVEL_INFO
+#define MEMDB_INFO(s, ...) LOG(s, __VA_ARGS__)
+#define MEMDB_INFO_F(s) s
+#else
+#define MEMDB_INFO(s, ...) (void)0
+#define MEMDB_INFO_F(s) (void)0
 #endif
 
 #if HOTSTUFF_DEBUG <= DEBUG_LEVEL_INFO

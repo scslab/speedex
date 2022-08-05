@@ -416,8 +416,8 @@ bool _speedex_block_validation_logic(
 		prices, 
 		expected_next_block.block.feeRate);
 
-	INFO("commitment checker log:");
-	INFO_F(commitment_checker.log());
+	TRACE("commitment checker log:");
+	TRACE_F(commitment_checker.log());
 
 	SpeedexManagementStructuresAutoRollback autorollback_structures(
 		management_structures,
@@ -451,7 +451,7 @@ bool _speedex_block_validation_logic(
 		stats,
 		state_update_stats); // checks db in valid state.
 
-	INFO_F(validation_stats.log());
+	TRACE_F(validation_stats.log());
 
 	stats.tx_validation_time = measure_time(timestamp);
 	BLOCK_INFO("block validation time: %lf",stats.tx_validation_time);

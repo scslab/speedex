@@ -9,21 +9,30 @@
 namespace speedex
 {
 
-class FilterLog
+enum FilterResult : int32_t
 {
-	using trie_t = AccountTrie<AccountFilterEntry>;
-	using serial_trie_t = trie_t::serial_trie_t;
+    // success
+    VALID_NO_TXS = 0,
+    VALID_HAS_TXS = 1,
 
-	using serial_cache_t = ThreadlocalCache<serial_trie_t>;
-
-	trie_t entries;
-
-public:
-
-	void add_txs(std::vector<SignedTransaction> const& txs, MemoryDatabase const& db);
-
-	bool check_valid_account(AccountID const& account) const;
+    // failure
+    INVALID = -1,
 };
 
+class FilterLog
+{
+    using trie_t = AccountTrie<AccountFilterEntry>;
+    using serial_trie_t = trie_t::serial_trie_t;
 
-} /* speedex */
+    using serial_cache_t = ThreadlocalCache<serial_trie_t>;
+
+    trie_t entries;
+
+public:
+    void add_txs(std::vector<SignedTransaction> const& txs,
+                 MemoryDatabase const& db);
+
+    FilterResult check_valid_account(AccountID const& account) const;
+};
+
+} // namespace speedex

@@ -176,6 +176,7 @@ MAIN_CCS = \
 	main/synthetic_data_gen_from_params.cc \
 	main/tatonnement_experiment_data_gen_from_params.cc \
 	main/tatonnement_mega_graph.cc \
+	main/test.cc \
 	main/trie_comparison.cc 
 
 AM_CPPFLAGS = \
@@ -201,9 +202,16 @@ LDADD = \
 	$(hotstuff_LIBS) \
 	-lglpk
 
+CATCH_TEST_CCS = \
+	filtering/tests/test_filter_entry.cc
+
+$(CATCH_TEST_SRCS:.cc=.o) : CXXFLAGS += $(Catch2_CFLAGS)
+main/test.o : CXXFLAGS += $(Catch2_CFLAGS)
+
 $(SRCS:.cc=.o) : $(XH_FILES)
 $(MAIN_CCS:.cc=.o) : $(XH_FILES)
 $(GENERIC_CCS:.cc=.o) : $(XH_FILES)
+$(CATCH_TEST_CCS:.cc=.o) : $(XH_FILES)
 
 TEST_SRCS = \
 	$(HEADER_HASH_TEST_SRCS) \
@@ -231,7 +239,8 @@ bin_PROGRAMS = \
 	tatonnement_experiment_data_gen \
 	tatonnement_mega_graph \
 	trie_comparison \
-	test
+	test \
+	ctest
 
 cda_experiment_SOURCES = $(SRCS) main/cda_experiment.cc
 clean_lmdbs_SOURCES = $(SRCS) main/clean_lmdbs.cc
@@ -250,6 +259,9 @@ tatonnement_mega_graph_SOURCES = $(SRCS) main/tatonnement_mega_graph.cc
 trie_comparison_SOURCES = $(SRCS) main/trie_comparison.cc
 
 test_SOURCES = $(SRCS) test_runner.cc
+ctest_SOURCES = $(SRCS) $(CATCH_TEST_CCS) main/test.cc
+
+ctest_LDFLAGS = $(Catch2_LIBS)
 
 #building x files
 $(XH_FILES) : $(XDRC)

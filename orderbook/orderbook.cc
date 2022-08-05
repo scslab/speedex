@@ -855,7 +855,7 @@ Orderbook::tentative_clear_offers_for_validation(
     // if no partial exec offer, partial exec threshold key in block header must
     // be all zeros.
     if (!partial_exec_offer_opt) {
-        INFO("no partial exec offer");
+        ORDERBOOK_INFO("no partial exec offer");
 
         if (memcmp(local_clearing_log.partialExecThresholdKey.data(),
                    zero_buf,
@@ -899,7 +899,7 @@ Orderbook::tentative_clear_offers_for_validation(
             committed_offers.clear();
         }
 
-        INFO("no partial exec correct exit");
+        ORDERBOOK_INFO("no partial exec correct exit");
         return true;
     }
 
@@ -1045,7 +1045,7 @@ Orderbook::process_clear_offers(
     }
 
     if (!partial_exec_key) {
-        INFO("partial exec key is nullptr");
+        ORDERBOOK_INFO("partial exec key is nullptr");
         INTEGRITY_CHECK("remaining offers size: %d", committed_offers.size());
         // no committed offers remain
         auto lock = lmdb_instance.lock();

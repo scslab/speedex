@@ -464,8 +464,8 @@ MemoryDatabase::_produce_state_commitment(Hash& hash) {
 
 	commitment_trie.hash(hash);
 
-	INFO_F(commitment_trie._log("db commit"));
-	INFO_F(log());
+	BLOCK_INFO_F(commitment_trie._log("db commit"));
+	MEMDB_INFO_F(log());
 }
 
 void MemoryDatabase::add_persistence_thunk(uint64_t current_block_number, AccountModificationLog& log) {
@@ -675,7 +675,7 @@ void MemoryDatabase::persist_lmdb(uint64_t current_block_number) {
 
 	auto stats = account_lmdb_instance.stat();
 	BLOCK_INFO("db size: %" PRIu32, static_cast<uint32_t>(stats.ms_entries));
-	INFO_F(log());
+	MEMDB_INFO_F(log());
 }
 
 void MemoryDatabase::load_lmdb_contents_to_memory() {

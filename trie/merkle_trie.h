@@ -1817,14 +1817,13 @@ MerkleTrie<TEMPLATE_PARAMS>::get_root_hash(Hash& out) {
 	} else {
 		throw std::runtime_error("invalid number of children");
 	}
-	INFO("top level hash in num children: %lu", num_children);
-	INFO("top level hash in: %s", 
+	TRIE_INFO("top level hash in num children: %lu", num_children);
+	TRIE_INFO("top level hash in: %s", 
 		debug::array_to_str(buf, 36).c_str());
 	
 	crypto_generichash(out.data(), out.size(), buf.data(), buf.size(), NULL, 0);
 
-	//SHA256(buf.data(), buf.size(), out.data());
-	INFO("top level hash out: %s", 
+	TRIE_INFO("top level hash out: %s", 
 		debug::array_to_str(out.data(), out.size()).c_str());
 }
 

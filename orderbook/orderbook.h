@@ -113,7 +113,7 @@ class Orderbook {
 	persist_lmdb(uint64_t current_block_number, dbenv::wtxn& wtx);
 
 	void add_offers(OrderbookTrie&& offers) {
-		INFO("merging in to \"%d %d\"", category.sellAsset, category.buyAsset);
+		ORDERBOOK_INFO("merging in to \"%d %d\"", category.sellAsset, category.buyAsset);
 		uncommitted_offers.merge_in(std::move(offers));
 	}
 
