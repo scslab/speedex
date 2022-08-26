@@ -102,6 +102,8 @@ int main(int argc, char* const* argv)
 			block.push_back(generator.gen_payment_tx(1));
 		}
 
+		generator.fill_in_seqnos(block);
+
 		for (size_t i = 0; i < num_dups; i++)
 		{
 			size_t dup_idx = generator.gen_random_index(num_txs-num_dups);

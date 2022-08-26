@@ -632,6 +632,17 @@ GeneratorState<random_generator>::filter_by_replica_id(ExperimentBlock& block) {
 }
 
 template<typename random_generator>
+void
+GeneratorState<random_generator>::fill_in_seqnos(ExperimentBlock& block)
+{
+	for (unsigned int i = 0; i < block.size(); i++) {
+		uint64_t prev_seq_num = block_state.sequence_num_map[block[i].transaction.metadata.sourceAccount];
+		block[i].transaction.metadata.sequenceNumber = (prev_seq_num + 1) << 8;
+		block_state.sequence_num_map[block.at(i).transaction.metadata.sourceAccount] ++;
+	}
+}
+
+template<typename random_generator>
 void GeneratorState<random_generator>::make_block(const std::vector<double>& prices) {
 	normalize_asset_probabilities();
 
@@ -661,18 +672,21 @@ void GeneratorState<random_generator>::make_block(const std::vector<double>& pri
 	auto& txs = block_state.tx_buffer;
 	auto& cancellation_flags = block_state.cancel_flags;
 
+	ExperimentBlock output;
+	output.insert(output.end(), txs.begin(), txs.begin() + options.block_size);
+
+	fill_in_seqnos(output);
+
 	for (unsigned int i = 0; i < options.block_size; i++) {
-		uint64_t prev_seq_num = block_state.sequence_num_map[txs[i].transaction.metadata.sourceAccount];
-		txs[i].transaction.metadata.sequenceNumber = (prev_seq_num + 1) << 8;
-		block_state.sequence_num_map[txs.at(i).transaction.metadata.sourceAccount] ++;
+		//uint64_t prev_seq_num = block_state.sequence_num_map[txs[i].transaction.metadata.sourceAccount];
+		//txs[i].transaction.metadata.sequenceNumber = (prev_seq_num + 1) << 8;
+		//block_state.sequence_num_map[txs.at(i).transaction.metadata.sourceAccount] ++;
 
 		if (cancellation_flags.at(i)) {
-			add_cancel_tx(gen_cancel_tx(txs.at(i)));
+			add_cancel_tx(gen_cancel_tx(output.at(i)));
 		}
 	}
 
-	ExperimentBlock output;
-	output.insert(output.end(), txs.begin(), txs.begin() + options.block_size);
 	filter_by_replica_id(output);
 	
 	//std::printf("writing block %lu\n", block_state.block_number);

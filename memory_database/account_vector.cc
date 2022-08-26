@@ -101,7 +101,6 @@ AccountVector::resize(size_t sz) {
 	if (sz != _size) {
 		throw std::runtime_error("overall resize error");
 	}
-	std::printf("resized to %lu\n", sz);
 }
 
 

@@ -130,6 +130,63 @@ TEST_CASE("single account", "[filtering]")
 		entry.compute_validity(db);
 		REQUIRE(entry.check_valid());
 	}
+	SECTION("payment tx good")
+	{
+		auto tx = make_payment_tx(id, initial_seqno + 10 * 256, 10, id, 1, 10);
+		entry.add_tx(tx, db);
+		entry.compute_validity(db);
+		REQUIRE(entry.check_valid());
+	}	
+	SECTION("payment tx bad")
+	{
+		auto tx = make_payment_tx(id, initial_seqno + 10 * 256, 10, id, 1, 11);
+		entry.add_tx(tx, db);
+		entry.compute_validity(db);
+		REQUIRE(!entry.check_valid());
+	}
+	SECTION("payment tx bad conflict with fee")
+	{
+		auto tx = make_payment_tx(id, initial_seqno + 10 * 256, 5, id, 0, 6);
+		entry.add_tx(tx, db);
+		entry.compute_validity(db);
+		REQUIRE(!entry.check_valid());
+	}
+	SECTION("two payment tx good")
+	{
+		auto tx1 = make_payment_tx(id, initial_seqno + 10 * 256, 5, id, 1, 6);
+		auto tx2 = make_payment_tx(id, initial_seqno + 11 * 256, 5, id, 2, 6);
+		entry.add_tx(tx1, db);
+		entry.add_tx(tx2, db);
+		entry.compute_validity(db);
+		REQUIRE(entry.check_valid());
+	}
+	SECTION("two payment tx bad")
+	{
+		auto tx1 = make_payment_tx(id, initial_seqno + 10 * 256, 5, id, 1, 6);
+		auto tx2 = make_payment_tx(id, initial_seqno + 11 * 256, 5, id, 1, 6);
+		entry.add_tx(tx1, db);
+		entry.add_tx(tx2, db);
+		entry.compute_validity(db);
+		REQUIRE(!entry.check_valid());
+	}
+	SECTION("same seqno fail")
+	{
+		auto tx1 = make_payment_tx(id, initial_seqno + 10 * 256, 5, id, 1, 1);
+		auto tx2 = make_payment_tx(id, initial_seqno + 10 * 256, 5, id, 2, 1);
+		entry.add_tx(tx1, db);
+		entry.add_tx(tx2, db);
+		entry.compute_validity(db);
+		REQUIRE(!entry.check_valid());
+	}
+	SECTION("same seqno duplicate ok")
+	{
+		auto tx1 = make_payment_tx(id, initial_seqno + 10 * 256, 5, id, 1, 10);
+		auto tx2 = make_payment_tx(id, initial_seqno + 10 * 256, 5, id, 1, 10);
+		entry.add_tx(tx1, db);
+		entry.add_tx(tx2, db);
+		entry.compute_validity(db);
+		REQUIRE(entry.check_valid());
+	}
 }
 
 }

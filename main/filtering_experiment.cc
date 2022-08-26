@@ -17,16 +17,18 @@
 [[noreturn]]
 static void usage() {
 	std::printf(R"(
-usage: filtering_experiment --exp_name=<experiment_name, required>
+usage: filtering_experiment --exp_name=<experiment_name, required> --num_threads=<number, required>
 )");
 	exit(1);
 }
 enum opttag {
 	EXPERIMENT_NAME,
+	NUM_THREADS,
 };
 
 static const struct option opts[] = {
 	{"exp_name", required_argument, nullptr, EXPERIMENT_NAME},
+	{"num_threads", required_argument, nullptr, NUM_THREADS},
 	{nullptr, 0, nullptr, 0}
 };
 
@@ -37,6 +39,7 @@ int main(int argc, char* const* argv)
 	MemoryDatabaseGenesisData memdb_genesis;
 
 	std::string experiment_name;
+	std::string nthreads;
 	
 	int opt;
 
@@ -47,12 +50,21 @@ int main(int argc, char* const* argv)
 			case EXPERIMENT_NAME:
 				experiment_name = optarg;
 				break;
+			case NUM_THREADS:
+				nthreads = optarg;
+				break;
+
 			default:
 				usage();
 		}
 	}
 
 	if (experiment_name.size() == 0) {
+		usage();
+	}
+
+	if (nthreads.size() == 0)
+	{
 		usage();
 	}
 
@@ -77,6 +89,8 @@ int main(int argc, char* const* argv)
 
 	size_t num_assets = 50;
 	size_t default_amount = 0;
+
+	size_t num_threads = std::stoi(nthreads);
 
 	for (size_t trial = 1; ; trial++)
 	{
@@ -104,12 +118,15 @@ int main(int argc, char* const* argv)
 
 
 		tbb::global_control control(
-			tbb::global_control::max_allowed_parallelism, 1);
+			tbb::global_control::max_allowed_parallelism, num_threads);
 
 		auto ts = init_time_measurement();
 
+		ExperimentBlock truncated;
+		truncated.insert(truncated.end(), block.begin(), block.begin() + 10);
+
 		FilterLog log;
-		log.add_txs(block, db);
+		log.add_txs(truncated, db);
 
 		auto res = measure_time(ts);
 

@@ -29,8 +29,10 @@ AccountFilterEntry::assert_initialized() const
 void
 AccountFilterEntry::add_req(AssetID const& asset, int64_t amount)
 {
+	//std::printf("add req %u amt %ld\n", asset, amount);
     if (amount < 0)
     {
+    //	std::printf("negative\n");
         return;
     }
 
@@ -42,6 +44,7 @@ AccountFilterEntry::add_req(AssetID const& asset, int64_t amount)
     if (__builtin_add_overflow_p(
             amount, required_assets[asset], static_cast<int64_t>(0)))
     {
+    //	std::printf("got error\n");
         required_assets[asset] = INT64_MAX;
         found_error = true;
         return;
@@ -70,6 +73,7 @@ AccountFilterEntry::compute_reqs()
                 case CANCEL_SELL_OFFER:
                     break;
                 case PAYMENT:
+       //         	std::printf("payment tx\n");
                     add_req(op.body.paymentOp().asset,
                             op.body.paymentOp().amount);
                     break;
@@ -79,6 +83,7 @@ AccountFilterEntry::compute_reqs()
                     throw std::runtime_error("filtering unknown optype");
             }
         }
+      //  std::printf("native asset\n");
         add_req(MemoryDatabase::NATIVE_ASSET, tx.transaction.fee);
     }
 }
@@ -87,8 +92,10 @@ void
 AccountFilterEntry::add_tx(SignedTransaction const& tx,
                            MemoryDatabase const& db)
 {
+//	std:printf("add tx\n");
     if (found_error)
     {
+    //	std::printf("already error\n");
         return;
     }
 
@@ -98,6 +105,7 @@ AccountFilterEntry::add_tx(SignedTransaction const& tx,
 
         if (acc == nullptr)
         {
+        //	std::printf("no account\n");
             log_reqs_invalid();
             return;
         }
@@ -108,6 +116,7 @@ AccountFilterEntry::add_tx(SignedTransaction const& tx,
 
     if (seqno <= min_seq_no)
     {
+    	//std::printf("low seqno, ignoring seqno=%lu min=%lu\n", seqno, min_seq_no);
         return;
     }
 
@@ -118,6 +127,7 @@ AccountFilterEntry::add_tx(SignedTransaction const& tx,
 
         if (!(tx_old == tx))
         {
+        //	std::printf("dup seqno mismatch, error\n");
             found_error = true;
             return;
         }
@@ -141,6 +151,7 @@ AccountFilterEntry::log_reqs_valid()
 void
 AccountFilterEntry::compute_validity(MemoryDatabase const& db)
 {
+//	std::printf("compute_validity\n");
     if (checked_reqs_cached)
     {
         std::printf("double check valid\n");
@@ -167,6 +178,7 @@ AccountFilterEntry::compute_validity(MemoryDatabase const& db)
     for (auto const& [asset, req] : required_assets)
     {
         int64_t avail = acc->lookup_available_balance(asset);
+       // std::printf("asset %lu req %ld avail %ld\n", asset, req, avail);
         if (avail < req)
         {
             log_reqs_invalid();
@@ -199,6 +211,7 @@ AccountFilterEntry::merge_in(AccountFilterEntry& other)
     }
 
     other.assert_initialized();
+    initialized = true;
 
     if (checked_reqs_cached)
     {
