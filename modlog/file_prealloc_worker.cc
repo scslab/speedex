@@ -1,6 +1,8 @@
 #include "modlog/file_prealloc_worker.h"
 #include "utils/save_load_xdr.h"
 
+#include <cinttypes>
+
 namespace speedex {
 
 void 
@@ -21,7 +23,7 @@ FilePreallocWorker::run() {
 void 
 FilePreallocWorker::prealloc(uint64_t block_number) {
 	auto filename = tx_block_name(block_number);
-	std::printf("preallocating file for block %lu filename %s\n", 
+	std::printf("preallocating file for block %" PRIu64 " filename %s\n", 
 		block_number, filename.c_str());
 	block_fd = preallocate_file(filename.c_str());
 }
