@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <sstream>
 
-#include "trie/metadata.h"
+#include "mtt/trie/metadata.h"
 
 #include "xdr/types.h"
 
@@ -50,7 +50,7 @@ struct OrderbookMetadata {
 
 	template<typename AtomicType>
 	void unsafe_load_from(const AtomicType& s) {
-		endow = s.endow.load(load_order);
+		endow = s.endow.load(trie::load_order);
 	}
 };
 
@@ -69,11 +69,11 @@ struct AtomicOrderbookMetadata {
 	AtomicOrderbookMetadata(const OrderbookMetadata& v) : endow(v.endow) {}
 
 	void operator+= (const OrderbookMetadata& other) {
-		endow.fetch_add(other.endow, store_order);
+		endow.fetch_add(other.endow, trie::store_order);
 	}
 
 	void operator-= (const OrderbookMetadata& other) {
-		endow.fetch_sub(other.endow, store_order);
+		endow.fetch_sub(other.endow, trie::store_order);
 	}
 
 	void clear() {
@@ -81,7 +81,7 @@ struct AtomicOrderbookMetadata {
 	}
 
 	void unsafe_store(const OrderbookMetadata& other) {
-		endow.store(other.endow, store_order);
+		endow.store(other.endow, trie::store_order);
 	}
 
 	std::string to_string() const {

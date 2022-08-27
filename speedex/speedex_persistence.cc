@@ -4,6 +4,8 @@
 
 #include "utils/header_persistence.h"
 
+#include "mtt/utils/time.h"
+
 namespace speedex {
 
 std::unique_ptr<AccountModificationBlock>
@@ -15,11 +17,11 @@ persist_critical_round_data(
 	bool write_block,
 	uint64_t log_offset) {
 
-	auto timestamp = init_time_measurement();
+	auto timestamp = utils::init_time_measurement();
 
 	save_header(header);
 
-	measurements.header_write_time = measure_time(timestamp);
+	measurements.header_write_time = utils::measure_time(timestamp);
 
 	uint64_t current_block_number = header.block.blockNumber;
 
@@ -28,12 +30,12 @@ persist_critical_round_data(
 		.persist_block(current_block_number + log_offset, get_block, write_block);
 
 	BLOCK_INFO("done writing account log");
-	measurements.account_log_write_time = measure_time(timestamp);
+	measurements.account_log_write_time = utils::measure_time(timestamp);
 
 	management_structures.db.add_persistence_thunk(
 		current_block_number, management_structures.account_modification_log);
 
-	measurements.account_db_checkpoint_time = measure_time(timestamp);
+	measurements.account_db_checkpoint_time = utils::measure_time(timestamp);
 
 	management_structures.account_modification_log.detached_clear();
 	BLOCK_INFO("done persist critical round data");
@@ -47,11 +49,11 @@ void persist_async_phase1(
 	BlockDataPersistenceMeasurements& measurements) {
 
 	BLOCK_INFO("starting async persistence");
-	auto timestamp = init_time_measurement();
+	auto timestamp = utils::init_time_measurement();
 
 	management_structures.db.commit_persistence_thunks(current_block_number);
 	BLOCK_INFO("done async db persistence\n");
-	measurements.account_db_checkpoint_finish_time = measure_time(timestamp);
+	measurements.account_db_checkpoint_finish_time = utils::measure_time(timestamp);
 }
 
 void 
@@ -80,11 +82,11 @@ void
 AsyncPersister::do_async_persist(
 	std::unique_ptr<PersistenceMeasurementLogCallback> callback)
 {
-	auto timestamp = init_time_measurement();
+	auto timestamp = utils::init_time_measurement();
 
 	wait_for_async_task();
 
-	callback -> measurements.wait_for_persist_time = measure_time(timestamp);
+	callback -> measurements.wait_for_persist_time = utils::measure_time(timestamp);
 	{
 		std::lock_guard lock(mtx);
 		if (persistence_callback) {
@@ -104,11 +106,11 @@ persist_async_phase2(
 	BlockDataPersistenceMeasurements& measurements) {
 
 	BLOCK_INFO("starting async persistence phase 2");
-	auto timestamp = init_time_measurement();
+	auto timestamp = utils::init_time_measurement();
 
 	management_structures.db.force_sync();
 	BLOCK_INFO("done async db sync\n");
-	measurements.account_db_checkpoint_sync_time = measure_time(timestamp);
+	measurements.account_db_checkpoint_sync_time = utils::measure_time(timestamp);
 }
 
 void 
@@ -156,16 +158,16 @@ persist_async_phase3(
 	BlockDataPersistenceMeasurements& measurements) {
 
 	BLOCK_INFO("starting async persistence phase 3");
-	auto timestamp = init_time_measurement();
+	auto timestamp = utils::init_time_measurement();
 
 	management_structures.orderbook_manager.persist_lmdb(current_block_number);
 	BLOCK_INFO("done async offer persistence\n");
-	measurements.offer_checkpoint_time = measure_time(timestamp);
+	measurements.offer_checkpoint_time = utils::measure_time(timestamp);
 
 	management_structures.block_header_hash_map.persist_lmdb(
 		current_block_number);
 
-	measurements.block_hash_map_checkpoint_time = measure_time(timestamp);
+	measurements.block_hash_map_checkpoint_time = utils::measure_time(timestamp);
 	BLOCK_INFO("done async total persistence\n");
 }
 

@@ -12,7 +12,7 @@ FilterLog::add_txs(std::vector<SignedTransaction> const& txs,
     serial_cache_t cache;
 
     auto serial_add_lambda = [&cache, &txs, &db, this](
-                                 tbb::blocked_range<size_t> r) {
+                                 const tbb::blocked_range<size_t> r) {
         auto& local_log = cache.get(entries);
 
         for (size_t i = r.begin(); i < r.end(); i++)

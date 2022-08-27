@@ -7,14 +7,17 @@
 #include <cstdint>
 #include <random>
 
+#include "orderbook/typedefs.h"
+
 #include "modlog/log_entry_fns.h"
+#include "modlog/typedefs.h"
 
-#include "trie/merkle_trie.h"
+#include "mtt/trie/merkle_trie.h"
 
-#include "trie/recycling_impl/trie.h"
+#include "mtt/trie/recycling_impl/trie.h"
 
 #include "utils/price.h"
-#include "utils/time.h"
+#include "mtt/utils/time.h"
 
 #include "xdr/types.h"
 #include "xdr/database_commitments.h"
@@ -22,6 +25,9 @@
 #include <sodium.h>
 
 using namespace speedex;
+
+using utils::init_time_measurement;
+using utils::measure_time;
 
 std::vector<AccountID> make_accounts(size_t num_accounts) {
 	std::minstd_rand gen(0);
@@ -63,10 +69,10 @@ float test_std_unordered_set(const std::vector<AccountID>& accounts) {
 }
 
 float test_std_map_emptyvalue(const std::vector<AccountID>& accounts) {
-	std::map<AccountID, EmptyValue> set;
+	std::map<AccountID, trie::EmptyValue> set;
 	auto timestamp = init_time_measurement();
 	for (auto& account : accounts) {
-		set.insert({account, EmptyValue{}});
+		set.insert({account, trie::EmptyValue{}});
 	}
 	auto res = measure_time(timestamp);
 	if (set.size() != accounts.size()) {
@@ -76,10 +82,10 @@ float test_std_map_emptyvalue(const std::vector<AccountID>& accounts) {
 }
 
 float test_std_unordered_map_emptyvalue(const std::vector<AccountID>& accounts) {
-	std::unordered_map<AccountID, EmptyValue> set;
+	std::unordered_map<AccountID, trie::EmptyValue> set;
 	auto timestamp = init_time_measurement();
 	for (auto& account : accounts) {
-		set.insert({account, EmptyValue{}});
+		set.insert({account, trie::EmptyValue{}});
 	}
 	auto res = measure_time(timestamp);
 	if (set.size() != accounts.size()) {
@@ -89,11 +95,11 @@ float test_std_unordered_map_emptyvalue(const std::vector<AccountID>& accounts) 
 }
 
 float test_smallnode_trie_emptyvalue(const std::vector<AccountID>& accounts) {
-	AccountTrie<EmptyValue> trie;
+	trie::RecyclingTrie<trie::EmptyValue> trie;
 	auto serial_trie = trie.open_serial_subsidiary();
 	auto timestamp = init_time_measurement();
 	for (auto& account : accounts) {
-		serial_trie.insert(account, EmptyValue{});
+		serial_trie.insert(account, trie::EmptyValue{});
 	}
 	trie.merge_in(serial_trie);
 	auto res = measure_time(timestamp);
@@ -101,18 +107,17 @@ float test_smallnode_trie_emptyvalue(const std::vector<AccountID>& accounts) {
 		throw std::runtime_error("size mismatch!");
 	}
 	return res; 
-	return 0;
 }
 
-using ValueT = XdrTypeWrapper<AccountModificationTxList>;
-using StaticValueT = XdrTypeWrapper<Offer>;
+using ValueT = AccountModificationTxListWrapper;
+using StaticValueT = OfferWrapper;
 
 
-float test_smallnode_trie_emptyvalue_reuse(const std::vector<AccountID>& accounts, AccountTrie<EmptyValue>& trie) {
+float test_smallnode_trie_emptyvalue_reuse(const std::vector<AccountID>& accounts, trie::RecyclingTrie<trie::EmptyValue>& trie) {
 	auto serial_trie = trie.open_serial_subsidiary();
 	auto timestamp = init_time_measurement();
 	for (auto& account : accounts) {
-		serial_trie.insert(account, EmptyValue{});
+		serial_trie.insert(account, trie::EmptyValue{});
 	}
 	trie.merge_in(serial_trie);
 	auto res = measure_time(timestamp);
@@ -122,10 +127,7 @@ float test_smallnode_trie_emptyvalue_reuse(const std::vector<AccountID>& account
 	return res;
 }
 
-
-
-
-float test_smallnode_trie_reuse(const std::vector<AccountID>& accounts, AccountTrie<ValueT>& trie) {
+float test_smallnode_trie_reuse(const std::vector<AccountID>& accounts, trie::RecyclingTrie<ValueT>& trie) {
 	auto serial_trie = trie.open_serial_subsidiary();
 	ValueT value_buffer;
 	value_buffer.identifiers_self.push_back(27);
@@ -134,7 +136,7 @@ float test_smallnode_trie_reuse(const std::vector<AccountID>& accounts, AccountT
 	for (auto& account : accounts) {
 		value_buffer.owner = account;
 		value_buffer.identifiers_others[0] = TxIdentifier{account + 1, 23};
-		serial_trie.insert(account, value_buffer);
+		serial_trie.insert(account, ValueT(value_buffer));
 	}
 	trie.merge_in(serial_trie);
 	auto res = measure_time(timestamp);
@@ -144,17 +146,20 @@ float test_smallnode_trie_reuse(const std::vector<AccountID>& accounts, AccountT
 	return res;
 } 
 
-float test_smallnode_trie_reuse_offer(const std::vector<AccountID>& accounts, AccountTrie<StaticValueT>& trie) {
+float test_smallnode_trie_reuse_offer(const std::vector<AccountID>& accounts, trie::RecyclingTrie<StaticValueT>& trie) {
 	auto serial_trie = trie.open_serial_subsidiary();
 	//serial_trie.print_offsets();
+
 	StaticValueT value_buffer;
 	value_buffer.amount = 1000;
+
 	auto timestamp = init_time_measurement();
 	for (auto& account : accounts) {
+
 		//value_buffer.owner = account;
 		//value_buffer.identifiers_others[0] = TxIdentifier{account + 1, 23};
 		value_buffer.owner = account;
-		serial_trie.insert(account, value_buffer);
+		serial_trie.insert(account, StaticValueT(value_buffer));
 	}
 	trie.merge_in(serial_trie);
 	auto res = measure_time(timestamp);
@@ -164,7 +169,7 @@ float test_smallnode_trie_reuse_offer(const std::vector<AccountID>& accounts, Ac
 	return res;
 }
 
-float test_smallnode_trie_reuse_offer_hash(const std::vector<AccountID>& accounts, AccountTrie<StaticValueT>& trie) {
+float test_smallnode_trie_reuse_offer_hash(const std::vector<AccountID>& accounts, trie::RecyclingTrie<StaticValueT>& trie) {
 	auto serial_trie = trie.open_serial_subsidiary();
 	//serial_trie.print_offsets();
 	StaticValueT value_buffer;
@@ -173,7 +178,7 @@ float test_smallnode_trie_reuse_offer_hash(const std::vector<AccountID>& account
 		//value_buffer.owner = account;
 		//value_buffer.identifiers_others[0] = TxIdentifier{account + 1, 23};
 		value_buffer.owner = account;
-		serial_trie.insert(account, value_buffer);
+		serial_trie.insert(account, StaticValueT(value_buffer));
 	}
 	trie.merge_in(serial_trie);
 	if (trie.size() != accounts.size()) {
@@ -190,7 +195,7 @@ float test_smallnode_trie_reuse_offer_hash(const std::vector<AccountID>& account
 }
 
 
-float test_smallnode_trie_reuse_txlog_hash(const std::vector<AccountID>& accounts, AccountTrie<ValueT>& trie) {
+float test_smallnode_trie_reuse_txlog_hash(const std::vector<AccountID>& accounts, trie::RecyclingTrie<ValueT>& trie) {
 	auto serial_trie = trie.open_serial_subsidiary();
 	//serial_trie.print_offsets();
 	ValueT value_buffer;
@@ -201,7 +206,7 @@ float test_smallnode_trie_reuse_txlog_hash(const std::vector<AccountID>& account
 		//value_buffer.identifiers_others[0] = TxIdentifier{account + 1, 23};
 		value_buffer.owner = account;
 		value_buffer.identifiers_others[0] = TxIdentifier{account+1, 23};
-		serial_trie.insert(account, value_buffer);
+		serial_trie.insert(account, ValueT(value_buffer));
 	}
 	trie.merge_in(serial_trie);
 	if (trie.size() != accounts.size()) {
@@ -229,7 +234,7 @@ float test_std_map(const std::vector<AccountID>& accounts) {
 	for (auto& account : accounts) {
 		value_buffer.owner = account;
 		value_buffer.identifiers_others[0] = TxIdentifier{account + 1, 23};
-		map.emplace(account, value_buffer);
+		map.emplace(account, ValueT(value_buffer));
 	}
 	auto res = measure_time(timestamp);
 	if (map.size() != accounts.size()) {
@@ -247,7 +252,7 @@ float test_std_unordered_map(const std::vector<AccountID>& accounts) {
 	for (auto& account : accounts) {
 		value_buffer.owner = account;
 		value_buffer.identifiers_others[0] = TxIdentifier{account + 1, 23};
-		map.emplace(account, value_buffer);
+		map.emplace(account, ValueT(value_buffer));
 	}
 	auto res = measure_time(timestamp);
 	if (map.size() != accounts.size()) {
@@ -257,9 +262,9 @@ float test_std_unordered_map(const std::vector<AccountID>& accounts) {
 }
 
 float test_merkle_trie_emptyvalue(const std::vector<AccountID>& accounts) {
-	using LogMetadataT = CombinedMetadata<SizeMixin>;
-	using prefix_t = ByteArrayPrefix<8>;
-	using TrieT = MerkleTrie<prefix_t, EmptyValue, LogMetadataT>;
+	using LogMetadataT = trie::CombinedMetadata<trie::SizeMixin>;
+	using prefix_t = trie::ByteArrayPrefix<8>;
+	using TrieT = trie::MerkleTrie<prefix_t, trie::EmptyValue, LogMetadataT>;
 	auto timestamp = init_time_measurement();
 	prefix_t prefix_buffer;
 	TrieT trie;
@@ -275,9 +280,9 @@ float test_merkle_trie_emptyvalue(const std::vector<AccountID>& accounts) {
 }
 
 float test_merkle_trie(const std::vector<AccountID>& accounts) {
-	using LogMetadataT = CombinedMetadata<SizeMixin>;
-	using prefix_t = ByteArrayPrefix<8>;
-	using TrieT = MerkleTrie<prefix_t, ValueT, LogMetadataT>;
+	using LogMetadataT = trie::CombinedMetadata<trie::SizeMixin>;
+	using prefix_t = trie::ByteArrayPrefix<8>;
+	using TrieT = trie::MerkleTrie<prefix_t, ValueT, LogMetadataT>;
 	auto timestamp = init_time_measurement();
 	prefix_t prefix_buffer;
 	ValueT value_buffer;
@@ -288,7 +293,7 @@ float test_merkle_trie(const std::vector<AccountID>& accounts) {
 		write_unsigned_big_endian(prefix_buffer, account);
 		value_buffer.owner = account;
 		value_buffer.identifiers_others[0] = TxIdentifier{account + 1, 23};
-		trie.insert(prefix_buffer, value_buffer);
+		trie.insert(prefix_buffer, ValueT(value_buffer));
 	}
 	auto res = measure_time(timestamp);
 	if (trie.size() != accounts.size()) {
@@ -318,9 +323,9 @@ int main(int argc, char const *argv[])
 	size_t test = std::stoi(argv[1]);
 	auto accounts = make_accounts(num_accounts);
 
-	AccountTrie<EmptyValue> reuse_trie;
-	AccountTrie<ValueT> reuse_trie_value;
-	AccountTrie<StaticValueT> reuse_static_value_trie;
+	trie::RecyclingTrie<trie::EmptyValue> reuse_trie;
+	trie::RecyclingTrie<ValueT> reuse_trie_value;
+	trie::RecyclingTrie<StaticValueT> reuse_static_value_trie;
 
 	while(true) {
 		float res = 0;

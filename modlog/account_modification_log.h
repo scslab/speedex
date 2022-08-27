@@ -7,19 +7,23 @@ Implicitly assembles a block of transactions during block production.
 */
 
 #include <cstdint>
+#include <cinttypes>
 #include <thread>
 
 #include "config.h"
 
 #include "modlog/file_prealloc_worker.h"
+#include "modlog/typedefs.h"
 
-#include "trie/recycling_impl/trie.h"
+#include "mtt/trie/recycling_impl/trie.h"
 
 #include "utils/background_deleter.h"
-#include "utils/threadlocal_cache.h"
+#include "mtt/utils/threadlocal_cache.h"
 
 #include "xdr/database_commitments.h"
 #include "xdr/types.h"
+
+#include <xdrpp/marshal.h>
 
 
 
@@ -36,16 +40,15 @@ to merge these logs into one main log.
 */
 
 class AccountModificationLog {
-public:
-	using AccountModificationTxListWrapper 
-		= XdrTypeWrapper<AccountModificationTxList>;
 
+public:
+	
 	using LogValueT = AccountModificationTxListWrapper;
 
-	using TrieT = AccountTrie<LogValueT>;
+	using TrieT = trie::RecyclingTrie<LogValueT>;
 	using serial_trie_t = TrieT::serial_trie_t;
 
-	using serial_cache_t = ThreadlocalCache<serial_trie_t>;
+	using serial_cache_t = utils::ThreadlocalCache<serial_trie_t>;
 private:
 
 	serial_cache_t cache;

@@ -3,6 +3,8 @@
 #include "utils/debug_macros.h"
 #include "utils/price.h"
 
+#include "mtt/utils/time.h"
+
 #include <cmath>
 
 namespace speedex {
@@ -567,7 +569,7 @@ void TatonnementOracle::finish_tatonnement_query() {
 TatonnementMeasurements
 TatonnementOracle::compute_prices_grid_search(Price* prices_workspace, const ApproximationParameters approx_params, const uint16_t* v_relativizers) {
 
-	auto timestamp = init_time_measurement();
+	auto timestamp = utils::init_time_measurement();
 
 	//update_approximation_parameters();
 	active_approx_params = approx_params;
@@ -590,7 +592,7 @@ TatonnementOracle::compute_prices_grid_search(Price* prices_workspace, const App
 	for (size_t i = 0; i < num_assets; i++) {
 		prices_workspace[i] = internal_shared_price_workspace[i];
 	}
-	internal_measurements.runtime = measure_time(timestamp);
+	internal_measurements.runtime = utils::measure_time(timestamp);
 
 	return internal_measurements;
 }
@@ -730,7 +732,7 @@ TatonnementOracle::better_grid_search_tatonnement_query(
 		get_supply_demand(prices_workspace, supplies_search, demands_search, work_units, active_approx_params.smooth_mult);//, function_inputs);
 
 	MultifuncTatonnementObjective prev_objective;
-	prev_objective.eval(supplies_search, demands_search, prices_workspace, num_assets);
+	prev_objective.eval(supplies_search, demands_search, prices_workspace, relativizers, num_assets);
 
 	int round_number = 0;
 
@@ -741,11 +743,11 @@ TatonnementOracle::better_grid_search_tatonnement_query(
 	while (true) {
 
 		if (round_number % LP_CHECK_FREQ == LP_CHECK_FREQ - 1) {
-			TAT_INFO_F(auto timestamp = init_time_measurement());
+			TAT_INFO_F(auto timestamp = utils::init_time_measurement());
 			auto solver_res = solver.check_feasibility(trial_prices, lp_instance, active_approx_params);
 			if (solver_res) {
 				clearing = true;
-				TAT_INFO("clearing because lp solver found valid solution: lp time %lf", measure_time(timestamp));
+				TAT_INFO("clearing because lp solver found valid solution: lp time %lf", utils::measure_time(timestamp));
 			}
 		}
 
@@ -793,6 +795,7 @@ TatonnementOracle::better_grid_search_tatonnement_query(
 
 		if (round_number % 10 == 9) {
 			set_relativizers(control_params, relativizers, volume_relativizers, num_assets, demands_search, supplies_search);
+			prev_objective.eval(supplies_workspace, demands_workspace, prices_workspace, relativizers, num_assets);
 		}
 
 
@@ -810,7 +813,7 @@ TatonnementOracle::better_grid_search_tatonnement_query(
 		clearing = check_clearing(demands_workspace, supplies_workspace, active_approx_params.tax_rate, num_assets);
 
 		MultifuncTatonnementObjective new_objective;
-		new_objective.eval(supplies_workspace, demands_workspace, prices_workspace, num_assets);
+		new_objective.eval(supplies_workspace, demands_workspace, prices_workspace, relativizers, num_assets);
 
 		if (round_number % 10000 == 9999) {
 			auto other_finisher = done_tatonnement_flag.load(std::memory_order_acquire);
@@ -827,7 +830,7 @@ TatonnementOracle::better_grid_search_tatonnement_query(
 				return false;
 			}
 		}
-		if (round_number % 100 == -1) {
+		if (round_number % 1000 == -1) {
 			TAT_INFO("ROUND %5d step_size %lf (%lu) objective %lf step_radix %lu", round_number, price::amount_to_double(step, step_radix), step, prev_objective.l2norm_sq, step_radix);
 			for (size_t i = 0; i < num_assets; i++) {
 				double demand = price::amount_to_double(demands_search[i], price::PRICE_RADIX);
@@ -882,11 +885,12 @@ TatonnementOracle::better_grid_search_tatonnement_query(
 		}
 
 		if (recalc_obj) {
-			prev_objective.eval(supplies_workspace, demands_workspace, prices_workspace, num_assets);
+			prev_objective.eval(supplies_workspace, demands_workspace, prices_workspace, relativizers, num_assets);
 		}
 	}
 }
 
+#if 0
 bool
 TatonnementOracle::grid_search_tatonnement_query(
 	TatonnementControlParameters& control_params,
@@ -1099,6 +1103,9 @@ TatonnementOracle::grid_search_tatonnement_query(
 		}
 	}
 }
+
+#endif
+
 
 
 } /* namespace speedex */

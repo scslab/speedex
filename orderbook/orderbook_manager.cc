@@ -236,10 +236,11 @@ size_t OrderbookManager::num_open_offers() const {
 
 }
 
+template<typename DB>
 struct ClearOffersForProductionData {
 	const ClearingParams& params;
 	Price* prices;
-	MemoryDatabase& db;
+	DB& db;
 	OrderbookStateCommitment& clearing_details_out;
 
 	void operator() (
@@ -328,10 +329,27 @@ public:
 
 };
 
+template void OrderbookManager::clear_offers_for_production<MemoryDatabase>(
+	const ClearingParams&,
+	Price*,
+	MemoryDatabase&,
+	AccountModificationLog&,
+	OrderbookStateCommitment&,
+	BlockStateUpdateStatsWrapper&);
+
+template void OrderbookManager::clear_offers_for_production<NullDB>(
+	const ClearingParams&,
+	Price*,
+	NullDB&,
+	AccountModificationLog&,
+	OrderbookStateCommitment&,
+	BlockStateUpdateStatsWrapper&);
+
+template<typename DB>
 void OrderbookManager::clear_offers_for_production(
 	const ClearingParams& params, 
 	Price* prices, 
-	MemoryDatabase& db, 
+	DB& db, 
 	AccountModificationLog& account_log, 
 	OrderbookStateCommitment& clearing_details_out,
 	BlockStateUpdateStatsWrapper& state_update_stats) {
@@ -344,10 +362,10 @@ void OrderbookManager::clear_offers_for_production(
 
 	const size_t work_units_per_batch = 3;
 	
-	ClearOffersForProductionData data{params, prices, db, clearing_details_out};
+	ClearOffersForProductionData<DB> data{params, prices, db, clearing_details_out};
 
 
-	ClearOffersReduce<ClearOffersForProductionData> reduction(account_log, orderbooks, data);
+	ClearOffersReduce<ClearOffersForProductionData<DB>> reduction(account_log, orderbooks, data);
 
 	tbb::parallel_reduce(
 		tbb::blocked_range<size_t>(0, num_orderbooks, work_units_per_batch), 

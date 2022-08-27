@@ -152,11 +152,12 @@ public:
 
 	size_t get_total_nnz() const;
 
+	template<typename DB = MemoryDatabase>
 	//! Clear a set of offers, when operating in block production mode.
 	void clear_offers_for_production(
 		const ClearingParams& params, 
 		Price* prices, 
-		MemoryDatabase& db, 
+		DB& db, 
 		AccountModificationLog& account_log, 
 		OrderbookStateCommitment& clearing_details_out,
 		BlockStateUpdateStatsWrapper& state_update_stats);

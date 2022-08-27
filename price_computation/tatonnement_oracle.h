@@ -56,19 +56,25 @@ struct MultifuncTatonnementObjective {
 	double l2norm_sq = 0;
 	double l8norm = 0;
 
-	void eval(const uint128_t* supplies, const uint128_t* demands, const Price* prices, size_t num_assets) {
+	double p_dot_l1 = 0;
+
+	void eval(const uint128_t* supplies, const uint128_t* demands, const Price* prices, const uint16_t* volume_relativizers, size_t num_assets) {
 		double acc_l2 = 0;
 		double acc_l8 = 0;
+		p_dot_l1 = 0;
 		for (size_t i = 0; i < num_assets; i++) {
 			double diff = price::amount_to_double(supplies[i], price::PRICE_RADIX) - price::amount_to_double(demands[i], price::PRICE_RADIX);
 			
 			#ifndef USE_DEMAND_MULT_PRICES
 				diff *= price::to_double(prices[i]);
 			#endif
+
+			//diff *= volume_relativizers[i];
 			
 			double diff_sq = diff * diff;
 			acc_l2 += diff_sq;
 			acc_l8 += diff_sq * diff_sq * diff_sq * diff_sq;
+			p_dot_l1 -= price::to_double(prices[i]) * diff;
 		}
 		l2norm_sq = acc_l2;
 		l8norm = std::pow(acc_l8, 1.0/8.0);
@@ -76,6 +82,7 @@ struct MultifuncTatonnementObjective {
 
 	bool
 	is_better_than(const MultifuncTatonnementObjective& reference_objective) {
+		//return (p_dot_l1 <= reference_objective.p_dot_l1 * 1.01);
 		return (l2norm_sq <= reference_objective.l2norm_sq * 1.01);
 	//	return (l8norm <= reference_objective.l8norm * 1.1); 
 	}
@@ -180,10 +187,10 @@ class TatonnementOracle {
 
 	//! Run one Tatonnement query with a given set of control params.
 	//! return true if this thread is the first to find successful equilibrium
-	bool grid_search_tatonnement_query(
-		TatonnementControlParameters& control_params, 
-		Price* prices_workspace, 
-		std::unique_ptr<LPInstance>& lp_instance);
+//	bool grid_search_tatonnement_query(
+//		TatonnementControlParameters& control_params, 
+//		Price* prices_workspace, 
+//		std::unique_ptr<LPInstance>& lp_instance);
 	bool better_grid_search_tatonnement_query(
 		TatonnementControlParameters& control_params, 
 		Price* prices_workspace, 

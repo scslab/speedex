@@ -2,6 +2,9 @@
 
 #include "orderbook/typedefs.h"
 
+#include "mtt/trie/metadata.h"
+#include "mtt/trie/merkle_trie.h"
+
 namespace speedex
 {
 
@@ -10,11 +13,11 @@ class MemoryDatabase;
 class SerialOrderbook
 {
 
-	typedef CombinedMetadata<
-			DeletableMixin>
+	typedef trie::CombinedMetadata<
+			trie::DeletableMixin>
 	SerialOBMetadata;
 
-	using ob_t = MerkleTrie<OrderbookTriePrefix, OfferWrapper, SerialOBMetadata, false>;
+	using ob_t = trie::MerkleTrie<OrderbookTriePrefix, OfferWrapper, SerialOBMetadata, false>;
 
 	ob_t ob;
 

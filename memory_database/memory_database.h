@@ -16,11 +16,10 @@
 
 #include "modlog/account_modification_log.h"		
 
-#include "trie/merkle_trie.h"
-#include "trie/prefix.h"
+#include "mtt/trie/merkle_trie.h"
+#include "mtt/trie/prefix.h"
 
-#include "utils/big_endian.h"
-#include "utils/time.h"
+#include "mtt/utils/time.h"
 
 #include "xdr/database_commitments.h"
 #include "xdr/types.h"
@@ -189,13 +188,22 @@ public:
 	constexpr static AssetID NATIVE_ASSET = 0;
 
 	using DBEntryT = UserAccount;
-	using DBMetadataT = CombinedMetadata<SizeMixin>;
-	using DBStateCommitmentValueT = XdrTypeWrapper<AccountCommitment>;
+	using DBMetadataT = trie::CombinedMetadata<trie::SizeMixin>;
 
-	using trie_prefix_t = AccountIDPrefix;
+	static std::vector<uint8_t> 
+	serialize(const AccountCommitment& v)
+	{
+		return xdr::xdr_to_opaque(v);
+	}
+
+	using DBStateCommitmentValueT = trie::XdrTypeWrapper<AccountCommitment, &serialize>;
+
+	//using DBStateCommitmentValueT = XdrTypeWrapper<AccountCommitment>;
+
+	using trie_prefix_t = trie::UInt64Prefix;//AccountIDPrefix;
 
 	using DBStateCommitmentTrie 
-		= MerkleTrie<trie_prefix_t, DBStateCommitmentValueT, DBMetadataT>;
+		= trie::MerkleTrie<trie_prefix_t, DBStateCommitmentValueT, DBMetadataT>;
 
 
 	static inline void write_trie_key(trie_prefix_t& buf, AccountID account) {
@@ -391,10 +399,6 @@ public:
 
 	UserAccount* lookup_user(AccountID account) const;
 
-	//bool lookup_user_id(AccountID account, account_db_idx* index_out) const;
-
-	//input to index is what is returned from lookup
-
 	void transfer_available(
 		UserAccount* user_index, AssetID asset_type, int64_t change);
 
@@ -434,7 +438,6 @@ public:
 
 	AccountCommitment produce_commitment(UserAccount* idx) const {
 		return idx -> produce_commitment();
-		//return database[idx].produce_commitment();
 	}
 
 	/*! Generate a peristence thunk given a log of which accounts were modified.
@@ -468,14 +471,13 @@ public:
 		std::function<void(UserAccount&)> account_init_lambda);
 };
 
-class NullDB : public MemoryDatabase {
+class NullDB {
 
 	UserAccount* mockAccount;
 public:
 
 	NullDB()
-		: MemoryDatabase()
-		, mockAccount(new UserAccount())
+		: mockAccount(new UserAccount())
 		{}
 	~NullDB()
 	{

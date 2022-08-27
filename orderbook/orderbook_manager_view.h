@@ -22,6 +22,8 @@ a crash could result in an unrecoverable state.
 #include "orderbook/typedefs.h"
 #include "orderbook/utils.h"
 
+#include "mtt/trie/utils.h"
+
 
 namespace speedex {
 
@@ -41,51 +43,18 @@ public:
 
 
 	LoadLMDBManagerView(
-		uint64_t current_block_number, OrderbookManager& main_manager)
-	: current_block_number(current_block_number)
-	, main_manager(main_manager) {}
+		uint64_t current_block_number, OrderbookManager& main_manager);
 
-
-	void add_offers(int idx, trie_t&& trie) {
-		if (main_manager.get_persisted_round_number(idx) 
-				< current_block_number) {
-			
-			main_manager.add_offers(idx, std::move(trie));
-		}
-	}
+	void add_offers(int idx, trie_t&& trie);
 
 	std::optional<Offer> 
-	mark_for_deletion(int idx, const prefix_t& key) {
-		if (main_manager.get_persisted_round_number(idx) 
-				< current_block_number) {
+	mark_for_deletion(int idx, const prefix_t& key) ;
 
-			return main_manager.mark_for_deletion(idx, key);
-		}
-		// Again, problem if memory database does not already reflect
-		// the quantity of the asset that would normally be refunded
-		// upon offer cancellation.
-		return Offer();
-	}
+	void unmark_for_deletion (int idx, const prefix_t& key);
 
-	void unmark_for_deletion (int idx, const prefix_t& key) {
-		if (main_manager.get_persisted_round_number(idx) 
-				< current_block_number) {
-
-			main_manager.unmark_for_deletion(idx, key);
-		}
-	}
-
-	unsigned int get_num_orderbooks() const {
-		return main_manager.get_num_orderbooks();
-	}
-
-	int get_num_assets() const {
-		return main_manager.get_num_assets();
-	}
-
-	int look_up_idx(const OfferCategory& id) const {
-		return main_manager.look_up_idx(id);
-	}
+	unsigned int get_num_orderbooks() const;
+	int get_num_assets() const;
+	int look_up_idx(const OfferCategory& id) const;
 
 };
 
@@ -339,7 +308,7 @@ public:
 		}
 
 		// Otherwise, compare the offer's key to the partial exec threshold.
-		auto key_buf_bytes = key_buf.get_bytes_array();
+		auto key_buf_bytes = key_buf.template get_bytes_array<xdr::opaque_array<ORDERBOOK_KEY_LEN>>();
 		auto res = memcmp(
 			clearing_commitment[idx].partialExecThresholdKey.data(), 
 			key_buf_bytes.data(), 
@@ -353,7 +322,7 @@ public:
 
 			// Insertions are marked with rollback metadata, in case
 			// we rollback the whole block later (for some unrelated reason).
-			new_offers.at(idx).template insert<RollbackInsertFn<OfferWrapper>> (
+			new_offers.at(idx).template insert<trie::RollbackInsertFn<OfferWrapper>> (
 				key_buf, OfferWrapper(offer));
 		} else {
 			// Threshold key is strictly bigger than offer's key.

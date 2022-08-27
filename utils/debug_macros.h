@@ -18,8 +18,6 @@ Printouts include file/line information.
 
 #define DEBUG_LEVEL DEBUG_LEVEL_ERROR
 
-#define TRIE_DEBUG DEBUG_LEVEL_ERROR
-
 #define TATONNEMENT_DEBUG DEBUG_LEVEL_INFO
 
 #define TRANSACTION_DEBUG DEBUG_LEVEL_NONE
@@ -102,22 +100,6 @@ Printouts include file/line information.
 #else
 #define TRACE(s, ...) (void)0
 #define TRACE_F(s) (void)0
-#endif
-
-#if TRIE_DEBUG <= DEBUG_LEVEL_ERROR
-#define TRIE_ERROR(s, ...) LOG(s, __VA_ARGS__)
-#define TRIE_ERROR_F(s) s
-#else
-#define TRIE_ERROR(s, ...) (void)0
-#define TRIE_ERROR_F(s) (void)0
-#endif
-
-#if TRIE_DEBUG <= DEBUG_LEVEL_INFO
-#define TRIE_INFO(s, ...) LOG(s, __VA_ARGS__)
-#define TRIE_INFO_F(s) s
-#else
-#define TRIE_INFO(s, ...) (void)0
-#define TRIE_INFO_F(s) (void)0
 #endif
 
 #if TATONNEMENT_DEBUG <= DEBUG_LEVEL_INFO

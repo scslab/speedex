@@ -3,7 +3,7 @@
 #include "xdr/transaction.h"
 #include "xdr/types.h"
 
-#include "trie/prefix.h"
+#include "mtt/trie/prefix.h"
 
 #include <cstdint>
 #include <map>
@@ -56,11 +56,11 @@ public:
 
 struct AccountFilterInsertFn
 {
-    static AccountFilterEntry new_value(AccountIDPrefix const& prefix)
+    static AccountFilterEntry new_value(trie::UInt64Prefix const& prefix)
     {
         try
         {
-            return AccountFilterEntry(prefix.get_account());
+            return AccountFilterEntry(prefix.uint64());
         }
         catch (...)
         {

@@ -1,11 +1,16 @@
 #include "block_header_hash_map.h"
 
-#include "utils/big_endian.h"
+#include "mtt/utils/serialize_endian.h"
 #include "utils/hash.h"
+
+#include "utils/debug_macros.h"
+#include "utils/debug_utils.h"
 
 namespace speedex {
 
 using xdr::operator==;
+
+using key_byte_array_t = std::array<uint8_t, BlockHeaderHashMap::KEY_LEN>;
 
 void 
 BlockHeaderHashMapLMDB::open_env() {
@@ -28,7 +33,7 @@ void BlockHeaderHashMap::insert(const Block& block, bool res) {
 
 	prefix_t key_buf;
 
-	write_unsigned_big_endian(key_buf, block_number);
+	utils::write_unsigned_big_endian(key_buf, block_number);
 
 	BlockHeaderHashValue value;
 	value.hash = hash_xdr(block);
@@ -55,8 +60,9 @@ void BlockHeaderHashMap::persist_lmdb(uint64_t current_block_number) {
 		if (i == 0) continue;
 		TrieT::prefix_t round_buf;
 
-		write_unsigned_big_endian(round_buf, i);
-		auto round_bytes = round_buf.get_bytes_array();
+		utils::write_unsigned_big_endian(round_buf, i);
+
+		auto round_bytes = round_buf.template get_bytes_array<key_byte_array_t>();
 		dbval key{round_bytes};
 
 		// querying for round i
@@ -88,7 +94,7 @@ BlockHeaderHashMap::rollback_to_committed_round(uint64_t committed_block_number)
 	for (uint64_t i = committed_block_number + 1; i <= last_committed_block_number; i++) {
 		if (i == 0) continue;
 		TrieT::prefix_t round_buf;
-		write_unsigned_big_endian(round_buf, i);
+		utils::write_unsigned_big_endian(round_buf, i);
 
 		if (!block_map.perform_deletion(round_buf)) {
 			throw std::runtime_error("error when deleting from header hash map");
@@ -104,10 +110,13 @@ void BlockHeaderHashMap::load_lmdb_contents_to_memory() {
 
 	for (auto kv : cursor) {
 		auto bytes = kv.first.bytes();
+
+		TrieT::prefix_t prefix;
+		prefix.from_bytes_array(bytes);
+
 		uint64_t round_number;
 
-		read_unsigned_big_endian(bytes.data(), round_number);
-
+		utils::read_unsigned_big_endian(prefix, round_number);
 
 		if (round_number > lmdb_instance.get_persisted_round_number()) {
 
@@ -121,7 +130,7 @@ void BlockHeaderHashMap::load_lmdb_contents_to_memory() {
 		}
 
 		prefix_t round_buf;
-		write_unsigned_big_endian(round_buf, round_number);
+		utils::write_unsigned_big_endian(round_buf, round_number);
 
 		BlockHeaderHashValue block;
 		//if (kv.second.mv_size != 32) {
@@ -145,7 +154,7 @@ BlockHeaderHashMap::get(uint64_t round_number) const {
 	}
 
 	prefix_t round_buf;
-	write_unsigned_big_endian(round_buf, round_number);
+	utils::write_unsigned_big_endian(round_buf, round_number);
 	auto out_opt = block_map.get_value(round_buf);
 
 	if (!out_opt) {

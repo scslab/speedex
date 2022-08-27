@@ -408,7 +408,7 @@ void MemoryDatabase::tentative_produce_state_commitment(Hash& hash, const Accoun
 
 	ParallelApplyLambda<TentativeValueModifyLambda> apply_lambda{commitment_trie, func};
 
-	std::printf("starting tentative_produce_state_commitment, size = %" PRIu64 "\n", commitment_trie.size());
+	std::printf("starting tentative_produce_state_commitment, size = %" PRIu32 "\n", commitment_trie.size());
 
 	log.parallel_iterate_over_log(apply_lambda);
 
@@ -421,7 +421,7 @@ void MemoryDatabase::set_trie_commitment_to_user_account_commits(const AccountMo
 
 	ParallelApplyLambda<ProduceValueModifyLambda> apply_lambda{commitment_trie, func};
 
-	std::printf("starting produce_state_commitment, size = %" PRIu64 "\n", commitment_trie.size());
+	std::printf("starting produce_state_commitment, size = %" PRIu32 "\n", commitment_trie.size());
 
 	log.parallel_iterate_over_log(apply_lambda);
 }

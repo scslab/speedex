@@ -3,6 +3,8 @@
 #include <atomic>
 #include <cstdint>
 
+#include "mtt/utils/threadlocal_cache.h"
+
 #include <xdrpp/marshal.h>
 
 namespace speedex {
@@ -44,7 +46,7 @@ struct AccountModificationBlockWrapper {
 template<typename TxListOp>
 class ParallelValidate {
 	using serial_cache_t
-		= ThreadlocalCache<SerialTransactionValidator<OrderbookManager>>;
+		= utils::ThreadlocalCache<SerialTransactionValidator<OrderbookManager>>;
 
 	const TxListOp& txs;
 	SpeedexManagementStructures& management_structures;
@@ -124,7 +126,7 @@ BlockValidator::validate_transaction_block_(
 	BlockStateUpdateStatsWrapper& stats) {
 	
 	using serial_cache_t
-		= ThreadlocalCache<SerialTransactionValidator<OrderbookManager>>;
+		= utils::ThreadlocalCache<SerialTransactionValidator<OrderbookManager>>;
 
 	serial_cache_t serial_validator_cache;
 
@@ -141,7 +143,7 @@ BlockValidator::validate_transaction_block_(
 		throw std::runtime_error("forgot to clear mod log");
 	}
 
-	auto timestamp = init_time_measurement();
+	auto timestamp = utils::init_time_measurement();
 
 	auto range = tbb::blocked_range<size_t>(
 		0, transactions.size(), VALIDATION_BATCH_SIZE);
@@ -156,11 +158,11 @@ BlockValidator::validate_transaction_block_(
 
 	stats += validator.state_update_stats;
 
-	measurements.tx_validation_processing_time = measure_time(timestamp);
+	measurements.tx_validation_processing_time = utils::measure_time(timestamp);
 
 	worker.do_merge();
 
-	auto offer_timestamp = init_time_measurement();
+	auto offer_timestamp = utils::init_time_measurement();
 
 	size_t num_orderbooks 
 		= management_structures.orderbook_manager.get_num_orderbooks();
@@ -184,13 +186,13 @@ BlockValidator::validate_transaction_block_(
 		}
 	}
 
-	measurements.tx_validation_offer_merge_time = measure_time(offer_timestamp);
+	measurements.tx_validation_offer_merge_time = utils::measure_time(offer_timestamp);
 
 	BLOCK_INFO("waiting for merge_in_log_batch join");
 
 	worker.wait_for_merge_finish();
 
-	measurements.tx_validation_trie_merge_time = measure_time(timestamp);
+	measurements.tx_validation_trie_merge_time = utils::measure_time(timestamp);
 
 	BLOCK_INFO("tx validation success, checking db state");
 	auto res = management_structures.db.check_valid_state(

@@ -4,19 +4,31 @@
 
 #include "orderbook/metadata.h"
 
-#include "trie/merkle_trie.h"
-#include "trie/metadata.h"
-#include "trie/prefix.h"
-#include "trie/utils.h"
+#include "mtt/trie/merkle_trie.h"
+#include "mtt/trie/metadata.h"
+#include "mtt/trie/prefix.h"
+#include "mtt/trie/utils.h"
 
 #include "utils/big_endian.h"
 #include "utils/price.h"
 
 #include "xdr/types.h"
 
+#include <xdrpp/marshal.h>
+
 namespace speedex {
 
-typedef XdrTypeWrapper<Offer> OfferWrapper;
+struct OrderbookMethods
+{
+	// warning police: sidesteps anonymous namespace warnings -Wsubobject-linkage
+	static std::vector<uint8_t> 
+	serialize(const Offer& v)
+	{
+		return xdr::xdr_to_opaque(v);
+	}
+};
+
+typedef trie::XdrTypeWrapper<Offer, &OrderbookMethods::serialize> OfferWrapper;
 
 constexpr static size_t ORDERBOOK_KEY_LEN 
 	= price::PRICE_BYTES + sizeof(AccountID) + sizeof(uint64_t);
@@ -24,15 +36,15 @@ constexpr static size_t ORDERBOOK_KEY_LEN
 static_assert(OFFER_KEY_LEN_BYTES == ORDERBOOK_KEY_LEN,
 	"Accounting mismatch in offer key len!");
 
-typedef CombinedMetadata<
-			DeletableMixin, 
-			SizeMixin, 
-			RollbackMixin, 
+typedef trie::CombinedMetadata<
+			trie::DeletableMixin, 
+			trie::SizeMixin, 
+			trie::RollbackMixin, 
 			OrderbookMetadata>
 	OrderbookTrieMetadata;
 
 typedef  
-	ByteArrayPrefix<ORDERBOOK_KEY_LEN>
+	trie::ByteArrayPrefix<ORDERBOOK_KEY_LEN>
 	OrderbookTriePrefix;
 
 static void generate_orderbook_trie_key(
@@ -57,7 +69,7 @@ generate_orderbook_trie_key(const Offer& offer, OrderbookTriePrefix& buf) {
 }
 
 typedef  
-	MerkleTrie<OrderbookTriePrefix, OfferWrapper, OrderbookTrieMetadata, false>
+	trie::MerkleTrie<OrderbookTriePrefix, OfferWrapper, OrderbookTrieMetadata, false>
 	OrderbookTrie;
 
 

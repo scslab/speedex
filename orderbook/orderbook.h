@@ -13,6 +13,8 @@ Manage a set of offers trading one fixed asset for another fixed asset.
 
 #include <xdrpp/marshal.h>
 
+#include "utils/debug_macros.h"
+
 #include "memory_database/memory_database.h"
 
 #include "modlog/account_modification_log.h"
@@ -28,10 +30,6 @@ Manage a set of offers trading one fixed asset for another fixed asset.
 
 #include "stats/block_update_stats.h"
 
-#include "trie/merkle_trie.h"
-
-#include "utils/big_endian.h"
-#include "utils/price.h"
 
 namespace speedex {
 
@@ -88,7 +86,7 @@ class Orderbook {
 		}
 	};
 
-	using IndexType = IndexedMetadata
+	using IndexType = trie::IndexedMetadata
 					<
 						EndowAccumulator,
 						Price,
@@ -174,12 +172,12 @@ public:
 		committed_offers._log("committed_offers: ");
 	}
 
-
+	template<typename DB>
 	void process_clear_offers(
 		const OrderbookClearingParams& params, 
 		const Price* prices, 
 		const uint8_t& tax_rate, 
-		MemoryDatabase& db,
+		DB& db,
 		SerialAccountModificationLog& serial_account_log,
 		SingleOrderbookStateCommitment& clearing_commitment_log,
 		BlockStateUpdateStatsWrapper& state_update_stats);

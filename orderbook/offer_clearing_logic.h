@@ -48,6 +48,7 @@ clear_offer_full(
 out_sell_amount is the amount deducted from the offer that partially
 clears.
 */
+template<typename Database>
 [[maybe_unused]]
 static void
 clear_offer_partial(
@@ -56,7 +57,7 @@ clear_offer_partial(
 	const Price& buyPrice,
 	const uint8_t tax_rate,
 	const FractionalAsset& remaining_to_clear, 
-	MemoryDatabase& db,
+	Database& db,
 	UserAccount* db_idx,
 	int64_t& out_sell_amount, 
 	int64_t& out_buy_amount) {

@@ -13,9 +13,9 @@ millions of blocks.
 
 #include "lmdb/lmdb_wrapper.h"
 
-#include "trie/merkle_trie.h"
-#include "trie/metadata.h"
-#include "trie/prefix.h"
+#include "mtt/trie/merkle_trie.h"
+#include "mtt/trie/metadata.h"
+#include "mtt/trie/prefix.h"
 
 #include "xdr/types.h"
 #include "xdr/block.h"
@@ -48,15 +48,21 @@ struct BlockHeaderHashMapLMDB : public LMDBInstance {
 
 /*! Stores a merkle trie mapping block numbers to block root hashes.
 */
-struct BlockHeaderHashMap {
-	using ValueT = XdrTypeWrapper<BlockHeaderHashValue>;
-	constexpr static unsigned int KEY_LEN = sizeof(uint64_t);
+class BlockHeaderHashMap {
 
-	using prefix_t = ByteArrayPrefix<KEY_LEN>;
+	static std::vector<uint8_t> 
+	serialize(const BlockHeaderHashValue& v)
+	{
+		return xdr::xdr_to_opaque(v);
+	}
 
-	using MetadataT = CombinedMetadata<SizeMixin>;
+	using ValueT = trie::XdrTypeWrapper<BlockHeaderHashValue, &serialize>;
 
-	using TrieT = MerkleTrie<prefix_t, ValueT, MetadataT>;
+	using prefix_t = trie::UInt64Prefix;//trie::ByteArrayPrefix<KEY_LEN>;
+
+	using MetadataT = trie::CombinedMetadata<trie::SizeMixin>;
+
+	using TrieT = trie::MerkleTrie<prefix_t, ValueT, MetadataT>;
 
 	TrieT block_map;
 
@@ -65,6 +71,8 @@ struct BlockHeaderHashMap {
 	uint64_t last_committed_block_number;
 
 public:
+	
+	constexpr static unsigned int KEY_LEN = sizeof(uint64_t);
 
 	//! Construct empty map.
 	BlockHeaderHashMap() 

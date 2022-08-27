@@ -12,7 +12,7 @@ SerialOrderbook::add_offer(Offer const& offer)
 
 	generate_orderbook_trie_key(offer, prefix);
 
-	ob.insert(prefix, offer);
+	ob.insert(prefix, OfferWrapper(offer));
 }
 
 
@@ -118,7 +118,7 @@ SerialOrderbook::try_execute(const Price& max_price, const uint64_t sell_amount,
 
 		generate_orderbook_trie_key(final_offer, prefix);
 
-		ob.insert(prefix, final_offer);
+		ob.insert(prefix, OfferWrapper(final_offer));
 	//	std::printf("inserting final offer\n");
 	}
 

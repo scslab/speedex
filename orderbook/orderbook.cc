@@ -11,19 +11,20 @@ namespace speedex {
 
 //! Lambda which, when applied to an offer trie, fully clears
 //! all of the offers in said trie.
+template<typename DB>
 class CompleteClearingFunc
 {
     const Price sellPrice;
     const Price buyPrice;
     const uint8_t tax_rate;
-    MemoryDatabase& db;
+    DB& db;
     SerialAccountModificationLog& serial_account_log;
 
   public:
     CompleteClearingFunc(Price sellPrice,
                          Price buyPrice,
                          uint8_t tax_rate,
-                         MemoryDatabase& db,
+                         DB& db,
                          SerialAccountModificationLog& serial_account_log)
         : sellPrice(sellPrice)
         , buyPrice(buyPrice)
@@ -95,7 +96,7 @@ Orderbook::undo_thunk(OrderbookLMDBCommitmentThunk& thunk)
     committed_offers.perform_marked_deletions();
 
     if (thunk.get_exists_partial_exec()) {
-        auto bytes_array = thunk.partial_exec_key.get_bytes_array();
+        auto bytes_array = thunk.partial_exec_key.template get_bytes_array<std::array<uint8_t, ORDERBOOK_KEY_LEN>>();
         std::printf("key:%s\n",
                     debug::array_to_str(bytes_array.data(), bytes_array.size())
                         .c_str());
@@ -882,7 +883,7 @@ Orderbook::tentative_clear_offers_for_validation(
                         category.sellAsset,
                         category.buyAsset,
                         endow_below_partial_exec_key);
-            std::printf("committed offers sz was %" PRIu64 "\n",
+            std::printf("committed offers sz was %" PRIu32 "\n",
                         committed_offers.size());
             std::fflush(stdout);
             throw;
@@ -916,7 +917,7 @@ Orderbook::tentative_clear_offers_for_validation(
     if (db_idx == nullptr) {
         std::printf("couldn't lookup user\n");
         committed_offers.insert(local_clearing_log.partialExecThresholdKey,
-                                partial_exec_offer);
+                                std::move(partial_exec_offer));
         return false;
     }
 
@@ -937,7 +938,7 @@ Orderbook::tentative_clear_offers_for_validation(
                     partial_exec_sell_amount,
                     partial_exec_offer.amount);
         committed_offers.insert(local_clearing_log.partialExecThresholdKey,
-                                partial_exec_offer);
+                                std::move(partial_exec_offer));
         return false;
     }
 
@@ -970,18 +971,37 @@ Orderbook::tentative_clear_offers_for_validation(
     if (partial_exec_offer.amount != 0) {
         // added if statement 4/22/2021
         committed_offers.insert(local_clearing_log.partialExecThresholdKey,
-                                partial_exec_offer);
+                                std::move(partial_exec_offer));
         state_update_stats.partial_clear_offer_count++;
     }
     return true;
 }
 
+template void Orderbook::process_clear_offers<MemoryDatabase>(
+    const OrderbookClearingParams&,
+    const Price*,
+    const uint8_t&,
+    MemoryDatabase&,
+    SerialAccountModificationLog&,
+    SingleOrderbookStateCommitment&,
+    BlockStateUpdateStatsWrapper&);
+
+template void Orderbook::process_clear_offers<NullDB>(
+    const OrderbookClearingParams&,
+    const Price*,
+    const uint8_t&,
+    NullDB&,
+    SerialAccountModificationLog&,
+    SingleOrderbookStateCommitment&,
+    BlockStateUpdateStatsWrapper&);
+
+template<typename DB>
 void
 Orderbook::process_clear_offers(
     const OrderbookClearingParams& params,
     const Price* prices,
     const uint8_t& tax_rate,
-    MemoryDatabase& db,
+    DB& db,
     SerialAccountModificationLog& serial_account_log,
     SingleOrderbookStateCommitment& clearing_commitment_log,
     BlockStateUpdateStatsWrapper& state_update_stats)
@@ -1100,7 +1120,7 @@ Orderbook::process_clear_offers(
         *partial_exec_key, sell_amount, partial_exec_offer);
 
     clearing_commitment_log.partialExecThresholdKey
-        = partial_exec_key->get_bytes_array();
+        = partial_exec_key->template get_bytes_array<xdr::opaque_array<ORDERBOOK_KEY_LEN>>();
 
     partial_exec_offer.amount -= sell_amount;
 
@@ -1110,7 +1130,7 @@ Orderbook::process_clear_offers(
     if (partial_exec_offer.amount > 0) {
         // std::printf("starting last committed offers insert\n");
         // committed_offers._log("committed offers ");
-        committed_offers.insert(*partial_exec_key, partial_exec_offer);
+        committed_offers.insert(*partial_exec_key, std::move(partial_exec_offer));
         // std::printf("ending last committed offers insert\n");
         state_update_stats.partial_clear_offer_count++;
     } else if (partial_exec_offer.amount < 0) {

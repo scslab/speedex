@@ -1,12 +1,15 @@
 #include "orderbook/lmdb.h"
 
 #include "utils/price.h"
+#include "utils/debug_macros.h"
 
 #include <cinttypes>
 #include <set>
 
 namespace speedex
 {
+
+using get_bytes_array_t = std::array<uint8_t, ORDERBOOK_KEY_LEN>;
 
 // Commits everything up to and including current_block_number
 std::unique_ptr<ThunkGarbage<typename OrderbookLMDB::trie_t>> __attribute__((
@@ -93,7 +96,7 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number,
         for (auto& delete_kv : thunk.deleted_keys.deleted_keys)
         {
             auto& delete_key = delete_kv.first;
-            auto bytes = delete_key.get_bytes_array();
+            auto bytes = delete_key.template get_bytes_array<get_bytes_array_t>();
             dbval key = dbval{ bytes };
             if (!wtx.del(get_data_dbi(), key))
             {
@@ -127,7 +130,7 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number,
 
     // auto begin_cursor = wtx.cursor_open(dbi).begin();
 
-    auto key_buf_bytes = key_buf.get_bytes_array();
+    auto key_buf_bytes = key_buf.template get_bytes_array<get_bytes_array_t>();
 
     dbval key = dbval{ key_buf_bytes };
 
@@ -259,7 +262,7 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number,
                 if (db_put)
                 {
 
-                    auto offer_key_buf_bytes = offer_key_buf.get_bytes_array();
+                    auto offer_key_buf_bytes = offer_key_buf.template get_bytes_array<get_bytes_array_t>();
                     dbval db_key = dbval{ offer_key_buf_bytes };
 
                     auto value_buf = xdr::xdr_to_opaque(cur_offer);
@@ -320,7 +323,7 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number,
         }
 
         auto partial_exec_key_bytes
-            = relevant_thunks[i].partial_exec_key.get_bytes_array();
+            = relevant_thunks[i].partial_exec_key.template get_bytes_array<get_bytes_array_t>();
         dbval partial_exec_key{
             partial_exec_key_bytes
         }; //(relevant_thunks[i].partial_exec_key.data(),
@@ -450,7 +453,7 @@ OrderbookLMDB::write_thunks(const uint64_t current_block_number,
                 // fully clears in future.
                 //  We already took care of the 0 case in the preceding loop.
                 auto partial_exec_key_bytes
-                    = relevant_thunks[i].partial_exec_key.get_bytes_array();
+                    = relevant_thunks[i].partial_exec_key.template get_bytes_array<get_bytes_array_t>();
                 dbval partial_exec_key{
                     partial_exec_key_bytes
                 }; //(relevant_thunks[i].partial_exec_key.data(),

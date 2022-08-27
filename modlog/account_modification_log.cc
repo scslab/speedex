@@ -19,7 +19,6 @@ AccountModificationLog::hash(Hash& hash)
     modification_log.hash<LogNormalizeFn>(hash);
 
     float res = measure_time(timestamp);
-    modification_log.sz_check();
 
     *persistable_block
         = modification_log
@@ -112,7 +111,7 @@ SerialAccountModificationLog::log_self_modification(AccountID owner,
                                                     uint64_t sequence_number)
 {
     modification_log.template insert<LogInsertFn, uint64_t>(owner,
-                                                            sequence_number);
+                                                            std::move(sequence_number));
 }
 
 void
@@ -122,7 +121,7 @@ SerialAccountModificationLog::log_other_modification(AccountID tx_owner,
 {
     TxIdentifier value{ tx_owner, sequence_number };
     modification_log.template insert<LogInsertFn, TxIdentifier>(
-        modified_account, value);
+        modified_account, std::move(value));
 }
 
 void
@@ -131,7 +130,7 @@ SerialAccountModificationLog::log_new_self_transaction(
 {
     AccountID sender = tx.transaction.metadata.sourceAccount;
     modification_log.template insert<LogInsertFn, SignedTransaction>(sender,
-                                                                     tx);
+                                                                     SignedTransaction(tx));
 }
 
 void

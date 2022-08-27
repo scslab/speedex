@@ -7,7 +7,9 @@
 
 #include "block_processing/serial_transaction_processor.h"
 
-#include "utils/threadlocal_cache.h"
+#include "mtt/utils/threadlocal_cache.h"
+
+#include "mtt/utils/time.h"
 
 #include "xdr/block.h"
 #include <inttypes.h>
@@ -46,7 +48,7 @@ bool delete_tx_from_mempool(TransactionProcessingStatus status) {
 class BlockProductionReduce {
 	SpeedexManagementStructures& management_structures;
 	Mempool& mempool;
-	ThreadlocalCache<SerialTransactionProcessor>& serial_processor_cache;
+	utils::ThreadlocalCache<SerialTransactionProcessor>& serial_processor_cache;
 	std::atomic<int64_t>& remaining_block_space;
 	std::atomic<uint64_t>& total_block_size;
 
@@ -139,7 +141,7 @@ public:
 	BlockProductionReduce(
 		SpeedexManagementStructures& management_structures,
 		Mempool& mempool,
-		ThreadlocalCache<SerialTransactionProcessor>& serial_processor_cache,
+		utils::ThreadlocalCache<SerialTransactionProcessor>& serial_processor_cache,
 		std::atomic<int64_t>& remaining_block_space,
 		std::atomic<uint64_t>& total_block_size)
 		: management_structures(management_structures)
@@ -165,7 +167,7 @@ BlockProducer::build_block(
 		throw std::runtime_error("forgot to clear mod log");
 	}
 
-	ThreadlocalCache<SerialTransactionProcessor> serial_processor_cache;
+	utils::ThreadlocalCache<SerialTransactionProcessor> serial_processor_cache;
 
 	auto lock = mempool.lock_mempool();
 
@@ -184,11 +186,11 @@ BlockProducer::build_block(
 
 	BLOCK_INFO("starting produce block from mempool, max size=%ld", max_block_size);
 
-	auto timestamp = init_time_measurement();
+	auto timestamp = utils::init_time_measurement();
 
 	tbb::parallel_reduce(range, producer);
 
-	BLOCK_INFO("done produce block from mempool: duration %lf", measure_time(timestamp));
+	BLOCK_INFO("done produce block from mempool: duration %lf", utils::measure_time(timestamp));
 
 	MEMPOOL_INFO_F(
 		for (auto iter = producer.status_counts.begin(); iter != producer.status_counts.end(); iter++) {
@@ -203,7 +205,7 @@ BlockProducer::build_block(
 	size_t num_orderbooks 
 		= management_structures.orderbook_manager.get_num_orderbooks();
 
-	auto offer_merge_timestamp = init_time_measurement();
+	auto offer_merge_timestamp = utils::init_time_measurement();
 	tbb::parallel_for(
 		tbb::blocked_range<size_t>(0, num_orderbooks),
 		[&serial_processor_cache] (auto r) {
@@ -223,7 +225,7 @@ BlockProducer::build_block(
 			proc->extract_manager_view().partial_finish_conclude();
 	}
 
-	measurements.offer_merge_time = measure_time(offer_merge_timestamp);
+	measurements.offer_merge_time = utils::measure_time(offer_merge_timestamp);
 	BLOCK_INFO("merging in new offers took %lf", measurements.offer_merge_time);
 
 	uint64_t block_size = total_block_size.load(std::memory_order_relaxed);

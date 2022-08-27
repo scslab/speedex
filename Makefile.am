@@ -83,7 +83,8 @@ ORDERBOOK_SRCS = \
 	orderbook/lmdb.cc \
 	orderbook/offer_clearing_params.cc \
 	orderbook/orderbook.cc \
-	orderbook/orderbook_manager.cc
+	orderbook/orderbook_manager.cc \
+	orderbook/orderbook_manager_view.cc
 
 ORDERBOOK_TEST_SRCS = \
 	orderbook/tests/test_demand_calc.h
@@ -188,6 +189,7 @@ AM_CPPFLAGS = \
 	$(tbb_CFLAGS) \
 	$(lmdb_CFLAGS) \
 	$(lemon_CFLAGS) \
+	$(merkle_trie_toolkit_CFLAGS) \
 	$(hotstuff_CFLAGS)
 
 LDADD = \
@@ -199,6 +201,7 @@ LDADD = \
 	$(tbb_LIBS) \
 	$(lmdb_LIBS) \
 	$(lemon_LIBS) \
+	$(merkle_trie_toolkit_LIBS) \
 	$(hotstuff_LIBS) \
 	-lglpk
 
@@ -217,9 +220,8 @@ TEST_SRCS = \
 	$(HEADER_HASH_TEST_SRCS) \
 	$(MEMORY_DATABASE_TEST_SRCS) \
 	$(ORDERBOOK_TEST_SRCS) \
-	$(SIMPLEX_TEST_SRCS) \
-	$(TRIE_TEST_SRCS)
-
+	$(SIMPLEX_TEST_SRCS)
+	
 test_runner.cc : $(TEST_SRCS) $(XHFILES)
 	cxxtestgen --error-printer -o test_runner.cc $(TEST_SRCS)
 

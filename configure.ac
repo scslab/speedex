@@ -89,6 +89,7 @@ ABS_TOP_DIR=$ac_pwd
 export ABS_TOP_DIR
 
 AX_PKGCONFIG_SUBDIR(lib/hotstuff)
+AX_PKGCONFIG_SUBDIR(lib/merkle_trie_toolkit)
 
 export xdrpp_INTERNAL
 global_xdrpp_CFLAGS=$xdrpp_CFLAGS
