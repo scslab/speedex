@@ -116,6 +116,7 @@ SIMPLEX_TEST_SRCS = \
 SPEEDEX_SRCS = \
 	speedex/autorollback_validation_structures.cc \
 	speedex/reload_from_hotstuff.cc \
+	speedex/speedex_management_structures.cc \
 	speedex/speedex_measurements.cc \
 	speedex/speedex_operation.cc \
 	speedex/speedex_options.cc \

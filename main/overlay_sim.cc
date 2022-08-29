@@ -12,7 +12,7 @@
 #include "mempool/mempool.h"
 
 #include <iostream>
-
+#include <cinttypes>
 #include <optional>
 
 #include <getopt.h>
@@ -94,7 +94,7 @@ int main(int argc, char **argv)
 
 	while (true) {
 		std::cin.get();
-		std::printf("mempool size: %lu\n", mp.total_size());
+		std::printf("mempool size: %" PRIu64 "\n", mp.total_size());
 		mp.push_mempool_buffer_to_mempool();
 		mp.drop_txs(550'000);
 	}

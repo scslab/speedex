@@ -6,8 +6,6 @@ Store all of the data structures used in Speedex in one convenient
 wrapper class.
 */
 
-#include "automation/get_experiment_vars.h"
-
 #include "header_hash/block_header_hash_map.h"
 
 #include "memory_database/memory_database.h"
@@ -25,11 +23,9 @@ wrapper class.
 namespace speedex {
 
 struct SpeedexRuntimeConfigs {
-	bool check_sigs;
+	const bool check_sigs;
 
-	SpeedexRuntimeConfigs()
-		: check_sigs(get_check_sigs())
-		{}
+	SpeedexRuntimeConfigs();
 };
 
 //! All of the data structures involved in running a SPEEDEX instance.
@@ -45,27 +41,14 @@ struct SpeedexManagementStructures {
 
 	//! Open all of the lmdb environment instances in Speedex.
 	//! LMDB environments are opened before lmdb databases.
-	void open_lmdb_env() {
-		db.open_lmdb_env();
-		orderbook_manager.open_lmdb_env();
-		block_header_hash_map.open_lmdb_env();
-	}
+	void open_lmdb_env();
 
 	//! Create all of the lmdb instances for Speedex.
 	//! Will throw error if databases already exist.
-	void create_lmdb() {
-		db.create_lmdb();
-		orderbook_manager.create_lmdb();
-		block_header_hash_map.create_lmdb();
-	}
+	void create_lmdb();
 
 	//! Open all off the LMDB instances in SPEEDEX
-	void open_lmdb() {
-		db.open_lmdb();
-		orderbook_manager.open_lmdb();
-		block_header_hash_map.open_lmdb();
-	}
-
+	void open_lmdb();
 	//! Initialize speedex with a given number of assets and target
 	//! approximation bounds
 	SpeedexManagementStructures(
