@@ -32,4 +32,5 @@ SpeedexManagementStructures::open_lmdb()
     orderbook_manager.open_lmdb();
     block_header_hash_map.open_lmdb();
 }
+
 } // namespace speedex

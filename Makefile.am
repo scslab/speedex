@@ -138,7 +138,8 @@ TRIE_TEST_SRCS = \
 UTILS_SRCS = \
 	utils/cleanup.cc \
 	utils/header_persistence.cc \
-	utils/manage_data_dirs.cc
+	utils/manage_data_dirs.cc \
+	utils/save_load_xdr.cc
 
 SRCS = \
 	$(AUTOMATION_SRCS) \

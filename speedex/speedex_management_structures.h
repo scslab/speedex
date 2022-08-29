@@ -38,7 +38,6 @@ struct SpeedexManagementStructures {
 
 	SpeedexRuntimeConfigs configs;
 
-
 	//! Open all of the lmdb environment instances in Speedex.
 	//! LMDB environments are opened before lmdb databases.
 	void open_lmdb_env();
@@ -49,6 +48,7 @@ struct SpeedexManagementStructures {
 
 	//! Open all off the LMDB instances in SPEEDEX
 	void open_lmdb();
+
 	//! Initialize speedex with a given number of assets and target
 	//! approximation bounds
 	SpeedexManagementStructures(

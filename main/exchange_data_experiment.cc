@@ -84,7 +84,7 @@ int main(int argc, char const *argv[])
 	{
 		size_t idx = manager.look_up_idx(snapshot.category);
 
-		std::printf("selling %lu buying %lu\n", snapshot.category.sellAsset, snapshot.category.buyAsset);
+		std::printf("selling %" PRIu32 " buying %" PRIu32 "\n", snapshot.category.sellAsset, snapshot.category.buyAsset);
 
 		ProcessingSerialManager serial_manager(manager);
 
@@ -105,7 +105,7 @@ int main(int argc, char const *argv[])
 	manager.commit_for_production(round_number);
 	round_number++;
 
-	size_t cur_idx = 0;
+	uint32_t cur_idx = 0;
 
 	TatonnementManagementStructures tatonnement(manager);
 
@@ -122,10 +122,10 @@ int main(int argc, char const *argv[])
 		prices[i] = price::from_double(1.0);
 	}
 
-	size_t timeouts = 0, successes = 0;
+	uint32_t timeouts = 0, successes = 0;
 
 	while(cur_idx < events.size()) {
-		std::printf("current idx: %lu events.size() %lu\n", cur_idx, events.size());
+		std::printf("current idx: %" PRIu32 " events.size() %lu\n", cur_idx, events.size());
 		add_one_round_of_events(manager, cur_idx, cur_idx + batch_size, events);
 		cur_idx += batch_size;
 
@@ -195,7 +195,7 @@ int main(int argc, char const *argv[])
 		manager.persist_lmdb(round_number);
 		round_number++;
 
-		std::printf("after round %lu: successes %lu timeouts %lu\n", round_number, successes, timeouts);
+		std::printf("after round %" PRIu64 ": successes %" PRIu32 " timeouts %" PRIu32 "\n", round_number, successes, timeouts);
 	}
 
 }

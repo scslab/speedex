@@ -30,6 +30,7 @@ struct BlockStateUpdateStatsWrapper : public BlockStateUpdateStats {
 	}
 };
 
+/*
 struct AtomicBlockStateUpdateStatsWrapper 
 	: public BlockStateUpdateStatsWrapper
 {
@@ -40,6 +41,6 @@ struct AtomicBlockStateUpdateStatsWrapper
 		this -> operator+=(other);
 		return *this;
 	}
-};
+}; */
 
 } /* speedex */
