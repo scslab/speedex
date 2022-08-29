@@ -71,8 +71,6 @@ int main(int argc, char **argv)
 		config_file = get_config_file();
 	}
 
-	//ReplicaConfig config;
-
 	struct fy_document* fyd = fy_document_build_from_file(NULL, config_file.c_str());
 	if (fyd == NULL) {
 		std::printf("Failed to build doc from file \"%s\"\n", config_file.c_str());
