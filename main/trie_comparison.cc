@@ -269,7 +269,7 @@ float test_merkle_trie_emptyvalue(const std::vector<AccountID>& accounts) {
 	prefix_t prefix_buffer;
 	TrieT trie;
 	for (auto& account : accounts) {
-		write_unsigned_big_endian(prefix_buffer, account);
+		utils::write_unsigned_big_endian(prefix_buffer, account);
 		trie.insert(prefix_buffer);
 	}
 	auto res = measure_time(timestamp);
@@ -290,7 +290,7 @@ float test_merkle_trie(const std::vector<AccountID>& accounts) {
 	value_buffer.identifiers_others.resize(1);
 	TrieT trie;
 	for (auto& account : accounts) {
-		write_unsigned_big_endian(prefix_buffer, account);
+		utils::write_unsigned_big_endian(prefix_buffer, account);
 		value_buffer.owner = account;
 		value_buffer.identifiers_others[0] = TxIdentifier{account + 1, 23};
 		trie.insert(prefix_buffer, ValueT(value_buffer));

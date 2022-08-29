@@ -58,7 +58,7 @@ class BlockHeaderHashMap {
 
 	using ValueT = trie::XdrTypeWrapper<BlockHeaderHashValue, &serialize>;
 
-	using prefix_t = trie::UInt64Prefix;//trie::ByteArrayPrefix<KEY_LEN>;
+	using prefix_t = trie::UInt64Prefix;
 
 	using MetadataT = trie::CombinedMetadata<trie::SizeMixin>;
 

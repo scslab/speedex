@@ -1,6 +1,6 @@
 #include "memory_database/memory_database.h"
 
-#include "utils/time.h"
+#include "mtt/utils/time.h"
 
 #include "crypto/crypto_utils.h"
 
@@ -120,7 +120,7 @@ int main(int argc, char* const* argv)
 		tbb::global_control control(
 			tbb::global_control::max_allowed_parallelism, num_threads);
 
-		auto ts = init_time_measurement();
+		auto ts = utils::init_time_measurement();
 
 		ExperimentBlock truncated;
 		truncated.insert(truncated.end(), block.begin(), block.begin() + 10);
@@ -128,7 +128,7 @@ int main(int argc, char* const* argv)
 		FilterLog log;
 		log.add_txs(truncated, db);
 
-		auto res = measure_time(ts);
+		auto res = utils::measure_time(ts);
 
 		std::printf("duration: %lf\n", res);
 

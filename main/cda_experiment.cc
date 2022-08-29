@@ -4,7 +4,7 @@
 
 #include "memory_database/memory_database.h"
 
-#include "utils/time.h"
+#include "mtt/utils/time.h"
 
 #include <getopt.h>
 
@@ -104,11 +104,11 @@ int main(int argc, char* const* argv)
 	{
 
 		SerialOrderbookExperiment exp(db);
-		auto ts = init_time_measurement();
+		auto ts = utils::init_time_measurement();
 
 		exp.exec_offers(trials[i]);
 
-		std::printf("time: %lf\n", measure_time(ts));
+		std::printf("time: %lf\n", utils::measure_time(ts));
 
 	}
 

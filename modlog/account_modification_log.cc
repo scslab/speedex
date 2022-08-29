@@ -3,7 +3,7 @@
 
 #include "utils/debug_macros.h"
 #include "utils/save_load_xdr.h"
-#include "utils/time.h"
+#include "mtt/utils/time.h"
 
 namespace speedex {
 
@@ -14,17 +14,17 @@ AccountModificationLog::hash(Hash& hash)
 {
     std::lock_guard lock(mtx);
 
-    auto timestamp = init_time_measurement();
+    auto timestamp = utils::init_time_measurement();
 
     modification_log.hash<LogNormalizeFn>(hash);
 
-    float res = measure_time(timestamp);
+    float res = utils::measure_time(timestamp);
 
     *persistable_block
         = modification_log
               .template accumulate_values_parallel<AccountModificationBlock>();
 
-    float res2 = measure_time(timestamp);
+    float res2 = utils::measure_time(timestamp);
 
     BLOCK_INFO("acct log hash: hash/normalize %lf acc vals %lf", res, res2);
 }

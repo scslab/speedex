@@ -135,15 +135,6 @@ class Orderbook {
 
 	void rollback_thunks(uint64_t current_block_number);
 
-	/*std::string get_lmdb_env_name() {
-		return std::string(ROOT_DB_DIRECTORY) 
-		+ std::string(OFFER_DB) 
-		+ std::to_string(category.sellAsset) 
-		+ "_" 
-		+ std::to_string(category.buyAsset) 
-		+ std::string("/");
-	}*/
-
 	std::string get_lmdb_db_name() {
 		return std::to_string(category.sellAsset)
 			 + std::string(" ")
@@ -189,10 +180,6 @@ public:
 		const SingleOrderbookStateCommitmentChecker& local_clearing_log,
 		const OrderbookStateCommitmentChecker& clearing_commitment_log,
 		BlockStateUpdateStatsWrapper& state_update_stats);
-
-	//void open_lmdb_env() {
-	//	lmdb_instance.open_env(get_lmdb_env_name());
-	//}
 
 	void create_lmdb() {
 		auto name = get_lmdb_db_name();

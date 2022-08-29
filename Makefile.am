@@ -114,6 +114,7 @@ SIMPLEX_TEST_SRCS = \
 	simplex/tests/test_tableau.h
 
 SPEEDEX_SRCS = \
+	speedex/autorollback_validation_structures.cc \
 	speedex/reload_from_hotstuff.cc \
 	speedex/speedex_measurements.cc \
 	speedex/speedex_operation.cc \
@@ -221,7 +222,7 @@ TEST_SRCS = \
 	$(MEMORY_DATABASE_TEST_SRCS) \
 	$(ORDERBOOK_TEST_SRCS) \
 	$(SIMPLEX_TEST_SRCS)
-	
+
 test_runner.cc : $(TEST_SRCS) $(XHFILES)
 	cxxtestgen --error-printer -o test_runner.cc $(TEST_SRCS)
 

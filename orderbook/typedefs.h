@@ -9,7 +9,8 @@
 #include "mtt/trie/prefix.h"
 #include "mtt/trie/utils.h"
 
-#include "utils/big_endian.h"
+#include "mtt/utils/serialize_endian.h"
+
 #include "utils/price.h"
 
 #include "xdr/types.h"
@@ -56,9 +57,9 @@ static void generate_orderbook_trie_key(
 	size_t offset = 0;
 	price::write_price_big_endian(buf, minPrice);
 	offset += price::PRICE_BYTES;
-	write_unsigned_big_endian(buf, owner, offset);
+	utils::write_unsigned_big_endian(buf, owner, offset);
 	offset += sizeof(owner);
-	write_unsigned_big_endian(buf, offer_id, offset);
+	utils::write_unsigned_big_endian(buf, offer_id, offset);
 }
 
 [[maybe_unused]]

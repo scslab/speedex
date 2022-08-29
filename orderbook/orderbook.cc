@@ -3,6 +3,8 @@
 #include "utils/debug_macros.h"
 #include "utils/debug_utils.h"
 
+#include "mtt/utils/serialize_endian.h"
+
 #include <cinttypes>
 
 #include <tbb/task_arena.h>
@@ -1013,7 +1015,7 @@ Orderbook::process_clear_offers(
             "trying to clear more than there should exist");
     }
 
-    write_unsigned_big_endian(clearing_commitment_log.fractionalSupplyActivated,
+    utils::write_unsigned_big_endian(clearing_commitment_log.fractionalSupplyActivated,
                               params.supply_activated.value);
 
     auto fully_cleared_trie = committed_offers.endow_split(clear_amount);
@@ -1051,7 +1053,7 @@ Orderbook::process_clear_offers(
         fully_cleared_trie.clear();
     }
 
-    write_unsigned_big_endian(
+    utils::write_unsigned_big_endian(
         clearing_commitment_log.partialExecOfferActivationAmount,
         remaining_to_clear.value);
 

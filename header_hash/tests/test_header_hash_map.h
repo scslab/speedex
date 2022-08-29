@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "utils/big_endian.h"
+#include "mtt/utils/serialize_endian.h"
 #include "utils/manage_data_dirs.h"
 #include "utils/hash.h"
 
@@ -28,7 +28,7 @@ public:
 
 	Block make_block(uint64_t value, uint64_t block_number) {
 		Block buf;
-		write_unsigned_big_endian(buf.prevBlockHash, value);
+		utils::write_unsigned_big_endian(buf.prevBlockHash, value);
 		buf.blockNumber = block_number;
 		return buf;
 	}

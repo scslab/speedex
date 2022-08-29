@@ -10,6 +10,9 @@
 
 namespace speedex {
 
+using utils::measure_time;
+using utils::init_time_measurement;
+
 SpeedexVM::SpeedexVM(
 		const ExperimentParameters& params,
 		const SpeedexOptions& options,
@@ -114,8 +117,8 @@ new_measurements(NodeType state)
 }
 
 void
-SpeedexVM::exec_block(const hotstuff::VMBlock& blk_unparsed) {
-
+SpeedexVM::exec_block(const hotstuff::VMBlock& blk_unparsed)
+{
 	auto const& blk_ = static_cast<const block_type&>(blk_unparsed);
 	auto const& blk = blk_.data;
 
@@ -251,7 +254,7 @@ SpeedexVM::propose()
 	
 	BlockStateUpdateStatsWrapper state_update_stats;
 
-	current_measurements.total_init_time = measure_time_from_basept(start_time);
+	current_measurements.total_init_time = utils::measure_time_from_basept(start_time);
 
 	BLOCK_INFO("mempool size: %lu", mempool_structs.mempool.size());
 
@@ -259,7 +262,7 @@ SpeedexVM::propose()
 
 	experiment_done = (block_size < 100);
 
-	current_measurements.total_block_build_time = measure_time_from_basept(start_time);
+	current_measurements.total_block_build_time = utils::measure_time_from_basept(start_time);
 
 	HashedBlock new_block = speedex_block_creation_logic(
 		prices,
@@ -271,7 +274,7 @@ SpeedexVM::propose()
 
 	proposal_base_block = new_block;
 	
-	current_measurements.total_block_commitment_time = measure_time_from_basept(start_time);
+	current_measurements.total_block_commitment_time = utils::measure_time_from_basept(start_time);
 
 	auto timestamp = init_time_measurement();
 
@@ -283,8 +286,8 @@ SpeedexVM::propose()
 		false);
 
 	current_measurements.data_persistence_measurements.total_critical_persist_time = measure_time(timestamp);
-	current_measurements.total_critical_persist_time = measure_time_from_basept(start_time);
-	current_measurements.total_block_persist_time = measure_time_from_basept(start_time);
+	current_measurements.total_critical_persist_time = utils::measure_time_from_basept(start_time);
+	current_measurements.total_block_persist_time = utils::measure_time_from_basept(start_time);
 	current_measurements.state_update_stats = state_update_stats.get_xdr();
 
 	auto mempool_wait_ts = init_time_measurement();
@@ -299,7 +302,7 @@ SpeedexVM::propose()
 
 	current_measurements.serialize_time = measure_time(mempool_wait_ts);
 
-	current_measurements.total_time_from_basept = measure_time_from_basept(start_time);
+	current_measurements.total_time_from_basept = utils::measure_time_from_basept(start_time);
 	current_measurements.total_time = measure_time(start_time);
 
 	measurements_log.add_measurement(measurements_base);

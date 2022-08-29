@@ -1,6 +1,6 @@
 #include "mempool/mempool_cleaner.h"
 
-#include "utils/time.h"
+#include "mtt/utils/time.h"
 
 namespace speedex {
 
@@ -15,10 +15,10 @@ MempoolCleaner::run() {
 		}
 		if (done_flag) return;
 		if (do_cleaning) {
-			auto timestamp = init_time_measurement();
+			auto timestamp = utils::init_time_measurement();
 			mempool.remove_confirmed_txs();
 			mempool.join_small_chunks();
-			output_measurement = measure_time(timestamp);
+			output_measurement = utils::measure_time(timestamp);
 
 			do_cleaning = false;
 		}

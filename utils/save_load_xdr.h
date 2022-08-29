@@ -11,10 +11,8 @@ Utilities for saving and loading xdr objects to disk
 #include <xdrpp/marshal.h>
 
 #include "utils/cleanup.h"
-#include "utils/time.h"
 
 #include "xdr/database_commitments.h"
-
 
 namespace speedex {
 

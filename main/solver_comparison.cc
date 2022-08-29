@@ -5,7 +5,7 @@
 
 #include "orderbook/utils.h"
 
-#include "utils/time.h"
+#include "mtt/utils/time.h"
 
 #include "xdr/types.h"
 
@@ -211,7 +211,7 @@ void run_experiment(size_t num_assets, std::unique_ptr<LPInstance>& instance, LP
 	auto prices = gen_prices(num_assets, gen);
 	auto bounds = gen_bounds(num_assets, gen);
 
-	auto ts = init_time_measurement();
+	auto ts = utils::init_time_measurement();
 
 	bool glpk_res = false;
 
@@ -220,7 +220,7 @@ void run_experiment(size_t num_assets, std::unique_ptr<LPInstance>& instance, LP
 		glpk_res = true;
 	} 
 
-	float glpk_time = measure_time(ts);
+	float glpk_time = utils::measure_time(ts);
 
 	if (can_run_simplex) {
 		if(run_simplex(bounds, prices, num_assets, glpk_res)) {
@@ -228,7 +228,7 @@ void run_experiment(size_t num_assets, std::unique_ptr<LPInstance>& instance, LP
 		}
 	}
 
-	float simplex_time = measure_time(ts);
+	float simplex_time = utils::measure_time(ts);
 
 	overall_sum_simplex += simplex_time;
 	count++;
@@ -242,7 +242,7 @@ void run_experiment(size_t num_assets, std::unique_ptr<LPInstance>& instance, LP
 
 	#endif
 
-	float lemon_time = measure_time(ts);
+	float lemon_time = utils::measure_time(ts);
 
 	std::printf("glpk_time(successes=%lu) %lf\t simplex_time(successes=%lu) %lf (avg %lf) lemon-ns(successes=%lu) %lf\n",
 		glpk_successes, glpk_time, simplex_successes, simplex_time, overall_sum_simplex / count, lemon_successes, lemon_time);

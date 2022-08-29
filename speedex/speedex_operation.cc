@@ -6,8 +6,10 @@
 
 #include "utils/hash.h"
 #include "utils/header_persistence.h"
-#include "utils/time.h"
 #include "utils/save_load_xdr.h"
+
+#include "mtt/utils/time.h"
+
 
 namespace speedex {
 
@@ -16,23 +18,23 @@ void speedex_make_state_commitment(
 	SpeedexManagementStructures& management_structures,
 	BlockProductionHashingMeasurements& measurements) {
 	{
-		auto timestamp = init_time_measurement();
+		auto timestamp = utils::init_time_measurement();
 
 		management_structures.db.produce_state_commitment(
 			hashes.dbHash, management_structures.account_modification_log);
-		measurements.db_state_commitment_time = measure_time(timestamp);
+		measurements.db_state_commitment_time = utils::measure_time(timestamp);
 	}
 
 	{
-		auto timestamp = init_time_measurement();
+		auto timestamp = utils::init_time_measurement();
 		management_structures.orderbook_manager.hash(hashes.clearingDetails);
-		measurements.work_unit_commitment_time = measure_time(timestamp);
+		measurements.work_unit_commitment_time = utils::measure_time(timestamp);
 	}
 
-	auto timestamp = init_time_measurement();
+	auto timestamp = utils::init_time_measurement();
 	management_structures.account_modification_log.hash(
 		hashes.modificationLogHash);
-	measurements.account_log_hash_time = measure_time(timestamp);
+	measurements.account_log_hash_time = utils::measure_time(timestamp);
 
 	management_structures.block_header_hash_map.hash(hashes.blockMapHash);
 }
@@ -80,14 +82,14 @@ speedex_block_creation_logic(
 	management_structures.account_modification_log.prepare_block_fd(
 		current_block_number);
 
-	auto timestamp = init_time_measurement();
+	auto timestamp = utils::init_time_measurement();
 
 	auto& db = management_structures.db;
 	auto& orderbook_manager = management_structures.orderbook_manager;
 
 	//Push new accounts into main db (also updates database merkle trie).
 	db.commit_new_accounts(current_block_number);
-	stats.initial_account_db_commit_time = measure_time(timestamp);
+	stats.initial_account_db_commit_time =utils::measure_time(timestamp);
 
 	BLOCK_INFO("initial accountdb commit duration: %fs", 
 		stats.initial_account_db_commit_time);
@@ -95,7 +97,7 @@ speedex_block_creation_logic(
 	//! Commits newly created offers, preps orderbooks for Tatonnement
 	orderbook_manager.commit_for_production(current_block_number);
 
-	stats.initial_offer_db_commit_time = measure_time(timestamp);
+	stats.initial_offer_db_commit_time =utils::measure_time(timestamp);
 
 	BLOCK_INFO("initial offerdb commit duration: %fs", 
 		stats.initial_offer_db_commit_time);
@@ -115,7 +117,7 @@ speedex_block_creation_logic(
 	//After running tatonnement, signal the timeout thread to cancel
 	cancel_timeout = true;
 
-	stats.tatonnement_time = measure_time(timestamp);
+	stats.tatonnement_time =utils::measure_time(timestamp);
 	BLOCK_INFO("price computation took %fs", stats.tatonnement_time);
 	stats.tatonnement_rounds = tat_res.num_rounds;
 
@@ -137,7 +139,7 @@ speedex_block_creation_logic(
 		management_structures.approx_params,
 		use_lower_bound);
 	
-	stats.lp_time = measure_time(timestamp);
+	stats.lp_time =utils::measure_time(timestamp);
 	BLOCK_INFO("lp solving took %fs", stats.lp_time);
 
 
@@ -187,7 +189,7 @@ speedex_block_creation_logic(
 	//TODO could be removed later.  Good rn as a sanititimeouttheck.
 	auto clearing_check = lp_results.check_clearing(price_workspace);
 
-	stats.clearing_check_time = measure_time(timestamp);
+	stats.clearing_check_time =utils::measure_time(timestamp);
 	BLOCK_INFO("clearing sanity check took %fs", stats.clearing_check_time);
 
 	double vol_metric = management_structures.orderbook_manager
@@ -223,19 +225,19 @@ speedex_block_creation_logic(
 		clearing_details, 
 		state_update_stats);
 
-	stats.offer_clearing_time = measure_time(timestamp);
+	stats.offer_clearing_time =utils::measure_time(timestamp);
 	BLOCK_INFO("clearing offers took %fs", stats.offer_clearing_time);
 
 	if (!db.check_valid_state(management_structures.account_modification_log)) {
 		throw std::runtime_error("DB left in invalid state!!!");
 	}
 
-	stats.db_validity_check_time = measure_time(timestamp);
+	stats.db_validity_check_time =utils::measure_time(timestamp);
 	BLOCK_INFO("db validity check took %fs", stats.db_validity_check_time);
 
 	db.commit_values(management_structures.account_modification_log);
 
-	stats.final_commit_time = measure_time(timestamp);
+	stats.final_commit_time =utils::measure_time(timestamp);
 	BLOCK_INFO("final commit took %fs", stats.final_commit_time);
 	BLOCK_INFO("finished block creation");
 
@@ -266,7 +268,7 @@ speedex_block_creation_logic(
 		management_structures,
 		hashing_measurements);
 
-	overall_measurements.state_commitment_time = measure_time(timestamp);
+	overall_measurements.state_commitment_time =utils::measure_time(timestamp);
 
 	speedex_format_hashed_block(
 		new_block,
@@ -274,7 +276,7 @@ speedex_block_creation_logic(
 		price_workspace,
 		achieved_feerate);
 
-	overall_measurements.format_time = measure_time(timestamp);
+	overall_measurements.format_time =utils::measure_time(timestamp);
 
 	tatonnement.oracle.wait_for_all_tatonnement_threads();
 	timeout_th.join();
@@ -429,14 +431,14 @@ bool _speedex_block_validation_logic(
 	//auto& header_map_autorollback 
 	//	= autorollback_structures.block_header_hash_map;
 
-	auto timestamp = init_time_measurement();
+	auto timestamp = utils::init_time_measurement();
 
 	auto& stats = overall_validation_stats.block_validation_measurements;
 
 	BLOCK_INFO("checking clearing params");
 	auto clearing_param_res = commitment_checker.check_clearing();
 
-	stats.clearing_param_check = measure_time(timestamp);
+	stats.clearing_param_check =utils::measure_time(timestamp);
 
 	if (!clearing_param_res) {
 
@@ -453,7 +455,7 @@ bool _speedex_block_validation_logic(
 
 	TRACE_F(validation_stats.log());
 
-	stats.tx_validation_time = measure_time(timestamp);
+	stats.tx_validation_time =utils::measure_time(timestamp);
 	BLOCK_INFO("block validation time: %lf",stats.tx_validation_time);
 
 	if (!res) {
@@ -467,7 +469,7 @@ bool _speedex_block_validation_logic(
 	manager_autorollback.tentative_commit_for_validation(current_block_number);
 	std::printf("done tentative commit workunits\n");
 
-	stats.tentative_commit_time = measure_time(timestamp);
+	stats.tentative_commit_time = utils::measure_time(timestamp);
 
 	auto clearings_valid 
 		= manager_autorollback.tentative_clear_offers_for_validation(
@@ -477,7 +479,7 @@ bool _speedex_block_validation_logic(
 
 	std::printf("done tentative clearing\n");
 
-	stats.check_workunit_validation_time = measure_time(timestamp);
+	stats.check_workunit_validation_time = utils::measure_time(timestamp);
 
 	if (!clearings_valid) {
 		BLOCK_INFO("clearings invalid");
@@ -498,7 +500,7 @@ bool _speedex_block_validation_logic(
 	//}
 
 	//TODO currently ignoring header map mod times, which should be basically 0.
-	measure_time(timestamp);
+	utils::measure_time(timestamp);
 
 	Block comparison_next_block;
 
@@ -507,12 +509,12 @@ bool _speedex_block_validation_logic(
 	comparison_next_block.prices = expected_next_block.block.prices;
 	comparison_next_block.feeRate = expected_next_block.block.feeRate;
 
-	stats.get_dirty_account_time = measure_time(timestamp);
+	stats.get_dirty_account_time = utils::measure_time(timestamp);
 	db_autorollback.tentative_produce_state_commitment(
 		comparison_next_block.internalHashes.dbHash,
 		management_structures.account_modification_log);
 
-	stats.db_tentative_commit_time = measure_time(timestamp);
+	stats.db_tentative_commit_time = utils::measure_time(timestamp);
 	BLOCK_INFO("db tentative_commit_time = %lf", stats.db_tentative_commit_time);
 	
 	//copy expected clearing state, except we overwrite the hashes later.
@@ -521,7 +523,7 @@ bool _speedex_block_validation_logic(
 	management_structures.orderbook_manager.hash(
 		comparison_next_block.internalHashes.clearingDetails);
 
-	stats.workunit_hash_time = measure_time(timestamp);
+	stats.workunit_hash_time = utils::measure_time(timestamp);
 
 	management_structures.account_modification_log.hash(
 		comparison_next_block.internalHashes.modificationLogHash);
@@ -559,6 +561,10 @@ Block ensure_sequential_block_numbers(const HashedBlock& prev_block, const Hashe
 	return out;
 }
 
+/*
+If successful, returns true and all state is committed to next block.
+If fails, no-op.
+*/
 std::pair<Block, bool>
 speedex_block_validation_logic( 
 	SpeedexManagementStructures& management_structures,
@@ -583,35 +589,7 @@ speedex_block_validation_logic(
 	return {corrected_block, res};
 } 
 
-/*
-If successful, returns true and all state is committed to next block.
-If fails, no-op.
-*/
-/*
-template bool speedex_block_validation_logic( 
-	SpeedexManagementStructures& management_structures,
-	BlockValidator& validator,
-	OverallBlockValidationMeasurements& overall_validation_stats,
-	const HashedBlock& prev_block,
-	const HashedBlock& expected_next_block,
-	const SerializedBlock& transactions);
 
-template bool speedex_block_validation_logic( 
-	SpeedexManagementStructures& management_structures,
-	BlockValidator& validator,
-	OverallBlockValidationMeasurements& overall_validation_stats,
-	const HashedBlock& prev_block,
-	const HashedBlock& expected_next_block,
-	const AccountModificationBlock& transactions);
 
-template bool speedex_block_validation_logic( 
-	SpeedexManagementStructures& management_structures,
-	BlockValidator& validator,
-	OverallBlockValidationMeasurements& overall_validation_stats,
-	const HashedBlock& prev_block,
-	const HashedBlock& expected_next_block,
-	const SignedTransactionList& transactions);
-
-*/
 
 } /* speedex */
