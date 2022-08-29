@@ -1,5 +1,7 @@
 #include "speedex/speedex_measurements.h"
 
+#include <cinttypes>
+
 namespace speedex {
 
 SpeedexMeasurements::SpeedexMeasurements(const ExperimentParameters& params)
@@ -23,7 +25,7 @@ void SpeedexMeasurements::add_measurement(TaggedSingleBlockResults const& res)
 		return;
 	}
 
-	std::printf("uncling measurement block %lu.  Is this intentional?\n", res.blockNumber);
+	std::printf("uncling measurement block %" PRIu64 ".  Is this intentional?\n", res.blockNumber);
 	uncled_measurements.push_back(iter->second);
 	iter->second = res;
 }
