@@ -21,6 +21,13 @@ BlockHeaderHashMapLMDB::open_env()
         DEFAULT_LMDB_FLAGS | MDB_NOLOCK); // need NOLOCK for commit/reload tests
 }
 
+BlockHeaderHashMap::BlockHeaderHashMap()
+    : block_map()
+    , lmdb_instance()
+    , last_committed_block_number(0)
+    , mtx()
+{}
+
 void
 BlockHeaderHashMap::insert(const Block& block, bool res)
 {
@@ -131,7 +138,7 @@ BlockHeaderHashMap::rollback_to_committed_round(uint64_t committed_block_number)
     }
     last_committed_block_number
         = committed_block_number; //(committed_block_number == 0) ? 0 :
-                                  //committed_block_number - 1;
+                                  // committed_block_number - 1;
 }
 
 void

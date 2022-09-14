@@ -22,6 +22,7 @@ millions of blocks.
 
 #include <cstdint>
 #include <map>
+#include <mutex>
 #include <optional>
 
 namespace speedex
@@ -70,17 +71,13 @@ class BlockHeaderHashMap
 
     uint64_t last_committed_block_number;
 
-    std::mutex mtx;
+    mutable std::mutex mtx;
 
 public:
     constexpr static unsigned int KEY_LEN = sizeof(uint64_t);
 
     //! Construct empty map.
-    BlockHeaderHashMap()
-        : block_map()
-        , lmdb_instance()
-        , last_committed_block_number(0)
-    {}
+    BlockHeaderHashMap();
 
     /*! Insert hash of a newly produced block.
             In normal operation, map should include hashes for
