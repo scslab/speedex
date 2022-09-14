@@ -155,13 +155,13 @@ BlockHeaderHashMap::get(uint64_t round_number) const {
 
 	prefix_t round_buf;
 	utils::write_unsigned_big_endian(round_buf, round_number);
-	auto out_opt = block_map.get_value(round_buf);
+	auto* out_opt = block_map.get_value(round_buf);
 
 	if (!out_opt) {
 		throw std::runtime_error("failed to load hash that lmdb should have");
 	}
 
-	return out_opt;
+	return {*out_opt};
 }
 
 void 
