@@ -172,11 +172,6 @@ public:
 		: modification_log(main_log.cache.get(main_log.modification_log))
 		, main_log(main_log) {}
 
-	SerialAccountModificationLog(AccountModificationLog& main_log, int idx) 
-		: modification_log(
-				main_log.cache.get_index(idx, main_log.modification_log))
-		, main_log(main_log) {}
-
 	//! Logs when some operation created by an account results in
 	//! a modification to the account, for things other than new txs.
 	//! Main example: an offer clears.  Sequence number is of the op
