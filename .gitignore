@@ -26,6 +26,8 @@ experiment_results/
 *~
 test-driver
 *.dSYM/*
+ar-lib
+compile
 
 #automation
 automation/check_sigs

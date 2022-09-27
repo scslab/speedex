@@ -266,7 +266,7 @@ trie_comparison_SOURCES = $(SRCS) main/trie_comparison.cc
 test_SOURCES = $(SRCS) test_runner.cc
 ctest_SOURCES = $(SRCS) $(CATCH_TEST_CCS) main/test.cc
 
-ctest_LDFLAGS = $(Catch2_LIBS)
+ctest_LDADD = $(LDADD) $(Catch2_LIBS)
 
 #building x files
 $(XH_FILES) : $(XDRC)
