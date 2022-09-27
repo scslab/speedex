@@ -274,7 +274,7 @@ LPSolver::solve(
 		double flow = glp_get_col_prim(lp, idx+1);
 		OrderbookClearingParams result;
 
-		FractionalAsset rounded_flow(flow);
+		FractionalAsset rounded_flow = FractionalAsset::from_double(flow);
 		result.supply_activated = rounded_flow;
 
 		output.orderbook_params.push_back(result);

@@ -12,7 +12,12 @@
 
 namespace speedex {
 
+namespace
+{
+
 struct EmptyStruct {};
+
+} // anonymous namespace
 
 //! Represents a fractional value with a fixed radix.
 //! Only works with unsigned underlying values.
@@ -29,10 +34,14 @@ struct FixedPrecision {
 
 	value_t value;
 
+
+private:
 	//! Construct from raw value
-	FixedPrecision(value_t value, const EmptyStruct& foo) : value(value) {}
+	FixedPrecision(value_t value, EmptyStruct) : value(value) {}
 	//! Construct from double (i.e. round double to fixed-point)
 	FixedPrecision(double d_val) : value(std::round(d_val * (((value_t) 1)<<radix))) {}
+public:
+
 	//! Construct with default value 0.
 	FixedPrecision() : value(0) {}
 
@@ -47,17 +56,23 @@ struct FixedPrecision {
 
 	//! Construct from raw value (i.e. interpret input value as fixed point)
 	static FixedPrecision from_raw(value_t value) {
-		return FixedPrecision(value, EmptyStruct());
+		return FixedPrecision(value, EmptyStruct{});
 	}
-	//! Constrct from integer
+	//! Construct from integer
 	static FixedPrecision from_integral(value_t value) {
-		return FixedPrecision(value <<radix, EmptyStruct());
+		return FixedPrecision(value <<radix, EmptyStruct{});
+	}
+
+	//! Construct from double
+	static FixedPrecision from_double(double val)
+	{
+		return FixedPrecision(val);
 	}
 
 	template<unsigned int other_radix>
 	FixedPrecision<radix, value_t> operator+ (const FixedPrecision<other_radix, value_t>& other) const{
 		static_assert(other_radix <= radix, "invalid radix combination");
-		return FixedPrecision(value + (other.value<<(radix-other_radix)), EmptyStruct());
+		return FixedPrecision(value + (other.value<<(radix-other_radix)), EmptyStruct{});
 	}
 
 	template<unsigned int other_radix>
@@ -77,11 +92,11 @@ struct FixedPrecision {
 	template<unsigned int other_radix>
 	FixedPrecision<radix, value_t> operator- (const FixedPrecision<other_radix, value_t>& other) const {
 		static_assert(other_radix <= radix, "invalid radix combination");
-		return FixedPrecision(value - (other.value<<(radix-other_radix)), EmptyStruct());
+		return FixedPrecision(value - (other.value<<(radix-other_radix)), EmptyStruct{});
 	}
 
 	FixedPrecision<radix, value_t> operator* (const uint64_t& other_value) const {
-		return FixedPrecision(value * other_value, EmptyStruct());
+		return FixedPrecision(value * other_value, EmptyStruct{});
 	}
 
 	std::strong_ordering operator<=> (const FixedPrecision<radix, value_t>& other) const {
@@ -95,7 +110,7 @@ struct FixedPrecision {
 	//does not shift radix
 	FixedPrecision<radix, value_t>
 	operator>>(unsigned int i) const {
-		return FixedPrecision(value>>i, EmptyStruct());
+		return FixedPrecision(value>>i, EmptyStruct{});
 	}
 
 	integral_type floor() const {
