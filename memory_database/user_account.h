@@ -14,10 +14,12 @@ Manage the account state for one user.
 #include <atomic>
 
 #include "memory_database/revertable_asset.h"
+#include "memory_database/sequence_tracker.h"
 
 #include "xdr/types.h"
 #include "xdr/transaction.h"
 #include "xdr/database_commitments.h"
+#include "xdr/params.h"
 
 #include "lmdb/lmdb_types.h"
 
@@ -40,11 +42,6 @@ class UserAccount {
 	static_assert(
 		__builtin_popcount(MAX_OPS_PER_TX) == 1, "should be power of two");
 
-	//! Reminder that we only can reserve the next 64 sequence numbers
-	//! in this implementation, before a block commits.
-	static_assert(
-		MAX_SEQ_NUMS_PER_BLOCK <= 64, "rework sequence num reservations");
-
 	using amount_t = typename RevertableAsset::amount_t;
 
 	mutable std::mutex uncommitted_assets_mtx;
@@ -61,10 +58,12 @@ class UserAccount {
 	//! Bitvector of committed/reserved sequence numbers in the current block.
 	//! Offsets are from last_committed_id.  I.e. to reserve sequence number
 	//! last_committed_id + 3, set sequence_number_vec |= 1 << (3 + 1)
-	std::atomic<uint64_t> sequence_number_vec;
+	//std::atomic<uint64_t> sequence_number_vec;
 
 	//! Highest sequence number that has been committed from the account
-	uint64_t last_committed_id;
+	//uint64_t last_committed_id;
+
+	SequenceTracker<MAX_SEQ_NUMS_PER_BLOCK> seq_tracker;
 
 	/*! Apply some function to an asset.  Acquires a lock on uncommittted_assets
 	    if the current account does not own the asset in question.
@@ -102,54 +101,13 @@ public:
 	void set_owner(AccountID _owner, PublicKey const& _pk, uint64_t _last_committed_id);
 
 	//!We cannot move UserAccounts and concurrently modify them.
-	UserAccount(UserAccount&& other)
-		: uncommitted_assets_mtx(),
-		owned_assets(std::move(other.owned_assets)),
-		uncommitted_assets(std::move(other.uncommitted_assets)),
-
-		sequence_number_vec(
-			other.sequence_number_vec.load(std::memory_order_acquire)),
-
-		last_committed_id(other.last_committed_id),
-
-		owner(other.owner)
-		, pk(other.pk) {
-		}
-
+	UserAccount(UserAccount&& other);
 
 	//!Needed only for vector.erase, for some dumb reason
-	UserAccount& operator=(UserAccount&& other) {
-		owned_assets = std::move(other.owned_assets);
-		uncommitted_assets = std::move(other.uncommitted_assets);
-		sequence_number_vec 
-			= other.sequence_number_vec.load(std::memory_order_acquire);
-		last_committed_id = other.last_committed_id;
-		owner = other.owner;
-		pk = other.pk;
-		return *this;
-	}
+	UserAccount& operator=(UserAccount&& other);
 
 	//! Initializes an account from an account database record.
-	UserAccount(const AccountCommitment& commitment) 
-		: owned_assets()
-		, uncommitted_assets()
-		, sequence_number_vec(0)
-		, last_committed_id(commitment.last_committed_id)
-		, owner(commitment.owner)
-		, pk(commitment.pk) {
-
-			for (unsigned int i = 0; i < commitment.assets.size(); i++) {
-				if (commitment.assets[i].asset < owned_assets.size()) {
-					throw std::runtime_error(
-						"assets in commitment should be sorted");
-				}
-				while (owned_assets.size() < commitment.assets[i].asset) {
-					owned_assets.emplace_back(0);
-				}
-				owned_assets.emplace_back(
-					commitment.assets[i].amount_available);
-			}
-		}
+	UserAccount(const AccountCommitment& commitment);
 
 	//! Return the public key associated with the account.
 	const PublicKey& get_pk() const {
@@ -163,9 +121,8 @@ public:
 
 	//! NOT threadsafe with commit.
 	uint64_t get_last_committed_seq_number() const {
-		return last_committed_id;
+		return seq_tracker.produce_commitment();
 	}
-
 
 	//! Transfer amount of asset to the account's (unescrowed) balance.
 	//! Negative amounts mean a withdrawal.
@@ -261,11 +218,6 @@ public:
 	//! Generate an account commitment (for hashing)
 	//! based on uncommitted account balances.
 	AccountCommitment tentative_commitment() const;
-	//! not threadsafe with modifications
-	uint64_t get_last_committed_seqno() const
-	{
-		return last_committed_id;
-	}
 
 	//! Convert an lmdb key (byte string) into an account id.
 	static AccountID read_lmdb_key(const dbval& key);

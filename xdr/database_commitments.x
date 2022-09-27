@@ -16,13 +16,9 @@
 %from database_commitments_includes cimport *
 #endif
 
-
-
-
 namespace speedex {
 	
 const MAX_NUMBER_DISTINCT_ASSETS = 256;
-const MAX_SEQ_NUMS_PER_BLOCK = 64;
 
 struct AssetCommitment {
 	AssetID asset;
@@ -43,7 +39,7 @@ struct TxIdentifier {
 
 struct AccountModificationTxList {
 	AccountID owner;
-	SignedTransaction new_transactions_self<MAX_SEQ_NUMS_PER_BLOCK>; //transactions
+	SignedTransaction new_transactions_self<>; //transactions
 	uint64 identifiers_self<>; // sequence numbers, in addition
 	TxIdentifier identifiers_others<>;
 };

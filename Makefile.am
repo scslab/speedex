@@ -16,8 +16,8 @@ X_FILES = \
 	xdr/cryptocoin_experiment.x \
 	xdr/header_summary.x \
 	xdr/experiments.x \
-	xdr/hotstuff.x \
-	xdr/overlay.x
+	xdr/overlay.x \
+	xdr/params.x
 
 XH_FILES = $(X_FILES:.x=.h)
 
@@ -62,6 +62,7 @@ MEMORY_DATABASE_SRCS = \
 	memory_database/account_vector.cc \
 	memory_database/memory_database.cc \
 	memory_database/memory_database_view.cc \
+	memory_database/sequence_tracker.cc \
 	memory_database/user_account.cc
 
 MEMORY_DATABASE_TEST_SRCS = \
@@ -209,7 +210,8 @@ LDADD = \
 	-lglpk
 
 CATCH_TEST_CCS = \
-	filtering/tests/test_filter_entry.cc
+	filtering/tests/test_filter_entry.cc \
+	memory_database/tests/test_seqno_gadget.cc
 
 $(CATCH_TEST_SRCS:.cc=.o) : CXXFLAGS += $(Catch2_CFLAGS)
 main/test.o : CXXFLAGS += $(Catch2_CFLAGS)

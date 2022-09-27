@@ -18,6 +18,7 @@ doc/
 *.dirstamp
 depcomp
 test
+ctest
 test_runner.cc
 README
 databases/
