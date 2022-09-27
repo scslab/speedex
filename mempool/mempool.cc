@@ -39,14 +39,6 @@ MempoolChunk::filter(MempoolTransactionFilter const& filter) {
 }
 
 void 
-Mempool::add_to_mempool_buffer(std::vector<SignedTransaction>&& chunk) {
-	buffer_size.fetch_add(chunk.size(), std::memory_order_relaxed);
-	MempoolChunk to_add(std::move(chunk));
-	std::lock_guard lock(buffer_mtx);
-	buffered_mempool.emplace_back(std::move(to_add));
-}
-
-void 
 Mempool::add_to_mempool_buffer_nolock(std::vector<SignedTransaction>&& chunk) {
 	buffer_size.fetch_add(chunk.size(), std::memory_order_relaxed);
 	MempoolChunk to_add(std::move(chunk));

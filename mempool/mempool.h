@@ -133,8 +133,6 @@ public:
     //! These transactions do not go directly into the mempool, but instead
     //! into an internal buffer.  This buffer is merged into the main mempool
     //! by push_mempool_buffer_to_mempool().
-	void add_to_mempool_buffer(std::vector<SignedTransaction>&& chunk);
-
 	void chunkify_and_add_to_mempool_buffer(std::vector<SignedTransaction>&& txs);
 
 	//! Pushes the internal tx buffer to the mempool.
