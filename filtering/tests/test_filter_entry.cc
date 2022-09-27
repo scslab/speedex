@@ -44,7 +44,7 @@ make_payment_tx(AccountID const& from, uint64_t seqno, uint64_t fee, AccountID c
 	out.transaction.operations.push_back(make_payment_op(to, asset, amount));
 	out.transaction.metadata.sourceAccount = from;
 	out.transaction.metadata.sequenceNumber = seqno;
-	out.transaction.fee = fee;
+	out.transaction.maxFee = fee;
 	sign_transaction(out, sk);
 
 	return out;
@@ -59,7 +59,7 @@ make_empty_tx(AccountID const& from, uint64_t seqno, uint64_t fee)
 	SignedTransaction out;
 	out.transaction.metadata.sourceAccount = from;
 	out.transaction.metadata.sequenceNumber = seqno;
-	out.transaction.fee = fee;
+	out.transaction.maxFee = fee;
 	sign_transaction(out, sk);
 
 	return out;

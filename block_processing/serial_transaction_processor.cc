@@ -25,6 +25,11 @@ bool check_tx_format_parameters(Transaction tx) {
 	return true;
 }
 
+int64_t fee_required(int tx_op_count)
+{
+	return BASE_FEE_PER_TX + FEE_PER_OP * tx_op_count;
+}
+
 template<typename SerialManager>
 void SerialTransactionHandler<SerialManager>::log_modified_accounts(
 	const SignedTransaction& signed_tx, 
@@ -93,23 +98,21 @@ bool SerialTransactionValidator<ManagerViewType>::validate_transaction(
 		return false;
 	}
 
+	int64_t fee_req = fee_required(tx_op_count);
+
+	if (fee_req > tx.maxFee)
+	{
+		return false;
+	}
+
 	if (check_sigs) {
 		if (!sig_check(tx, signed_tx.signature, source_account_idx -> get_pk())) {
 			return false;
 		}
 	}
 
-/*	account_db_idx source_account_idx;
-
-	if (!account_database.lookup_user_id(
-		tx.metadata.sourceAccount, &source_account_idx)) {
-		TX_INFO("invalid userid lookup %lu", tx.metadata.sourceAccount);
-		return false;
-	} */
-
 	OperationMetadata<UnbufferedViewT> op_metadata(
 		tx.metadata, source_account_idx, account_database, lmdb_args...);
-
 
 	auto id_status = op_metadata.db_view.reserve_sequence_number(
 		source_account_idx, tx.metadata.sequenceNumber);
@@ -124,6 +127,12 @@ bool SerialTransactionValidator<ManagerViewType>::validate_transaction(
 	op_metadata.db_view.commit_sequence_number(
 		source_account_idx, tx.metadata.sequenceNumber);
 
+	if (op_metadata.db_view.transfer_available(
+		source_account_idx, MemoryDatabase::NATIVE_ASSET, -fee_req)
+		!= TransactionProcessingStatus::SUCCESS)
+	{
+		return false;
+	}
 
 	for (int i = 0; i < tx_op_count; i++) {
 
@@ -214,6 +223,13 @@ SerialTransactionProcessor::process_transaction(
 		return TransactionProcessingStatus::INVALID_TX_FORMAT;
 	}
 
+	int64_t fee_req = fee_required(tx_op_count);
+
+	if (fee_req > tx.maxFee)
+	{
+		return TransactionProcessingStatus::FEE_BID_TOO_LOW;
+	}
+
 	UserAccount* source_account_idx = account_database.lookup_user(tx.metadata.sourceAccount);
 	if (source_account_idx == nullptr) {
 		TX_INFO("invalid userid lookup %lu", tx.metadata.sourceAccount);
@@ -226,23 +242,11 @@ SerialTransactionProcessor::process_transaction(
 		}
 	}
 
-
-/*	account_db_idx source_account_idx;
-
-	if (!account_database.lookup_user_id(
-			tx.metadata.sourceAccount, &source_account_idx)) {
-		TX_INFO("invalid userid lookup %lu", tx.metadata.sourceAccount);
-		return TransactionProcessingStatus::SOURCE_ACCOUNT_NEXIST;
-	} */
-
 	OperationMetadata<BufferedViewT> op_metadata(
 		tx.metadata, source_account_idx, account_database);
 
 	auto seq_num_status = op_metadata.db_view.reserve_sequence_number(
 		source_account_idx, tx.metadata.sequenceNumber);
-
-	//auto seq_num_status = account_database.reserve_sequence_number(
-	//	source_account_idx, tx.metadata.sequenceNumber);
 
 	if (seq_num_status != TransactionProcessingStatus::SUCCESS) {
 		TX_INFO("bad seq num on account %lu seqnum %lu", 
@@ -252,6 +256,15 @@ SerialTransactionProcessor::process_transaction(
 	}
 
 	TX_INFO("successfully reserved seq num %lu", tx.metadata.sequenceNumber);
+
+	auto fee_status = 
+		op_metadata.db_view.transfer_available(
+			source_account_idx, MemoryDatabase::NATIVE_ASSET, -fee_req);
+
+	if (fee_status != TransactionProcessingStatus::SUCCESS)
+	{
+		return fee_status;
+	}
 
 	for (uint64_t i = 0; i < tx_op_count; i++) {
 		TX_INFO("processing operation %lu, type %s", 

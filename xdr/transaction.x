@@ -35,7 +35,8 @@ enum TransactionProcessingStatus {
 	RECIPIENT_ACCOUNT_NEXIST = 14,
 	INVALID_PRINT_MONEY_AMOUNT = 15,
 	INVALID_AMOUNT = 16,
-	BAD_SIGNATURE = 17
+	BAD_SIGNATURE = 17,
+	FEE_BID_TOO_LOW = 18,
 };
 
 enum OperationType
@@ -101,12 +102,13 @@ struct Operation {
 	case MONEY_PRINTER:
 		MoneyPrinterOp moneyPrinterOp;
 	} body;
-
-
 };
 
 const MAX_OPS_PER_TX = 256;
 const RESERVED_SEQUENCE_NUM_LOWBITS = 255;
+
+const BASE_FEE_PER_TX = 10;
+const FEE_PER_OP = 5;
 
 struct TransactionMetadata {
 	AccountID sourceAccount;
@@ -117,7 +119,7 @@ struct TransactionMetadata {
 struct Transaction {
 	TransactionMetadata metadata;
 	Operation operations<MAX_OPS_PER_TX>;
-	uint32 fee;
+	uint32 maxFee;
 };
 
 struct SignedTransaction {

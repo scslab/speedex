@@ -638,6 +638,7 @@ GeneratorState<random_generator>::fill_in_seqnos(ExperimentBlock& block)
 	for (unsigned int i = 0; i < block.size(); i++) {
 		uint64_t prev_seq_num = block_state.sequence_num_map[block[i].transaction.metadata.sourceAccount];
 		block[i].transaction.metadata.sequenceNumber = (prev_seq_num + 1) << 8;
+		block[i].transaction.maxFee = BASE_FEE_PER_TX + FEE_PER_OP * block[i].transaction.operations.size();
 		block_state.sequence_num_map[block.at(i).transaction.metadata.sourceAccount] ++;
 	}
 }

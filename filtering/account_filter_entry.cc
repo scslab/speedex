@@ -73,7 +73,6 @@ AccountFilterEntry::compute_reqs()
                 case CANCEL_SELL_OFFER:
                     break;
                 case PAYMENT:
-       //         	std::printf("payment tx\n");
                     add_req(op.body.paymentOp().asset,
                             op.body.paymentOp().amount);
                     break;
@@ -83,8 +82,7 @@ AccountFilterEntry::compute_reqs()
                     throw std::runtime_error("filtering unknown optype");
             }
         }
-      //  std::printf("native asset\n");
-        add_req(MemoryDatabase::NATIVE_ASSET, tx.transaction.fee);
+        add_req(MemoryDatabase::NATIVE_ASSET, tx.transaction.maxFee);
     }
 }
 
