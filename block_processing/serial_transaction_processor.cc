@@ -18,14 +18,14 @@ template bool SerialTransactionValidator<LoadLMDBManagerView>::validate_transact
 	SerialAccountModificationLog& serial_account_log, 
 	uint64_t round_number);
 
-bool check_tx_format_parameters(Transaction tx) {
+inline bool check_tx_format_parameters(const Transaction& tx) {
 	if (tx.metadata.sequenceNumber & RESERVED_SEQUENCE_NUM_LOWBITS) {
 		return false;
 	}
 	return true;
 }
 
-int64_t fee_required(int tx_op_count)
+inline int64_t fee_required(int tx_op_count)
 {
 	return BASE_FEE_PER_TX + FEE_PER_OP * tx_op_count;
 }
@@ -35,7 +35,7 @@ void SerialTransactionHandler<SerialManager>::log_modified_accounts(
 	const SignedTransaction& signed_tx, 
 	SerialAccountModificationLog& serial_account_log) 
 {
-	if (!SerialManager::maintain_account_log) {
+	if constexpr (!SerialManager::maintain_account_log) {
 		return;
 	}
 	serial_account_log.log_new_self_transaction(signed_tx);
