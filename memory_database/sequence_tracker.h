@@ -144,7 +144,7 @@ BoundedSequenceTracker<MAX_SEQ_GAP>::BoundedSequenceTracker(BoundedSequenceTrack
 {
 	for (auto i = 0u; i < NUM_WORDS; i++)
 	{
-		sequence_number_vec[i].store(other.sequence_number_vec.load(std::memory_order_relaxed), std::memory_order_relaxed);
+		sequence_number_vec[i].store(other.sequence_number_vec[i].load(std::memory_order_relaxed), std::memory_order_relaxed);
 	}
 }
 
@@ -156,7 +156,7 @@ BoundedSequenceTracker<MAX_SEQ_GAP>::operator=(BoundedSequenceTracker&& other)
 
 	for (auto i = 0u; i < NUM_WORDS; i++)
 	{
-		sequence_number_vec[i].store(other.sequence_number_vec.load(std::memory_order_relaxed), std::memory_order_relaxed);
+		sequence_number_vec[i].store(other.sequence_number_vec[i].load(std::memory_order_relaxed), std::memory_order_relaxed);
 	}
 	return *this;
 }
