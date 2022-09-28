@@ -644,7 +644,7 @@ GeneratorState<random_generator>::fill_in_seqnos(ExperimentBlock& block)
 }
 
 template<typename random_generator>
-void GeneratorState<random_generator>::make_block(const std::vector<double>& prices) {
+ExperimentBlock GeneratorState<random_generator>::make_block(const std::vector<double>& prices) {
 	normalize_asset_probabilities();
 
 	if (2 * options.block_size < block_state.tx_buffer.size()) {
@@ -719,6 +719,8 @@ void GeneratorState<random_generator>::make_block(const std::vector<double>& pri
 
 	txs.insert(txs.end(), cancel_txs.begin(), cancel_txs.end());
 	cancellation_flags.resize(txs.size(), false);
+
+	return output;
 }
 
 template<typename random_generator>

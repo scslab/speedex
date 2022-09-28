@@ -191,7 +191,7 @@ public:
 	make_offer_list(const std::vector<double>& prices, size_t num_offers);
 
 	void make_offer_set(const std::vector<double>& prices);
-	void make_block(const std::vector<double>& prices);
+	ExperimentBlock make_block(const std::vector<double>& prices);
 	void fill_in_seqnos(ExperimentBlock& block);
 
 	void make_offer_sets();
