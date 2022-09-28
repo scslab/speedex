@@ -20,28 +20,6 @@ using xdr::operator==;
 namespace speedex
 {
 
-void setUp() {
-	clear_memory_database_lmdb_dir();
-	make_memory_database_lmdb_dir();
-}
-
-void tearDown() {
-	clear_memory_database_lmdb_dir();
-}
-
-struct setup
-{
-	setup()
-	{
-		setUp();
-	}
-
-	~setup()
-	{
-		tearDown();
-	}
-};
-
 void init_memdb(MemoryDatabase& db, uint64_t num_accounts, uint32_t num_assets, uint64_t default_amount)
 {
 	db.open_lmdb_env();
@@ -94,7 +72,7 @@ void assert_balance(MemoryDatabase& db, AccountID acct, uint32_t asset, int64_t 
 
 TEST_CASE("set genesis", "[memdb]")
 {
-	setup s;
+	test::speedex_dirs s;
 
 	MemoryDatabase db;
 
@@ -120,7 +98,7 @@ TEST_CASE("set genesis", "[memdb]")
 
 TEST_CASE("set big genesis", "[memdb]")
 {
-	setup s;
+	test::speedex_dirs s;
 
 	MemoryDatabase db;
 
@@ -139,7 +117,7 @@ TEST_CASE("set big genesis", "[memdb]")
 
 TEST_CASE("rollback account values", "[memdb]")
 {	
-	setup s;
+	test::speedex_dirs s;
 
 	MemoryDatabase db;
 
@@ -189,7 +167,7 @@ TEST_CASE("rollback account values", "[memdb]")
 
 TEST_CASE("rollback with gaps", "[memdb]")
 {
-	setup s;
+	test::speedex_dirs s;
 	
 	MemoryDatabase db;
 

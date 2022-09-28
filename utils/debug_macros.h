@@ -86,6 +86,7 @@ Printouts include file/line information.
 #endif
 */
 
+/*
 #if DEBUG_LEVEL <= DEBUG_LEVEL_WARN
 #define WARN(s, ...) LOG(s, __VA_ARGS__)
 #define WARN_F(s) s
@@ -93,6 +94,7 @@ Printouts include file/line information.
 #define WARN(s, ...) (void)0
 #define WARN_F(s) (void)0
 #endif
+*/
 
 #if DEBUG_LEVEL <= DEBUG_LEVEL_TRACE
 #define TRACE(s, ...) LOG(s, __VA_ARGS__)

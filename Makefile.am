@@ -51,7 +51,7 @@ HEADER_HASH_SRCS = \
 	header_hash/block_header_hash_map.cc
 
 HEADER_HASH_TEST_SRCS = \
-	header_hash/tests/test_header_hash_map.h
+	header_hash/tests/test_header_hash_map.cc
 
 LMDB_SRCS = \
 	lmdb/lmdb_types.cc \
@@ -88,7 +88,7 @@ ORDERBOOK_SRCS = \
 	orderbook/orderbook_manager_view.cc
 
 ORDERBOOK_TEST_SRCS = \
-	orderbook/tests/test_demand_calc.h
+	orderbook/tests/test_demand_calc.cc
 
 OVERLAY_SRCS = \
 	overlay/overlay_client.cc \
@@ -205,7 +205,10 @@ LDADD = \
 
 CATCH_TEST_CCS = \
 	filtering/tests/test_filter_entry.cc \
-	$(MEMORY_DATABASE_TEST_SRCS)
+	$(HEADER_HASH_TEST_SRCS) \
+	$(MEMORY_DATABASE_TEST_SRCS) \
+	$(ORDERBOOK_TEST_SRCS)
+
 
 $(CATCH_TEST_SRCS:.cc=.o) : CXXFLAGS += $(Catch2_CFLAGS)
 main/test.o : CXXFLAGS += $(Catch2_CFLAGS)
@@ -216,8 +219,6 @@ $(GENERIC_CCS:.cc=.o) : $(XH_FILES)
 $(CATCH_TEST_CCS:.cc=.o) : $(XH_FILES)
 
 TEST_SRCS = \
-	$(HEADER_HASH_TEST_SRCS) \
-	$(ORDERBOOK_TEST_SRCS) \
 	$(SIMPLEX_TEST_SRCS)
 
 test_runner.cc : $(TEST_SRCS) $(XHFILES)

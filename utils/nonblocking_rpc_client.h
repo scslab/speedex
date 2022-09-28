@@ -67,7 +67,7 @@ NonblockingRpcClient<client_t>::try_open_connection()
 		open_connection();
 	} catch (...)
 	{
-		WARN("failed to open connection on rid=%d", info.id);
+		ERROR("failed to open connection on rid=%d", info.id);
 		clear_connection();
 	}
 	on_connection_open();
