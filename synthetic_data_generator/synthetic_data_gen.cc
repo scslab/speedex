@@ -613,8 +613,6 @@ template<typename random_generator>
 void
 GeneratorState<random_generator>::filter_by_replica_id(ExperimentBlock& block) {
 
-	std::printf("before: block.size() = %lu\n", block.size());
-
 	if (conf_pair) {
 
 		for (size_t i = 0; i < block.size();) {
@@ -627,8 +625,6 @@ GeneratorState<random_generator>::filter_by_replica_id(ExperimentBlock& block) {
 			}
 		}
 	}
-
-	std::printf("after: block.size() = %lu\n", block.size());
 }
 
 template<typename random_generator>

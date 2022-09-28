@@ -21,6 +21,10 @@ void CycleDistribution::create_acc_probabilities(
 }
 
 int CycleDistribution::get_size(double random) const {
+	if (acc_probabilities.size() == 0)
+	{
+		throw std::runtime_error("can't make a cycle if there are no assets");
+	}
 	for (unsigned int i = 0; i < acc_probabilities.size(); i++) {
 		if (random <= acc_probabilities[i]) {
 			return i+2;
@@ -83,7 +87,10 @@ bool CycleDistribution::parse(struct fy_document* fyd, int num_assets) {
 	if (!status) {
 		return status;
 	}
-	create_acc_probabilities(individual_scores, distribution_size);
+	if (distribution_size > 1)
+	{
+		create_acc_probabilities(individual_scores, distribution_size);
+	}
 	return true;
 }
 
@@ -167,8 +174,8 @@ bool GenerationOptions::parse(const char* filename) {
 		std::printf("don't be a fool\n");
 		return false;
 	}
-	std::printf("min endow: %ld, max endow: %ld\n", 
-		initial_endow_min, initial_endow_max);
+	//std::printf("min endow: %ld, max endow: %ld\n", 
+	//	initial_endow_min, initial_endow_max);
 
 	output_prefix = std::string(filename_buf);
 

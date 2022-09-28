@@ -12,6 +12,21 @@
 
 namespace speedex {
 
+namespace detail
+{
+
+void speedex_make_state_commitment(
+	InternalHashes& hashes,
+	SpeedexManagementStructures& management_structures,
+	BlockProductionHashingMeasurements& measurements);
+
+void speedex_format_hashed_block(
+	HashedBlock& block_out,
+	const HashedBlock& prev_block,
+	const std::vector<Price>& price_workspace,
+	const uint8_t tax_rate);
+} /* detail */
+
 /*! Runs block creation logic.  Does not
 assemble a new block of transactions, nor
 does it persist data to disk.

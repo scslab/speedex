@@ -161,6 +161,7 @@ GENERIC_CCS = \
 	generic/counting_vm.cc
 
 MAIN_CCS = \
+	main/blockstm_comparison.cc \
 	main/cda_experiment.cc \
 	main/clean_lmdbs.cc \
 	main/counting_vm_hotstuff.cc \
@@ -225,6 +226,7 @@ test_runner.cc : $(TEST_SRCS) $(XHFILES)
 	cxxtestgen --error-printer -o test_runner.cc $(TEST_SRCS)
 
 bin_PROGRAMS = \
+	blockstm_comparison \
 	cda_experiment \
 	clean_lmdbs \
 	counting_vm_hotstuff \
@@ -243,6 +245,7 @@ bin_PROGRAMS = \
 	test \
 	ctest
 
+blockstm_comparison_SOURCES = $(SRCS) main/blockstm_comparison.cc
 cda_experiment_SOURCES = $(SRCS) main/cda_experiment.cc
 clean_lmdbs_SOURCES = $(SRCS) main/clean_lmdbs.cc
 counting_vm_hotstuff_SOURCES = $(SRCS) $(GENERIC_CCS) main/counting_vm_hotstuff.cc
