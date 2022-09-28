@@ -1,9 +1,15 @@
 #include "orderbook/orderbook.h"
 
+#include "memory_database/memory_database.h"
+
+#include "orderbook/commitment_checker.h"
+
+#include "stats/block_update_stats.h"
+
 #include "utils/debug_macros.h"
 #include "utils/debug_utils.h"
 
-#include "mtt/utils/serialize_endian.h"
+#include <mtt/utils/serialize_endian.h>
 
 #include <cinttypes>
 

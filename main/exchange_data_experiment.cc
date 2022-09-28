@@ -9,6 +9,8 @@
 #include "speedex/approximation_parameters.h"
 #include "speedex/speedex_management_structures.h"
 
+#include "stats/block_update_stats.h"
+
 #include "utils/debug_macros.h"
 #include "utils/manage_data_dirs.h"
 #include "utils/save_load_xdr.h"

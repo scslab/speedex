@@ -1,12 +1,32 @@
 #include "block_processing/serial_transaction_processor.h"
 #include "crypto/crypto_utils.h"
 
+#include "speedex/speedex_management_structures.h"
+
+#include "memory_database/memory_database.h"
+#include "memory_database/memory_database_view.h"
+
+#include "modlog/account_modification_log.h"
+
 namespace speedex {
 
 // force template instantiations
 
 template class SerialTransactionValidator<OrderbookManager>;
 template class SerialTransactionValidator<LoadLMDBManagerView>;
+
+template
+SerialTransactionValidator<OrderbookManager>::SerialTransactionValidator(
+	SpeedexManagementStructures& management_structures, 
+	const OrderbookStateCommitmentChecker& orderbook_state_commitment, 
+	ThreadsafeValidationStatistics& main_stats);
+
+template
+SerialTransactionValidator<LoadLMDBManagerView>::SerialTransactionValidator(
+	SpeedexManagementStructures& management_structures, 
+	const OrderbookStateCommitmentChecker& orderbook_state_commitment, 
+	ThreadsafeValidationStatistics& main_stats,
+	uint64_t current_block_number); 
 
 template bool SerialTransactionValidator<OrderbookManager>::validate_transaction<>(
 	const SignedTransaction&, 
@@ -17,6 +37,8 @@ template bool SerialTransactionValidator<LoadLMDBManagerView>::validate_transact
 	BlockStateUpdateStatsWrapper& stats, 
 	SerialAccountModificationLog& serial_account_log, 
 	uint64_t round_number);
+
+
 
 inline bool check_tx_format_parameters(const Transaction& tx) {
 	if (tx.metadata.sequenceNumber & RESERVED_SEQUENCE_NUM_LOWBITS) {
@@ -29,6 +51,16 @@ inline int64_t fee_required(int tx_op_count)
 {
 	return BASE_FEE_PER_TX + FEE_PER_OP * tx_op_count;
 }
+
+
+template<typename SerialManager>
+SerialTransactionHandler<SerialManager>::SerialTransactionHandler(
+	SpeedexManagementStructures& management_structures, 
+	SerialManager&& serial_manager)
+	: serial_manager(std::move(serial_manager))
+	, account_database(management_structures.db)
+	, check_sigs(management_structures.configs.check_sigs)
+	{}
 
 template<typename SerialManager>
 void SerialTransactionHandler<SerialManager>::log_modified_accounts(
@@ -73,6 +105,22 @@ void SerialTransactionHandler<SerialManager>::log_modified_accounts(
 		}
 	}
 }
+
+template<typename ManagerViewType>
+template<typename ...Args>
+SerialTransactionValidator<ManagerViewType>::SerialTransactionValidator(
+	SpeedexManagementStructures& management_structures, 
+	const OrderbookStateCommitmentChecker& orderbook_state_commitment, 
+	ThreadsafeValidationStatistics& main_stats,
+	Args... lmdb_args) 
+	: BaseT(
+		management_structures, 
+		ValidatingSerialManager<ManagerViewType>(
+			management_structures.orderbook_manager, 
+			orderbook_state_commitment, 
+			main_stats,
+			lmdb_args...))
+{}
 
 template<typename ManagerViewType>
 template<typename... Args>
@@ -205,6 +253,12 @@ std::string op_type_to_string(OperationType type) {
 	}
 }
 
+SerialTransactionProcessor::SerialTransactionProcessor(
+	SpeedexManagementStructures& management_structures) 
+	: BaseT(management_structures, 
+		ProcessingSerialManager(management_structures.orderbook_manager)) {}
+
+
 TransactionProcessingStatus 
 SerialTransactionProcessor::process_transaction(
 	const SignedTransaction& signed_tx,
@@ -213,7 +267,7 @@ SerialTransactionProcessor::process_transaction(
 
 	auto& tx = signed_tx.transaction;
 	
-	uint64_t tx_op_count = tx.operations.size();
+	uint32_t tx_op_count = tx.operations.size();
 
 	TX_INFO("starting process_transaction");
 
@@ -266,7 +320,8 @@ SerialTransactionProcessor::process_transaction(
 		return fee_status;
 	}
 
-	for (uint64_t i = 0; i < tx_op_count; i++) {
+	for (uint32_t i = 0; i < tx_op_count; i++)
+	{
 		TX_INFO("processing operation %lu, type %s", 
 			i, op_type_to_string(tx.operations[i].body.type()).c_str());
 
@@ -303,10 +358,10 @@ SerialTransactionProcessor::process_transaction(
 				break;
 			// default: status is left as INVALID_OPERATION_TYPE
 		}
-		if (status != TransactionProcessingStatus::SUCCESS) {
-
+		if (status != TransactionProcessingStatus::SUCCESS)
+		{
 			TX_INFO("got bad status from an op");
-			unwind_transaction(tx, i-1);
+			unwind_transaction(tx, static_cast<int32_t>(i)-1);
 			op_metadata.db_view.release_sequence_number(
 				source_account_idx, tx.metadata.sequenceNumber);
 			op_metadata.unwind();
@@ -322,10 +377,11 @@ SerialTransactionProcessor::process_transaction(
 	return TransactionProcessingStatus::SUCCESS;
 }
 
+// negative input to last_valid_op makes this a no-op
 void 
 SerialTransactionProcessor::unwind_transaction(
 	const Transaction& tx,
-	int last_valid_op) {
+	int32_t last_valid_op) {
 
 	UserAccount* source_account_idx = account_database.lookup_user(tx.metadata.sourceAccount);
 	if (source_account_idx == nullptr) {
@@ -335,7 +391,7 @@ SerialTransactionProcessor::unwind_transaction(
 	OperationMetadata<UnbufferedViewT> op_metadata(
 		tx.metadata, source_account_idx, account_database);
 
-	int op_idx = last_valid_op;
+	int32_t op_idx = last_valid_op;
 	
 	while (op_idx >= 0) {
 

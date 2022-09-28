@@ -18,15 +18,17 @@ a crash could result in an unrecoverable state.
 */
 #include <cstdint>
 
-#include "orderbook/orderbook_manager.h"
 #include "orderbook/typedefs.h"
 #include "orderbook/utils.h"
 
 #include "mtt/trie/utils.h"
 
+#include "orderbook/commitment_checker.h"
 
 namespace speedex {
 
+struct SpeedexManagementStructures;
+class OrderbookManager;
 
 /*! Mock around an orderbook manager when replaying a block from disk.
 Operations are no-op if the corresponding orderbook already reflects
@@ -177,20 +179,10 @@ public:
 		const int idx, 
 		const Price min_price, 
 		const AccountID owner, 
-		const uint64_t offer_id) {
-		
-		generate_orderbook_trie_key(
-			min_price, owner, offer_id, BaseSerialManager::key_buf);
-		
-		BaseSerialManager<OrderbookManager>::main_manager
-			.unmark_for_deletion(idx, key_buf);
-	}
+		const uint64_t offer_id);
 
 	//! Undo a call do add_offer
-	void unwind_add_offer(int idx, const Offer& offer) {
-		generate_orderbook_trie_key(offer, key_buf);
-		new_offers.at(idx).perform_deletion(key_buf);
-	}
+	void unwind_add_offer(int idx, const Offer& offer);
 
 	/*! Add a newly created offer to the local database.
 	Template arguments are irrelevant in the block production setting (and

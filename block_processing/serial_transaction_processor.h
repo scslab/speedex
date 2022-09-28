@@ -16,23 +16,20 @@ Based on template argument, works in block production or validation mode.
 
 #include "block_processing/operation_metadata.h"
 
-#include "memory_database/memory_database.h"
-#include "memory_database/memory_database_view.h"
-
-#include "modlog/account_modification_log.h"
-
-#include "orderbook/orderbook_manager.h"
 #include "orderbook/orderbook_manager_view.h"
 
-#include "speedex/speedex_management_structures.h"
-
-#include "stats/block_update_stats.h"
-
 #include "xdr/transaction.h"
-#include "xdr/ledger.h"
 
 namespace speedex {
 
+struct MemoryDatabase;
+struct SpeedexManagementStructures;
+
+class BufferedMemoryDatabaseView;
+class UnbufferedMemoryDatabaseView;
+class LoadLMDBMemoryDatabaseView;
+
+class SerialAccountModificationLog;
 
 /*! Base handler for processing transactions.
 Should not be used directly.  Use instead
@@ -115,11 +112,7 @@ public:
 
 	SerialTransactionHandler(
 		SpeedexManagementStructures& management_structures, 
-		SerialManager&& serial_manager)
-		: serial_manager(std::move(serial_manager))
-		, account_database(management_structures.db)
-		, check_sigs(management_structures.configs.check_sigs)
-		{}
+		SerialManager&& serial_manager);
 
 	//void clear() {
 	//	serial_manager.clear();
@@ -167,15 +160,13 @@ class SerialTransactionProcessor
 	//! Only calls unwind_operation on the ops that succeeded.
 	void unwind_transaction(
 		const Transaction& tx,
-		int last_valid_op);
+		int32_t last_valid_op);
 
 
 public:
 	//! Initialize new object for processing transactions in one thread.
 	SerialTransactionProcessor(
-		SpeedexManagementStructures& management_structures) 
-		: BaseT(management_structures, 
-			ProcessingSerialManager(management_structures.orderbook_manager)) {}
+		SpeedexManagementStructures& management_structures);
 
 	//! Process one transaction.  Is no-op if processing fails.
 	TransactionProcessingStatus process_transaction(
@@ -232,15 +223,7 @@ public:
 		SpeedexManagementStructures& management_structures, 
 		const OrderbookStateCommitmentChecker& orderbook_state_commitment, 
 		ThreadsafeValidationStatistics& main_stats,
-		Args... lmdb_args) 
-		: BaseT(
-			management_structures, 
-			std::move(
-				ValidatingSerialManager<ManagerViewType>(
-					management_structures.orderbook_manager, 
-					orderbook_state_commitment, 
-					main_stats,
-					lmdb_args...))) {}
+		Args... lmdb_args);
 
 	//! Validate a single transaction, returns true on success.
 	template<typename ...Args>

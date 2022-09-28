@@ -20,7 +20,6 @@ offer clearing/validation checks.
 
 #include "xdr/block.h"
 #include "xdr/transaction.h"
-#include "xdr/ledger.h"
 
 namespace speedex {
 

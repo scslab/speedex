@@ -15,11 +15,6 @@ Manage a set of offers trading one fixed asset for another fixed asset.
 
 #include "utils/debug_macros.h"
 
-#include "memory_database/memory_database.h"
-
-#include "modlog/account_modification_log.h"
-
-#include "orderbook/commitment_checker.h"
 #include "orderbook/helpers.h"
 #include "orderbook/lmdb.h"
 #include "orderbook/metadata.h"
@@ -27,9 +22,6 @@ Manage a set of offers trading one fixed asset for another fixed asset.
 #include "orderbook/offer_clearing_params.h"
 #include "orderbook/thunk.h"
 #include "orderbook/typedefs.h"
-
-#include "stats/block_update_stats.h"
-
 
 namespace speedex {
 
@@ -68,6 +60,15 @@ present, etc).  Returns true if these checks pass.
 If they fail, rollback_validation (undoes all state changes).
 
 */
+
+class BlockStateUpdateStatsWrapper;
+class OrderbookStateCommitmentChecker;
+class MemoryDatabase;
+class SerialAccountModificationLog;
+class SingleValidationStatistics;
+class SingleOrderbookStateCommitment;
+class SingleOrderbookStateCommitmentChecker;
+
 class Orderbook {
 
 	const OfferCategory category;

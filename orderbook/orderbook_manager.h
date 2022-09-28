@@ -4,17 +4,12 @@
 #include <mutex>
 #include <vector>
 
-#include "modlog/account_modification_log.h"
-
 #include "orderbook/lmdb.h"
-#include "orderbook/offer_clearing_params.h"
 #include "orderbook/orderbook.h"
 #include "orderbook/utils.h"
 
-#include "stats/block_update_stats.h"
-#include "utils/fixed_point_value.h"
-
 #include "xdr/types.h"
+#include "xdr/block.h"
 
 namespace speedex {
 
@@ -59,6 +54,12 @@ If fails, we call rollback_validation.
 Rollback validation clears the persistence thunk that was just built.
 
 */
+class AccountModificationLog;
+class BlockStateUpdateStatsWrapper;
+class ClearingParams;
+class OrderbookStateCommitmentChecker;
+class ThreadsafeValidationStatistics;
+
 class OrderbookManager {
 
 	std::vector<Orderbook> orderbooks;
@@ -92,7 +93,7 @@ public:
 	OrderbookManager(const OrderbookManager& other) = delete;
 	OrderbookManager(OrderbookManager&& other) = delete;
 
-	void clear_();
+	//void clear_();
 
 	//! Add a set of offers to a particular orderbook index.  Index
 	//! should be looked up in advance.

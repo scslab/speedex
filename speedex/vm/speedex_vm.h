@@ -14,6 +14,7 @@
 
 #include "xdr/block.h"
 
+#include <forward_list>
 #include <mutex>
 
 

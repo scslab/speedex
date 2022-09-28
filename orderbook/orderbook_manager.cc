@@ -1,5 +1,12 @@
 #include "orderbook/orderbook_manager.h"
 
+#include "modlog/account_modification_log.h"
+
+#include "orderbook/commitment_checker.h"
+#include "orderbook/offer_clearing_params.h"
+
+#include "stats/block_update_stats.h"
+
 namespace speedex {
 
 OrderbookManager::OrderbookManager(
@@ -111,9 +118,10 @@ void OrderbookManager::persist_lmdb_for_loading(uint64_t current_block_number) {
 	}
 }
 
-void OrderbookManager::clear_() {
-	generic_map_serial<&Orderbook::clear_>();
-}
+
+//void OrderbookManager::clear_() {
+//	generic_map_serial<&Orderbook::clear_>();
+//}
 
 void OrderbookManager::create_lmdb() {
 	generic_map_serial<&Orderbook::create_lmdb>();

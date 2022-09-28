@@ -7,7 +7,6 @@ CLEANFILES = *~ .*~
 X_FILES = \
 	xdr/types.x \
 	xdr/transaction.x \
-	xdr/ledger.x \
 	xdr/block.x \
 	xdr/database_commitments.x \
 	xdr/trie_proof.x \
