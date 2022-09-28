@@ -8,13 +8,13 @@
 	valid mempool in validators.
 */
 
-#include "mempool/mempool.h"
-
-#include "speedex/speedex_management_structures.h"
-
-#include "xdr/transaction.h"
+#include "utils/async_worker.h"
 
 namespace speedex {
+
+class Mempool;
+class MemoryDatabase;
+struct SignedTransaction;
 
 //! Filter mempool for committed txs (i.e. txs committed by another node).
 //! Should NOT be used while speedex state is modified by block production or validation.
@@ -22,12 +22,12 @@ namespace speedex {
 //! One instance of class can be concurrently used (this doesn't hold any state of its own).
 class MempoolTransactionFilter {
 
-	SpeedexManagementStructures const& management_structures;
+	MemoryDatabase const& db;
 
 public:
 
-	MempoolTransactionFilter(SpeedexManagementStructures const& management_structures)
-		: management_structures(management_structures) 
+	MempoolTransactionFilter(MemoryDatabase const& db)
+		: db(db) 
 		{}
 
 	//! return true if the transaction is definitely committed already or uncommittable
@@ -55,7 +55,7 @@ class MempoolFilterExecutor : public AsyncWorker {
 
 public:
 
-	MempoolFilterExecutor(SpeedexManagementStructures const& management_structures, Mempool& mempool);
+	MempoolFilterExecutor(MemoryDatabase const& db, Mempool& mempool);
 
 	void start_filter();
 

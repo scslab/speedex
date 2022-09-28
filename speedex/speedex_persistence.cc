@@ -4,7 +4,9 @@
 
 #include "utils/header_persistence.h"
 
-#include "mtt/utils/time.h"
+#include "utils/debug_macros.h"
+
+#include <mtt/utils/time.h>
 
 namespace speedex {
 

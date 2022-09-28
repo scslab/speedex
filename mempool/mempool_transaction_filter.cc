@@ -1,5 +1,12 @@
 #include "mempool/mempool_transaction_filter.h"
 
+#include "mempool/mempool.h"
+
+#include "memory_database/memory_database.h"
+
+#include "xdr/types.h"
+#include "xdr/transaction.h"
+
 namespace speedex {
 
 // return true to remove
@@ -7,7 +14,7 @@ bool
 MempoolTransactionFilter::check_transaction(const SignedTransaction& tx) const {
 	AccountID source_account = tx.transaction.metadata.sourceAccount;
 
-	UserAccount* idx = management_structures.db.lookup_user(source_account);
+	auto* idx = db.lookup_user(source_account);
 	//if (!management_structures.db.lookup_user_id(source_account, &idx)) {
 	if (idx == nullptr) {
 		// don't remove, we haven't seen that account's creation tx yet
@@ -15,17 +22,17 @@ MempoolTransactionFilter::check_transaction(const SignedTransaction& tx) const {
 		return false;
 	}
 
-	uint64_t last_committed_seq_num = management_structures.db.get_last_committed_seq_number(idx);
+	uint64_t last_committed_seq_num = db.get_last_committed_seq_number(idx);
 
 	// return true IFF we've already committed a seq number higher than this one on this account.
 	return (last_committed_seq_num >= tx.transaction.metadata.sequenceNumber);
 }
 
-MempoolFilterExecutor::MempoolFilterExecutor(SpeedexManagementStructures const& management_structures, Mempool& mempool)
+MempoolFilterExecutor::MempoolFilterExecutor(MemoryDatabase const& db, Mempool& mempool)
 	: AsyncWorker()
 	, cancel_background_filter(false)
 	, do_work(false)
-	, filter(management_structures)
+	, filter(db)
 	, mempool(mempool)
 	{
 		start_async_thread(

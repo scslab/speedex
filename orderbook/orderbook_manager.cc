@@ -7,7 +7,11 @@
 
 #include "stats/block_update_stats.h"
 
+#include "utils/debug_macros.h"	
+
 namespace speedex {
+
+class NullDB;
 
 OrderbookManager::OrderbookManager(
 		uint16_t num_new_assets)
@@ -117,11 +121,6 @@ void OrderbookManager::persist_lmdb_for_loading(uint64_t current_block_number) {
 		}
 	}
 }
-
-
-//void OrderbookManager::clear_() {
-//	generic_map_serial<&Orderbook::clear_>();
-//}
 
 void OrderbookManager::create_lmdb() {
 	generic_map_serial<&Orderbook::create_lmdb>();

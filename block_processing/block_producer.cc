@@ -1,18 +1,22 @@
 #include "block_processing/block_producer.h"
 
 #include <atomic>
+#include <cinttypes>
 #include <cstdint>
 #include <mutex>
 #include <tbb/parallel_reduce.h>
 
 #include "block_processing/serial_transaction_processor.h"
 
-#include "mtt/utils/threadlocal_cache.h"
+#include "speedex/speedex_management_structures.h"
+#include "stats/block_update_stats.h"
 
-#include "mtt/utils/time.h"
+#include "utils/debug_macros.h"
+
+#include <mtt/utils/threadlocal_cache.h>
+#include <mtt/utils/time.h>
 
 #include "xdr/block.h"
-#include <inttypes.h>
 
 namespace speedex {
 

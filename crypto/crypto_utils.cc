@@ -78,9 +78,6 @@ BlockSignatureChecker::check_all_sigs(const SerializedBlock& block) {
 	return checker.valid;
 }
 
-
-
-
 std::pair<std::vector<SecretKey>, std::vector<PublicKey>>
 DeterministicKeyGenerator::gen_key_pair_list(size_t num_accounts) {
 	std::vector<SecretKey> sks;

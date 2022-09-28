@@ -8,14 +8,14 @@ given a mempool of uncommitted (new) transactions.
 
 #include "modlog/log_merge_worker.h"
 
-#include "speedex/speedex_management_structures.h"
-
 #include "mempool/mempool.h"
 
-#include "stats/block_update_stats.h"
 #include "xdr/block.h"
 
 namespace speedex {
+
+class BlockStateUpdateStatsWrapper;
+class SpeedexManagementStructures;
 
 /*! 
 Interface for producing valid block of transactions.

@@ -2,14 +2,14 @@
 
 #include <cstdint>
 
-#include "memory_database/memory_database.h"
-
 #include "utils/fixed_point_value.h"
 #include "utils/price.h"
 
 #include "xdr/types.h"
 
 namespace speedex {
+
+class UserAccount;
 
 /*! Fully clear a trade offer.
 

@@ -13,14 +13,8 @@ Manage a set of offers trading one fixed asset for another fixed asset.
 
 #include <xdrpp/marshal.h>
 
-#include "utils/debug_macros.h"
-
 #include "orderbook/helpers.h"
 #include "orderbook/lmdb.h"
-#include "orderbook/metadata.h"
-#include "orderbook/offer_clearing_logic.h"
-#include "orderbook/offer_clearing_params.h"
-#include "orderbook/thunk.h"
 #include "orderbook/typedefs.h"
 
 namespace speedex {
@@ -62,6 +56,9 @@ If they fail, rollback_validation (undoes all state changes).
 */
 
 class BlockStateUpdateStatsWrapper;
+struct EndowAccumulator;
+class OrderbookClearingParams;
+class OrderbookLMDBCommitmentThunk;
 class OrderbookStateCommitmentChecker;
 class MemoryDatabase;
 class SerialAccountModificationLog;
@@ -100,7 +97,7 @@ class Orderbook {
 		return lmdb_instance.get_persisted_round_number();
 	}
 
-	void tentative_commit_for_validation(uint64_t current_block_number); //creates thunk
+	void tentative_commit_for_validation(uint64_t current_block_number); //creates thunk (within lmdb instance)
 	void commit_for_production(uint64_t current_block_number); // creates lmdb thunk
 
 	void generate_metadata_index();
@@ -111,10 +108,7 @@ class Orderbook {
 	__attribute__((warn_unused_result))
 	persist_lmdb(uint64_t current_block_number, dbenv::wtxn& wtx);
 
-	void add_offers(OrderbookTrie&& offers) {
-		ORDERBOOK_INFO("merging in to \"%d %d\"", category.sellAsset, category.buyAsset);
-		uncommitted_offers.merge_in(std::move(offers));
-	}
+	void add_offers(OrderbookTrie&& offers);
 
 	std::optional<Offer> mark_for_deletion(const prefix_t key) {
 		return committed_offers.mark_for_deletion(key);
@@ -153,12 +147,12 @@ public:
 	  indexed_metadata() {
 	}
 
-	void clear_() {
-		uncommitted_offers.clear();
-		committed_offers.clear();
-		indexed_metadata.clear();
-		lmdb_instance.clear_();
-	}
+//	void clear_() {
+//		uncommitted_offers.clear();
+//		committed_offers.clear();
+//		indexed_metadata.clear();
+//		lmdb_instance.clear_();
+//	}
 
 	void log() {
 		committed_offers._log("committed_offers: ");

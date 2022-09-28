@@ -1,6 +1,10 @@
 #include "speedex/autorollback_validation_structures.h"
 
-#include "mtt/utils/time.h"
+#include "speedex/speedex_management_structures.h"
+
+#include "stats/block_update_stats.h"
+
+#include <mtt/utils/time.h>
 
 namespace speedex
 {

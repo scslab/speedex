@@ -18,6 +18,7 @@ a crash could result in an unrecoverable state.
 */
 #include <cstdint>
 
+#include "orderbook/offer_clearing_logic.h"
 #include "orderbook/typedefs.h"
 #include "orderbook/utils.h"
 

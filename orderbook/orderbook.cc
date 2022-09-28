@@ -2,7 +2,12 @@
 
 #include "memory_database/memory_database.h"
 
+#include "modlog/account_modification_log.h"
+
 #include "orderbook/commitment_checker.h"
+#include "orderbook/offer_clearing_logic.h"
+#include "orderbook/offer_clearing_params.h"
+#include "orderbook/thunk.h"
 
 #include "stats/block_update_stats.h"
 
@@ -177,6 +182,12 @@ Orderbook::persist_lmdb(uint64_t current_block_number, dbenv::wtxn& wtx)
     return lmdb_instance.write_thunks(current_block_number, wtx);
 }
 
+
+void 
+Orderbook::add_offers(OrderbookTrie&& offers) {
+    ORDERBOOK_INFO("merging in to \"%d %d\"", category.sellAsset, category.buyAsset);
+    uncommitted_offers.merge_in(std::move(offers));
+}
 /*
 //old version
 WorkUnitMetadata MerkleWorkUnit::get_metadata(Price p) {

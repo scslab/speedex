@@ -1,5 +1,7 @@
 #include "memory_database/memory_database.h"
 
+#include "modlog/account_modification_log.h"		
+
 #include "utils/debug_macros.h"
 
 #include <tbb/parallel_for.h>

@@ -9,12 +9,21 @@ unless validation succeeds and the block
 commits.
 */
 
-#include "speedex/speedex_management_structures.h"
-
 #include "xdr/block.h"
+
+#include <cstdint>
 
 namespace speedex
 {
+
+class AccountModificationLog;
+class BlockHeaderHashMap;
+class BlockStateUpdateStatsWrapper;
+class MemoryDatabase;
+class OrderbookManager;
+class OrderbookStateCommitmentChecker;
+class SpeedexManagementStructures;
+class ThreadsafeValidationStatistics;
 
 //! Rollback changes to database upon going out of scope,
 //! unless whole block commits.

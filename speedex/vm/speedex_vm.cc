@@ -3,6 +3,7 @@
 #include "speedex/speedex_operation.h"
 #include "speedex/speedex_options.h"
 
+#include "utils/debug_macros.h"
 #include "utils/hash.h"
 #include "utils/save_load_xdr.h"
 
@@ -33,7 +34,7 @@ SpeedexVM::SpeedexVM(
 	, TARGET_BLOCK_SIZE(options.block_size)
 	, MEMPOOL_TARGET_SIZE(options.mempool_target)
 	, tatonnement_structs(management_structures.orderbook_manager)
-	, mempool_structs(management_structures, MEMPOOL_CHUNK_SIZE, MEMPOOL_TARGET_SIZE)
+	, mempool_structs(management_structures.db, MEMPOOL_CHUNK_SIZE, MEMPOOL_TARGET_SIZE)
 	, log_merge_worker(management_structures.account_modification_log)
 	, block_producer(management_structures, log_merge_worker)
 	, block_validator(management_structures, log_merge_worker)

@@ -6,6 +6,8 @@
 
 namespace speedex {
 
+class MemoryDatabase;
+
 class MempoolStructures {
 
 public:
@@ -16,10 +18,10 @@ private:
 	MempoolFilterExecutor filter;
 public:
 
-	MempoolStructures(const SpeedexManagementStructures& management_structures, size_t target_chunk_size, size_t max_mempool_size)
+	MempoolStructures(const MemoryDatabase& db, size_t target_chunk_size, size_t max_mempool_size)
 		: mempool(target_chunk_size, max_mempool_size)
 		, background_cleaner(mempool)
-		, filter(management_structures, mempool)
+		, filter(db, mempool)
 		{}
 	
 	void pre_validation_stop_background_filtering() {

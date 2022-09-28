@@ -14,8 +14,6 @@
 #include "memory_database/typedefs.h"
 #include "memory_database/user_account.h"
 
-#include "modlog/account_modification_log.h"		
-
 #include "mtt/trie/merkle_trie.h"
 #include "mtt/trie/prefix.h"
 
@@ -68,6 +66,8 @@ If fail
 namespace speedex {
 
 class MemoryDatabase;
+
+class AccountModificationLog;
 
 /*! Wrapper class around an LMDB instance for the account database,
 with some extra parameters filled in (i.e. database file location).

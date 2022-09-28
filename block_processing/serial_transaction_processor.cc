@@ -8,6 +8,8 @@
 
 #include "modlog/account_modification_log.h"
 
+#include "utils/debug_macros.h"
+
 namespace speedex {
 
 // force template instantiations

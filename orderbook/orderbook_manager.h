@@ -93,8 +93,6 @@ public:
 	OrderbookManager(const OrderbookManager& other) = delete;
 	OrderbookManager(OrderbookManager&& other) = delete;
 
-	//void clear_();
-
 	//! Add a set of offers to a particular orderbook index.  Index
 	//! should be looked up in advance.
 	void add_offers(int idx, OrderbookTrie&& trie) {
