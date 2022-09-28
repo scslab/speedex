@@ -496,7 +496,7 @@ SerialTransactionHandler<SerialManager>::process_operation(
 		TX("price out of bounds!");
 		return TransactionProcessingStatus::INVALID_PRICE;
 	}
-	if (op.amount == 0) {
+	if (op.amount <= 0) {
 		TX("amount is 0!");
 		return TransactionProcessingStatus::INVALID_AMOUNT;
 	}
@@ -592,6 +592,11 @@ SerialTransactionHandler<SerialManager>::process_operation(
 	const PaymentOp& op) {
 
 	UserAccount* target_account_idx = metadata.db_view.lookup_user(op.receiver);
+
+	if (op.amount <= 0)
+	{
+		return TransactionProcessingStatus::INVALID_AMOUNT;
+	}
 	
 	//account_db_idx target_account_idx = -1;
 	//if (!metadata.db_view.lookup_user_id(
