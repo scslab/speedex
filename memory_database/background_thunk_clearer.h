@@ -49,8 +49,7 @@ public:
 		}
 
 	~BackgroundThunkClearer() {
-		wait_for_async_task();
-		end_async_thread();
+		terminate_worker();
 	}
 	
 	void clear_batch(std::vector<Clearable>&& new_work) {

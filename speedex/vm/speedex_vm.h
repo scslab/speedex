@@ -75,7 +75,7 @@ class SpeedexVM : public hotstuff::VMBase {
 	
 	SpeedexMeasurements measurements_log;
 
-	std::string measurement_output_folder;
+	const std::string measurement_output_folder;
 
 	const SpeedexOptions& options;
 	const ExperimentParameters& params;

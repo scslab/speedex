@@ -32,21 +32,15 @@ protected:
 	//! Flag for signaling that worker thread has shut down
 	std::atomic<bool> worker_shutdown = false;
 
-public:
+private:
+	bool started = false;
+	bool terminate_correctly = false;
 
-	//! extenders override this to tell worker when there's work waiting to be done.
-	virtual bool exists_work_to_do() = 0;
-
-	//! wait for background task to finish
-	void wait_for_async_task() {
+	void wait_for_async_thread_terminate() {
 		std::unique_lock lock(mtx);
-		if (!exists_work_to_do()) return;
-		cv.wait(lock, [this] {return !exists_work_to_do();});
-	}
-
-	//! call in ctor of extender
-	void start_async_thread(auto run_lambda) {
-		std::thread(run_lambda).detach();
+		if (!worker_shutdown) {
+			cv.wait(lock, [this] () -> bool { return worker_shutdown;});
+		}
 	}
 
 	//! call in dtor of extender
@@ -56,16 +50,62 @@ public:
 		cv.notify_all();
 	}
 
+	void run_wrapper(auto run_lambda)
+	{
+		run_lambda();
+		signal_async_thread_shutdown();
+	}
+
+	//! call when worker thread terminates
 	void signal_async_thread_shutdown() {
 		std::lock_guard lock(mtx);
 		worker_shutdown = true;
 		cv.notify_all();		
 	}
 
-	void wait_for_async_thread_terminate() {
+public:
+
+	//! extenders override this to tell worker when there's work waiting to be done.
+	virtual bool exists_work_to_do() = 0;
+
+	//! call in ctor of derived class
+	//! can't pass in lambda in ctor if lambda depends on
+	//! data in derived class that hasn't yet been initialized
+	void start_async_thread(auto run_lambda)
+	{
+		if (started)
+		{
+			throw std::runtime_error("double start on async worker");
+		}
+		std::thread([this, run_lambda] {run_wrapper(run_lambda); }).detach();
+		started = true;
+	}
+
+	//! wait for background task to finish
+	//! cannot be called in dtor of this class because of virtual call
+	//! in most cases will be called in dtor of derived class
+	void wait_for_async_task() {
 		std::unique_lock lock(mtx);
-		if (!worker_shutdown) {
-			cv.wait(lock, [this] () -> bool { return worker_shutdown;});
+		if (!exists_work_to_do()) return;
+		cv.wait(lock, [this] {return !exists_work_to_do();});
+	}
+
+	// must be called in dtor of derived class
+	void terminate_worker()
+	{
+		wait_for_async_task();
+		end_async_thread();
+		wait_for_async_thread_terminate();
+		terminate_correctly = true;
+	}
+
+	~AsyncWorker()
+	{
+		if (!terminate_correctly)
+		{
+			std::printf("terminated async worker incorrectly\n");
+			std::fflush(stdout);
+			std::abort();
 		}
 	}
 };

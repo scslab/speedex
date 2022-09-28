@@ -38,8 +38,8 @@ public:
 
 	//! Background thread is signaled to terminate when object leaves scope.
 	~LogMergeWorker() {
-		wait_for_async_task();
-		end_async_thread();
+		std::fflush(stdout);
+		terminate_worker();
 	}
 
 	//! Initiate a call to merge in modification logs in the background.

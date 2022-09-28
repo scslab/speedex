@@ -68,6 +68,11 @@ public:
 		return OVERLAY_PORT;
 	}
 
+	~OverlayClient()
+	{
+		terminate_worker();
+	}
+
 };
 
 

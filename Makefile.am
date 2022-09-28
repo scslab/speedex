@@ -65,7 +65,8 @@ MEMORY_DATABASE_SRCS = \
 	memory_database/user_account.cc
 
 MEMORY_DATABASE_TEST_SRCS = \
-	memory_database/tests/test_memory_database_lmdb.h
+	memory_database/tests/test_memory_database_lmdb.cc \
+	memory_database/tests/test_seqno_gadget.cc
 
 MEMPOOL_SRCS = \
 	mempool/mempool.cc \
@@ -128,12 +129,6 @@ SYNTHETIC_DATA_GEN_SRCS = \
 	synthetic_data_generator/synthetic_data_gen.cc \
 	synthetic_data_generator/synthetic_data_gen_options.cc \
 	synthetic_data_generator/synthetic_data_stream.cc
-
-TRIE_TEST_SRCS = \
-	trie/tests/test_prefix.h \
-	trie/tests/test_merkle_trie.h \
-	trie/tests/test_merkle_trie_metadata.h \
-	trie/tests/test_recycling_trie.h
 
 UTILS_SRCS = \
 	utils/cleanup.cc \
@@ -210,7 +205,7 @@ LDADD = \
 
 CATCH_TEST_CCS = \
 	filtering/tests/test_filter_entry.cc \
-	memory_database/tests/test_seqno_gadget.cc
+	$(MEMORY_DATABASE_TEST_SRCS)
 
 $(CATCH_TEST_SRCS:.cc=.o) : CXXFLAGS += $(Catch2_CFLAGS)
 main/test.o : CXXFLAGS += $(Catch2_CFLAGS)

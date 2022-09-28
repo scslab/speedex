@@ -96,8 +96,7 @@ public:
 		std::unique_ptr<PersistenceMeasurementLogCallback> callback);
 
 	~AsyncPersisterPhase3() {
-		wait_for_async_task();
-		end_async_thread();
+		terminate_worker();
 	}
 };
 
@@ -138,8 +137,7 @@ public:
 		std::unique_ptr<PersistenceMeasurementLogCallback> callback);
 
 	~AsyncPersisterPhase2() {
-		wait_for_async_task();
-		end_async_thread();
+		terminate_worker();
 	}
 };
 
@@ -200,8 +198,7 @@ public:
 	}
 
 	~AsyncPersister() {
-		wait_for_async_persist();
-		end_async_thread();
+		terminate_worker();
 	}
 };
 

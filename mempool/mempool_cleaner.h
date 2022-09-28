@@ -34,14 +34,13 @@ class MempoolCleaner : public AsyncWorker {
 
 public:
 	MempoolCleaner(Mempool& mempool)
-		:AsyncWorker()
+		: AsyncWorker()
 		, mempool(mempool) {
 			start_async_thread([this] () {run();});
 		}
 
 	~MempoolCleaner() {
-		wait_for_async_task();
-		end_async_thread();
+		terminate_worker();
 	}
 
 	//! Object will write the time it took to clean the mempool

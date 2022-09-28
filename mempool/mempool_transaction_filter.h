@@ -63,8 +63,7 @@ public:
 
 	~MempoolFilterExecutor() {
 		stop_filter();
-		wait_for_async_task();
-		end_async_thread();
+		terminate_worker();
 	}
 };
 

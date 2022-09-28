@@ -141,8 +141,7 @@ public:
 	}
 
 	~DemandOracleWorker() {
-		wait_for_async_task();
-		end_async_thread();
+		terminate_worker();
 		delete[] demands;
 		delete[] supplies;
 	}

@@ -47,7 +47,6 @@ class BackgroundDeleter : public AsyncWorker {
 			do_deletions();
 			cv.notify_all();
 		}
-		signal_async_thread_shutdown();
 	}
 
 public:
@@ -58,9 +57,7 @@ public:
 		}
 
 	~BackgroundDeleter() {
-		wait_for_async_task();
-		end_async_thread();
-		wait_for_async_thread_terminate();
+		terminate_worker();
 	}
 	
 	//! Delete a single pointer
@@ -109,6 +106,7 @@ public:
 	//! Release the list of pointers (Caller becomes responsible for deleting
 	//! these pointers).
 	std::vector<garbage_t*>
+	__attribute__((warn_unused_result))
 	release() {
 		auto out = std::move(to_delete);
 		to_delete.clear();
