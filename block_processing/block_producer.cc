@@ -42,6 +42,8 @@ bool delete_tx_from_mempool(TransactionProcessingStatus status) {
 		case RECIPIENT_ACCOUNT_NEXIST:
 		case INVALID_PRINT_MONEY_AMOUNT:
 		case INVALID_AMOUNT:
+		case FEE_BID_TOO_LOW:
+		case BAD_SIGNATURE:
 			return true;
 		default:
 			throw std::runtime_error(
