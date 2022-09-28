@@ -1,9 +1,11 @@
 #include "modlog/account_modification_log.h"
 #include "modlog/log_entry_fns.h"
 
+#include "config.h"
+
 #include "utils/debug_macros.h"
 #include "utils/save_load_xdr.h"
-#include "mtt/utils/time.h"
+#include <mtt/utils/time.h>
 
 namespace speedex {
 

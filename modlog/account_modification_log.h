@@ -10,15 +10,13 @@ Implicitly assembles a block of transactions during block production.
 #include <cinttypes>
 #include <thread>
 
-#include "config.h"
-
 #include "modlog/file_prealloc_worker.h"
 #include "modlog/typedefs.h"
 
-#include "mtt/trie/recycling_impl/trie.h"
+#include <mtt/trie/recycling_impl/trie.h>
 
 #include "utils/background_deleter.h"
-#include "mtt/utils/threadlocal_cache.h"
+#include <mtt/utils/threadlocal_cache.h>
 
 #include "xdr/database_commitments.h"
 #include "xdr/types.h"

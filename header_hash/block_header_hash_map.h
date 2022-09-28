@@ -9,13 +9,11 @@ to load that data into memory.  Would only be relevant if Speedex runs for
 millions of blocks.
 */
 
-#include "config.h"
-
 #include "lmdb/lmdb_wrapper.h"
 
-#include "mtt/trie/merkle_trie.h"
-#include "mtt/trie/metadata.h"
-#include "mtt/trie/prefix.h"
+#include <mtt/trie/merkle_trie.h>
+#include <mtt/trie/metadata.h>
+#include <mtt/trie/prefix.h>
 
 #include "xdr/block.h"
 #include "xdr/types.h"
@@ -24,6 +22,8 @@ millions of blocks.
 #include <map>
 #include <mutex>
 #include <optional>
+
+#include <xdrpp/marshal.h>
 
 namespace speedex
 {

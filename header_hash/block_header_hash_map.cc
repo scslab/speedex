@@ -1,6 +1,9 @@
 #include "block_header_hash_map.h"
 
-#include "mtt/utils/serialize_endian.h"
+#include "config.h"
+
+#include <mtt/utils/serialize_endian.h>
+
 #include "utils/hash.h"
 
 #include "utils/debug_macros.h"
