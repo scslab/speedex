@@ -19,9 +19,10 @@ Manage the account state for one user.
 #include "xdr/types.h"
 #include "xdr/transaction.h"
 #include "xdr/database_commitments.h"
-#include "xdr/params.h"
 
 #include "lmdb/lmdb_types.h"
+
+#include "speedex/speedex_static_configs.h"
 
 #include <sodium.h>
 

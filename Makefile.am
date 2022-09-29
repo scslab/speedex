@@ -15,8 +15,7 @@ X_FILES = \
 	xdr/cryptocoin_experiment.x \
 	xdr/header_summary.x \
 	xdr/experiments.x \
-	xdr/overlay.x \
-	xdr/params.x
+	xdr/overlay.x
 
 XH_FILES = $(X_FILES:.x=.h)
 
