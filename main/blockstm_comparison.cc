@@ -79,7 +79,8 @@ int main(int argc, char* const* argv)
 }
 
 
-void speedex_block_creation_logic_notatonnement(
+HashedBlock
+speedex_block_creation_logic_notatonnement(
 	SpeedexManagementStructures& management_structures,
 	const HashedBlock& prev_block,
 	OverallBlockProductionMeasurements& overall_measurements,
@@ -147,6 +148,8 @@ void speedex_block_creation_logic_notatonnement(
 	overall_measurements.format_time = utils::measure_time(timestamp);
 
 	management_structures.block_header_hash_map.insert(new_block.block, true);//new_block.block.blockNumber, new_block.hash);
+
+	return new_block;
 }
 
 void run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, const uint32_t num_threads)
@@ -173,7 +176,6 @@ void run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_s
 
 	SpeedexManagementStructures management_structures(options.num_assets, ApproximationParameters());
 	
-	BlockStateUpdateStatsWrapper state_update_stats;
 	BlockCreationMeasurements measurements;
 	OverallBlockProductionMeasurements overall_measurements;
 
@@ -199,50 +201,66 @@ void run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_s
 	db.install_initial_accounts_and_commit(data, init_lambda);
 
 	std::vector<double> prices;
-
-	ExperimentBlock block = generator.make_block(prices);
-
-	Mempool mempool(1, 1'000'000);
-
-	mempool.chunkify_and_add_to_mempool_buffer(std::move(block));
-	mempool.push_mempool_buffer_to_mempool();
-
-	LogMergeWorker log_merge_worker(management_structures.account_modification_log);
-	BlockProducer producer(management_structures, log_merge_worker);
-
-	//block processing:
-	// step 1: assemble block
-	// step 2: block creation logic
-	// step 3: persist/commit (we skip here)
-
-	auto ts = utils::init_time_measurement();
-
-	//step 1
-	producer.build_block(
-		mempool,
-		batch_size,
-		measurements,
-		state_update_stats);
-
-	if (state_update_stats.payment_count != batch_size)
-	{
-		throw std::runtime_error("block sz mismatch");
-	}
-
-	//step 2
-
+	
 	HashedBlock prev_block;
 
-	speedex_block_creation_logic_notatonnement(
-		management_structures,
-		prev_block,
-		overall_measurements,
-		state_update_stats);
+	std::vector<double> results;
 
-	//step 3
-	//nothing
+	for (size_t trial = 0; trial < 10; trial++)
+	{
+		BlockStateUpdateStatsWrapper state_update_stats;
 
-	double res = utils::measure_time(ts);
+		ExperimentBlock block = generator.make_block(prices);
 
-	std::printf("nthreads = %lu batch_size = %lu num_accounts = %lu time = %lf tps = %lf\n", num_threads, batch_size, num_accounts, res, batch_size / res);
+
+		Mempool mempool(1, 1'000'000);
+
+		mempool.chunkify_and_add_to_mempool_buffer(std::move(block));
+		mempool.push_mempool_buffer_to_mempool();
+
+		LogMergeWorker log_merge_worker(management_structures.account_modification_log);
+		BlockProducer producer(management_structures, log_merge_worker);
+
+		//block processing:
+		// step 1: assemble block
+		// step 2: block creation logic
+		// step 3: persist/commit (we skip here)
+
+		auto ts = utils::init_time_measurement();
+
+		//step 1
+		producer.build_block(
+			mempool,
+			batch_size,
+			measurements,
+			state_update_stats);
+
+		if (state_update_stats.payment_count != batch_size)
+		{
+			throw std::runtime_error("block sz mismatch");
+		}
+
+		//step 2
+
+		prev_block = 
+			speedex_block_creation_logic_notatonnement(
+			management_structures,
+			prev_block,
+			overall_measurements,
+			state_update_stats);
+
+		//step 3
+		//nothing
+
+		double res = utils::measure_time(ts);
+		results.push_back(res);
+
+
+		management_structures.account_modification_log.detached_clear();
+	}
+
+	for (auto& res : results)
+	{
+		std::printf("nthreads = %lu batch_size = %lu num_accounts = %lu time = %lf tps = %lf\n", num_threads, batch_size, num_accounts, res, batch_size / res);
+	}
 }
