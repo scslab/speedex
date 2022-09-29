@@ -40,6 +40,7 @@ automation/replica
 automation/speedex_options
 
 #binaries
+blockstm_comparison
 cda_experiment
 clean_lmdbs
 counting_vm_hotstuff

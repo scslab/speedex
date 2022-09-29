@@ -17,6 +17,7 @@
 #include "mempool/mempool.h"
 
 #include "utils/debug_macros.h"
+#include "utils/manage_data_dirs.h"
 
 #include <getopt.h>
 
@@ -181,7 +182,10 @@ void run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_s
 
 	auto& db = management_structures.db;
 
-	GeneratorState generator (gen, options, "foo");
+	mkdir_safe("experiment_data/");
+	mkdir_safe("experiment_data/blockstm_comparison_data/");
+
+	GeneratorState generator (gen, options, "experiment_data/blockstm_comparison_data/");
 
 	MemoryDatabaseGenesisData data;
 	data.id_list = generator.get_accounts();
