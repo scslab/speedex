@@ -30,11 +30,27 @@ LogInsertFn::value_insert(AccountModificationTxList& main_value,
 
 //! Initialize an empty account modification log entry.
 AccountModificationTxListWrapper
-LogInsertFn::new_value(const AccountIDPrefix prefix)
+LogInsertFn::new_value(const AccountIDPrefix& prefix)
 {
     AccountModificationTxListWrapper out;
     out.owner = prefix.uint64();
     return out;
+}
+
+AccountModificationTxListWrapper
+LogKeyOnlyInsertFn::new_value(const AccountIDPrefix& prefix)
+{
+    AccountModificationTxListWrapper out;
+    out.owner = prefix.uint64();
+    return out;
+}
+
+void 
+LogKeyOnlyInsertFn::value_insert(
+    AccountModificationTxList& main_value,
+    const void*)
+{
+
 }
 
 struct TxIdentifierCompareFn

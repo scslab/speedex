@@ -44,7 +44,20 @@ struct LogInsertFn {//: public trie::GenericInsertFn<AccountModificationTxListWr
 
 	//! Initialize an empty account modification log entry.
 	static AccountModificationTxListWrapper 
-	new_value(const AccountIDPrefix prefix);
+	new_value(const AccountIDPrefix& prefix);
+};
+
+struct LogKeyOnlyInsertFn
+{
+	using AccountIDPrefix = trie::UInt64Prefix;
+
+	static void 
+	value_insert(
+		AccountModificationTxList& main_value,
+		const void*);
+
+	static AccountModificationTxListWrapper 
+	new_value(const AccountIDPrefix& prefix);
 };
 
 //might like to make these one struct, reduce extra code/etc, but type signatures on metadata merge are slightly diff

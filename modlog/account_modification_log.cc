@@ -5,11 +5,14 @@
 
 #include "utils/debug_macros.h"
 #include "utils/save_load_xdr.h"
+
+#include "speedex/speedex_static_configs.h"
+
 #include <mtt/utils/time.h>
 
 namespace speedex {
 
-constexpr bool DIFF_LOGS_ENABLED = false;
+constexpr static bool DIFF_LOGS_ENABLED = false;
 
 void
 AccountModificationLog::hash(Hash& hash)
@@ -88,7 +91,7 @@ AccountModificationLog::persist_block(uint64_t block_number,
                 "must be error in accumulate_values_parallel");
         }
 
-        if (DIFF_LOGS_ENABLED) {
+        if constexpr (DIFF_LOGS_ENABLED) {
             save_xdr_to_file_fast(
                 *persistable_block, block_fd, write_buffer, BUF_SIZE);
         } else {
@@ -112,8 +115,14 @@ void
 SerialAccountModificationLog::log_self_modification(AccountID owner,
                                                     uint64_t sequence_number)
 {
-    modification_log.template insert<LogInsertFn, uint64_t>(owner,
+    if constexpr (DETAILED_MOD_LOGGING)
+    {
+        modification_log.template insert<LogInsertFn, uint64_t>(owner,
                                                             std::move(sequence_number));
+    } else
+    {
+        modification_log.template insert<LogKeyOnlyInsertFn, const void*>(owner, nullptr);
+    }
 }
 
 void
@@ -121,9 +130,16 @@ SerialAccountModificationLog::log_other_modification(AccountID tx_owner,
                                                      uint64_t sequence_number,
                                                      AccountID modified_account)
 {
-    TxIdentifier value{ tx_owner, sequence_number };
-    modification_log.template insert<LogInsertFn, TxIdentifier>(
-        modified_account, std::move(value));
+    if constexpr (DETAILED_MOD_LOGGING)
+    {
+        TxIdentifier value{ tx_owner, sequence_number };
+        modification_log.template insert<LogInsertFn, TxIdentifier>(
+            modified_account, std::move(value));
+    }
+    else
+    {
+        modification_log.template insert<LogKeyOnlyInsertFn, const void*>(modified_account, nullptr);
+    }
 }
 
 void
@@ -131,8 +147,16 @@ SerialAccountModificationLog::log_new_self_transaction(
     const SignedTransaction& tx)
 {
     AccountID sender = tx.transaction.metadata.sourceAccount;
-    modification_log.template insert<LogInsertFn, SignedTransaction>(sender,
-                                                                     SignedTransaction(tx));
+
+    if constexpr (DETAILED_MOD_LOGGING)
+    {
+        modification_log.template insert<LogInsertFn, SignedTransaction>(sender,
+                                                                 SignedTransaction(tx));
+    } else
+    {
+        modification_log.template insert<LogKeyOnlyInsertFn, const void*>(sender, nullptr);
+    }
+
 }
 
 void
@@ -140,9 +164,14 @@ AccountModificationLog::diff_with_prev_log(uint64_t block_number)
 {
     AccountModificationBlock prev;
 
-    if (DIFF_LOGS_ENABLED) {
+    if constexpr (DIFF_LOGS_ENABLED) {
+        // this error happens because we didn't save the entire log (since hotstuff just
+        // saves the tx list, not the full modification log)
+        // TODO this should likely not throw, but rather just return
+        // It's purpose was diagnostical (prior to 9/29/2022), but is unusable 
+        // unless we re-enable detailed logging within the speedex vm.
         throw std::runtime_error(
-            "can't compare account log if we didn't save entire log");
+            "TODO can't compare account log if we didn't save entire log");
     }
 
     auto filename = tx_block_name(block_number);
