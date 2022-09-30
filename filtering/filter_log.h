@@ -6,18 +6,10 @@
 
 #include "mtt/utils/threadlocal_cache.h"
 
+#include "filtering/error_code.h"
+
 namespace speedex
 {
-
-enum FilterResult : int32_t
-{
-    // success
-    VALID_NO_TXS = 0,
-    VALID_HAS_TXS = 1,
-
-    // failure
-    INVALID = -1,
-};
 
 class FilterLog
 {

@@ -38,8 +38,8 @@ int main(int argc, char* const* argv)
 {
 	MemoryDatabaseGenesisData memdb_genesis;
 
-	std::string experiment_name;
-	std::string nthreads;
+	std::string experiment_name = "filtering";
+	std::string nthreads = "1";
 	
 	int opt;
 
@@ -88,15 +88,13 @@ int main(int argc, char* const* argv)
 		});
 
 	size_t num_assets = 50;
-	size_t default_amount = 1000'000;
+	size_t default_amount = 1;
 
 	size_t num_threads = std::stoi(nthreads);
-
-	for (size_t trial = 1; ; trial++)
-	{
 		MemoryDatabase db;
 
 		auto account_init_lambda = [&] (UserAccount& user_account) -> void {
+			user_account.transfer_available(MemoryDatabase::NATIVE_ASSET, 10000);
 			for (auto i = 0u; i < num_assets; i++) {
 				user_account.transfer_available(i, default_amount);
 			}
@@ -107,6 +105,9 @@ int main(int argc, char* const* argv)
 
 		std::printf("num_accounts: %lu\n", memdb_genesis.pk_list.size());
 		std::printf("db size: %lu\n", db.size());
+
+	for (size_t trial = 1; ; trial++)
+	{
 
 		xdr::opaque_vec<> vec;
 		ExperimentBlock block;
@@ -124,8 +125,8 @@ int main(int argc, char* const* argv)
 
 		auto ts = utils::init_time_measurement();
 
-		//ExperimentBlock truncated;
-		//truncated.insert(truncated.end(), block.begin(), block.begin() + 10);
+	//	ExperimentBlock truncated;
+	//	truncated.insert(truncated.end(), block.begin(), block.begin() + 10);
 
 		FilterLog log;
 		log.add_txs(block, db);
@@ -134,7 +135,7 @@ int main(int argc, char* const* argv)
 
 		std::printf("duration: %lf\n", res);
 
-		size_t num_valid_with_txs = 0, num_invalid = 0;
+		size_t num_valid_with_txs = 0, num_bad_duplicates = 0, num_missing_requirements = 0;
 
 		for (auto const& acct : memdb_genesis.id_list)
 		{
@@ -150,16 +151,24 @@ int main(int argc, char* const* argv)
 					num_valid_with_txs++;
 					break;
 				}
-				case FilterResult::INVALID:
+				case FilterResult::INVALID_DUPLICATE:
 				{
-					num_invalid++;
+					num_bad_duplicates++;
+					break;
+				}
+				case FilterResult::MISSING_REQUIREMENT:
+				{
+					num_missing_requirements++;
 					break;
 				}
 				default:
 					throw std::runtime_error("invalid filter result");
 			}
 		}
-		std::printf("stats: num_valid_with_txs %lu num_invalid %lu total %lu\n", num_valid_with_txs, num_invalid, num_valid_with_txs + num_invalid);
+		std::printf("stats: num_valid_with_txs %lu num_bad_duplicates %lu num_missing_requirements %lu total %lu\n", 
+			num_valid_with_txs, num_bad_duplicates,
+			num_missing_requirements,
+			 num_valid_with_txs + num_bad_duplicates + num_missing_requirements);
 	}
 
 }
