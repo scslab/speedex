@@ -8,20 +8,18 @@ Only does the actual iteration over transactions.  Does not do
 offer clearing/validation checks.
 */
 
-#include "block_processing/serial_transaction_processor.h"
-
-#include "modlog/log_merge_worker.h"
-
-#include "orderbook/commitment_checker.h"
-
-#include "speedex/speedex_management_structures.h"
-
-#include "stats/block_update_stats.h"
-
 #include "xdr/block.h"
 #include "xdr/transaction.h"
+#include "xdr/database_commitments.h"
 
-namespace speedex {
+namespace speedex
+{
+
+class BlockStateUpdateStatsWrapper;
+class LogMergeWorker;
+class OrderbookStateCommitmentChecker;
+class SpeedexManagementStructures;
+class ThreadsafeValidationStatistics;
 
 /*! 
 Interface for producing valid block of transactions.
@@ -80,7 +78,5 @@ void replay_trusted_block(
 	SpeedexManagementStructures& management_structures,
 	const SignedTransactionList& block,
 	const HashedBlock& header);
-
-
 
 } /* speedex */

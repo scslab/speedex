@@ -1,8 +1,13 @@
 #include "speedex/speedex_operation.h"
 
+#include "block_processing/block_validator.h"
+
 #include "orderbook/utils.h"
 
 #include "speedex/autorollback_validation_structures.h"
+#include "speedex/speedex_management_structures.h"
+
+#include "stats/block_update_stats.h"
 
 #include "utils/debug_macros.h"
 #include "utils/hash.h"

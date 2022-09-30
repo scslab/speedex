@@ -1,7 +1,17 @@
 #include "block_processing/block_validator.h"
 
+#include "block_processing/serial_transaction_processor.h"
+
+#include "modlog/log_merge_worker.h"
+
+#include "orderbook/commitment_checker.h"
+
+#include "speedex/speedex_management_structures.h"
+#include "stats/block_update_stats.h"
+
 #include <atomic>
 #include <cstdint>
+#include <utility>
 
 #include <mtt/utils/threadlocal_cache.h>
 

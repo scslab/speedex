@@ -2,15 +2,14 @@
 
 #include <cstdint>
 
-#include "block_processing/block_validator.h"
-
-#include "speedex/speedex_management_structures.h"
-
-#include "stats/block_update_stats.h"
-
 #include "xdr/block.h"
 
 namespace speedex {
+
+class SpeedexManagementStructures;
+class BlockStateUpdateStatsWrapper;
+class BlockValidator;
+class TatonnementManagementStructures;
 
 namespace detail
 {

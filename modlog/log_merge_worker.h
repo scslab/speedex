@@ -7,9 +7,10 @@ in a background thread.
 */
 
 #include "utils/async_worker.h"
-#include "modlog/account_modification_log.h"
 
 namespace speedex {
+
+class AccountModificationLog;
 
 /*! Runs a background thread that, when requested, merges all of the 
 serial account modification logs (that are cached in the main account log's
@@ -30,30 +31,18 @@ class LogMergeWorker : public AsyncWorker {
 
 public:
 	//! Start the mod log background thread
-	LogMergeWorker(AccountModificationLog& modification_log)
-		: AsyncWorker()
-		, modification_log(modification_log) {
-			start_async_thread([this] {run();});
-		}
+	LogMergeWorker(AccountModificationLog& modification_log);
 
 	//! Background thread is signaled to terminate when object leaves scope.
 	~LogMergeWorker() {
-		std::fflush(stdout);
 		terminate_worker();
 	}
 
 	//! Initiate a call to merge in modification logs in the background.
-	void do_merge() {
-		wait_for_async_task();
-		std::lock_guard lock(mtx);
-		logs_ready_for_merge = true;
-		cv.notify_all();
-	}
-
+	void do_merge();
+	
 	//! Wait for background merge to finish.
-	void wait_for_merge_finish() {
-		wait_for_async_task();
-	}
+	void wait_for_merge_finish();
 };
 
 }
