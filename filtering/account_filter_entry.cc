@@ -32,21 +32,22 @@ AccountFilterEntry::add_req(AssetID const& asset, int64_t amount)
 	//std::printf("add req %u amt %ld\n", asset, amount);
     if (amount < 0)
     {
-    //	std::printf("negative\n");
+   // 	std::printf("negative\n");
         return;
     }
 
-    if (found_error)
+    if (found_error())
     {
+    //	std::printf("found error, quick exit\n");
         return;
     }
 
     if (__builtin_add_overflow_p(
             amount, required_assets[asset], static_cast<int64_t>(0)))
     {
-    //	std::printf("got error\n");
+    //	std::printf("got overflow\n");
         required_assets[asset] = INT64_MAX;
-        found_error = true;
+	    log_overflow_req();
         return;
     }
 
@@ -56,10 +57,14 @@ AccountFilterEntry::add_req(AssetID const& asset, int64_t amount)
 void
 AccountFilterEntry::compute_reqs()
 {
+	if (reqs_computed)
+	{
+		throw std::runtime_error("double compute reqs");
+	}
     for (auto const& [_, tx] : txs)
     {
         for (auto const& op : tx.transaction.operations)
-        {
+        {        
             switch (op.body.type())
             {
                 case CREATE_ACCOUNT:
@@ -84,6 +89,7 @@ AccountFilterEntry::compute_reqs()
         }
         add_req(MemoryDatabase::NATIVE_ASSET, tx.transaction.maxFee);
     }
+    reqs_computed = true;
 }
 
 void
@@ -91,7 +97,7 @@ AccountFilterEntry::add_tx(SignedTransaction const& tx,
                            MemoryDatabase const& db)
 {
 //	std:printf("add tx\n");
-    if (found_error)
+    if (found_error()) // short circuit a bad account
     {
     //	std::printf("already error\n");
         return;
@@ -126,7 +132,7 @@ AccountFilterEntry::add_tx(SignedTransaction const& tx,
         if (!(tx_old == tx))
         {
         //	std::printf("dup seqno mismatch, error\n");
-            found_error = true;
+            log_bad_duplicate();
             return;
         }
     }
@@ -137,14 +143,32 @@ void
 AccountFilterEntry::log_reqs_invalid()
 {
     checked_reqs_cached = true;
-    found_error = true;
+    found_invalid_reqs = true;
 }
 
 void
-AccountFilterEntry::log_reqs_valid()
+AccountFilterEntry::log_reqs_checked()
 {
     checked_reqs_cached = true;
 }
+
+void 
+AccountFilterEntry::log_invalid_account()
+{
+	found_account_nexist = true;
+}
+void 
+AccountFilterEntry::log_bad_duplicate()
+{
+	found_bad_duplicate = true;
+}
+
+void 
+AccountFilterEntry::log_overflow_req()
+{
+	overflow_req = true;
+}
+
 
 void
 AccountFilterEntry::compute_validity(MemoryDatabase const& db)
@@ -156,9 +180,9 @@ AccountFilterEntry::compute_validity(MemoryDatabase const& db)
         throw std::runtime_error("double check valid");
     }
 
-    if (found_error)
+    if (found_error())
     {
-        log_reqs_invalid();
+        log_reqs_checked();
         return;
     }
 
@@ -169,24 +193,25 @@ AccountFilterEntry::compute_validity(MemoryDatabase const& db)
     auto const* acc = db.lookup_user(account);
     if (acc == nullptr)
     {
-        log_reqs_invalid();
+        log_invalid_account();
         return;
     }
 
     for (auto const& [asset, req] : required_assets)
     {
         int64_t avail = acc->lookup_available_balance(asset);
-       // std::printf("asset %lu req %ld avail %ld\n", asset, req, avail);
+    //    std::printf("asset %lu req %ld avail %ld\n", asset, req, avail);
         if (avail < req)
         {
+        //	std::printf("found invalid\n");
             log_reqs_invalid();
             return;
         }
     }
-    log_reqs_valid();
+    log_reqs_checked();
 }
 
-bool
+FilterResult
 AccountFilterEntry::check_valid() const
 {
     if (!checked_reqs_cached)
@@ -194,22 +219,56 @@ AccountFilterEntry::check_valid() const
         throw std::runtime_error("check before computing valid or not");
     }
 
-    return !found_error;
+    if (found_bad_duplicate)
+	{
+		return FilterResult::INVALID_DUPLICATE;
+	}
+
+	if (found_account_nexist)
+	{
+		return FilterResult::ACCOUNT_NEXIST;
+	}
+
+	if (found_invalid_reqs)
+	{
+		return FilterResult::MISSING_REQUIREMENT;
+	}
+
+	if (overflow_req)
+	{
+		return FilterResult::OVERFLOW_REQ;
+	}
+    return FilterResult::VALID_HAS_TXS;
 }
 
 void
 AccountFilterEntry::merge_in(AccountFilterEntry& other)
 {
     min_seq_no = std::min(min_seq_no, other.min_seq_no);
-    found_error = found_error || other.found_error;
-
-    if (found_error)
+    found_bad_duplicate = found_bad_duplicate || other.found_bad_duplicate;
+    found_invalid_reqs = found_invalid_reqs || other.found_invalid_reqs;
+	found_account_nexist = found_account_nexist || other.found_account_nexist;
+	overflow_req = overflow_req || other.overflow_req;
+    
+    if (found_error())
     {
         return;
     }
 
     other.assert_initialized();
+    if (initialized)
+    {
+    	if (other.account != account)
+    	{
+    		throw std::runtime_error("invalid merge");
+    	}
+    }
     initialized = true;
+
+    if (other.reqs_computed || reqs_computed)
+    {
+    	throw std::runtime_error("improper merge");
+    }
 
     if (checked_reqs_cached)
     {
@@ -228,7 +287,7 @@ AccountFilterEntry::merge_in(AccountFilterEntry& other)
 
         if (it->second != tx)
         {
-            found_error = true;
+        	log_bad_duplicate();
             return;
         }
     }

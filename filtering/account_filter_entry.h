@@ -8,6 +8,10 @@
 #include <cstdint>
 #include <map>
 
+#include "filtering/error_code.h"
+
+#include <mtt/utils/non_movable.h>
+
 namespace speedex
 {
 
@@ -17,22 +21,34 @@ class AccountFilterEntry
 {
     AccountID account;
     uint64_t min_seq_no;
-    bool initialized;
+    bool initialized = false;
+    bool reqs_computed = false;
 
     std::map<uint64_t, SignedTransaction> txs;
 
     std::map<AssetID, int64_t> required_assets;
 
-    bool found_error = false;
+    bool found_bad_duplicate = false;
+    bool found_invalid_reqs = false;
+    bool found_account_nexist = false;
+    bool overflow_req = false;
     bool checked_reqs_cached = false;
 
     void add_req(AssetID const& asset, int64_t amount);
+    void log_invalid_account();
+    void log_bad_duplicate();
+    void log_overflow_req();
     void log_reqs_invalid();
-    void log_reqs_valid();
+    void log_reqs_checked();
 
     void compute_reqs();
 
     void assert_initialized() const;
+
+    bool found_error() const
+    {
+    	return found_bad_duplicate || found_invalid_reqs || found_account_nexist || overflow_req;
+    }
 
 public:
     AccountFilterEntry()
@@ -51,7 +67,7 @@ public:
 
     void merge_in(AccountFilterEntry& other);
 
-    bool check_valid() const;
+    FilterResult check_valid() const;
 };
 
 struct AccountFilterInsertFn

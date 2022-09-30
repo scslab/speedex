@@ -42,8 +42,7 @@ FilterLog::check_valid_account(AccountID const& account) const
     {
         return FilterResult::VALID_NO_TXS;
     }
-    return (res->check_valid() ? FilterResult::VALID_HAS_TXS
-                               : FilterResult::INVALID);
+	return res -> check_valid();
 }
 
 } // namespace speedex
