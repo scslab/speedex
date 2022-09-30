@@ -242,6 +242,8 @@ run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, 
 
 	std::vector<double> results;
 
+	LogMergeWorker log_merge_worker(management_structures.account_modification_log);
+
 	for (size_t trial = 0; trial < 15; trial++)
 	{
 		BlockStateUpdateStatsWrapper state_update_stats;
@@ -254,7 +256,6 @@ run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, 
 		mempool.chunkify_and_add_to_mempool_buffer(std::move(block));
 		mempool.push_mempool_buffer_to_mempool();
 
-		LogMergeWorker log_merge_worker(management_structures.account_modification_log);
 		BlockProducer producer(management_structures, log_merge_worker);
 
 		//block processing:
