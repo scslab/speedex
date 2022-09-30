@@ -23,6 +23,9 @@
 
 #include <tbb/global_control.h>
 
+#include <vector>
+#include <cstdint>
+
 using namespace speedex;
 
 [[noreturn]]
@@ -43,16 +46,17 @@ static const struct option opts[] = {
 	{nullptr, 0, nullptr, 0}
 };
 
-void run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, const uint32_t num_threads);
+std::vector<double>
+run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, const uint32_t num_threads);
 
 int main(int argc, char* const* argv)
 {
 	int opt;
 
-	uint64_t num_accounts = 0;
-	uint64_t batch_size = 0;
+	//uint64_t num_accounts = 0;
+//	uint64_t batch_size = 0;
 
-	while ((opt = getopt_long_only(argc, argv, "",
+	/*while ((opt = getopt_long_only(argc, argv, "",
 				 opts, nullptr)) != -1)
 	{
 		switch(opt) {
@@ -65,17 +69,44 @@ int main(int argc, char* const* argv)
 			default:
 				usage();
 		}
-	}
-
-	if (num_accounts == 0 || batch_size == 0) {
-		usage();
-	}
+	} */
 
 	std::vector<uint32_t> thread_counts = {1, 2, 4, 8, 16, 32, 48, 96};
 
-	for (auto n : thread_counts)
+	std::vector<uint32_t> num_accounts = {2, 10, 100};
+
+	std::vector<uint32_t> batch_sizes = {100, 1000, 10'000, 20'000};
+
+	std::vector<std::tuple<uint32_t, uint32_t, uint32_t, double>> results;
+
+	for (auto acc : num_accounts)
 	{
-		run_blockstm_experiment(num_accounts, batch_size, n);
+		for (auto batch : batch_sizes)
+		{
+			for (auto n : thread_counts)
+			{
+				auto res = run_blockstm_experiment(acc, batch, n);
+
+				if (res.size() != 15)
+				{
+					throw std::runtime_error("invalid size return");
+				}
+
+				double avg = 0;
+				for (auto i = 5u; i < 15; i++)
+				{
+					avg += res[i];
+				}
+				results.push_back({acc, batch, n, avg/10.0});
+			}
+		}
+	}
+
+	std::printf("===== results =====\n\n");
+
+	for (auto [acc, batch, n, time] : results)
+	{
+		std::printf("accounts = %lu batch_size = %lu nthread = %lu time = %lf tps = %lf\n", acc, batch, n, time, batch/time);
 	}
 }
 
@@ -153,7 +184,8 @@ speedex_block_creation_logic_notatonnement(
 	return new_block;
 }
 
-void run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, const uint32_t num_threads)
+std::vector<double>
+run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, const uint32_t num_threads)
 {
  	tbb::global_control control(tbb::global_control::max_allowed_parallelism, num_threads);
 
@@ -210,7 +242,7 @@ void run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_s
 
 	std::vector<double> results;
 
-	for (size_t trial = 0; trial < 10; trial++)
+	for (size_t trial = 0; trial < 15; trial++)
 	{
 		BlockStateUpdateStatsWrapper state_update_stats;
 
@@ -267,4 +299,6 @@ void run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_s
 	{
 		std::printf("nthreads = %lu batch_size = %lu num_accounts = %lu time = %lf tps = %lf\n", num_threads, batch_size, num_accounts, res, batch_size / res);
 	}
+
+	return results;
 }
