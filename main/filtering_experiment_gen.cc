@@ -38,6 +38,9 @@ int main(int argc, char* const* argv)
 	std::string experiment_options_file;
 	std::string experiment_name;
 	
+	experiment_options_file = "synthetic_data_config/filtering_experiment.yaml";
+	experiment_name = "filtering";
+
 	int opt;
 
 	while ((opt = getopt_long_only(argc, argv, "",
@@ -54,6 +57,7 @@ int main(int argc, char* const* argv)
 				usage();
 		}
 	}
+
 
 	if (experiment_options_file.size() == 0) {
 		usage();
@@ -88,7 +92,7 @@ int main(int argc, char* const* argv)
 
 	size_t num_txs = 500'000;
 
-	size_t num_dups = 10'000;
+	size_t num_dups = 100'000;
 
 	size_t num_bad_accounts = 1'000;
 
@@ -113,7 +117,7 @@ int main(int argc, char* const* argv)
 		{
 			size_t bad_idx = generator.gen_random_index(num_txs - num_dups);
 			auto tx = block[bad_idx];
-			tx.transaction.metadata.sequenceNumber = 1'000'000;
+			tx.transaction.operations[0].body.paymentOp().amount = 1'000'000'000;
 			block.push_back(tx);
 		}
 
