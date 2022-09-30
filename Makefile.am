@@ -59,6 +59,7 @@ MEMORY_DATABASE_SRCS = \
 	memory_database/memory_database.cc \
 	memory_database/memory_database_view.cc \
 	memory_database/sequence_tracker.cc \
+	memory_database/thunk.cc \
 	memory_database/user_account.cc
 
 MEMORY_DATABASE_TEST_SRCS = \
