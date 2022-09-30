@@ -94,7 +94,7 @@ int main(int argc, char* const* argv)
 
 	size_t num_dups = 100'000;
 
-	size_t num_bad_accounts = 1'000;
+	size_t num_bad_seq_accounts = 1'000;
 
 	for (size_t b = 0; b < 5; b++)
 	{
@@ -113,11 +113,11 @@ int main(int argc, char* const* argv)
 			size_t dup_idx = generator.gen_random_index(num_txs-num_dups);
 			block.push_back(block[dup_idx]);
 		}
-		for (size_t i = 0; i < num_bad_accounts; i++)
+		for (size_t i = 0; i < num_bad_seq_accounts; i++)
 		{
 			size_t bad_idx = generator.gen_random_index(num_txs - num_dups);
 			auto tx = block[bad_idx];
-			tx.transaction.operations[0].body.paymentOp().amount = 1'000'000'000;
+			tx.transaction.operations.at(0).body.paymentOp().amount+=10;
 			block.push_back(tx);
 		}
 

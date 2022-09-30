@@ -88,7 +88,7 @@ int main(int argc, char* const* argv)
 		});
 
 	size_t num_assets = 50;
-	size_t default_amount = 0;
+	size_t default_amount = 1000'000;
 
 	size_t num_threads = std::stoi(nthreads);
 
@@ -105,6 +105,9 @@ int main(int argc, char* const* argv)
 
 		db.install_initial_accounts_and_commit(memdb_genesis, account_init_lambda);
 
+		std::printf("num_accounts: %lu\n", memdb_genesis.pk_list.size());
+		std::printf("db size: %lu\n", db.size());
+
 		xdr::opaque_vec<> vec;
 		ExperimentBlock block;
 		std::string filename = experiment_root + "/" + std::to_string(trial) + ".txs";
@@ -116,17 +119,16 @@ int main(int argc, char* const* argv)
 
 		xdr::xdr_from_opaque(vec, block);
 
-
 		tbb::global_control control(
 			tbb::global_control::max_allowed_parallelism, num_threads);
 
 		auto ts = utils::init_time_measurement();
 
-		ExperimentBlock truncated;
-		truncated.insert(truncated.end(), block.begin(), block.begin() + 10);
+		//ExperimentBlock truncated;
+		//truncated.insert(truncated.end(), block.begin(), block.begin() + 10);
 
 		FilterLog log;
-		log.add_txs(truncated, db);
+		log.add_txs(block, db);
 
 		auto res = utils::measure_time(ts);
 
