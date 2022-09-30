@@ -118,7 +118,7 @@ template<uint64_t NUM_WORDS>
 inline uint64_t
 array_get_seq_num_increment(std::array<std::atomic<uint64_t>, NUM_WORDS> const& bv)
 {
-	for (auto i = NUM_WORDS - 1; i != 0; i--)
+	for (int32_t i = NUM_WORDS - 1; i >= 0; i--)
 	{
 		uint64_t val = bv[i].load(std::memory_order_relaxed);
 
