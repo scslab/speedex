@@ -4,6 +4,8 @@
 
 #include "hotstuff/log_access_wrapper.h"
 
+#include "orderbook/commitment_checker.h"
+
 #include "speedex/speedex_management_structures.h"
 #include "speedex/speedex_operation.h"
 #include "speedex/speedex_persistence.h"

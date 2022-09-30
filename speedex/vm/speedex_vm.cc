@@ -7,6 +7,8 @@
 #include "utils/hash.h"
 #include "utils/save_load_xdr.h"
 
+#include "stats/block_update_stats.h"
+
 #include "xdr/experiments.h"
 
 namespace speedex {

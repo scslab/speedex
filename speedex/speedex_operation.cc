@@ -2,6 +2,7 @@
 
 #include "block_processing/block_validator.h"
 
+#include "orderbook/commitment_checker.h"
 #include "orderbook/utils.h"
 
 #include "speedex/autorollback_validation_structures.h"
