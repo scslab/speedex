@@ -10,10 +10,8 @@ X_FILES = \
 	xdr/block.x \
 	xdr/database_commitments.x \
 	xdr/trie_proof.x \
-	xdr/iblt_wire.x \
 	xdr/consensus_api.x \
 	xdr/cryptocoin_experiment.x \
-	xdr/header_summary.x \
 	xdr/experiments.x \
 	xdr/overlay.x
 
