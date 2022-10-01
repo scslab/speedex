@@ -24,7 +24,7 @@ Printouts include file/line information.
 
 #define ROUNDING_DEBUG DEBUG_LEVEL_NONE
 
-#define CLEARING_DEBUG DEBUG_LEVEL_INFO
+#define CLEARING_DEBUG DEBUG_LEVEL_NONE
 
 #define PROOF_DEBUG DEBUG_LEVEL_NONE
 
