@@ -102,6 +102,7 @@ SpeedexVM::log_commitment(const block_id& id) {
 		//if (last_committed_block_number % PERSIST_BATCH == 0) {
 		if (last_committed_block_number >= last_persisted_block_number + PERSIST_BATCH)
 		{
+			std::printf("activating async persist on block %lu\n", last_committed_block_number);
 			async_persister.do_async_persist(
 				std::make_unique<PersistenceMeasurementLogCallback>(measurements_log, last_committed_block_number));
 			last_persisted_block_number = last_committed_block_number;

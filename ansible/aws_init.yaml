@@ -3,7 +3,7 @@
   hosts: all
   tasks:
           - name: mdadm
-            shell: "sudo mdadm -C /dev/md127 -l 0 -n 4 /dev/nvme1n1 /dev/nvme0n1 /dev/nvme3n1 /dev/nvme4n1"
+            shell: "sudo mdadm -C /dev/md127 -l 0 -n 4 /dev/nvme1n1 /dev/nvme2n1 /dev/nvme3n1 /dev/nvme4n1"
           - name: mkdir
             shell: "mkdir xfs"
           - name: mkfs
