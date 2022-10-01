@@ -209,6 +209,32 @@ AsyncAccountLMDBShardWorker::run()
 	}
 }
 
+void 
+AsyncFsyncWorker::run()
+{
+	while(true) {
+		std::unique_lock lock(mtx);
+
+		if ((!done_flag) && (!exists_work_to_do())) {
+			cv.wait(
+				lock, [this] () {return done_flag || exists_work_to_do();});
+		}
+
+		if (done_flag) return;
+		shard.sync();
+		cv.notify_all();
+		do_fsync = false;
+	}
+}
+
+void 
+AsyncFsyncWorker::call_fsync()
+{
+	wait_for_async_task();
+	std::lock_guard lock(mtx);
+	do_fsync = true;
+	cv.notify_all();
+}
 
 } /* detail */
 
@@ -220,6 +246,7 @@ AccountLMDB::AccountLMDB()
 		{
 			shards.emplace_back(std::make_unique<detail::AccountLMDBShard>(i));
 			workers.emplace_back(std::make_unique<detail::AsyncAccountLMDBShardWorker>(*shards.back()));
+			syncers.emplace_back(std::make_unique<detail::AsyncFsyncWorker>(*shards.back()));
 		}
 	}
 
@@ -228,6 +255,15 @@ void
 AccountLMDB::wait_for_all_workers()
 {
 	for (auto& worker : workers)
+	{
+		worker->wait_for_async_task();
+	}
+}
+
+void
+AccountLMDB::wait_for_all_syncers()
+{
+	for (auto& worker : syncers)
 	{
 		worker->wait_for_async_task();
 	}
@@ -282,10 +318,13 @@ AccountLMDB::sync()
 	if constexpr (!ACCOUNT_DB_SYNC_IMMEDIATELY)
 	{
 		auto ts = utils::init_time_measurement();
-		for (auto& shard : shards)
+
+		for (auto& sync : syncers)
 		{
-			shard->sync();
+			sync->call_fsync();
 		}
+
+		wait_for_all_syncers();
 
 		std::printf("out of band sync time: %lf\n", utils::measure_time(ts));
 	}

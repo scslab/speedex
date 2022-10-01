@@ -61,7 +61,7 @@ class AsyncAccountLMDBShardWorker : public AsyncWorker, utils::NonMovableOrCopya
 	AccountLMDBShard& shard;
 
 	bool exists_work_to_do() override final {
-		return thunks_to_process != nullptr;
+		return (thunks_to_process != nullptr);
 	}
 
 	void run();
@@ -86,16 +86,49 @@ public:
 	}
 };
 
+class AsyncFsyncWorker : public AsyncWorker, utils::NonMovableOrCopyable
+{
+	using AsyncWorker::mtx;
+	using AsyncWorker::cv;
+
+	bool do_fsync;
+
+	AccountLMDBShard& shard;
+
+	bool exists_work_to_do() override final {
+		return (do_fsync);
+	}
+
+	void run();
+
+public:
+	AsyncFsyncWorker(AccountLMDBShard& shard)
+		: AsyncWorker()
+		, do_fsync(false)
+		, shard(shard)
+	{
+		start_async_thread([this] {run();});
+	}
+
+	void call_fsync();
+
+	~AsyncFsyncWorker() {
+		terminate_worker();
+	}
+};
+
 } /* detail */
 
 class AccountLMDB
 {
 	std::vector<std::unique_ptr<detail::AccountLMDBShard>> shards;
 	std::vector<std::unique_ptr<detail::AsyncAccountLMDBShardWorker>> workers;
+	std::vector<std::unique_ptr<detail::AsyncFsyncWorker>> syncers;
 
 	bool opened = false;
 
 	void wait_for_all_workers();
+	void wait_for_all_syncers();
 
 	// many copies of this key, but that's not a huge problem
 	uint8_t HASH_KEY[crypto_shorthash_KEYBYTES];
