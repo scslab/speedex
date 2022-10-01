@@ -8,6 +8,8 @@
 
 #include "config.h"
 
+#include <mtt/utils/time.h>
+
 namespace speedex
 {
 
@@ -146,6 +148,8 @@ AsyncAccountLMDBShardWorker::exec_thunks()
 		throw std::runtime_error("tried to exec_thunks when no thunks present");
 	}
 
+	auto ts = utils::init_time_measurement();
+
 	uint64_t current_block_number = shard.get_persisted_round_number();
 
 	const uint64_t starting_persisted_number = current_block_number;
@@ -167,8 +171,12 @@ AsyncAccountLMDBShardWorker::exec_thunks()
 		throw std::runtime_error("invalid persist max_round_number");
 	}
 
+	std::printf("thunk process time: %lf\n", utils::measure_time(ts));
+
 	//TODO consider whether to sync here or later
 	shard.commit_wtxn(wtx, max_round_number, ACCOUNT_DB_SYNC_IMMEDIATELY);
+
+	std::printf("commit time: %lf\n", utils::measure_time(ts));
 
 	thunks_to_process = nullptr;
 }
@@ -273,10 +281,13 @@ AccountLMDB::sync()
 {
 	if constexpr (!ACCOUNT_DB_SYNC_IMMEDIATELY)
 	{
+		auto ts = utils::init_time_measurement();
 		for (auto& shard : shards)
 		{
 			shard->sync();
 		}
+
+		std::printf("out of band sync time: %lf\n", utils::measure_time(ts));
 	}
 	//else nothing to do, sync already was done
 }
