@@ -39,7 +39,7 @@ AccountLMDBShard::load_hash_key()
 }
 
 AccountLMDBShard::AccountLMDBShard(uint32_t idx) 
-	: LMDBInstance(0x40'0000)
+	: LMDBInstance(0x1000'0000)
 	, idx(idx)
 	, DB_NAME("account_db" + std::to_string(idx))
  {
@@ -115,6 +115,8 @@ AsyncAccountLMDBShardWorker::exec_one_thunk(
 		throw std::runtime_error("can't persist blocks in wrong order!!!");
 	}
 
+	uint32_t written_local = 0;
+
 	size_t thunk_sz = thunk.kvs ->size();
 	for (size_t i = 0; i < thunk_sz; i++) {
 
@@ -124,6 +126,8 @@ AsyncAccountLMDBShardWorker::exec_one_thunk(
 		{
 			continue;
 		}
+
+		written_local ++;
 	
 		dbval key = dbval{&kv.key, sizeof(AccountID)};//UserAccount::produce_lmdb_key(kv.key);
 
@@ -137,6 +141,7 @@ AsyncAccountLMDBShardWorker::exec_one_thunk(
 		
 		wtx.put(shard.get_data_dbi(), &key, &val);
 	}
+	std::printf("write %lu of %lu in block %lu\n", written_local, thunk.kvs -> size(), thunk.current_block_number);
 	current_block_number = thunk.current_block_number;
 }
 
