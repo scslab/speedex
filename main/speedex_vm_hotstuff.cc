@@ -16,6 +16,7 @@
 #include "synthetic_data_generator/synthetic_data_stream.h"
 
 #include "utils/save_load_xdr.h"
+#include "utils/manage_data_dirs.h"
 
 #include "xdr/experiments.h"
 
@@ -158,6 +159,8 @@ int main(int argc, char* const* argv)
 	if (config.nreplicas != params.n_replicas) {
 		std::printf("WARNING: mismatch between experiment data sharding and num replicas\n");
 	}
+
+	make_all_data_dirs(config.get_info(*self_id));
 
 	auto vm = std::make_shared<SpeedexVM>(params, speedex_options, experiment_results_folder);
 
