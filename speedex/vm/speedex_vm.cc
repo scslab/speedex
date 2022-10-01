@@ -133,6 +133,13 @@ SpeedexVM::exec_block(const hotstuff::VMBlock& blk_unparsed)
 
 	BLOCK_INFO("got locks for vm on %lu", blk.hashedBlock.block.blockNumber);
 
+	measurements_log.add_measurement(measurements_base);
+
+	uint64_t prev_block_number = last_committed_block.block.blockNumber;
+
+	auto measurements_base = new_measurements(BLOCK_VALIDATOR);
+	measurements_base.blockNumber = prev_block_number + 1;
+
 	if (last_committed_block.block.blockNumber + 1 != blk.hashedBlock.block.blockNumber) {
 		BLOCK_INFO("incorrect block height appended to speedex vm chain -- no-op, except incrementing blockNumber");
 		return;
@@ -141,11 +148,6 @@ SpeedexVM::exec_block(const hotstuff::VMBlock& blk_unparsed)
 	auto const& new_header = blk.hashedBlock;
 
 	mempool_structs.pre_validation_stop_background_filtering();
-
-	uint64_t prev_block_number = last_committed_block.block.blockNumber;
-
-	auto measurements_base = new_measurements(BLOCK_VALIDATOR);
-	measurements_base.blockNumber = prev_block_number + 1;
 
 	auto& current_measurements = measurements_base.results.validationResults();
 
@@ -190,8 +192,6 @@ SpeedexVM::exec_block(const hotstuff::VMBlock& blk_unparsed)
 	current_measurements.total_time = measure_time(timestamp);
 
 	//last_committed_block = new_header;
-
-	measurements_log.add_measurement(measurements_base);
 
 	mempool_structs.post_validation_cleanup();
 }

@@ -10,8 +10,6 @@ SpeedexMeasurements::SpeedexMeasurements(const ExperimentParameters& params)
 	, mtx()
 	, uncled_measurements()
 	{
-
-		
 	}
 
 void SpeedexMeasurements::add_measurement(TaggedSingleBlockResults const& res)
@@ -19,8 +17,6 @@ void SpeedexMeasurements::add_measurement(TaggedSingleBlockResults const& res)
 	std::lock_guard lock(mtx);
 
 	auto iter = measurements.find(res.blockNumber);
-
-	std::printf("adding measurement for block %lu\n");
 
 	if (iter == measurements.end()) {
 		measurements.emplace(res.blockNumber, res);
@@ -39,17 +35,9 @@ SpeedexMeasurements::insert_async_persistence_measurement(
 {
 	std::lock_guard lock(mtx);
 
-	std::printf("async measurement for block %lu\n", block_number);
-
 	auto iter = measurements.find(block_number);
 
 	if (iter == measurements.end()) {
-		for (auto [blk, _] : measurements)
-		{
-			std::printf("we have block %lu\n", blk);
-		}
-
-		std::fflush(stdout);
 
 		throw std::runtime_error("can't add async persist measurements for nonexistent block!");
 	}
