@@ -39,7 +39,7 @@ AccountLMDBShard::load_hash_key()
 }
 
 AccountLMDBShard::AccountLMDBShard(uint32_t idx) 
-	: LMDBInstance(0x1000'0000)
+	: LMDBInstance(0x1'0000'0000)
 	, idx(idx)
 	, DB_NAME("account_db" + std::to_string(idx))
  {
