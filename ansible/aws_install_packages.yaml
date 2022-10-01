@@ -1,0 +1,15 @@
+---
+- name: aws init
+  hosts: all
+  tasks:
+          - name: update
+            shell: "sudo apt-get update"
+          - name: install packages
+            shell: "sudo apt-get install -y autoconf make bison flex pip libgsl-dev liblmdb-dev git libltdl-dev libsodium-dev cxxtest pkg-config libtool libtbb-dev libglpk-dev cmake"
+          - name: install cc
+            shell: "sudo apt-get install -y g++-11 && sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 11 && sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 11"
+          - name: install libfyaml
+            shell: "git clone https://github.com/pantoniou/libfyaml.git && cd libfyaml && ./bootstrap.sh && ./configure && make -j && sudo make install"
+          - name: install catch2
+            shell: "git clone https://github.com/catchorg/Catch2.git && cd Catch2 && cmake -Bbuild -H. -DBUILD_TESTING=OFF && sudo cmake --build build/ --target install"
+
