@@ -49,6 +49,8 @@ SpeedexMeasurements::insert_async_persistence_measurement(
 			std::printf("we have block %lu\n", blk);
 		}
 
+		std::fflush(stdout);
+
 		throw std::runtime_error("can't add async persist measurements for nonexistent block!");
 	}
 
