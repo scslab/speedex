@@ -248,12 +248,15 @@ SpeedexVM::propose()
 	std::lock_guard lock(operation_mtx);
 
 	uint64_t prev_block_number = proposal_base_block.block.blockNumber;
-
-	FILE* f = std::fopen((std::to_string(prev_block_number) + ".dblog").c_str(), "w");
-	management_structures.db.log(f);
 	
 	BLOCK_INFO("Starting production on block %lu", prev_block_number + 1);
 
+	char res = std::fgetc(stdin);
+	if (res == 'y')
+	{
+		FILE* f = std::fopen((std::to_string(prev_block_number) + ".dblog").c_str(), "w");
+		management_structures.db.log(f);
+	}
 	auto measurements_base = new_measurements(BLOCK_PRODUCER);
 
 	measurements_base.blockNumber = prev_block_number + 1;
