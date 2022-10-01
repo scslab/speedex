@@ -754,8 +754,8 @@ void MemoryDatabase::load_lmdb_contents_to_memory() {
 	_produce_state_commitment(hash);
 }
 
-void MemoryDatabase::log() {
-	commitment_trie._log("db: ");
+void MemoryDatabase::log(FILE* out) {
+	commitment_trie._log("db: ", out);
 }
 
 void MemoryDatabase::values_log() {

@@ -57,7 +57,6 @@ void speedex_format_hashed_block(
 	block_out.block.prevBlockHash = prev_block.hash;
 	block_out.block.feeRate = tax_rate;
 
-
 	for (unsigned int i = 0; i < price_workspace.size(); i++) {
 		block_out.block.prices.push_back(price_workspace[i]);
 	}
@@ -299,9 +298,12 @@ speedex_block_creation_logic(
 void debug_hash_discrepancy(
 	const HashedBlock& expected_next_block,
 	const Block& comparison_next_block,
-	AccountModificationLog& mod_log) {
+	SpeedexManagementStructures& management_structures) {
 	BLOCK_INFO("incorrect hash");
 
+
+	auto& mod_log = management_structures.account_modification_log;
+	auto& db = management_structures.db;
 	if (memcmp(
 			comparison_next_block.prevBlockHash.data(), 
 			expected_next_block.block.prevBlockHash.data(), 
@@ -336,6 +338,12 @@ void debug_hash_discrepancy(
 			expected_next_block.block.internalHashes.dbHash.data(), 
 			32) != 0) {
 		BLOCK_INFO("discrepancy in dbHash");
+
+		uint64_t blknum = expected_next_block.block.blockNumber;
+
+		FILE* f = std::fopen((std::to_string(blknum) + ".dblog").c_str(), "w");
+
+		db.log(f);
 	}
 
 	for (unsigned int i = 0; 
@@ -364,6 +372,9 @@ void debug_hash_discrepancy(
 			32) != 0) {
 		BLOCK_INFO("header hash map discrepancy");
 	}
+
+	std::fflush(stdout);
+	throw std::runtime_error("crash immediately on desync");
 }
 
 bool _speedex_block_validation_logic( 
@@ -552,7 +563,7 @@ bool _speedex_block_validation_logic(
 		debug_hash_discrepancy(
 			expected_next_block, 
 			comparison_next_block, 
-			management_structures.account_modification_log);
+			management_structures);
 		return false;
 	} else {
 		BLOCK_INFO("block hash match");

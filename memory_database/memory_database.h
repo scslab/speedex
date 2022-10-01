@@ -28,6 +28,7 @@
 #include <xdrpp/marshal.h>
 
 #include <atomic>
+#include <cstdio>
 #include <functional>
 #include <map>
 #include <memory>
@@ -368,7 +369,7 @@ public:
 	//not threadsafe with commit/rollback
 	std::optional<PublicKey> get_pk_nolock(AccountID account) const;
 
-	void log();
+	void log(FILE* out);
 	void values_log();
 
 	/*! Checks whether the database is in a valid state

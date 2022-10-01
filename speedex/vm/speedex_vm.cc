@@ -133,12 +133,12 @@ SpeedexVM::exec_block(const hotstuff::VMBlock& blk_unparsed)
 
 	BLOCK_INFO("got locks for vm on %lu", blk.hashedBlock.block.blockNumber);
 
-	measurements_log.add_measurement(measurements_base);
+	auto measurements_base = new_measurements(BLOCK_VALIDATOR);
 
 	uint64_t prev_block_number = last_committed_block.block.blockNumber;
-
-	auto measurements_base = new_measurements(BLOCK_VALIDATOR);
 	measurements_base.blockNumber = prev_block_number + 1;
+
+	measurements_log.add_measurement(measurements_base);
 
 	if (last_committed_block.block.blockNumber + 1 != blk.hashedBlock.block.blockNumber) {
 		BLOCK_INFO("incorrect block height appended to speedex vm chain -- no-op, except incrementing blockNumber");
@@ -248,6 +248,9 @@ SpeedexVM::propose()
 	std::lock_guard lock(operation_mtx);
 
 	uint64_t prev_block_number = proposal_base_block.block.blockNumber;
+
+	FILE* f = std::fopen((std::to_string(prev_block_number) + ".dblog").c_str(), "w");
+	management_structures.db.log(f);
 	
 	BLOCK_INFO("Starting production on block %lu", prev_block_number + 1);
 
