@@ -2,16 +2,16 @@ num_replicas: 4
 
 replica_0:
   sk_seed: 1
-  hostname: "172.31.40.133"
+  hostname: "172.31.45.23"
 
 replica_1:
   sk_seed: 2
-  hostname: "172.31.36.17"
+  hostname: "172.31.36.69"
 
 replica_2:
   sk_seed: 3
-  hostname: "172.31.43.31"
+  hostname: "172.31.36.100"
 
 replica_3:
   sk_seed: 4
-  hostname: "172.31.37.247"
+  hostname: "172.31.34.180"
