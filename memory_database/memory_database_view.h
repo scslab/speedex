@@ -181,9 +181,9 @@ public:
 	TransactionProcessingStatus transfer_available(
 		UserAccount* account, AssetID asset, int64_t amount);
 
-	uint64_t get_persisted_round_number() {
-		return main_db.get_persisted_round_number();
-	}
+	//uint64_t get_persisted_round_number() {
+//		return main_db.get_persisted_round_number();
+//	}
 
 	using AccountCreationView::commit;
 	using AccountCreationView::reserve_sequence_number;
@@ -191,10 +191,100 @@ public:
 	using AccountCreationView::release_sequence_number;
 };
 
+class LoadLMDBMemoryDatabaseView
+{
+	UnbufferedMemoryDatabaseView base_view;
+
+	MemoryDatabase const& main_db;
+
+	const uint64_t current_block_number;
+
+	bool do_action(const UserAccount* account)
+	{
+		AccountID id = account -> get_owner();
+
+		return main_db.get_persisted_round_number_by_account(id) < current_block_number;
+	}
+
+public:
+
+	LoadLMDBMemoryDatabaseView(
+		uint64_t current_block_number,
+		MemoryDatabase& main_db)
+		: base_view(main_db)
+		, main_db(main_db)
+		, current_block_number(current_block_number)
+	{}
+
+	TransactionProcessingStatus
+	escrow(UserAccount* account, AssetID asset, int64_t amount)
+	{
+		if (do_action(account))
+		{
+			return base_view.escrow(account, asset, amount);
+		}
+		return TransactionProcessingStatus::SUCCESS;
+	}
+
+	TransactionProcessingStatus 
+	transfer_available(UserAccount* account, AssetID asset, int64_t amount) {
+		if (do_action(account))
+		{
+			return base_view.transfer_available(account, asset, amount);
+		}
+		return TransactionProcessingStatus::SUCCESS;
+	}
+
+	void commit() {
+		base_view.commit();
+	}
+
+	UserAccount* lookup_user(AccountID account) {
+		return base_view.lookup_user(account);
+	}
+
+	TransactionProcessingStatus 
+	create_new_account(
+		AccountID account, const PublicKey pk, UserAccount** out) {
+		// ok to call this even if account doesn't exist yet
+		if (main_db.get_persisted_round_number_by_account(account) < current_block_number)
+		{
+			return base_view.create_new_account(account, pk, out);
+		}
+		else
+		{
+			*out = base_view.lookup_user(account);
+			return TransactionProcessingStatus::SUCCESS;
+		}
+	}
+
+	TransactionProcessingStatus 
+	reserve_sequence_number(UserAccount* idx, uint64_t sequence_number) {
+		if (do_action(idx))
+		{
+			return base_view.reserve_sequence_number(idx, sequence_number);
+		}
+		return TransactionProcessingStatus::SUCCESS;
+	}
+
+	void commit_sequence_number(UserAccount* idx, uint64_t sequence_number)
+	{
+		if (do_action(idx))
+		{
+			base_view.commit_sequence_number(idx, sequence_number);
+		}
+	}
+
+	void release_sequence_number(UserAccount* idx, uint64_t sequence_number) {
+		throw std::runtime_error("release_sequence_number should never be called when replaying trusted block");
+	}
+};
+
 /*! Mock database view that either acts as an unbuffered view or as a no-op,
 depending on whether or not we are processing a transaction block
 whose side effects are already present in the underlying database state.
 */
+/*
 class LoadLMDBMemoryDatabaseView 
 	: public LMDBLoadingWrapper<UnbufferedMemoryDatabaseView> {
 
@@ -226,11 +316,6 @@ public:
 		return unconditional_do<&UnbufferedMemoryDatabaseView::lookup_user>(account);
 	}
 
-/*	bool lookup_user_id(AccountID account, account_db_idx* index_out) {
-		return generic_do<&UnbufferedMemoryDatabaseView::lookup_user_id>(
-			account, index_out);
-	} */
-
 	TransactionProcessingStatus 
 	create_new_account(
 		AccountID account, const PublicKey pk, UserAccount** out) {
@@ -253,27 +338,6 @@ public:
 		generic_do<&UnbufferedMemoryDatabaseView::release_sequence_number>(
 			idx, sequence_number);
 	}
-};
-
-
-
-/*! Occasionally it is useful to run test experiments where
-we automatically grant money to accounts whenever they run out.
-
-Not for use in actual deployment.
-*/
-/*
-class UnlimitedMoneyBufferedMemoryDatabaseView : public BufferedMemoryDatabaseView {
-
-public:
-
-	UnlimitedMoneyBufferedMemoryDatabaseView(MemoryDatabase& main_db)
-		: BufferedMemoryDatabaseView(main_db) {}
-
-	TransactionProcessingStatus escrow(
-		account_db_idx account, AssetID asset, int64_t amount);
-	TransactionProcessingStatus transfer_available(
-		account_db_idx account, AssetID asset, int64_t amount);
 }; */
 
 } /* speedex */

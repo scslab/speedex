@@ -10,10 +10,17 @@
 #include "hotstuff/manage_data_dirs.h"
 #include "hotstuff/config/replica_config.h"
 
+#include "memory_database/typedefs.h"
+
 namespace speedex {
 
 std::string memory_database_lmdb_dir() {
 	return std::string(ROOT_DB_DIRECTORY) + std::string(ACCOUNT_DB);
+}
+
+std::string memory_database_lmdb_shard_dir(uint32_t shard)
+{
+	return memory_database_lmdb_dir() + std::to_string(shard) + "/";
 }
 
 void
@@ -21,6 +28,12 @@ make_memory_database_lmdb_dir() {
 	mkdir_safe(ROOT_DB_DIRECTORY);
 	auto path = memory_database_lmdb_dir();
 	mkdir_safe(path.c_str());
+
+	for (uint32_t shard = 0; shard < NUM_ACCOUNT_DB_SHARDS; shard++)
+	{
+		path = memory_database_lmdb_shard_dir(shard);
+		mkdir_safe(path.c_str());
+	}
 }
 
 void

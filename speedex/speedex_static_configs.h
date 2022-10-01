@@ -9,6 +9,7 @@ namespace speedex
 constexpr static uint32_t MAX_SEQ_NUMS_PER_BLOCK = 64;
 constexpr static bool DETAILED_MOD_LOGGING = true;
 constexpr static bool PREALLOC_BLOCK_FILES = true;
+constexpr static bool ACCOUNT_DB_SYNC_IMMEDIATELY = true;
 
 #if 0
 // setup for blockstm replication

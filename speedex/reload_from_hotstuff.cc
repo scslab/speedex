@@ -35,7 +35,8 @@ void speedex_replay_trusted_round_success(
 
 	BLOCK_INFO("starting to replay transactions of round %lu", round_number);
 	replay_trusted_block(management_structures, tx_block, header);
-	if (management_structures.db.get_persisted_round_number() < round_number) {
+	auto [min_db_round, _] = management_structures.db.get_min_max_persisted_round_numbers();
+	if (min_db_round < round_number) {
 		management_structures.db.commit_new_accounts(round_number);
 	}
 	BLOCK_INFO("replayed txs in block %lu", round_number);
@@ -64,7 +65,8 @@ void speedex_replay_trusted_round_success(
 	header_hash_map.insert_for_loading(header.block, true);
 
 	//persist data
-	if (management_structures.db.get_persisted_round_number() < round_number) {
+
+	if (min_db_round < round_number) {
 		management_structures.db.commit_values();
 		management_structures.db.persist_lmdb(round_number);
 	}
@@ -128,35 +130,40 @@ speedex_load_persisted_data(
 	BlockValidator& validator,
 	hotstuff::LogAccessWrapper const& decided_block_cache) {
 
+	auto [min_db_round, max_db_round] = management_structures.db.get_min_max_persisted_round_numbers();
+
+	throw std::runtime_error("sync db to a consistent snapshot: unimp");
+
 	management_structures.db.load_lmdb_contents_to_memory();
 	management_structures.orderbook_manager.load_lmdb_contents_to_memory();
 	management_structures.block_header_hash_map.load_lmdb_contents_to_memory();
 
-	auto db_round = management_structures.db.get_persisted_round_number();
+	//auto db_round = management_structures.db.get_persisted_round_number();
 
 	auto max_orderbook_round = management_structures.orderbook_manager.get_max_persisted_round_number();
 	auto min_orderbook_round = management_structures.orderbook_manager.get_min_persisted_round_number();
 
-	if (max_orderbook_round > db_round) {
+
+
+	if (max_orderbook_round > min_db_round) {
 		throw std::runtime_error("can't reload if workunit persists without db (bc of the cancel offers thing)");
 	}
 
-	BLOCK_INFO("db round: %lu manager max round: %lu hashmap %lu", 
-		db_round, 
+	BLOCK_INFO("min db round: %lu max_db_round: %lu manager max round: %lu hashmap %lu", 
+		min_db_round,
+		max_db_round,
 		max_orderbook_round, 
 		management_structures.block_header_hash_map.get_persisted_round_number());
 
 	auto start_round = std::min(
 		{
 			static_cast<uint64_t>(1),
-			db_round, 
-			min_orderbook_round, 
+			min_orderbook_round, // min_orderbook_round <= max_orderbook_round <= min_db_round
 			management_structures.block_header_hash_map.get_persisted_round_number()
 		});
 	auto end_round = std::max(
 		{
-			db_round, 
-			max_orderbook_round, 
+			max_db_round, // max_orderbook_round <= min_db_round <= max_db_round
 			management_structures.block_header_hash_map.get_persisted_round_number()
 		});
 

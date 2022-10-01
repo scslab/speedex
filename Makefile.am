@@ -55,6 +55,7 @@ LMDB_SRCS = \
 	lmdb/lmdb_wrapper.cc
 
 MEMORY_DATABASE_SRCS = \
+	memory_database/account_lmdb.cc \
 	memory_database/account_vector.cc \
 	memory_database/memory_database.cc \
 	memory_database/memory_database_view.cc \

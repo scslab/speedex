@@ -9,6 +9,7 @@
 
 #include "lmdb/lmdb_wrapper.h"
 
+#include "memory_database/account_lmdb.h"
 #include "memory_database/account_vector.h"
 #include "memory_database/background_thunk_clearer.h"
 #include "memory_database/thunk.h"
@@ -73,6 +74,7 @@ class AccountModificationLog;
 /*! Wrapper class around an LMDB instance for the account database,
 with some extra parameters filled in (i.e. database file location).
 */
+/*
 struct AccountLMDB : public LMDBInstance {
 
 	constexpr static auto DB_NAME = "account_lmdb";
@@ -93,7 +95,7 @@ struct AccountLMDB : public LMDBInstance {
 	}
 
 	using LMDBInstance::sync;
-};
+}; */
 
 
 struct AccountCreationThunk {
@@ -235,8 +237,12 @@ private:
 		UserAccount* user_index, uint64_t sequence_number);
 public:
 
-	uint64_t get_persisted_round_number() {
-		return account_lmdb_instance.get_persisted_round_number();
+	uint64_t get_persisted_round_number_by_account(AccountID account) const {
+		return account_lmdb_instance.get_persisted_round_number_by_account(account);
+	}
+	std::pair<uint64_t, uint64_t> get_min_max_persisted_round_numbers() const
+	{
+		return account_lmdb_instance.get_min_max_persisted_round_numbers();
 	}
 
 	MemoryDatabase()

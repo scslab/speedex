@@ -146,12 +146,16 @@ void MemoryDatabase::commit_new_accounts(uint64_t current_block_number)
 	std::lock_guard lock2(committed_mtx);
 	std::lock_guard lock3(uncommitted_mtx);
 
-	if ((account_creation_thunks.size() == 0 && account_lmdb_instance.get_persisted_round_number() + 1 != current_block_number)
+	auto [min_db_round, max_db_round] = account_lmdb_instance.get_min_max_persisted_round_numbers();
+
+	// the thunk we're about to add should be sequentially after the last one or the last db round
+	if ((account_creation_thunks.size() == 0 && min_db_round + 1 != current_block_number)
 		|| (account_creation_thunks.size() > 0 && account_creation_thunks.back().current_block_number + 1 != current_block_number)) {
 
-		if (!(current_block_number == 0 && account_lmdb_instance.get_persisted_round_number() ==0)) {
-			BLOCK_INFO("mismatch: current_block_number = %lu account_lmdb_instance.get_persisted_round_number() = %lu",
-					current_block_number, account_lmdb_instance.get_persisted_round_number());
+		// the only case where this isn't true is the first round (genesis)
+		if (!(current_block_number == 0 && min_db_round == 0)) {
+			BLOCK_INFO("mismatch: current_block_number = %lu account_lmdb_instance.min_persisted_round_number() = %lu",
+					current_block_number, min_db_round);
 			if (account_creation_thunks.size()) {
 				BLOCK_INFO("account_creation_thunks.back().current_block_number:%lu",
 						account_creation_thunks.back().current_block_number);
@@ -483,7 +487,7 @@ void MemoryDatabase::clear_persistence_thunks_and_reload(uint64_t expected_persi
 	std::lock_guard lock2(committed_mtx);
 	std::lock_guard lock3(uncommitted_mtx);
 	
-	if (expected_persisted_round_number != account_lmdb_instance.get_persisted_round_number()) {
+	if (expected_persisted_round_number != account_lmdb_instance.assert_snapshot_and_get_persisted_round_number()) {
 		throw std::runtime_error("mismatch between expected round in db and actual persisted round in db");
 	}
 
@@ -498,10 +502,11 @@ void MemoryDatabase::clear_persistence_thunks_and_reload(uint64_t expected_persi
 				[this, &thunk] (auto r) {
 					auto rtx = account_lmdb_instance.rbegin();
 					for (auto idx = r.begin(); idx < r.end(); idx++) {
-						dbval key = dbval{&thunk.kvs->at(idx).key, sizeof(AccountID)};
+						//dbval key = dbval{&thunk.kvs->at(idx).key, sizeof(AccountID)};
 
-						auto res = rtx.get(account_lmdb_instance.get_data_dbi(), key);
-						
+						//auto res = rtx.get(account_lmdb_instance.get_data_dbi(), key);
+						auto res = rtx.get(thunk.kvs->at(idx).key);
+
 						if (res) {
 							AccountCommitment commitment;
 							dbval_to_xdr(*res, commitment);
@@ -541,7 +546,7 @@ void MemoryDatabase::commit_persistence_thunks(uint64_t max_round_number) {
 		}
 	}
 
-	if (thunks_to_commit.size() == 0) {
+	/*if (thunks_to_commit.size() == 0) {
 		BLOCK_INFO("DB: No thunks to commit.  Modifying db metadata (round number) only");
 
 		if (account_lmdb_instance) {
@@ -549,8 +554,13 @@ void MemoryDatabase::commit_persistence_thunks(uint64_t max_round_number) {
 			account_lmdb_instance.commit_wtxn(wtxn, max_round_number);
 		}
 		return;
-	}
+	} */
 
+	if (account_lmdb_instance)
+	{
+		account_lmdb_instance.persist_thunks(thunks_to_commit, max_round_number);
+	}
+/*
 	// counter used to enforce sequentiality of commitment
 	auto current_block_number = get_persisted_round_number();
 
@@ -608,6 +618,8 @@ void MemoryDatabase::commit_persistence_thunks(uint64_t max_round_number) {
 
 	account_lmdb_instance.commit_wtxn(write_txn, current_block_number, false);
 
+	*/
+
 	BLOCK_INFO("committed wtxn");
 
 	{
@@ -633,19 +645,41 @@ void MemoryDatabase::commit_persistence_thunks(uint64_t max_round_number) {
 	//	std::printf("Missing a round commitment!\n");
 	//	throw std::runtime_error("missing commitment");
 	//}
-	if (account_lmdb_instance) {
-		auto stats = account_lmdb_instance.stat();
-		BLOCK_INFO("db size: %" PRIu64 , stats.ms_entries);
-	}
+	
+	//if (account_lmdb_instance) {
+	//	auto stats = account_lmdb_instance.stat();
+	//	BLOCK_INFO("db size: %" PRIu64 , stats.ms_entries);
+	//}
 }
 
 void MemoryDatabase::persist_lmdb(uint64_t current_block_number) {
 	std::shared_lock lock(committed_mtx);
 
+
+	std::vector<DBPersistenceThunk> thunks;
+	thunks.emplace_back(*this, current_block_number);
+
+	auto& thunk = thunks.back();
+
+	thunk.kvs->resize(database.size());
+
+	tbb::parallel_for(
+		tbb::blocked_range<size_t>(0, database.size()),
+		[&] (auto r) {
+
+			for (auto i = r.begin(); i < r.end(); i++)
+			{
+				UserAccount* acct = database.get(i);
+				thunk.kvs->at(i).key = acct -> get_owner();
+				thunk.kvs->at(i).msg = xdr::xdr_to_opaque(acct -> produce_commitment());
+			}
+		});
+
+	account_lmdb_instance.persist_thunks(thunks, current_block_number, true);
+/*
 	auto write_txn = account_lmdb_instance.wbegin();
 
 	std::printf("writing entire database\n");
-
 
 	int32_t modified_count = 0;
 	for (account_db_idx i = 0; i < database.size(); i++) {
@@ -668,52 +702,54 @@ void MemoryDatabase::persist_lmdb(uint64_t current_block_number) {
 			std::printf("failed to insert to account lmdb\n");
 			throw;
 		}
-
 	}
 
 	BLOCK_INFO("modified count = %" PRId32, modified_count);
 
 	account_lmdb_instance.commit_wtxn(write_txn, current_block_number);
 
-	auto stats = account_lmdb_instance.stat();
-	BLOCK_INFO("db size: %" PRIu32, static_cast<uint32_t>(stats.ms_entries));
+	//auto stats = account_lmdb_instance.stat();
+	//BLOCK_INFO("db size: %" PRIu32, static_cast<uint32_t>(stats.ms_entries));
 	MEMDB_INFO_F(log());
+	*/
 }
 
 void MemoryDatabase::load_lmdb_contents_to_memory() {
 	std::lock_guard lock(committed_mtx);
 
-	auto stats = account_lmdb_instance.stat();
+	//auto stats = account_lmdb_instance.stat();
 
-	std::printf("db size: %" PRIu32 "\n", static_cast<uint32_t>(stats.ms_entries));
+	//std::printf("db size: %" PRIu32 "\n", static_cast<uint32_t>(stats.ms_entries));
 
-	auto rtx = account_lmdb_instance.rbegin();
+	auto rtx_main = account_lmdb_instance.rbegin();
 
-	auto cursor = rtx.cursor_open(account_lmdb_instance.get_data_dbi());
+	for (auto& [rtx, data_dbi] : rtx_main.rtxns)
+	{
+		auto cursor = rtx.cursor_open(data_dbi);
 
-	cursor.get(MDB_FIRST);
-	while (cursor) {
-		auto& kv = *cursor;
+		cursor.get(MDB_FIRST);
+		while (cursor) {
+			auto& kv = *cursor;
 
-		auto account_owner = UserAccount::read_lmdb_key(kv.first);
+			auto account_owner = UserAccount::read_lmdb_key(kv.first);
 
-		AccountCommitment commitment;
+			AccountCommitment commitment;
 
-		auto bytes = kv.second.bytes();
+			auto bytes = kv.second.bytes();
 
-		dbval_to_xdr(kv.second, commitment);
+			dbval_to_xdr(kv.second, commitment);
 
-		auto owner = commitment.owner;
-		if (account_owner != owner) {
-			throw std::runtime_error("key read error");
+			auto owner = commitment.owner;
+			if (account_owner != owner) {
+				throw std::runtime_error("key read error");
+			}
+			UserAccount* acct = database.emplace_back(commitment);
+
+			user_id_to_idx_map.emplace(owner, acct);
+			++cursor;
 		}
-		UserAccount* acct = database.emplace_back(commitment);
-
-		user_id_to_idx_map.emplace(owner, acct);
-		++cursor;
 	}
 
-	rtx.commit();
 	Hash hash;
 	_produce_state_commitment(hash);
 }
