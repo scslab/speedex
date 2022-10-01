@@ -186,7 +186,7 @@ int main(int argc, char* const* argv)
 		tbb::global_control::max_allowed_parallelism, num_threads);
 
 	ExperimentController control_server(vm);
-	//control_server.wait_for_breakpoint_signal();
+	control_server.wait_for_breakpoint_signal();
 
 	OverlayFlooder flooder(data_stream, client_manager, server, 2'000'000);
 
@@ -227,7 +227,7 @@ int main(int argc, char* const* argv)
 			pmaker.do_empty_propose();
 			pmaker.wait_for_qc();
 
-			//control_server.wait_for_breakpoint_signal();
+			control_server.wait_for_breakpoint_signal();
 			vm -> write_measurements();
 			exit(0);
 		}
