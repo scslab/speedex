@@ -14,7 +14,7 @@
 
 #include "xdr/block.h"
 
-#include <forward_list>
+#include <deque>
 #include <mutex>
 
 
@@ -104,7 +104,7 @@ class SpeedexVM : public hotstuff::VMBase {
 	ExperimentResultsUnion 
 	get_measurements_nolock();
 
-	std::forward_list<hotstuff::VMBlockID> pending_proposed_ids; 
+	std::deque<hotstuff::VMBlockID> pending_proposed_ids; 
 
 public:
 	using block_type = SpeedexVMBlock;

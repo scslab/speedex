@@ -310,7 +310,7 @@ SpeedexVM::propose()
 
 	measurements_log.add_measurement(measurements_base);
 
-	pending_proposed_ids.insert_after(pending_proposed_ids.end(), out -> get_id());
+	pending_proposed_ids.push_back(out -> get_id());
 
 	return out;
 }
