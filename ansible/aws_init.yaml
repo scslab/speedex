@@ -2,8 +2,14 @@
 - name: aws init
   hosts: all
   tasks:
+          - name: update
+            shell: "sudo apt-get update"
+          - name: install packages
+            shell: "sudo apt-get install -y autoconf make bison flex pip libgsl-dev liblmdb-dev libsodium-dev pkg-config libtool libtbb-dev libglpk-dev cmake"
           - name: mdadm
             shell: "sudo mdadm -C /dev/md127 -l 0 -n 4 /dev/nvme1n1 /dev/nvme0n1 /dev/nvme3n1 /dev/nvme4n1"
+          - name: mkdir
+            shell: "mkdir xfs"
           - name: mkfs
             shell: "sudo mkfs.xfs /dev/md127 -f && sudo mount /dev/md127 xfs -o discard"
           - name: chmod
