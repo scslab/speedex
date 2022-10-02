@@ -251,7 +251,7 @@ SpeedexVM::propose()
 	
 	BLOCK_INFO("Starting production on block %lu", prev_block_number + 1);
 
-	measurements_base = new_measurements(BLOCK_PRODUCER);
+	auto measurements_base = new_measurements(BLOCK_PRODUCER);
 
 	measurements_base.blockNumber = prev_block_number + 1;
 	auto& current_measurements = measurements_base.results.productionResults();
