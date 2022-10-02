@@ -322,11 +322,11 @@ uint8_t
 LPSolver::max_tax_param(
 	FractionalAsset supply, FractionalAsset demand, const uint8_t target_tax) {
 
-	if (supply >= demand.tax(target_tax)) {
+	if (supply.ceil() >= demand.tax_and_round(target_tax)) {
 		return target_tax;
 	}
 
-	if (supply >= (demand.tax((target_tax - 1)))) {
+	if (supply.ceil() >= (demand.tax_and_round((target_tax - 1)))) {
 		return target_tax - 1;
 	}
 	
@@ -337,6 +337,8 @@ LPSolver::max_tax_param(
 	uint8_t tax_rate = std::floor(-eps);
 	
 	if (tax_rate < target_tax - 1) {
+		std::printf("eps %lf demand %lf supply %lf\n", eps, demand.to_double(), supply.to_double());
+		std::fflush(stdout);
 		throw std::runtime_error(
 			"tax rate increased too much due to LP rounding error");
 	}
