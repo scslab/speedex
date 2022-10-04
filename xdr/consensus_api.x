@@ -40,17 +40,6 @@ program RequestBlockForwarding {
 	} = 1;
 } = 0x11111112;
 
-program ExperimentControl {
-	version ExperimentControlV1 {
-		void write_measurements(void) = 1;
-		void signal_start(void) = 2;
-		ExperimentResultsUnion get_measurements(void) = 3;
-		uint32 is_running(void) = 4;
-		uint32 is_ready_to_start(void) = 5;
-		void signal_upstream_finish(void) = 6;
-	} = 1;
-} = 0x11111113;
-
 program HotstuffVMControl {
 	version HotstuffVMControlV1 {
 		void signal_breakpoint(void) = 1;
@@ -60,6 +49,6 @@ program HotstuffVMControl {
 		void send_producer_is_done_signal(void) = 5;
 		uint64 get_speedex_block_height(void) = 6;
 	} = 1;
-} = 0x11111114;
+} = 0x11111113;
 
 } /* speedex */
