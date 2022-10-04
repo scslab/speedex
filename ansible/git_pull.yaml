@@ -3,5 +3,5 @@
   hosts: all
   tasks:
           - name: git_pull
-            shell: "cd ~/xfs/speedex && git pull && git submodule update --recursive"
+            shell: "cd ~/xfs/speedex && git pull && git submodule sync && git submodule update --recursive"
 
