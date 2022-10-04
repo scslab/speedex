@@ -4,7 +4,7 @@ namespace speedex
 {
 
 void
-LogInsertFn::value_insert(AccountModificationTxList& main_value,
+LogInsertFn::value_insert(AccountModificationTxListWrapper& main_value,
                           const uint64_t self_sequence_number)
 {
     main_value.identifiers_self.push_back(self_sequence_number);
@@ -13,7 +13,7 @@ LogInsertFn::value_insert(AccountModificationTxList& main_value,
 //! Log that an account has been modified by a transaction from another
 //! account (e.g. a payment).
 void
-LogInsertFn::value_insert(AccountModificationTxList& main_value,
+LogInsertFn::value_insert(AccountModificationTxListWrapper& main_value,
                           const TxIdentifier& other_identifier)
 {
     main_value.identifiers_others.push_back(other_identifier);
@@ -22,7 +22,7 @@ LogInsertFn::value_insert(AccountModificationTxList& main_value,
 //! Log that an account has been modified by itself, when it sends a new
 //! transaction.
 void
-LogInsertFn::value_insert(AccountModificationTxList& main_value,
+LogInsertFn::value_insert(AccountModificationTxListWrapper& main_value,
                           const SignedTransaction& self_transaction)
 {
     main_value.new_transactions_self.push_back(self_transaction);
@@ -47,7 +47,7 @@ LogKeyOnlyInsertFn::new_value(const AccountIDPrefix& prefix)
 
 void 
 LogKeyOnlyInsertFn::value_insert(
-    AccountModificationTxList& main_value,
+    AccountModificationTxListWrapper& main_value,
     const void*)
 {
 
@@ -89,8 +89,8 @@ dedup(value_list& values, CompareFn comparator)
 }
 
 void
-LogMergeFn::value_merge(AccountModificationTxList& original_value,
-                        const AccountModificationTxList& merge_in_value)
+LogMergeFn::value_merge(AccountModificationTxListWrapper& original_value,
+                        const AccountModificationTxListWrapper& merge_in_value)
 {
     for (const auto& new_tx : merge_in_value.new_transactions_self)
     {

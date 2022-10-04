@@ -27,19 +27,19 @@ struct LogInsertFn {//: public trie::GenericInsertFn<AccountModificationTxListWr
 	//! Log that an account has been modified by one of its own past 
 	//! transactions (e.g. an offer has cleared).
 	static void value_insert(
-		AccountModificationTxList& main_value, 
+		AccountModificationTxListWrapper& main_value, 
 		const uint64_t self_sequence_number);
 
 	//! Log that an account has been modified by a transaction from another
 	//! account (e.g. a payment).
 	static void value_insert(
-		AccountModificationTxList& main_value, 
+		AccountModificationTxListWrapper& main_value, 
 		const TxIdentifier& other_identifier);
 
 	//! Log that an account has been modified by itself, when it sends a new
 	//! transaction.
 	static void value_insert(
-		AccountModificationTxList& main_value, 
+		AccountModificationTxListWrapper& main_value, 
 		const SignedTransaction& self_transaction);
 
 	//! Initialize an empty account modification log entry.
@@ -53,7 +53,7 @@ struct LogKeyOnlyInsertFn
 
 	static void 
 	value_insert(
-		AccountModificationTxList& main_value,
+		AccountModificationTxListWrapper& main_value,
 		const void*);
 
 	static AccountModificationTxListWrapper 
@@ -63,8 +63,8 @@ struct LogKeyOnlyInsertFn
 //might like to make these one struct, reduce extra code/etc, but type signatures on metadata merge are slightly diff
 struct LogMergeFn {
 	static void value_merge(
-		AccountModificationTxList& original_value, 
-		const AccountModificationTxList& merge_in_value);
+		AccountModificationTxListWrapper& original_value, 
+		const AccountModificationTxListWrapper& merge_in_value);
 };
 
 struct LogNormalizeFn {
