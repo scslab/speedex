@@ -37,6 +37,11 @@ AccountModificationEntry::merge_value(AccountModificationEntry& other_value)
 	{
 		throw std::runtime_error("log entry merge_value owner mismatch");
 	}
+
+	if (other_value.new_transactions_self.size() != 0)
+	{
+		throw std::runtime_error("seqno error: tx showed up in multiple values");
+	}
 }
 
 //caller owns mem
