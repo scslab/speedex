@@ -29,10 +29,10 @@ protected:
 	//! Flag for signaling worker thread to terminate
 	std::atomic<bool> done_flag = false;
 
+private:
 	//! Flag for signaling that worker thread has shut down
 	std::atomic<bool> worker_shutdown = false;
 
-private:
 	bool started = false;
 	bool terminate_correctly = false;
 
@@ -63,10 +63,12 @@ private:
 		cv.notify_all();		
 	}
 
-public:
+protected:
 
 	//! extenders override this to tell worker when there's work waiting to be done.
 	virtual bool exists_work_to_do() = 0;
+
+public:
 
 	//! call in ctor of derived class
 	//! can't pass in lambda in ctor if lambda depends on
@@ -90,6 +92,8 @@ public:
 		cv.wait(lock, [this] {return !exists_work_to_do();});
 	}
 
+protected:
+
 	// must be called in dtor of derived class
 	void terminate_worker()
 	{
@@ -98,7 +102,8 @@ public:
 		wait_for_async_thread_terminate();
 		terminate_correctly = true;
 	}
-
+	
+	// http://www.gotw.ca/publications/mill18.htm
 	~AsyncWorker()
 	{
 		if (!terminate_correctly)
