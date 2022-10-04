@@ -1,6 +1,7 @@
 #pragma once
 
-#include "mtt/trie/utils.h"
+#include <mtt/trie/utils.h>
+#include <mtt/trie/prefix.h>
 
 #include "xdr/database_commitments.h"
 #include "xdr/types.h"
@@ -9,6 +10,8 @@
 
 namespace speedex
 {
+
+typedef trie::UInt64Prefix AccountIDPrefix;
 
 // warning police
 struct ModificationLogFns

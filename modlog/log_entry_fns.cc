@@ -1,10 +1,39 @@
 #include "modlog/log_entry_fns.h"
 
+#include "modlog/account_modification_entry.h"
+
 namespace speedex
 {
 
 void
-LogInsertFn::value_insert(AccountModificationTxListWrapper& main_value,
+LogEntryInsertFn::value_insert(AccountModificationEntry& main_value,
+                          const uint64_t self_sequence_number)
+{
+    main_value.add_identifier_self(self_sequence_number);
+}
+
+void
+LogEntryInsertFn::value_insert(AccountModificationEntry& main_value,
+                          const TxIdentifier& other_identifier)
+{
+    main_value.add_identifier_other(other_identifier);
+}
+
+void
+LogEntryInsertFn::value_insert(AccountModificationEntry& main_value,
+                          const SignedTransaction& self_transaction)
+{
+    main_value.add_tx_self(self_transaction);
+}
+
+AccountModificationEntry
+LogEntryInsertFn::new_value(const AccountIDPrefix& prefix)
+{
+    return AccountModificationEntry (prefix.uint64());
+}
+
+void
+LogListInsertFn::value_insert(AccountModificationTxListWrapper& main_value,
                           const uint64_t self_sequence_number)
 {
     main_value.identifiers_self.push_back(self_sequence_number);
@@ -13,7 +42,7 @@ LogInsertFn::value_insert(AccountModificationTxListWrapper& main_value,
 //! Log that an account has been modified by a transaction from another
 //! account (e.g. a payment).
 void
-LogInsertFn::value_insert(AccountModificationTxListWrapper& main_value,
+LogListInsertFn::value_insert(AccountModificationTxListWrapper& main_value,
                           const TxIdentifier& other_identifier)
 {
     main_value.identifiers_others.push_back(other_identifier);
@@ -22,7 +51,7 @@ LogInsertFn::value_insert(AccountModificationTxListWrapper& main_value,
 //! Log that an account has been modified by itself, when it sends a new
 //! transaction.
 void
-LogInsertFn::value_insert(AccountModificationTxListWrapper& main_value,
+LogListInsertFn::value_insert(AccountModificationTxListWrapper& main_value,
                           const SignedTransaction& self_transaction)
 {
     main_value.new_transactions_self.push_back(self_transaction);
@@ -30,7 +59,7 @@ LogInsertFn::value_insert(AccountModificationTxListWrapper& main_value,
 
 //! Initialize an empty account modification log entry.
 AccountModificationTxListWrapper
-LogInsertFn::new_value(const AccountIDPrefix& prefix)
+LogListInsertFn::new_value(const AccountIDPrefix& prefix)
 {
     AccountModificationTxListWrapper out;
     out.owner = prefix.uint64();
@@ -90,7 +119,7 @@ dedup(value_list& values, CompareFn comparator)
 
 void
 LogMergeFn::value_merge(AccountModificationTxListWrapper& original_value,
-                        const AccountModificationTxListWrapper& merge_in_value)
+                        AccountModificationTxListWrapper& merge_in_value)
 {
     for (const auto& new_tx : merge_in_value.new_transactions_self)
     {
@@ -113,6 +142,13 @@ LogMergeFn::value_merge(AccountModificationTxListWrapper& original_value,
     {
         throw std::runtime_error("owner mismatch when merging logs!!!");
     }
+}
+
+void
+LogMergeFn::value_merge(AccountModificationEntry& original_value,
+    AccountModificationEntry& merge_in_value)
+{
+    original_value.merge_value(merge_in_value);
 }
 
 void

@@ -19,10 +19,10 @@ and called on trie values.
 
 namespace speedex {
 
-//! Insert modifications to the log for one account
-struct LogInsertFn {//: public trie::GenericInsertFn<AccountModificationTxListWrapper> {
+class AccountModificationEntry;
 
-	using AccountIDPrefix = trie::UInt64Prefix;
+//! Insert modifications to the log for one account
+struct LogListInsertFn {
 
 	//! Log that an account has been modified by one of its own past 
 	//! transactions (e.g. an offer has cleared).
@@ -47,6 +47,31 @@ struct LogInsertFn {//: public trie::GenericInsertFn<AccountModificationTxListWr
 	new_value(const AccountIDPrefix& prefix);
 };
 
+struct LogEntryInsertFn
+{
+	//! Log that an account has been modified by one of its own past 
+	//! transactions (e.g. an offer has cleared).
+	static void value_insert(
+		AccountModificationEntry& main_value, 
+		const uint64_t self_sequence_number);
+
+	//! Log that an account has been modified by a transaction from another
+	//! account (e.g. a payment).
+	static void value_insert(
+		AccountModificationEntry& main_value, 
+		const TxIdentifier& other_identifier);
+
+	//! Log that an account has been modified by itself, when it sends a new
+	//! transaction.
+	static void value_insert(
+		AccountModificationEntry& main_value, 
+		const SignedTransaction& self_transaction);
+
+	//! Initialize an empty account modification log entry.
+	static AccountModificationEntry 
+	new_value(const AccountIDPrefix& prefix);
+};
+
 struct LogKeyOnlyInsertFn
 {
 	using AccountIDPrefix = trie::UInt64Prefix;
@@ -64,7 +89,11 @@ struct LogKeyOnlyInsertFn
 struct LogMergeFn {
 	static void value_merge(
 		AccountModificationTxListWrapper& original_value, 
-		const AccountModificationTxListWrapper& merge_in_value);
+		AccountModificationTxListWrapper& merge_in_value);
+
+	static void value_merge(
+		AccountModificationEntry& original_value,
+		AccountModificationEntry& merge_in_value);
 };
 
 struct LogNormalizeFn {

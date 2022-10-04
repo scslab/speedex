@@ -23,8 +23,6 @@ Implicitly assembles a block of transactions during block production.
 
 #include <xdrpp/marshal.h>
 
-
-
 namespace speedex {
 
 /*! Log the accounts that are modified when processing a set of transactions.
@@ -37,6 +35,9 @@ serial logs developed by different threads.  Call batch_merge_in_logs()
 to merge these logs into one main log.
 */
 
+struct LogListInsertFn;
+struct LogEntryInsertFn;
+
 class AccountModificationLog {
 
 public:
@@ -45,6 +46,8 @@ public:
 
 	using TrieT = trie::RecyclingTrie<LogValueT>;
 	using serial_trie_t = TrieT::serial_trie_t;
+
+	static_assert(std::is_same<TrieT::prefix_t, AccountIDPrefix>::value, "unexpected prefix type");
 
 	using serial_cache_t = utils::ThreadlocalCache<serial_trie_t>;
 private:
@@ -162,6 +165,11 @@ class SerialAccountModificationLog {
 
 	serial_trie_t& modification_log;
 	AccountModificationLog& main_log;
+
+	using LogInsertFn = typename
+		std::conditional<std::is_same<AccountModificationLog::LogValueT, AccountModificationTxListWrapper>::value,
+			LogListInsertFn,
+			LogEntryInsertFn>::type;
 
 public:
 	SerialAccountModificationLog(const SerialAccountModificationLog& other) = delete;

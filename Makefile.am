@@ -73,10 +73,14 @@ MEMPOOL_SRCS = \
 	mempool/mempool_transaction_filter.cc
 
 MODLOG_SRCS = \
+	modlog/account_modification_entry.cc \
 	modlog/account_modification_log.cc \
 	modlog/file_prealloc_worker.cc \
 	modlog/log_entry_fns.cc \
 	modlog/log_merge_worker.cc
+
+MODLOG_TEST_SRCS = \
+	modlog/tests/test_account_log_entry.cc
 
 ORDERBOOK_SRCS = \
 	orderbook/commitment_checker.cc \
@@ -207,6 +211,7 @@ CATCH_TEST_CCS = \
 	filtering/tests/test_filter_entry.cc \
 	$(HEADER_HASH_TEST_SRCS) \
 	$(MEMORY_DATABASE_TEST_SRCS) \
+	$(MODLOG_TEST_SRCS) \
 	$(ORDERBOOK_TEST_SRCS)
 
 
