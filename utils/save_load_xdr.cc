@@ -71,7 +71,9 @@ save_account_block_fast(
     xdr::xdr_put p (aligned_buf, aligned_buf + aligned_buf_size);
 
     p.put32(aligned_buf_cast, xdr::size32(0)); //space for now
-    p.p_ ++; // have to use if not using p.operator() mechanism, it seems
+    p.p_ ++; // have to use if not using p.operator() mechanism
+    // alternative would have been to just use p.put32(p.p_) or
+    // just p(0)
     buf_idx += 4;
 
     size_t total_written_bytes = 0;
