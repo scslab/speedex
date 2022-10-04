@@ -68,7 +68,12 @@ AccountModificationEntry::serialize_xdr() const
 
 	xdr::xdr_put p(out, out + total_size_bytes);
 
-	p(static_cast<uint64_t>(owner));
+	if (!owner)
+	{
+		throw std::runtime_error("owner not set prior to serialization");
+	}
+
+	p(static_cast<uint64_t>(*owner));
 
 	p(static_cast<uint32_t>(new_transactions_self.size()));
 	for (auto const& tx : new_transactions_self)

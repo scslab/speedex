@@ -2,6 +2,7 @@
 
 #include <compare>
 #include <cstdint>
+#include <optional>
 #include <set>
 
 #include "xdr/database_commitments.h"
@@ -40,7 +41,7 @@ struct TxComparator
 
 class AccountModificationEntry
 {
-	const AccountID owner;
+	std::optional<AccountID> owner;
 
 	std::set<uint64_t> identifiers_self;
 	std::set<TxIdentifier> identifiers_other;
@@ -48,7 +49,14 @@ class AccountModificationEntry
 
 public:
 
-	AccountModificationEntry(AccountID const& owner)
+	AccountModificationEntry()
+		: owner()
+		, identifiers_self()
+		, identifiers_other()
+		, new_transactions_self()
+		{}
+
+	AccountModificationEntry(AccountID owner)
 		: owner(owner)
 		, identifiers_self()
 		, identifiers_other()
