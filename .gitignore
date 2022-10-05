@@ -29,6 +29,7 @@ test-driver
 *.dSYM/*
 ar-lib
 compile
+ylwrap
 
 #automation
 automation/check_sigs
