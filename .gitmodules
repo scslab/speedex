@@ -10,3 +10,6 @@
 [submodule "m4"]
 	path = m4
 	url = https://github.com/gramseyer/m4.git
+[submodule "lib/utility"]
+	path = lib/utility
+	url = https://github.com/gramseyer/utility.git

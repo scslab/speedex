@@ -9,7 +9,7 @@
 
 #include "lmdb/lmdb_wrapper.h"
 
-#include "utils/async_worker.h"
+#include <utils/async_worker.h>
 
 #include <mtt/utils/non_movable.h>
 
@@ -49,10 +49,8 @@ public:
 	void export_hash_key(uint8_t* hash_key_out) const;
 };
 
-class AsyncAccountLMDBShardWorker : public AsyncWorker, utils::NonMovableOrCopyable
+class AsyncAccountLMDBShardWorker : public utils::AsyncWorker, utils::NonMovableOrCopyable
 {
-	using AsyncWorker::mtx;
-	using AsyncWorker::cv;
 
 	const std::vector<DBPersistenceThunk>* thunks_to_process;
 	uint64_t max_round_number;
@@ -71,7 +69,7 @@ class AsyncAccountLMDBShardWorker : public AsyncWorker, utils::NonMovableOrCopya
 
 public:
 	AsyncAccountLMDBShardWorker(AccountLMDBShard& shard)
-		: AsyncWorker()
+		: utils::AsyncWorker()
 		, thunks_to_process(nullptr)
 		, shard(shard)
 	{
@@ -86,11 +84,8 @@ public:
 	}
 };
 
-class AsyncFsyncWorker : public AsyncWorker, utils::NonMovableOrCopyable
+class AsyncFsyncWorker : public utils::AsyncWorker, utils::NonMovableOrCopyable
 {
-	using AsyncWorker::mtx;
-	using AsyncWorker::cv;
-
 	bool do_fsync;
 
 	AccountLMDBShard& shard;
@@ -103,7 +98,7 @@ class AsyncFsyncWorker : public AsyncWorker, utils::NonMovableOrCopyable
 
 public:
 	AsyncFsyncWorker(AccountLMDBShard& shard)
-		: AsyncWorker()
+		: utils::AsyncWorker()
 		, do_fsync(false)
 		, shard(shard)
 	{

@@ -17,7 +17,7 @@ Phase 3: Everything else (orderbooks, header hash)
 
 #include "speedex/speedex_measurements.h"
 
-#include "utils/async_worker.h"
+#include <utils/async_worker.h>
 
 #include "xdr/block.h"
 #include "xdr/database_commitments.h"
@@ -67,9 +67,7 @@ persist_after_loading(
 	uint64_t current_block_number);
 
 //! Operates a background thread for phase 3 persistence.
-class AsyncPersisterPhase3 : public AsyncWorker {
-	using AsyncWorker::mtx;
-	using AsyncWorker::cv;
+class AsyncPersisterPhase3 : public utils::AsyncWorker {
 
 	std::unique_ptr<PersistenceMeasurementLogCallback> persistence_callback;
 
@@ -86,7 +84,7 @@ class AsyncPersisterPhase3 : public AsyncWorker {
 public:
 
 	AsyncPersisterPhase3(SpeedexManagementStructures& management_structures)
-		: AsyncWorker()
+		: utils::AsyncWorker()
 		, persistence_callback(nullptr)
 		, management_structures(management_structures) {
 			start_async_thread([this] {run();});
@@ -102,9 +100,7 @@ public:
 
 //! Operates a background thread for phase 2 persistence.
 //! Automatically calls phase 3 when done.
-class AsyncPersisterPhase2 : public AsyncWorker {
-	using AsyncWorker::mtx;
-	using AsyncWorker::cv;
+class AsyncPersisterPhase2 : public utils::AsyncWorker {
 
 	std::unique_ptr<PersistenceMeasurementLogCallback> persistence_callback;
 
@@ -125,7 +121,7 @@ class AsyncPersisterPhase2 : public AsyncWorker {
 public:
 
 	AsyncPersisterPhase2(SpeedexManagementStructures& management_structures)
-		: AsyncWorker()
+		: utils::AsyncWorker()
 		, persistence_callback(nullptr)
 		, management_structures(management_structures)
 		, phase3_persist(management_structures)
@@ -143,9 +139,7 @@ public:
 
 //! Operates a background thread for phase 1 persistence.
 //! Automatically calls phase 2 when done.
-struct AsyncPersister : public AsyncWorker {
-	using AsyncWorker::mtx;
-	using AsyncWorker::cv;
+struct AsyncPersister : public utils::AsyncWorker {
 
 	std::unique_ptr<PersistenceMeasurementLogCallback> persistence_callback;
 	//std::optional<uint64_t> block_number_to_persist;
@@ -167,7 +161,7 @@ struct AsyncPersister : public AsyncWorker {
 public:
 
 	AsyncPersister(SpeedexManagementStructures& management_structures)
-		: AsyncWorker()
+		: utils::AsyncWorker()
 		, persistence_callback(nullptr)
 		, management_structures(management_structures)
 		, phase2_persist(management_structures) {

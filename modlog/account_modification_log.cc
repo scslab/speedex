@@ -157,7 +157,6 @@ SerialAccountModificationLog::log_new_self_transaction(
     {
         modification_log.template insert<LogKeyOnlyInsertFn, const void*>(sender, nullptr);
     }
-
 }
 
 void

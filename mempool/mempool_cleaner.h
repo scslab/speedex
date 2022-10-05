@@ -8,7 +8,7 @@ committed transactions.
 
 #include "mempool/mempool.h"
 
-#include "utils/async_worker.h"
+#include <utils/async_worker.h>
 
 namespace speedex {
 
@@ -16,9 +16,7 @@ namespace speedex {
 Specifically, deletes confirmed/failed transactions
 from the mempool, and defragments mempool chunks.
 */
-class MempoolCleaner : public AsyncWorker {
-	using AsyncWorker::mtx;
-	using AsyncWorker::cv;
+class MempoolCleaner : public utils::AsyncWorker {
 
 	Mempool& mempool;
 	bool do_cleaning = false;
@@ -34,7 +32,7 @@ class MempoolCleaner : public AsyncWorker {
 
 public:
 	MempoolCleaner(Mempool& mempool)
-		: AsyncWorker()
+		: utils::AsyncWorker()
 		, mempool(mempool) {
 			start_async_thread([this] () {run();});
 		}

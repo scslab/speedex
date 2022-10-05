@@ -17,6 +17,8 @@
 
 #include <xdrpp/srpc.h>
 
+#include <utils/mkdir.h>
+
 using namespace speedex;
 using namespace hotstuff;
 
@@ -277,7 +279,7 @@ int main(int argc, char* const* argv)
 		usage();
 	}
 
-	if (mkdir_safe(output_folder.c_str())) {
+	if (utils::mkdir_safe(output_folder.c_str())) {
 		std::printf("output directory %s already exists, continuing\n", output_folder.c_str());
 	}
 

@@ -9,7 +9,7 @@ Owns background threads to run these queries.
 #include "orderbook/orderbook.h"
 #include "orderbook/utils.h"
 
-#include "utils/async_worker.h"
+#include <utils/async_worker.h>
 
 using uint128_t = __uint128_t;
 
@@ -34,9 +34,7 @@ constexpr static auto demand_func = &Orderbook::calculate_demands_and_supplies_t
 constexpr static auto demand_func = &Orderbook::calculate_demands_and_supplies;
 #endif
 
-class DemandOracleWorker : public AsyncWorker {
-	using AsyncWorker::cv;
-	using AsyncWorker::mtx;
+class DemandOracleWorker : public utils::AsyncWorker {
 	
 	unsigned int num_assets;
 

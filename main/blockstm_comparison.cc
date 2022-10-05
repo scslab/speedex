@@ -19,6 +19,8 @@
 #include "utils/debug_macros.h"
 #include "utils/manage_data_dirs.h"
 
+#include <utils/mkdir.h>
+
 #include <getopt.h>
 
 #include <tbb/global_control.h>
@@ -214,8 +216,8 @@ run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, 
 
 	auto& db = management_structures.db;
 
-	mkdir_safe("experiment_data/");
-	mkdir_safe("experiment_data/blockstm_comparison_data/");
+	utils::mkdir_safe("experiment_data/");
+	utils::mkdir_safe("experiment_data/blockstm_comparison_data/");
 
 	GeneratorState generator (gen, options, "experiment_data/blockstm_comparison_data/");
 

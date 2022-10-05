@@ -5,8 +5,8 @@
 
 #include "config.h"
 
-#include "utils/async_worker.h"
-#include "utils/cleanup.h"
+#include <utils/async_worker.h>
+#include <utils/cleanup.h>
 
 namespace speedex {
 
@@ -20,11 +20,11 @@ std::string tx_block_name(uint64_t block_number) {
 }
 } /* anonymous namespace */
 
-class FilePreallocWorker : public AsyncWorker {
-	using AsyncWorker::mtx;
-	using AsyncWorker::cv;
+class FilePreallocWorker : public utils::AsyncWorker {
+	using utils::AsyncWorker::mtx;
+	using utils::AsyncWorker::cv;
 
-	unique_fd block_fd;
+	utils::unique_fd block_fd;
 	
 	std::optional<uint64_t> next_alloc_block;
 
@@ -37,7 +37,7 @@ class FilePreallocWorker : public AsyncWorker {
 public:
 
 	FilePreallocWorker()
-		: AsyncWorker()
+		: utils::AsyncWorker()
 		, block_fd()
 		, next_alloc_block(std::nullopt) {
 			start_async_thread([this] {run();});
@@ -56,7 +56,7 @@ public:
 		cv.notify_all();
 	}
 
-	unique_fd& wait_for_prealloc() {
+	utils::unique_fd& wait_for_prealloc() {
 		wait_for_async_task();
 		return block_fd;
 	}

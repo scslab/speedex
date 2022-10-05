@@ -5,7 +5,7 @@
 namespace speedex {
 
 LogMergeWorker::LogMergeWorker(AccountModificationLog& modification_log)
-	: AsyncWorker()
+	: utils::AsyncWorker()
 	, modification_log(modification_log) {
 		start_async_thread([this] {run();});
 	}

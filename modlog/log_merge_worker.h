@@ -6,7 +6,7 @@ Merges in a batch of serial account modification logs
 in a background thread.
 */
 
-#include "utils/async_worker.h"
+#include <utils/async_worker.h>
 
 namespace speedex {
 
@@ -16,9 +16,7 @@ class AccountModificationLog;
 serial account modification logs (that are cached in the main account log's
 threadlocal cache) into the actual main log.
 */
-class LogMergeWorker : public AsyncWorker {
-	using AsyncWorker::mtx;
-	using AsyncWorker::cv;
+class LogMergeWorker : public utils::AsyncWorker {
 
 	AccountModificationLog& modification_log;
 	bool logs_ready_for_merge = false;

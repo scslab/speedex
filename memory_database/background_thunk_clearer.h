@@ -2,16 +2,16 @@
 
 #include <vector>
 
-#include "utils/async_worker.h"
+#include <utils/async_worker.h>
 
 namespace speedex {
 
 //! Free database persistence thunks in the background.
 template<typename Clearable>
-class BackgroundThunkClearer : public AsyncWorker {
+class BackgroundThunkClearer : public utils::AsyncWorker {
 
-	using AsyncWorker::mtx;
-	using AsyncWorker::cv;
+	using utils::AsyncWorker::mtx;
+	using utils::AsyncWorker::cv;
 
 	std::vector<Clearable> work;
 
@@ -44,7 +44,7 @@ class BackgroundThunkClearer : public AsyncWorker {
 public:
 
 	BackgroundThunkClearer()
-		: AsyncWorker() {
+		: utils::AsyncWorker() {
 			start_async_thread([this] {run();});
 		}
 

@@ -7,12 +7,16 @@
 
 #include "config.h"
 
+#include <utils/mkdir.h>
+
 #include "hotstuff/manage_data_dirs.h"
 #include "hotstuff/config/replica_config.h"
 
 #include "memory_database/typedefs.h"
 
 namespace speedex {
+
+using utils::mkdir_safe;
 
 std::string memory_database_lmdb_dir() {
 	return std::string(ROOT_DB_DIRECTORY) + std::string(ACCOUNT_DB);

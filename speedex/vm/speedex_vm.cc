@@ -11,6 +11,8 @@
 
 #include "xdr/experiments.h"
 
+#include <utils/mkdir.h>
+
 namespace speedex {
 
 using utils::measure_time;
@@ -47,7 +49,7 @@ SpeedexVM::SpeedexVM(
 			prices[i] = price::from_double(1.0);
 		}
 
-		mkdir_safe(measurement_output_folder.c_str());
+		utils::mkdir_safe(measurement_output_folder.c_str());
 	}
 
 void 

@@ -67,7 +67,7 @@ load_xdr_from_file_fast(
 	size_t aligned_buf_size = BUF_SIZE;
 	unsigned char* aligned_buf = reinterpret_cast<unsigned char*>(std::align(512, sizeof(unsigned char), buf_head, aligned_buf_size));
 
-	unique_fd fd{open(filename, O_DIRECT | O_RDONLY)};
+	utils::unique_fd fd{open(filename, O_DIRECT | O_RDONLY)};
 
 	if (!fd) {
 		return -1;
@@ -78,7 +78,7 @@ load_xdr_from_file_fast(
 	int bytes_read = read(fd.get(), aligned_buf, aligned_buf_size);
 
 	if (bytes_read == -1) {
-		threrror("read error");
+		utils::threrror("read error");
 	}
 
 	if (static_cast<size_t>(bytes_read) >= aligned_buf_size) {
@@ -96,22 +96,23 @@ load_xdr_from_file_fast(
 namespace {
 
 static inline void 
-flush_buffer(unique_fd& fd, unsigned char* buffer, size_t bytes_to_write) {
+flush_buffer(utils::unique_fd& fd, unsigned char* buffer, size_t bytes_to_write) {
 	std::size_t idx = 0;
 
 	while (idx < bytes_to_write) {
 		int written = write(fd.get(), buffer + idx, bytes_to_write - idx);
 		if (written < 0) {
-			threrror("write error");
+			utils::threrror("write error");
 		}
 		idx += written;
 	}
 }
 
 }
+
 /*! Preallocate a file for later usage
 */
-unique_fd
+utils::unique_fd
 preallocate_file(const char* filename, size_t size = 0);
 
 /*! Save xdr object to disk.
@@ -155,7 +156,7 @@ void save_xdr_to_file_fast(const xdr_list_type& value, const char* filename, con
     an existing serialization buffer.
 */
 template<typename xdr_list_type>
-void save_xdr_to_file_fast(const xdr_list_type& value, unique_fd& fd, unsigned char* buffer, const unsigned int BUF_SIZE) {
+void save_xdr_to_file_fast(const xdr_list_type& value, utils::unique_fd& fd, unsigned char* buffer, const unsigned int BUF_SIZE) {
 
 	size_t list_size = value.size();
 
@@ -213,7 +214,7 @@ void save_xdr_to_file_fast(const xdr_list_type& value, unique_fd& fd, unsigned c
 	auto res = ftruncate(fd.get(), total_written_bytes);
 
 	if (res) {
-		threrror("ftruncate");
+		utils::threrror("ftruncate");
 	}
 
 	fsync(fd.get());
@@ -230,12 +231,8 @@ void save_xdr_to_file_fast(const xdr_list_type& value, unique_fd& fd, unsigned c
 void 
 save_account_block_fast(
 	const AccountModificationBlock& value, 
-	unique_fd& fd, 
+	utils::unique_fd& fd, 
 	unsigned char* buffer, 
 	const unsigned int BUF_SIZE);
 
-//! make a new directory, does not throw error if dir already exists.
-bool 
-mkdir_safe(const char* dirname);
-
-}
+} /* speedex */

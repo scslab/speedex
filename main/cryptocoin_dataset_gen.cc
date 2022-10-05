@@ -14,6 +14,8 @@
 #include <cstddef>
 #include <vector>
 
+#include <utils/mkdir.h>
+
 #include <getopt.h>
 #include <libfyaml.h>
 
@@ -170,11 +172,11 @@ int main(int argc, char* const* argv)
 	params.num_blocks = options.num_blocks;
 	params.n_replicas = conf.nreplicas;
 
-	if (mkdir_safe(options.output_prefix.c_str())) {
+	if (utils::mkdir_safe(options.output_prefix.c_str())) {
 		std::printf("directory %s already exists, continuing\n", options.output_prefix.c_str());
 	}
 
-	if (mkdir_safe(output_root.c_str())) {
+	if (utils::mkdir_safe(output_root.c_str())) {
 		std::printf("directory %s already exists, continuing\n", output_root.c_str());
 	}
 

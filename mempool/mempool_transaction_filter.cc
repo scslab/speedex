@@ -29,7 +29,7 @@ MempoolTransactionFilter::check_transaction(const SignedTransaction& tx) const {
 }
 
 MempoolFilterExecutor::MempoolFilterExecutor(MemoryDatabase const& db, Mempool& mempool)
-	: AsyncWorker()
+	: utils::AsyncWorker()
 	, cancel_background_filter(false)
 	, do_work(false)
 	, filter(db)

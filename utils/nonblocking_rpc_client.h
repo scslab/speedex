@@ -3,7 +3,7 @@
 #include "config/replica_config.h"
 #include "hotstuff/config/replica_config.h"
 
-#include "utils/async_worker.h"
+#include <utils/async_worker.h>
 #include "utils/debug_macros.h"
 
 #include <memory>
@@ -14,14 +14,11 @@
 namespace speedex {
 
 template<typename client_t>
-class NonblockingRpcClient : public AsyncWorker {
+class NonblockingRpcClient : public utils::AsyncWorker {
 
 	xdr::unique_sock socket;
 
 protected:
-
-	using AsyncWorker::mtx;
-	using AsyncWorker::cv;
 
 	hotstuff::ReplicaInfo info;
 

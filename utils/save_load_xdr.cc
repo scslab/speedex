@@ -6,17 +6,17 @@ namespace speedex
 constexpr static auto FILE_PERMISSIONS
     = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
 
-unique_fd
+utils::unique_fd
 preallocate_file(const char* filename, size_t size)
 {
 #ifdef __APPLE__
 
-    unique_fd fd{ open(filename, O_CREAT | O_RDONLY, FILE_PERMISSIONS) };
+    utils::unique_fd fd{ open(filename, O_CREAT | O_RDONLY, FILE_PERMISSIONS) };
     return fd;
 
 #else
 
-    unique_fd fd{ open(
+    utils::unique_fd fd{ open(
         filename, O_CREAT | O_WRONLY | O_DIRECT, FILE_PERMISSIONS) };
 
     if (size == 0)
@@ -26,7 +26,7 @@ preallocate_file(const char* filename, size_t size)
     auto res = fallocate(fd.get(), 0, 0, size);
     if (res)
     {
-        threrror("fallocate");
+        utils::threrror("fallocate");
     }
     return fd;
 
@@ -37,7 +37,7 @@ preallocate_file(const char* filename, size_t size)
 void 
 save_account_block_fast(
     const AccountModificationBlock& value, 
-    unique_fd& fd, 
+    utils::unique_fd& fd, 
     unsigned char* buffer, 
     const unsigned int BUF_SIZE)
 {
@@ -142,7 +142,7 @@ save_account_block_fast(
 
     auto res2 = lseek(fd.get(), 0, SEEK_SET);
     if (res2 != 0) {
-        threrror("lseek");
+        utils::threrror("lseek");
     }
 
     p.put32(aligned_first_reinterpreted, xdr::size32(num_written));
@@ -151,29 +151,10 @@ save_account_block_fast(
     auto res = ftruncate(fd.get(), total_written_bytes);
 
     if (res) {
-        threrror("ftruncate");
+        utils::threrror("ftruncate");
     }
     
     fsync(fd.get());
-}
-
-//! make a new directory, does not throw error if dir already exists.
-bool
-mkdir_safe(const char* dirname)
-{
-    constexpr static auto mkdir_perms = S_IRWXU | S_IRWXG | S_IRWXO;
-
-    auto res = mkdir(dirname, mkdir_perms);
-    if (res == 0)
-    {
-        return false;
-    }
-
-    if (errno == EEXIST)
-    {
-        return true;
-    }
-    threrror(std::string("mkdir ") + std::string(dirname));
 }
 
 } // namespace speedex

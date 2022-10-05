@@ -8,7 +8,7 @@
 	valid mempool in validators.
 */
 
-#include "utils/async_worker.h"
+#include <utils/async_worker.h>
 
 namespace speedex {
 
@@ -35,10 +35,7 @@ public:
 	bool check_transaction(const SignedTransaction& tx) const;
 };
 
-class MempoolFilterExecutor : public AsyncWorker {
-
-	using AsyncWorker::mtx;
-	using AsyncWorker::cv;
+class MempoolFilterExecutor : public utils::AsyncWorker {
 
 	std::atomic<bool> cancel_background_filter;
 

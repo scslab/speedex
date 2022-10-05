@@ -134,7 +134,6 @@ SYNTHETIC_DATA_GEN_SRCS = \
 	synthetic_data_generator/synthetic_data_stream.cc
 
 UTILS_SRCS = \
-	utils/cleanup.cc \
 	utils/header_persistence.cc \
 	utils/manage_data_dirs.cc \
 	utils/save_load_xdr.cc
@@ -192,7 +191,8 @@ AM_CPPFLAGS = \
 	$(lmdb_CFLAGS) \
 	$(lemon_CFLAGS) \
 	$(merkle_trie_toolkit_CFLAGS) \
-	$(hotstuff_CFLAGS)
+	$(hotstuff_CFLAGS) \
+	$(utility_CFLAGS)
 
 LDADD = \
 	$(libcrypto_LIBS) \
@@ -205,6 +205,7 @@ LDADD = \
 	$(lemon_LIBS) \
 	$(merkle_trie_toolkit_LIBS) \
 	$(hotstuff_LIBS) \
+	$(utility_LIBS) \
 	-lglpk
 
 CATCH_TEST_CCS = \

@@ -3,7 +3,6 @@ AM_INIT_AUTOMAKE([subdir-objects])
 AC_CONFIG_SRCDIR([configure.ac])
 AC_CONFIG_MACRO_DIR([m4])
 
-dnl note to future geoff: -flto seems to break lmdb, so don't use it -- 12/2/2021 this is wrong, seems to have been a result of accidental stack use-after-scope
 OPT_FLAGS="-march=native -O3 -flto"
 DEBUG_FLAGS="-ggdb -O0"
 
@@ -84,6 +83,7 @@ export ABS_TOP_DIR
 
 AX_PKGCONFIG_SUBDIR(lib/hotstuff)
 AX_PKGCONFIG_SUBDIR(lib/merkle_trie_toolkit)
+AX_PKGCONFIG_SUBDIR(lib/utility)
 
 export xdrpp_INTERNAL
 
@@ -92,6 +92,10 @@ export global_XDRC
 
 export xdrpp_CFLAGS
 export xdrpp_LIBS
+
+export utility_INTERNAL
+export utility_CFLAGS
+export utility_LIBS
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])

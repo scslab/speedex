@@ -10,6 +10,8 @@
 #include <getopt.h>
 #include <libfyaml.h>
 
+#include <utils/mkdir.h>
+
 using namespace speedex;
 
 [[noreturn]]
@@ -85,10 +87,10 @@ int main(int argc, char* const* argv)
 
 	std::string output_root = options.output_prefix + experiment_name + std::string("/");
 
-	if (mkdir_safe(options.output_prefix.c_str())) {
+	if (utils::mkdir_safe(options.output_prefix.c_str())) {
 		std::printf("directory %s already exists, continuing\n", options.output_prefix.c_str());
 	}
-	if (mkdir_safe(output_root.c_str())) {
+	if (utils::mkdir_safe(output_root.c_str())) {
 		std::printf("directory %s already exists, continuing\n", output_root.c_str());
 	}
 

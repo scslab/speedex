@@ -16,6 +16,8 @@
 
 #include "xdr/experiments.h"
 
+#include <utils/mkdir.h>
+
 namespace speedex {
 
 class TatonnementSimExperiment {
@@ -51,7 +53,7 @@ public:
 	TatonnementSimExperiment(std::string data_root, uint64_t num_assets)
 		: num_assets(num_assets)
 		, data_root(data_root) {
-			mkdir_safe(data_root.c_str());
+			utils::mkdir_safe(data_root.c_str());
 		}
 
 	void run_experiment(

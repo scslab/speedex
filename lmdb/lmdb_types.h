@@ -18,7 +18,7 @@
 
 #include <xdrpp/marshal.h>
 
-#include "utils/cleanup.h"
+#include <utils/cleanup.h>  
 
 namespace speedex {
 
@@ -87,7 +87,7 @@ void dbval_to_xdr(const dbval& d, xdr_type& value) {
 }
 
 //! self closing lmdb env
-struct dbenv : unique_destructor_t<mdb_env_close> {
+struct dbenv : utils::unique_destructor_t<mdb_env_close> {
   static void check(int err, const char *msg = nullptr) {
     if (err)
       throw dberror(err, msg);

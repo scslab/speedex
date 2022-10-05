@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 
-#include "utils/async_worker.h"
+#include <utils/async_worker.h>
 
 namespace speedex {
 
@@ -12,7 +12,7 @@ namespace speedex {
 Mainly used for deleting complex data structures, like tries.
 */
 template<typename ToBeDeleted>
-class BackgroundDeleter : public AsyncWorker {
+class BackgroundDeleter : public utils::AsyncWorker {
 
 	using AsyncWorker::mtx;
 	using AsyncWorker::cv;
