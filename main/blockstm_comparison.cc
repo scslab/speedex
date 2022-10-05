@@ -8,7 +8,6 @@
 
 #include "block_processing/block_producer.h"
 
-#include <mtt/utils/time.h>
 
 #include "stats/block_update_stats.h"
 
@@ -20,6 +19,7 @@
 #include "utils/manage_data_dirs.h"
 
 #include <utils/mkdir.h>
+#include <utils/time.h>
 
 #include <getopt.h>
 

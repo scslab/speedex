@@ -14,7 +14,7 @@
 #include "utils/debug_macros.h"
 #include "utils/debug_utils.h"
 
-#include <mtt/utils/serialize_endian.h>
+#include <utils/serialize_endian.h>
 
 #include <cinttypes>
 

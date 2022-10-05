@@ -9,7 +9,7 @@
 #include <mtt/trie/prefix.h>
 #include <mtt/trie/utils.h>
 
-#include <mtt/utils/serialize_endian.h>
+#include <utils/serialize_endian.h>
 
 #include "utils/price.h"
 

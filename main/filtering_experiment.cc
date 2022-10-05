@@ -1,6 +1,6 @@
 #include "memory_database/memory_database.h"
 
-#include "mtt/utils/time.h"
+#include <utils/time.h>
 
 #include "crypto/crypto_utils.h"
 

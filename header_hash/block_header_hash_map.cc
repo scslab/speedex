@@ -2,7 +2,7 @@
 
 #include "config.h"
 
-#include <mtt/utils/serialize_endian.h>
+#include <utils/serialize_endian.h>
 
 #include "utils/hash.h"
 

@@ -19,8 +19,6 @@
 #include "mtt/trie/merkle_trie.h"
 #include "mtt/trie/prefix.h"
 
-#include "mtt/utils/time.h"
-
 #include "xdr/database_commitments.h"
 #include "xdr/types.h"
 #include "xdr/transaction.h"

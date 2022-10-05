@@ -15,10 +15,10 @@ Implicitly assembles a block of transactions during block production.
 #include "modlog/typedefs.h"
 
 #include <mtt/trie/recycling_impl/trie.h>
-#include <mtt/utils/non_movable.h>
+#include <utils/non_movable.h>
 
 #include "utils/background_deleter.h"
-#include <mtt/utils/threadlocal_cache.h>
+#include <utils/threadlocal_cache.h>
 
 #include "xdr/database_commitments.h"
 #include "xdr/types.h"

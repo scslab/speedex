@@ -8,7 +8,7 @@
 
 #include "speedex/speedex_static_configs.h"
 
-#include <mtt/utils/time.h>
+#include <utils/time.h>
 
 namespace speedex {
 

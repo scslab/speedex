@@ -13,8 +13,8 @@
 
 #include "utils/debug_macros.h"
 
-#include <mtt/utils/threadlocal_cache.h>
-#include <mtt/utils/time.h>
+#include <utils/threadlocal_cache.h>
+#include <utils/time.h>
 
 #include "xdr/block.h"
 

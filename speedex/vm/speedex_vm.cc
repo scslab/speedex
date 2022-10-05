@@ -12,6 +12,7 @@
 #include "xdr/experiments.h"
 
 #include <utils/mkdir.h>
+#include <utils/time.h>
 
 namespace speedex {
 

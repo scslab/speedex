@@ -7,10 +7,12 @@
 #include <tbb/parallel_for.h>
 #include <tbb/parallel_reduce.h>
 
+#include <utils/time.h>
+
+
 
 #include <atomic>
-
-#include <inttypes.h>
+#include <cinttypes>
 
 namespace speedex {
 

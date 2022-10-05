@@ -10,7 +10,7 @@
 
 #include "filtering/error_code.h"
 
-#include <mtt/utils/non_movable.h>
+#include <utils/non_movable.h>
 
 namespace speedex
 {

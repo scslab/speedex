@@ -4,7 +4,7 @@
 
 #include "memory_database/memory_database.h"
 
-#include "mtt/utils/time.h"
+#include <utils/time.h>
 
 #include <getopt.h>
 
