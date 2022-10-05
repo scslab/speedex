@@ -70,7 +70,7 @@ AX_PKGCONFIG_SUBDIR(lib/xdrpp)
 AC_MSG_CHECKING(for xdrc)
 AS_IF([test -n "$XDRC"],,
 	    [test -n "$xdrpp_INTERNAL" -a x"$cross_compiling" != xyes],
-	    [XDRC='$(top_builddir)/lib/xdrpp/xdrc/xdrc$(EXEEXT)'],
+	    [XDRC='$(abs_top_builddir)/lib/xdrpp/xdrc/xdrc$(EXEEXT)'],
 	    [AC_PATH_PROG(XDRC, [xdrc])])
 if test -z "$XDRC"; then
    AC_MSG_ERROR(Cannot find xdrc)
@@ -78,8 +78,10 @@ fi
 AC_MSG_RESULT($XDRC)
 AC_SUBST(XDRC)
 
-ABS_TOP_DIR=$ac_pwd
-export ABS_TOP_DIR
+ABS_TOP_BUILDDIR=$ac_pwd
+ABS_TOP_SRCDIR=$ac_pwd
+export ABS_TOP_BUILDDIR
+export ABS_TOP_SRCDIR
 
 AX_PKGCONFIG_SUBDIR(lib/hotstuff)
 AX_PKGCONFIG_SUBDIR(lib/merkle_trie_toolkit)
