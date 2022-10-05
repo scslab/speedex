@@ -111,7 +111,7 @@ Orderbook::undo_thunk(OrderbookLMDBCommitmentThunk& thunk)
     if (thunk.get_exists_partial_exec()) {
         auto bytes_array = thunk.partial_exec_key.template get_bytes_array<std::array<uint8_t, ORDERBOOK_KEY_LEN>>();
         std::printf("key:%s\n",
-                    debug::array_to_str(bytes_array.data(), bytes_array.size())
+                    utils::array_to_str(bytes_array.data(), bytes_array.size())
                         .c_str());
         committed_offers.insert(
             thunk.partial_exec_key,

@@ -35,7 +35,7 @@ TEST_CASE("compare serialization", "[modlog]")
 
 		std::stringstream sstr;
 
-		sstr << "list:  " << debug::array_to_str(list_bytes) << "\nentry: " << debug::array_to_str(entry_bytes) << "\n";
+		sstr << "list:  " << utils::array_to_str(list_bytes) << "\nentry: " << utils::array_to_str(entry_bytes) << "\n";
 
 		INFO(sstr.str());
 		FAIL();

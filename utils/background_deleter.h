@@ -14,9 +14,6 @@ Mainly used for deleting complex data structures, like tries.
 template<typename ToBeDeleted>
 class BackgroundDeleter : public utils::AsyncWorker {
 
-	using AsyncWorker::mtx;
-	using AsyncWorker::cv;
-
 	std::vector<ToBeDeleted*> work;
 
 	bool exists_work_to_do() override final {
