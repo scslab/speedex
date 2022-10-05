@@ -86,12 +86,12 @@ AX_PKGCONFIG_SUBDIR(lib/hotstuff)
 AX_PKGCONFIG_SUBDIR(lib/merkle_trie_toolkit)
 
 export xdrpp_INTERNAL
-global_xdrpp_CFLAGS=$xdrpp_CFLAGS
-global_xdrpp_LIBS=$xdrpp_LIBS
+
 global_XDRC=$XDRC
-export global_xdrpp_CFLAGS
-export global_xdrpp_LIBS
 export global_XDRC
+
+export xdrpp_CFLAGS
+export xdrpp_LIBS
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])
