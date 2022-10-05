@@ -25,7 +25,7 @@ for instance in instances:
     hosts[name] = {}
     hosts[name]["ip"] = ip
     hosts[name]["pub"] = pub
-    print(name, ip, pub)
+    hosts[name]["id"] = instance["InstanceId"]
 
 print (hosts)
 
@@ -41,16 +41,16 @@ with open("awsinv", 'w') as f:
 
 with open("config/config_aws_generated.yaml", 'w') as f:
     f.write("num_replicas: 4\n\n")
-    f.write("replica_0:\n  sk_seed: 1\n  hostname:\"")
+    f.write("replica_0:\n  sk_seed: 1\n  hostname: \"")
     f.write(hosts["node-0"]["ip"])
     f.write("\"\n\n")
-    f.write("replica_1:\n  sk_seed: 2\n  hostname:\"")
+    f.write("replica_1:\n  sk_seed: 2\n  hostname: \"")
     f.write(hosts["node-1"]["ip"])
     f.write("\"\n\n")
-    f.write("replica_2:\n  sk_seed: 3\n  hostname:\"")
+    f.write("replica_2:\n  sk_seed: 3\n  hostname: \"")
     f.write(hosts["node-2"]["ip"])
     f.write("\"\n\n")
-    f.write("replica_3:\n  sk_seed: 4\n  hostname:\"")
+    f.write("replica_3:\n  sk_seed: 4\n  hostname: \"")
     f.write(hosts["node-3"]["ip"])
     f.write("\"\n\n")
 
