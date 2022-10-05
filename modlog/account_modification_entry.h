@@ -50,6 +50,9 @@ class AccountModificationEntry
 	friend struct EntryAccumulateValuesFn;
 	friend struct TxCountMetadata;
 
+	std::pair<uint8_t*, size_t>
+	serialize_xdr() const;
+
 public:
 
 	AccountModificationEntry()
@@ -72,13 +75,12 @@ public:
 
 	void merge_value(AccountModificationEntry& other_value);
 
-	std::pair<uint8_t*, size_t>
-	serialize_xdr() const;
 
 	void copy_data(std::vector<uint8_t>& buf) const
 	{
 		auto [ptr, sz] = serialize_xdr();
 		buf.insert(buf.end(), ptr, ptr + sz);
+		delete[] ptr;
 	}
 };
 
