@@ -10,7 +10,7 @@
 
 namespace speedex {
 
-std::unique_ptr<AccountModificationBlock>
+std::unique_ptr<SignedTransactionList>
 persist_critical_round_data(
 	SpeedexManagementStructures& management_structures,
 	const HashedBlock& header,

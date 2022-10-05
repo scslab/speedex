@@ -10,16 +10,19 @@ Implicitly assembles a block of transactions during block production.
 #include <cinttypes>
 #include <thread>
 
+#include "modlog/account_modification_entry.h"
 #include "modlog/file_prealloc_worker.h"
 #include "modlog/typedefs.h"
 
 #include <mtt/trie/recycling_impl/trie.h>
+#include <mtt/utils/non_movable.h>
 
 #include "utils/background_deleter.h"
 #include <mtt/utils/threadlocal_cache.h>
 
 #include "xdr/database_commitments.h"
 #include "xdr/types.h"
+#include "xdr/block.h"
 
 #include <xdrpp/marshal.h>
 
@@ -38,27 +41,32 @@ to merge these logs into one main log.
 struct LogListInsertFn;
 struct LogEntryInsertFn;
 
-class AccountModificationLog {
+class AccountModificationLog : private utils::NonMovableOrCopyable {
 
 public:
 	
-	using LogValueT = AccountModificationTxListWrapper;
+	using LogValueT = 
+		AccountModificationEntry;
+		//AccountModificationTxListWrapper;
 
-	using TrieT = trie::RecyclingTrie<LogValueT>;
+	using TrieT = trie::RecyclingTrie<LogValueT, AccountIDPrefix, TxCountMetadata>;
 	using serial_trie_t = TrieT::serial_trie_t;
 
 	static_assert(std::is_same<TrieT::prefix_t, AccountIDPrefix>::value, "unexpected prefix type");
 
 	using serial_cache_t = utils::ThreadlocalCache<serial_trie_t>;
+
+	using saved_block_t = SignedTransactionList; // AccountModificationBlock
+
 private:
 
 	serial_cache_t cache;
 
 	TrieT modification_log;
-	std::unique_ptr<AccountModificationBlock> persistable_block;
+	std::unique_ptr<saved_block_t> persistable_block;
 	mutable std::shared_mutex mtx;
 	FilePreallocWorker file_preallocator;
-	BackgroundDeleter<AccountModificationBlock> deleter;
+	BackgroundDeleter<saved_block_t> deleter;
 
 	constexpr static unsigned int BUF_SIZE = 5*1677716;
 	unsigned char* write_buffer = new unsigned char[BUF_SIZE];
@@ -68,14 +76,11 @@ public:
 
 	AccountModificationLog() 
 		: modification_log()
-		, persistable_block(std::make_unique<AccountModificationBlock>())
+		, persistable_block(std::make_unique<saved_block_t>())
 		, mtx()
 		, file_preallocator()
 		, deleter() 
 		{};
-
-	AccountModificationLog(const AccountModificationLog& other) = delete;
-	AccountModificationLog(AccountModificationLog&& other) = delete;
 
 	~AccountModificationLog() {
 		std::lock_guard lock(mtx);
@@ -118,15 +123,15 @@ public:
 		file_preallocator.cancel_prealloc();
 	}
 
-	//! Nominally accumulates a vector with all of the values in the trie.
-	//! Functions as an interation over all values by injecting
-	//! a nonstardard operator= into VectorType.
 	template<typename VectorType>
 	void parallel_accumulate_values(VectorType& vec) const {
 		std::shared_lock lock(mtx);
-		modification_log.accumulate_values_parallel(vec);
+		modification_log.template accumulate_values_parallel<VectorType, EntryAccumulateValuesFn>(vec);
 	}
 
+	//! Nominally accumulates a vector with all of the values in the trie.
+	//! Functions as an interation over all values by keys
+	//! a nonstardard operator= into VectorType.
 	template<typename VectorType>
 	void parallel_accumulate_keys(VectorType& vec) const {
 		std::shared_lock lock(mtx);
@@ -135,7 +140,7 @@ public:
 
 	//! Save account block to disk.  Optionally returns the log (for e.g.
 	//! forwarding to another node).
-	std::unique_ptr<AccountModificationBlock>
+	std::unique_ptr<saved_block_t>
 	persist_block(uint64_t block_number, bool return_block, bool write_block);
 
 	void diff_with_prev_log(uint64_t block_number);

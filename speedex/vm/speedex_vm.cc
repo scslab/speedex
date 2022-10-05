@@ -300,9 +300,10 @@ SpeedexVM::propose()
 	current_measurements.mempool_wait_time = measure_time(mempool_wait_ts);
 	
 	auto out = std::make_unique<block_type>();
-	out->data.hashedBlock = proposal_base_block;
-	out -> data.txList.reserve(block_size);
-	write_tx_data(out->data.txList, *output_tx_block);
+	out -> data.hashedBlock = proposal_base_block;
+	out -> data.txList = std::move(*output_tx_block);
+	//out -> data.txList.reserve(block_size);
+	//write_tx_data(out->data.txList, *output_tx_block);
 
 	current_measurements.serialize_time = measure_time(mempool_wait_ts);
 

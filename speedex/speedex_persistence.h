@@ -31,7 +31,7 @@ class SpeedexManagementStructures;
 Persists account block + header, and prepares memory database with a persistence
 thunk.
 */
-std::unique_ptr<AccountModificationBlock>
+std::unique_ptr<SignedTransactionList>
 persist_critical_round_data(
 	SpeedexManagementStructures& management_structures,
 	const HashedBlock& header,

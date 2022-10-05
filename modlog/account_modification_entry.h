@@ -47,6 +47,9 @@ class AccountModificationEntry
 	std::set<TxIdentifier> identifiers_other;
 	std::set<SignedTransaction, detail::TxComparator> new_transactions_self;
 
+	friend struct EntryAccumulateValuesFn;
+	friend struct TxCountMetadata;
+
 public:
 
 	AccountModificationEntry()
@@ -76,6 +79,60 @@ public:
 	{
 		auto [ptr, sz] = serialize_xdr();
 		buf.insert(buf.end(), ptr, ptr + sz);
+	}
+};
+
+struct TxCountMetadata
+{
+    int32_t num_txs = 0;
+
+    TxCountMetadata& operator+=(const TxCountMetadata& other)
+    {
+        num_txs += other.num_txs;
+        return *this;
+    }
+
+    friend TxCountMetadata operator-(TxCountMetadata lhs,
+                                     TxCountMetadata const& rhs)
+    {
+        lhs.num_txs -= rhs.num_txs;
+        return lhs;
+    }
+
+    TxCountMetadata operator-() const
+    {
+        return TxCountMetadata{ .num_txs = -this->num_txs };
+    }
+
+    constexpr static TxCountMetadata zero()
+    {
+        return TxCountMetadata{ .num_txs = 0 };
+    }
+
+    static TxCountMetadata from_value(AccountModificationEntry const& val)
+    {
+    	return TxCountMetadata{ .num_txs = static_cast<int32_t>(val.new_transactions_self.size()) };
+    }
+};
+
+struct
+EntryAccumulateValuesFn
+{
+	template<typename VectorType>
+	static void
+	accumulate(VectorType& vector, size_t vector_offset, const AccountModificationEntry& value)
+	{
+		for (auto const& tx : value.new_transactions_self)
+		{
+			vector[vector_offset] = tx;
+			vector_offset++;
+		}
+	}
+
+	template<typename MetadataType>
+	static size_t size_increment(const MetadataType& metadata)
+	{
+		return metadata.metadata.num_txs;
 	}
 };
 

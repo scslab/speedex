@@ -100,6 +100,9 @@ struct LogNormalizeFn {
 	//! Set account modification logs to a canonical representation.
 	//! This means de-duplicating and sorting modification log lists.
 	static void apply_to_value (AccountModificationTxListWrapper& log);
+
+	// nothing to do in this case
+	static void apply_to_value (AccountModificationEntry const& log) {}
 };
 
 } /* speedex */

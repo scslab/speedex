@@ -27,7 +27,7 @@ AccountModificationLog::hash(Hash& hash)
 
     *persistable_block
         = modification_log
-              .template accumulate_values_parallel<AccountModificationBlock>();
+              .template accumulate_values_parallel<saved_block_t, EntryAccumulateValuesFn>();
 
     float res2 = utils::measure_time(timestamp);
 
@@ -50,13 +50,13 @@ AccountModificationLog::detached_clear()
 
     deleter.call_delete(persistable_block.release());
 
-    persistable_block = std::make_unique<AccountModificationBlock>();
+    persistable_block = std::make_unique<saved_block_t>();
 
     modification_log.clear();
     cache.clear();
 }
 
-std::unique_ptr<AccountModificationBlock>
+std::unique_ptr<AccountModificationLog::saved_block_t>
 AccountModificationLog::persist_block(uint64_t block_number,
                                       bool return_block,
                                       bool persist_block)
@@ -75,7 +75,7 @@ AccountModificationLog::persist_block(uint64_t block_number,
             std::printf("forming log in persist_block\n");
             *persistable_block
                 = modification_log.template accumulate_values_parallel<
-                    AccountModificationBlock>();
+                    saved_block_t, EntryAccumulateValuesFn>();
         }
     }
 
@@ -95,17 +95,18 @@ AccountModificationLog::persist_block(uint64_t block_number,
             save_xdr_to_file_fast(
                 *persistable_block, block_fd, write_buffer, BUF_SIZE);
         } else {
-            save_account_block_fast(
-                *persistable_block, block_fd, write_buffer, BUF_SIZE);
+            throw std::runtime_error("unimpl for serializedtxlist");
+        //    save_account_block_fast(
+          //      *persistable_block, block_fd, write_buffer, BUF_SIZE);
         }
         block_fd.clear();
     }
 
     if (return_block) {
-        std::unique_ptr<AccountModificationBlock> out{
+        std::unique_ptr<saved_block_t> out{
             persistable_block.release()
         };
-        persistable_block = std::make_unique<AccountModificationBlock>();
+        persistable_block = std::make_unique<saved_block_t>();
         return out;
     }
     return nullptr;
@@ -179,9 +180,12 @@ AccountModificationLog::diff_with_prev_log(uint64_t block_number)
         throw std::runtime_error("couldn't load previous comparison data");
     }
 
+    throw std::runtime_error("unimpl yet for AccountModificationEntry");
+    /*
+
     AccountModificationBlock current
         = modification_log
-              .template accumulate_values_parallel<AccountModificationBlock>();
+              .template accumulate_values_parallel<saved_block_t>();
 
     std::printf("prev len %lu current len %lu\n", prev.size(), current.size());
 
@@ -273,7 +277,7 @@ AccountModificationLog::diff_with_prev_log(uint64_t block_number)
                         p.identifiers_others.size(),
                         c.identifiers_others.size());
         }
-    }
+    } */
 }
 
 } // namespace speedex
