@@ -40,6 +40,10 @@ automation/results_folder
 automation/replica
 automation/speedex_options
 
+#aws automation
+awsinv
+config/config_aws_generated.yaml
+
 #binaries
 blockstm_comparison
 cda_experiment
