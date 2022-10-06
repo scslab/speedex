@@ -106,7 +106,7 @@ class Orderbook {
 
 	std::unique_ptr<ThunkGarbage<OrderbookTrie::TrieT>>
 	__attribute__((warn_unused_result))
-	persist_lmdb(uint64_t current_block_number, dbenv::wtxn& wtx);
+	persist_lmdb(uint64_t current_block_number, lmdb::dbenv::wtxn& wtx);
 
 	void add_offers(OrderbookTrie&& offers);
 

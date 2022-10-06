@@ -10,6 +10,7 @@ millions of blocks.
 */
 
 #include "lmdb/lmdb_wrapper.h"
+#include "lmdb/lmdb_loading.h"
 
 #include <mtt/trie/merkle_trie.h>
 #include <mtt/trie/metadata.h>
@@ -32,7 +33,7 @@ namespace speedex
 
 /*! LMDB instance for persisting block header hashes to disk
  */
-struct BlockHeaderHashMapLMDB : public LMDBInstance
+struct BlockHeaderHashMapLMDB : public lmdb::LMDBInstance
 {
     constexpr static auto DB_NAME = "header_hash_lmdb";
 

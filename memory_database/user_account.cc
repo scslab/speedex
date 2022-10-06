@@ -128,7 +128,7 @@ AccountCommitment UserAccount::tentative_commitment() const {
 	return output;
 }
 
-AccountID UserAccount::read_lmdb_key(const dbval& key) {
+AccountID UserAccount::read_lmdb_key(const lmdb::dbval& key) {
 	return key.uint64(); // don't copy the database across systems with diff endianness
 }
 

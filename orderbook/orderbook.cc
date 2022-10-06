@@ -1,5 +1,7 @@
 #include "orderbook/orderbook.h"
 
+#include "lmdb/lmdb_loading.h"
+
 #include "memory_database/memory_database.h"
 
 #include "modlog/account_modification_log.h"
@@ -173,7 +175,7 @@ Orderbook::generate_metadata_index()
 
 std::unique_ptr<ThunkGarbage<typename OrderbookTrie::TrieT>> __attribute__((
     warn_unused_result))
-Orderbook::persist_lmdb(uint64_t current_block_number, dbenv::wtxn& wtx)
+Orderbook::persist_lmdb(uint64_t current_block_number, lmdb::dbenv::wtxn& wtx)
 {
 
     if (!lmdb_instance) {

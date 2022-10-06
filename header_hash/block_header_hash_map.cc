@@ -9,6 +9,8 @@
 #include "utils/debug_macros.h"
 #include "utils/debug_utils.h"
 
+using lmdb::dbval;
+
 namespace speedex
 {
 

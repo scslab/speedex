@@ -34,7 +34,7 @@ on accidental memory leaks.
 class OrderbookManagerLMDB {
 
 	//External iface is set up so that we could introduce limited sharding here
-	BaseLMDBInstance base_instance;
+	lmdb::BaseLMDBInstance base_instance;
 
 	const size_t num_orderbooks;
 
@@ -52,7 +52,7 @@ public:
 		, num_orderbooks(num_orderbooks)
 		{}
 
-	BaseLMDBInstance& get_base_instance(OfferCategory const& category) {
+	lmdb::BaseLMDBInstance& get_base_instance(OfferCategory const& category) {
 		return base_instance;
 	}
 
@@ -64,7 +64,7 @@ public:
 		return {0, num_orderbooks};
 	}
 
-	BaseLMDBInstance& get_base_instance_by_index(size_t idx) {
+	lmdb::BaseLMDBInstance& get_base_instance_by_index(size_t idx) {
 		return base_instance;
 	}
 
@@ -77,7 +77,7 @@ public:
 /*! Wrapper around lmdb instance.  Also includes 
 persistence thunks (and manages those thunks).
 */
-class OrderbookLMDB : public SharedLMDBInstance {
+class OrderbookLMDB : public lmdb::SharedLMDBInstance {
 	using thunk_t = OrderbookLMDBCommitmentThunk;
 	using prefix_t = OrderbookTriePrefix;
 
@@ -109,7 +109,7 @@ public:
 	__attribute__((warn_unused_result)) 
 	write_thunks(
 		const uint64_t current_block_number,
-		dbenv::wtxn& wtx,
+		lmdb::dbenv::wtxn& wtx,
 		bool debug = false);
 
 	//used for testing only, particularly wrt tatonnement_sim

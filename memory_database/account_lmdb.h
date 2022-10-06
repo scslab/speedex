@@ -9,6 +9,8 @@
 
 #include "lmdb/lmdb_wrapper.h"
 
+#include "xdr/types.h"
+
 #include <utils/async_worker.h>
 
 #include <utils/non_movable.h>
@@ -23,7 +25,7 @@ namespace detail
 
 uint32_t get_shard(AccountID const& account, const uint8_t* HASH_KEY);
 
-class AccountLMDBShard : public LMDBInstance, utils::NonMovableOrCopyable
+class AccountLMDBShard : public lmdb::LMDBInstance, utils::NonMovableOrCopyable
 {
 	const uint32_t idx;
 	const std::string DB_NAME;
@@ -65,7 +67,7 @@ class AsyncAccountLMDBShardWorker : public utils::AsyncWorker, utils::NonMovable
 	void run();
 
 	void exec_thunks();
-	void exec_one_thunk(const DBPersistenceThunk& thunk, dbenv::wtxn& wtx, uint64_t& current_block_number);
+	void exec_one_thunk(const DBPersistenceThunk& thunk, lmdb::dbenv::wtxn& wtx, uint64_t& current_block_number);
 
 public:
 	AsyncAccountLMDBShardWorker(AccountLMDBShard& shard)
@@ -155,7 +157,7 @@ public:
 	uint64_t assert_snapshot_and_get_persisted_round_number() const;
 
 	struct rtxn {
-		using txn_t = std::pair<dbenv::txn, MDB_dbi>;
+		using txn_t = std::pair<lmdb::dbenv::txn, MDB_dbi>;
 		std::vector<txn_t> rtxns;
 
 	private:
@@ -172,10 +174,10 @@ public:
 			std::memcpy(HASH_KEY, main_lmdb.HASH_KEY, crypto_shorthash_KEYBYTES);
 		}
 
-		std::optional<dbval> get(AccountID const& account)
+		std::optional<lmdb::dbval> get(AccountID const& account)
 		{
 			uint32_t idx = detail::get_shard(account, HASH_KEY);
-			dbval key{&account, sizeof(AccountID)};
+			lmdb::dbval key{&account, sizeof(AccountID)};
 
 			auto& [rtx, dbi] = rtxns.at(idx);
 

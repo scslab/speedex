@@ -221,7 +221,7 @@ public:
 	AccountCommitment tentative_commitment() const;
 
 	//! Convert an lmdb key (byte string) into an account id.
-	static AccountID read_lmdb_key(const dbval& key);
+	static AccountID read_lmdb_key(const lmdb::dbval& key);
 	
 	void log() const;
 };

@@ -9,7 +9,7 @@
 
 #include <utils/time.h>
 
-
+#include "lmdb/lmdb_loading.h"
 
 #include <atomic>
 #include <cinttypes>

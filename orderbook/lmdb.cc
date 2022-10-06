@@ -3,11 +3,14 @@
 #include "utils/price.h"
 #include "utils/debug_macros.h"
 
+#include "lmdb/lmdb_loading.h"
+
 #include <cinttypes>
 #include <set>
 
 namespace speedex
 {
+using lmdb::dbval;
 
 using get_bytes_array_t = std::array<uint8_t, ORDERBOOK_KEY_LEN>;
 
@@ -15,7 +18,7 @@ using get_bytes_array_t = std::array<uint8_t, ORDERBOOK_KEY_LEN>;
 std::unique_ptr<ThunkGarbage<typename OrderbookLMDB::trie_t>> __attribute__((
     warn_unused_result))
 OrderbookLMDB::write_thunks(const uint64_t current_block_number,
-                            dbenv::wtxn& wtx,
+                            lmdb::dbenv::wtxn& wtx,
                             bool debug)
 {
 

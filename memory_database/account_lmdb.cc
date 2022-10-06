@@ -10,6 +10,8 @@
 
 #include <utils/time.h>
 
+using lmdb::dbval;
+
 namespace speedex
 {
 
@@ -106,7 +108,7 @@ AccountLMDBShard::export_hash_key(uint8_t* hash_key_out) const
 void 
 AsyncAccountLMDBShardWorker::exec_one_thunk(
 	const DBPersistenceThunk& thunk, 
-	dbenv::wtxn& wtx, 
+	lmdb::dbenv::wtxn& wtx, 
 	uint64_t& current_block_number)
 {
 	// Used to require strict sequentiality, now gaps allowed in case of validation failures
