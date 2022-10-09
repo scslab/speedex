@@ -17,11 +17,6 @@
 #include <deque>
 #include <mutex>
 
-
-//namespace hotstuff {
-//class HotstuffLMDB;
-//} /* hotstuff */
-
 namespace speedex {
 
 class ExperimentParameters;

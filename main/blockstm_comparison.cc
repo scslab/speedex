@@ -55,24 +55,6 @@ int main(int argc, char* const* argv)
 {
 	int opt;
 
-	//uint64_t num_accounts = 0;
-//	uint64_t batch_size = 0;
-
-	/*while ((opt = getopt_long_only(argc, argv, "",
-				 opts, nullptr)) != -1)
-	{
-		switch(opt) {
-			case NUM_ACCOUNTS:
-				num_accounts = std::stol(optarg);
-				break;
-			case BATCH_SIZE:
-				batch_size = std::stol(optarg);
-				break;
-			default:
-				usage();
-		}
-	} */
-
 	std::vector<uint32_t> thread_counts = {1, 2, 4, 8, 16, 32, 48, 96};
 
 	std::vector<uint32_t> num_accounts = {2, 10, 100};
