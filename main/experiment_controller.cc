@@ -35,12 +35,14 @@ usage: experiment_controller --config_file=<filename, required>
 
 enum opttag {
 	OPT_CONFIG_FILE = 0x100,
-	OUTPUT_FOLDER
+	OUTPUT_FOLDER,
+	OUTPUT_PREFIX,
 };
 
 static const struct option opts[] = {
 	{"config_file", required_argument, nullptr, OPT_CONFIG_FILE},
 	{"output_folder", required_argument, nullptr, OUTPUT_FOLDER},
+	{"output_prefix", required_argument, nullptr, OUTPUT_PREFIX},
 	{nullptr, 0, nullptr, 0}
 };
 
@@ -252,6 +254,8 @@ int main(int argc, char* const* argv)
 	std::string config_file;
 
 	std::string output_folder;
+
+	std::string output_prefix;
 	
 	int opt;
 
@@ -264,6 +268,9 @@ int main(int argc, char* const* argv)
 				break;
 			case OUTPUT_FOLDER:
 				output_folder = optarg;
+				break;
+			case OUTPUT_PREFIX:
+				output_prefix = optarg;
 				break;
 			default:
 				usage();
@@ -301,7 +308,9 @@ int main(int argc, char* const* argv)
 
 	wait_for_all_same_height(config);
 
-	wait_for_all_measurements(output_folder, config);
+	std::string combined_name = output_folder + output_prefix;
+
+	wait_for_all_measurements(combined_name, config);
 
 	send_all_breakpoints(config);
 }
