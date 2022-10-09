@@ -5,9 +5,10 @@
 namespace speedex
 {
 
-SpeedexRuntimeConfigs::SpeedexRuntimeConfigs()
-    : check_sigs(get_check_sigs())
-{}
+//
+//SpeedexRuntimeConfigs::SpeedexRuntimeConfigs()
+  //  : check_sigs(get_check_sigs())
+//{}
 
 void
 SpeedexManagementStructures::open_lmdb_env()

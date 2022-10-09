@@ -7,6 +7,8 @@
 
 #include "utils/debug_macros.h"
 
+#include "speedex/speedex_runtime_configs.h"
+
 namespace speedex {
 
 constexpr static const char* CONFIG_FILE_FILENAME = "automation/config_file";
@@ -82,6 +84,17 @@ get_num_threads() {
 static bool
 get_check_sigs() {
 	return (std::stoi(get_experiment_var(CHECK_SIGS_FILENAME)) == 1);
+}
+
+[[maybe_unused]]
+static
+SpeedexRuntimeConfigs
+get_runtime_configs()
+{
+	return SpeedexRuntimeConfigs
+	{
+		.check_sigs = get_check_sigs()
+	};
 }
 
 } /* speedex */

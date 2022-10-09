@@ -22,10 +22,11 @@ using utils::init_time_measurement;
 SpeedexVM::SpeedexVM(
 		const ExperimentParameters& params,
 		const SpeedexOptions& options,
-		std::string measurement_output_folder)
+		std::string measurement_output_folder,
+		SpeedexRuntimeConfigs const& configs)
 	: hotstuff::VMBase()
 	, PERSIST_BATCH(options.persistence_frequency)
-	, management_structures(options.num_assets, options.get_approx_params())
+	, management_structures(options.num_assets, options.get_approx_params(), configs)
 	, operation_mtx()
 	, confirmation_mtx()
 	, proposal_base_block()

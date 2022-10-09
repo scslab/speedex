@@ -162,11 +162,11 @@ int main(int argc, char* const* argv)
 
 	make_all_data_dirs(config.get_info(*self_id));
 
-	auto vm = std::make_shared<SpeedexVM>(params, speedex_options, experiment_results_folder);
+	auto configs = get_runtime_configs();
+	
+	auto vm = std::make_shared<SpeedexVM>(params, speedex_options, experiment_results_folder, configs);
 
 	auto app = hotstuff::make_speculative_hotstuff_instance(config, *self_id, sk, vm);
-
-//	HotstuffApp app(config, *self_id, sk, vm);
 
 	if (load_from_lmdb) {
 		app->init_from_disk();

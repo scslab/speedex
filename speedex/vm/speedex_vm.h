@@ -104,20 +104,12 @@ class SpeedexVM : public hotstuff::VMBase {
 public:
 	using block_type = SpeedexVMBlock;
 	using block_id = hotstuff::VMBlockID;
-	//using block_type = HashedBlockTransactionListPair;
-	//using block_id = SpeedexVMBlockID;
-
-	/*static block_id nonempty_block_id(const block_type& blk) {
-		return SpeedexVMBlockID(blk.hashedBlock);
-	}
-	static block_id empty_block_id() {
-		return SpeedexVMBlockID();
-	}*/
 
 	SpeedexVM(
 		const ExperimentParameters& params,
 		const SpeedexOptions& options,
-		std::string measurement_output_folder);
+		std::string measurement_output_folder,
+		SpeedexRuntimeConfigs const& configs);
 
 	std::unique_ptr<hotstuff::VMBlock>
 	try_parse(xdr::opaque_vec<> const& body) override final

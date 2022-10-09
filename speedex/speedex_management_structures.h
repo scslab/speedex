@@ -19,14 +19,9 @@ wrapper class.
 #include "price_computation/tatonnement_oracle.h"
 
 #include "speedex/approximation_parameters.h"
+#include "speedex/speedex_runtime_configs.h"
 
 namespace speedex {
-
-struct SpeedexRuntimeConfigs {
-	const bool check_sigs;
-
-	SpeedexRuntimeConfigs();
-};
 
 //! All of the data structures involved in running a SPEEDEX instance.
 struct SpeedexManagementStructures {
@@ -36,7 +31,7 @@ struct SpeedexManagementStructures {
 	BlockHeaderHashMap block_header_hash_map;
 	ApproximationParameters approx_params;
 
-	SpeedexRuntimeConfigs configs;
+	const SpeedexRuntimeConfigs configs;
 
 	//! Open all of the lmdb environment instances in Speedex.
 	//! LMDB environments are opened before lmdb databases.
@@ -53,13 +48,14 @@ struct SpeedexManagementStructures {
 	//! approximation bounds
 	SpeedexManagementStructures(
 		uint16_t num_assets, 
-		ApproximationParameters approx_params)
+		ApproximationParameters approx_params,
+		SpeedexRuntimeConfigs configs)
 		: db()
 		, orderbook_manager(num_assets)
 		, account_modification_log()
 		, block_header_hash_map()
 		, approx_params(approx_params)
-		, configs() {}
+		, configs(configs) {}
 };
 
 
