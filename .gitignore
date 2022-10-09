@@ -44,6 +44,9 @@ automation/speedex_options
 awsinv
 config/config_aws_generated.yaml
 
+#micro
+log.txt
+
 #binaries
 blockstm_comparison
 cda_experiment

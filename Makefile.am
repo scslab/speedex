@@ -104,6 +104,9 @@ PRICE_COMPUTATION_SRCS = \
 	price_computation/normalization_rolling_average.cc \
 	price_computation/tatonnement_oracle.cc
 
+PRICE_COMPUTATION_TEST_SRCS = \
+	price_computation/tests/test_1asset_lp_solver.cc
+
 SIMPLEX_SRCS = \
 	simplex/allocator.cc \
 	simplex/bitcompressed_row.cc \
@@ -212,7 +215,8 @@ CATCH_TEST_CCS = \
 	$(HEADER_HASH_TEST_SRCS) \
 	$(MEMORY_DATABASE_TEST_SRCS) \
 	$(MODLOG_TEST_SRCS) \
-	$(ORDERBOOK_TEST_SRCS)
+	$(ORDERBOOK_TEST_SRCS) \
+	$(PRICE_COMPUTATION_TEST_SRCS)
 
 
 $(CATCH_TEST_SRCS:.cc=.o) : CXXFLAGS += $(Catch2_CFLAGS)

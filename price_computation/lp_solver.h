@@ -36,7 +36,7 @@ Reuses structs from one round to the next.  Take care to call clear() before
 use.
 */
 
-struct LPInstance {
+class LPInstance {
 
 	int* ia;
 	int* ja;
@@ -53,6 +53,14 @@ struct LPInstance {
 		lp = glp_create_prob();
 	}
 
+	void clear() {
+		glp_erase_prob(lp);
+	}
+
+	friend class LPSolver;
+
+public:
+
 	~LPInstance() {
 		delete[] ia;
 		delete[] ja;
@@ -60,9 +68,6 @@ struct LPInstance {
 		glp_delete_prob(lp);
 	}
 
-	void clear() {
-		glp_erase_prob(lp);
-	}
 };
 
 //! Lower and upper trade bounds for a given orderbook.
@@ -152,7 +157,7 @@ public:
 
 	//! Produce a new lp solver instance.
 	std::unique_ptr<LPInstance> make_instance() {
-		return std::make_unique<LPInstance>(get_nnz());
+		return std::unique_ptr<LPInstance>(new LPInstance(get_nnz()));
 	}
 };
 

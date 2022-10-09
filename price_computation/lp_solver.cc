@@ -118,13 +118,16 @@ bool LPSolver::check_feasibility(
 		throw std::runtime_error("invalid nnz");
 	}
 
-	//add in work unit supply availability constraints
-	glp_add_cols(lp, work_units_sz);
+	// only 0 if n_assets = 1
+	if (work_units_sz > 0) {
+		//add in work unit supply availability constraints
+		glp_add_cols(lp, work_units_sz);
 
-	int next_available_nnz = 1; // whyyyyyyy
-	for (unsigned int i = 0; i < work_units_sz; i++) {
-		//check feasibility calls within tatonnement runs always use lower bound on supply
-		add_orderbook_range_constraint(lp, bounds[i], i+1, prices, ia, ja, ar, next_available_nnz, approx_params.tax_rate, true);
+		int next_available_nnz = 1; // whyyyyyyy
+		for (unsigned int i = 0; i < work_units_sz; i++) {
+			//check feasibility calls within tatonnement runs always use lower bound on supply
+			add_orderbook_range_constraint(lp, bounds[i], i+1, prices, ia, ja, ar, next_available_nnz, approx_params.tax_rate, true);
+		}
 	}
 
 	glp_load_matrix(lp, nnz - 1, ia, ja, ar);
@@ -228,12 +231,15 @@ LPSolver::solve(
 	int* ja = new int[nnz];
 	double* ar = new double[nnz];
 
-	//add in work unit supply availability constraints
-	glp_add_cols(lp, work_units_sz);
-
-	int next_available_nnz = 1; // whyyyyyyy
-	for (unsigned int i = 0; i < work_units_sz; i++) {
-		add_orderbook_range_constraint(lp, orderbooks[i], i+1, prices, ia, ja, ar, next_available_nnz, approx_params, use_lower_bound);
+	// avoid glpk error in case of 1asset simulations (no constraints in such case)
+	if (work_units_sz > 0)
+	{
+		//add in work unit supply availability constraints
+		glp_add_cols(lp, work_units_sz);
+		int next_available_nnz = 1; // whyyyyyyy
+		for (unsigned int i = 0; i < work_units_sz; i++) {
+			add_orderbook_range_constraint(lp, orderbooks[i], i+1, prices, ia, ja, ar, next_available_nnz, approx_params, use_lower_bound);
+		}
 	}
 
 	glp_load_matrix(lp, nnz - 1, ia, ja, ar);
