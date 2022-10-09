@@ -11,6 +11,7 @@ struct BoundsInfo {
 	OfferCategory category;
 };
 
+
 BoundsInfo 
 get_bounds_info(
 	Orderbook& orderbook, 
@@ -363,6 +364,11 @@ LPSolver::max_tax_param(
 	 * with a higher level of precision.
 	 */
 	return tax_rate;
+}
+
+std::unique_ptr<LPInstance> 
+LPSolver::make_instance() const {
+	return std::unique_ptr<LPInstance>(new LPInstance(get_nnz()));
 }
 
 } /* speedex */

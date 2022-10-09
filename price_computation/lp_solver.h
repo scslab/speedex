@@ -67,7 +67,6 @@ public:
 		delete[] ar;
 		glp_delete_prob(lp);
 	}
-
 };
 
 struct BoundsInfo;
@@ -109,7 +108,7 @@ class LPSolver {
 
 
 	//! Get number of nnz values in lp.
-	size_t get_nnz() {
+	size_t get_nnz() const {
 		return 1 + 2 * manager.get_orderbooks().size();
 	}
 
@@ -151,9 +150,7 @@ public:
 		size_t num_assets);
 
 	//! Produce a new lp solver instance.
-	std::unique_ptr<LPInstance> make_instance() {
-		return std::unique_ptr<LPInstance>(new LPInstance(get_nnz()));
-	}
+	std::unique_ptr<LPInstance> make_instance() const;
 };
 
 }
