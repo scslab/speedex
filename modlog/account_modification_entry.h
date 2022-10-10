@@ -145,8 +145,6 @@ struct EntryAccumulateValuesFn
     template<typename MetadataType>
     static size_t vector_size(const MetadataType& root_metadata)
     {
-        std::printf("starting vector_size: %lu\n",
-                    root_metadata.metadata.num_txs);
         return root_metadata.metadata.num_txs;
     }
 };
