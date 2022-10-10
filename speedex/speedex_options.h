@@ -18,6 +18,7 @@ struct SpeedexOptions {
 	// operational parameters
 	size_t persistence_frequency;
 	size_t mempool_target;
+	size_t mempool_chunk;
 
 	void parse_options(const char* configfile);
 
