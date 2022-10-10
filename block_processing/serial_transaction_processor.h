@@ -20,7 +20,7 @@ Based on template argument, works in block production or validation mode.
 
 #include "xdr/transaction.h"
 
-#include "utils/debug_utils.h"
+#include "utils/debug_macros.h"
 
 namespace speedex {
 
