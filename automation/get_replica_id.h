@@ -17,9 +17,10 @@ get_replica_id() {
 		throw std::runtime_error("failed to open replica file");
 	}
 
-	const size_t buf_size = 10;
+	const size_t buf_size = 20;
 
 	char buf[buf_size + 1];
+	std::memset(buf, 0, buf_size + 1);
 
 	// expected format: "node-X" 
 

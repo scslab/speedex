@@ -119,7 +119,8 @@ bool GenerationOptions::parse(const char* filename) {
 		std::printf("failed to build doc from file \"%s\"\n", filename);
 		return false;
 	}
-	char filename_buf[256];
+	char filename_buf[257];
+	memset(filename_buf, 0, 257);
 
 	int shuffle;
 
