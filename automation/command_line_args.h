@@ -123,7 +123,7 @@ parse_cmd(int argc, char* const* argv, std::string binary_name)
 				out.num_accounts = std::stol(optarg);
 				break;
 			case BATCH_SIZE:
-				out.num_accounts = std::stol(optarg);
+				out.batch_size = std::stol(optarg);
 				break;
 			default:
 				usage(binary_name);
