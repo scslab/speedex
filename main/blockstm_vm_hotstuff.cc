@@ -214,8 +214,15 @@ int main(int argc, char* const* argv)
 			std::printf("done with experiment\n");
 
 			auto measurements = vm -> get_measurements();
-			for (auto const& b : measurements.block_results)
+
+			if (measurements.block_results.size() != params.num_blocks + 1)
 			{
+				throw std::runtime_error("incorrect block count");
+			}
+			for (size_t i = 0; i < params.num_blocks; i++)
+			{
+				auto const& b = measurements.block_results[i];
+
 				auto const& bcm = b.results.productionResults().block_creation_measurements;
 
 				if (bcm.number_of_transactions != args.batch_size)
