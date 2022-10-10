@@ -168,11 +168,13 @@ bool GenerationOptions::parse(const char* filename) {
 
 	if (count != 19) {
 		std::printf("missing something got %d\n", count);
+		fy_document_destroy(fyd);
 		return false;
 	}
 
 	if (initial_endow_min > initial_endow_max) {
 		std::printf("don't be a fool\n");
+		fy_document_destroy(fyd);
 		return false;
 	}
 	//std::printf("min endow: %ld, max endow: %ld\n", 
@@ -186,17 +188,19 @@ bool GenerationOptions::parse(const char* filename) {
 
 	if (!status) {
 		std::printf("cycle problem\n");
+		fy_document_destroy(fyd);
 		return false;
 	}
 
 	status = price_options.parse(fyd);
 	if (!status) {
 		std::printf("price problem\n");
+		fy_document_destroy(fyd);
 		return false;
 	}
 
 	do_shuffle = (shuffle > 0);
-
+	fy_document_destroy(fyd);
 	return true;
 }
 
