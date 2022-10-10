@@ -222,7 +222,9 @@ bool save_measurement(std::string const& folder, const ReplicaInfo& info) {
 		if (!measurements) {
 			return false;
 		}
-		auto filename = get_measurements_filename(folder, info);
+		auto suffix = client.get_measurement_name_suffix();
+
+		auto filename = get_measurements_filename(folder, info) + *suffix;
 		if (save_xdr_to_file(*measurements, filename.c_str())) {
 			std::printf("failed to write to file %s\n", filename.c_str());
 			return false;

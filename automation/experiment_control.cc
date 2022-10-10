@@ -60,8 +60,8 @@ HotstuffVMControl_server::wait_for_breakpoint_signal() {
 	bp_signalled = false;
 }
 
-ExperimentController::ExperimentController(std::shared_ptr<SpeedexVM> vm)
-	: server(vm)
+ExperimentController::ExperimentController(std::shared_ptr<SpeedexVM> vm, std::string measurement_name_suffix)
+	: server(vm, measurement_name_suffix)
 	, ps()
 	, listener(ps, xdr::tcp_listen(EXPERIMENT_CONTROL_PORT, AF_INET), false, xdr::session_allocator<void>())
 	{

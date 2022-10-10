@@ -27,18 +27,7 @@
 
 namespace speedex {
 
-
-program BlockTransfer{
-	version BlockTransferV1 {
-		void send_block(HashedBlock, SerializedBlock) = 1;
-	} = 1;
-} = 0x11111111;
-
-program RequestBlockForwarding {
-	version RequestBlockForwardingV1 {
-		uint32 request_forwarding(void) = 1;
-	} = 1;
-} = 0x11111112;
+typedef string suffixname<>;
 
 program HotstuffVMControl {
 	version HotstuffVMControlV1 {
@@ -48,6 +37,7 @@ program HotstuffVMControl {
 		uint32 experiment_is_done(void) = 4;
 		void send_producer_is_done_signal(void) = 5;
 		uint64 get_speedex_block_height(void) = 6;
+		suffixname get_measurement_name_suffix(void) = 7;
 	} = 1;
 } = 0x11111113;
 

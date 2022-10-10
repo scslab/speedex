@@ -149,7 +149,9 @@ int main(int argc, char* const* argv)
 	tbb::global_control control(
 		tbb::global_control::max_allowed_parallelism, num_threads);
 
-	ExperimentController control_server(vm);
+	std::string measurement_name_suffix = std::string("bstm_compare_nacc=") + args.num_accounts + "_nbatch=" + args.batch_size;
+
+	ExperimentController control_server(vm, measurement_name_suffix);
 	control_server.wait_for_breakpoint_signal();
 
 	PaceMakerWaitQC pmaker(app);
@@ -191,6 +193,17 @@ int main(int argc, char* const* argv)
 		}
 		if (app->proposal_buffer_is_empty()) {
 			std::printf("done with experiment\n");
+
+			auto measurements = vm -> get_measurements();
+			for (auto const& b : measurements.block_results)
+			{
+				auto const& bcm = b.results.productionResults().block_creation_measurements;
+
+				if (bcm.number_of_transactions != args.batch_size)
+				{
+					throw std::runtime_error("mismatch ntx != batch_size");
+				}
+			}
 
 			//flush proposal buffers
 			pmaker.do_empty_propose();

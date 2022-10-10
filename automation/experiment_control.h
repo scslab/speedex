@@ -24,16 +24,18 @@ class HotstuffVMControl_server {
 
 	std::atomic<bool> experiment_done_flag;
 
+	const std::string measurement_name_suffix;
 
 public:
 	using rpc_interface_type = HotstuffVMControlV1;
 
-	HotstuffVMControl_server(std::shared_ptr<SpeedexVM> vm)
+	HotstuffVMControl_server(std::shared_ptr<SpeedexVM> vm, std::string measurement_name_suffix)
 		: vm(vm)
 		, bp_signalled(false)
 		, mtx()
 		, cv()
 		, experiment_done_flag(false)
+		, measurement_name_suffix(measurement_name_suffix)
 		{}
 
 	//rpc methods
@@ -43,6 +45,10 @@ public:
 	std::unique_ptr<uint32_t> experiment_is_done() const;
 	void send_producer_is_done_signal(); // receives this signal
 	std::unique_ptr<uint64_t> get_speedex_block_height();
+	std::unique_ptr<xdr::xstring<>> get_measurement_name_suffix()
+	{
+		return std::make_unique<xdr::xstring<>>(measurement_name_suffix);
+	}
 
 	//non-rpc methods
 	void wait_for_breakpoint_signal();
@@ -58,7 +64,7 @@ class ExperimentController {
 	xdr::srpc_tcp_listener<> listener;
 public:
 
-	ExperimentController(std::shared_ptr<SpeedexVM> vm);
+	ExperimentController(std::shared_ptr<SpeedexVM> vm, std::string measurement_name_suffix = "");
 
 	void wait_for_breakpoint_signal() {
 		server.wait_for_breakpoint_signal();
