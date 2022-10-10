@@ -123,10 +123,12 @@ void OrderbookManager::persist_lmdb_for_loading(uint64_t current_block_number) {
 }
 
 void OrderbookManager::create_lmdb() {
+	lmdb.create_db();
 	generic_map_serial<&Orderbook::create_lmdb>();
 }
 
 void OrderbookManager::open_lmdb() {
+	lmdb.open_db();
 	generic_map_serial<&Orderbook::open_lmdb>();
 }
 

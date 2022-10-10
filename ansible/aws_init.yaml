@@ -45,6 +45,9 @@
 - name: make all
   import_playbook: make_all.yaml
 
+- name: set check sigs
+  import_playbook: set_check_sigs.yaml
+
 #- name: set config
 # hosts: all
 #  tasks:

@@ -72,6 +72,16 @@ public:
 		auto name = get_lmdb_env_name();
 		base_instance.open_env(name.c_str());
 	}
+
+	void create_db()
+	{
+		base_instance.create_metadata_db();
+	}
+
+	void open_db()
+	{
+		base_instance.open_metadata_db();
+	}
 };
 
 /*! Wrapper around lmdb instance.  Also includes 
