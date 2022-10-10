@@ -3,10 +3,9 @@
 namespace speedex
 {
 
-struct SpeedexRuntimeConfigs {
+struct SpeedexRuntimeConfigs
+{
 	bool check_sigs;
-
-	//SpeedexRuntimeConfigs();
 };
 
 } /* speedex */
