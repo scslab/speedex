@@ -6,6 +6,7 @@
 #include "config/replica_config.h"
 
 #include "hotstuff/hotstuff_app.h"
+#include "hotstuff/hotstuff_configs.h"
 #include "hotstuff/liveness.h"
 
 #include "overlay/overlay_client_manager.h"
@@ -167,7 +168,7 @@ int main(int argc, char* const* argv)
 
 	auto vm = std::make_shared<SpeedexVM>(params, speedex_options, args.experiment_results_folder, configs);
 
-	auto app = hotstuff::make_speculative_hotstuff_instance(config, *args.self_id, sk, vm);
+	auto app = hotstuff::make_speculative_hotstuff_instance(config, *args.self_id, sk, vm, HotstuffConfigs());
 
 	if (args.load_from_lmdb) {
 		app->init_from_disk();

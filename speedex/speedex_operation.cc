@@ -277,7 +277,7 @@ speedex_block_creation_logic(
 		management_structures,
 		hashing_measurements);
 
-	overall_measurements.state_commitment_time =utils::measure_time(timestamp);
+	overall_measurements.state_commitment_time = utils::measure_time(timestamp);
 
 	detail::speedex_format_hashed_block(
 		new_block,

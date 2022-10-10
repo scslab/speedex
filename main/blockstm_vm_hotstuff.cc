@@ -6,6 +6,7 @@
 #include "config/replica_config.h"
 
 #include "hotstuff/hotstuff_app.h"
+#include "hotstuff/hotstuff_configs.h"
 #include "hotstuff/liveness.h"
 
 #include "speedex/speedex_options.h"
@@ -135,7 +136,13 @@ int main(int argc, char* const* argv)
 
 	auto vm = std::make_shared<SpeedexVM>(params, speedex_options, args.experiment_results_folder, configs);
 
-	auto app = hotstuff::make_speculative_hotstuff_instance(config, *args.self_id, sk, vm);
+	HotstuffConfigs hs_configs
+	{
+		.proposal_buffer_target = 1,
+		.immediately_refill_proposal_buffer = false
+	};
+
+	auto app = hotstuff::make_speculative_hotstuff_instance(config, *args.self_id, sk, vm, hs_configs);
 
 	if (args.load_from_lmdb)
 	{
