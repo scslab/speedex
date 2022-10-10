@@ -61,7 +61,13 @@ int main(int argc, char* const* argv)
 	fy_document_destroy(fyd);
 
 	if (args.experiment_results_folder.size() == 0) {
-		args.experiment_results_folder = get_experiment_results_folder();
+		try
+		{
+			args.experiment_results_folder = get_experiment_results_folder();
+		} catch(...)
+		{
+			args.experiment_results_folder = "blockstm_vm_hotstuff_results/";
+		}
 	}
 
 	if (args.experiment_options_file.size() == 0)
