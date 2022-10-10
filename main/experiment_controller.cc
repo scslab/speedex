@@ -22,6 +22,8 @@
 using namespace speedex;
 using namespace hotstuff;
 
+using xdr::operator==;
+
 using namespace std::chrono_literals;
 
 [[noreturn]]
@@ -236,6 +238,42 @@ bool save_measurement(std::string const& folder, const ReplicaInfo& info) {
 	}
 }
 
+bool check_suffixes(const ReplicaConfig& config)
+{
+	std::vector<xdr::xstring<>> suffixes;
+	auto const& infos = config.list_info();
+	for (auto const& info : infos)
+	{
+		while(true)
+		{
+			try {
+				auto fd = info.tcp_connect(EXPERIMENT_CONTROL_PORT);
+				auto client = xdr::srpc_client<HotstuffVMControlV1>(fd.get());
+				auto suffix = client.get_measurement_name_suffix();
+				if (suffix)
+				{
+					suffixes.push_back(*suffix);
+					break;
+				}
+			}
+			catch(...)
+			{
+				std::printf("node %s is not responding to messages, retrying...\n", info.get_hostname().c_str());
+				std::this_thread::sleep_for(1000ms);
+			}
+		}
+	}
+
+	for (auto const& suffix : suffixes)
+	{
+		if (suffix != suffixes.at(0))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
 void wait_for_all_measurements(std::string const& folder, const ReplicaConfig& config) {
 	auto infos = config.list_info();
 	while(true) {
@@ -303,6 +341,8 @@ int main(int argc, char* const* argv)
 	fy_document_destroy(fyd);
 
 	wait_for_all_online(config);
+	check_suffixes(config);
+
 	send_all_breakpoints(config);
 
 	wait_for_one_experiment_done(config);
