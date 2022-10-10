@@ -6,7 +6,12 @@ namespace speedex
 {
 
 // default setup
-constexpr static uint32_t MAX_SEQ_NUMS_PER_BLOCK = 64;
+#ifndef _MAX_SEQ_NUMS_PER_BLOCK
+  #define _MAX_SEQ_NUMS_PER_BLOCK 64
+#endif
+
+constexpr static uint32_t MAX_SEQ_NUMS_PER_BLOCK = _MAX_SEQ_NUMS_PER_BLOCK;
+
 constexpr static bool DETAILED_MOD_LOGGING = true;
 constexpr static bool PREALLOC_BLOCK_FILES = true;
 
