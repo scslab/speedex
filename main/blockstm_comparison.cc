@@ -19,6 +19,8 @@
 #include <utils/mkdir.h>
 #include <utils/time.h>
 
+#include "automation/get_experiment_vars.h"
+
 #include <getopt.h>
 
 #include <tbb/global_control.h>
@@ -189,7 +191,9 @@ run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, 
 		throw std::runtime_error("invalid num assets");
 	}
 
-	SpeedexManagementStructures management_structures(options.num_assets, ApproximationParameters());
+	auto configs = get_runtime_configs(); 
+
+	SpeedexManagementStructures management_structures(options.num_assets, ApproximationParameters(), configs);
 	
 	BlockCreationMeasurements measurements;
 	OverallBlockProductionMeasurements overall_measurements;
