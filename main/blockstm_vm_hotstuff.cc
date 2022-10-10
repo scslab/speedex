@@ -149,7 +149,7 @@ int main(int argc, char* const* argv)
 	tbb::global_control control(
 		tbb::global_control::max_allowed_parallelism, num_threads);
 
-	std::string measurement_name_suffix = std::string("bstm_compare_nacc=") + args.num_accounts + "_nbatch=" + args.batch_size;
+	std::string measurement_name_suffix = std::string("bstm_compare_nacc=") + std::to_string(args.num_accounts) + "_nbatch=" + std::to_string(args.batch_size);
 
 	ExperimentController control_server(vm, measurement_name_suffix);
 	control_server.wait_for_breakpoint_signal();
