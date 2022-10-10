@@ -116,11 +116,6 @@ public:
 		SpeedexManagementStructures& management_structures, 
 		SerialManager&& serial_manager);
 
-	//void clear() {
-	//	serial_manager.clear();
-	//}
-
-
 	//! Get the underlying manager view.  Used when committing the
 	//! serial handler.
 	SerialManager& extract_manager_view() {

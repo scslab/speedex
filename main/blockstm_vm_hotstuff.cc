@@ -43,7 +43,7 @@ int main(int argc, char* const* argv)
 		args.config_file = get_config_file();
 	}
 
-	if ((args.batch_size == 0 || args.num_accounts == 0) && (*args.self_id == 0))
+	if ((args.batch_size == 0 || args.num_accounts == 0))
 	{
 		throw std::runtime_error("failed to set options req'd for blockstm comparison");
 	}

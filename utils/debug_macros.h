@@ -28,7 +28,7 @@ Printouts include file/line information.
 
 #define PROOF_DEBUG DEBUG_LEVEL_NONE
 
-#define BLOCK_DEBUG DEBUG_LEVEL_INFO
+#define BLOCK_DEBUG DEBUG_LEVEL_NONE
 
 #define DEMAND_CALC_DEBUG DEBUG_LEVEL_NONE
 
@@ -36,7 +36,7 @@ Printouts include file/line information.
 
 #define MEMPOOL_DEBUG DEBUG_LEVEL_INFO
 
-#define ORDERBOOK_DEBUG DEBUG_LEVEL_INFO
+#define ORDERBOOK_DEBUG DEBUG_LEVEL_NONE
 
 #define OVERLAY_DEBUG DEBUG_LEVEL_NONE
 

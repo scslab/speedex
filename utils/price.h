@@ -259,12 +259,8 @@ inline static
 uint64_t
 round_up_price_times_amount(uint128_t p_times_amount)
 {
-	//std::printf("%llx\n", p_times_amount);
-	//uint64_t check = p_times_amount & price_lowbits_mask;
-	//std::printf("%llx\n", check);
 	if (p_times_amount & price_lowbits_mask)
 	{
-	//	std::printf("whee\n");
 		return (p_times_amount >> PRICE_RADIX) + 1;
 	}
 	return p_times_amount >> PRICE_RADIX;
