@@ -40,10 +40,10 @@
             shell: "cd xfs/speedex && echo \"node-3\n\" > automation/replica"
 
 - name: set configs
-  ansible.builtin.import_playbook: ansible/set_config_aws.yaml
+  import_playbook: set_config_aws.yaml
 
 - name: make all
-  ansible.builtin.import_playbook: ansible/make_all.yaml
+  import_playbook: make_all.yaml
 
 #- name: set config
 # hosts: all

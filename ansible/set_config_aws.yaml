@@ -3,7 +3,7 @@
   tasks:
     - name: upload config
       ansible.builtin.copy:
-        src: config/config_aws_generated.yaml
+        src: ../config/config_aws_generated.yaml
         dest: ~/xfs/speedex/config/config_aws_generated.yaml
         mode: '0666'
     - name: set config

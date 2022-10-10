@@ -66,6 +66,8 @@ export CXXFLAGS
 
 dnl AC_CONFIG_SUBDIRS([xdrpp])
 
+AX_PKGCONFIG_SUBDIR(lib/utility)
+
 AX_PKGCONFIG_SUBDIR(lib/xdrpp)
 AC_MSG_CHECKING(for xdrc)
 AS_IF([test -n "$XDRC"],,
@@ -85,7 +87,6 @@ export ABS_TOP_SRCDIR
 
 AX_PKGCONFIG_SUBDIR(lib/hotstuff)
 AX_PKGCONFIG_SUBDIR(lib/merkle_trie_toolkit)
-AX_PKGCONFIG_SUBDIR(lib/utility)
 
 export xdrpp_INTERNAL
 
