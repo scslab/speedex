@@ -203,6 +203,7 @@ bool SerialTransactionValidator<ManagerViewType>::validate_transaction(
 						op_metadata,
 						tx.operations[i].body.createSellOfferOp(),
 						serial_account_log)) {
+					TX_INFO("create sell offer failed");
 					return false;
 				}
 				break;
@@ -210,6 +211,7 @@ bool SerialTransactionValidator<ManagerViewType>::validate_transaction(
 				if (!validate_operation(
 						op_metadata,
 						tx.operations[i].body.cancelSellOfferOp())) {
+					TX_INFO("cancel sell offer failed");
 					return false;
 				}
 				break;
@@ -217,6 +219,7 @@ bool SerialTransactionValidator<ManagerViewType>::validate_transaction(
 				if (!validate_operation(
 						op_metadata,
 						tx.operations[i].body.paymentOp())) {
+					TX_INFO("payment op failed");
 					return false;
 				}
 				break;

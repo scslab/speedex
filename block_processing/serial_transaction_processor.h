@@ -206,8 +206,14 @@ class SerialTransactionValidator
 		OperationMetadata<UnbufferedViewT>& metadata,
 		OpType op,
 		Args&... args) {
-		return process_operation(metadata, op, args...) 
-			== TransactionProcessingStatus::SUCCESS;
+		auto res = process_operation(metadata, op, args...);
+		if (res != TransactionProcessingStatus::SUCCESS)
+		{
+			TX_INFO("tx failed: result was %lu", res);
+		}
+		return res == TransactionProcessingStatus::SUCCESS;
+	//	return process_operation(metadata, op, args...) 
+	//		== TransactionProcessingStatus::SUCCESS;
 	}
 
 
