@@ -78,8 +78,8 @@ class SpeedexVM : public hotstuff::VMBase {
 	//constexpr static bool small = false;
 	const size_t TARGET_BLOCK_SIZE;
 	//constexpr static size_t TARGET_BLOCK_SIZE = small ? 50'000 : 500'000;
-	constexpr static size_t MEMPOOL_CHUNK_SIZE = 100;//1'000;
-	const size_t MEMPOOL_TARGET_SIZE;
+	//constexpr static size_t MEMPOOL_CHUNK_SIZE = 100;//1'000;
+	//const size_t MEMPOOL_TARGET_SIZE;
 
 	TatonnementManagementStructures tatonnement_structs;
 	std::vector<Price> prices;

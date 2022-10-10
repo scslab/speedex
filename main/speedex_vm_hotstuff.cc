@@ -1,3 +1,4 @@
+#include "automation/command_line_args.h"
 #include "automation/experiment_control.h"
 #include "automation/get_experiment_vars.h"
 #include "automation/get_replica_id.h"
@@ -22,17 +23,16 @@
 
 #include <optional>
 
-#include <getopt.h>
 #include <libfyaml.h>
 
 #include <tbb/global_control.h>
-
 
 using namespace hotstuff;
 using namespace speedex;
 
 using namespace std::chrono_literals;
 
+/*
 [[noreturn]]
 static void usage() {
 	std::printf(R"(
@@ -63,7 +63,7 @@ static const struct option opts[] = {
 	{"results_folder", required_argument, nullptr, RESULTS_FOLDER},
 	{"load_lmdb", no_argument, nullptr, LOAD_FROM_LMDB},
 	{nullptr, 0, nullptr, 0}
-};
+}; */
 
 ExperimentParameters load_params(std::string filename) {
 	ExperimentParameters out;
@@ -76,7 +76,8 @@ ExperimentParameters load_params(std::string filename) {
 
 int main(int argc, char* const* argv)
 {
-	std::optional<ReplicaID> self_id;
+	auto args = parse_cmd(argc, argv, "speedex_vm_hotstuff");
+	/*std::optional<ReplicaID> self_id;
 	std::optional<std::string> config_file;
 
 	std::string speedex_options_file;
@@ -112,45 +113,45 @@ int main(int argc, char* const* argv)
 			default:
 				usage();
 		}
+	} */
+
+	if (!args.self_id) {
+		args.self_id = get_replica_id();
+	}
+	if (!args.config_file) {
+		args.config_file = get_config_file();
 	}
 
-	if (!self_id) {
-		self_id = get_replica_id();
-	}
-	if (!config_file) {
-		config_file = get_config_file();
-	}
-
-	struct fy_document* fyd = fy_document_build_from_file(NULL, config_file->c_str());
+	struct fy_document* fyd = fy_document_build_from_file(NULL, args.config_file->c_str());
 	if (fyd == NULL) {
-		std::printf("Failed to build doc from file \"%s\"\n", config_file->c_str());
-		usage();
+		std::printf("Failed to build doc from file \"%s\"\n", args.config_file->c_str());
+		exit(1);
 	}
 
-	auto [config, sk] = parse_replica_config(fyd, *self_id);
+	auto [config, sk] = parse_replica_config(fyd, *args.self_id);
 
 	fy_document_destroy(fyd);
 
-	if (speedex_options_file.size() == 0) {
-		speedex_options_file = get_speedex_options();
+	if (args.speedex_options_file.size() == 0) {
+		args.speedex_options_file = get_speedex_options();
 	}
 
-	if (experiment_data_folder.size() == 0) {
-		experiment_data_folder = get_experiment_data_folder();
+	if (args.experiment_data_folder.size() == 0) {
+		args.experiment_data_folder = get_experiment_data_folder();
 	}
 
-	if (experiment_results_folder.size() == 0) {
-		experiment_results_folder = get_experiment_results_folder();
+	if (args.experiment_results_folder.size() == 0) {
+		args.experiment_results_folder = get_experiment_results_folder();
 	}
 
 	size_t num_threads = get_num_threads();
 
-	std::string experiment_params_file = experiment_data_folder + "params";
+	std::string experiment_params_file = args.experiment_data_folder + "params";
 
 	ExperimentParameters params = load_params(experiment_params_file);
 
 	SpeedexOptions speedex_options;
-	speedex_options.parse_options(speedex_options_file.c_str());
+	speedex_options.parse_options(args.speedex_options_file.c_str());
 
 	if (speedex_options.num_assets != params.num_assets) {
 		throw std::runtime_error("mismatch in num assets between speedex_options and experiment_options");
@@ -160,27 +161,27 @@ int main(int argc, char* const* argv)
 		std::printf("WARNING: mismatch between experiment data sharding and num replicas\n");
 	}
 
-	make_all_data_dirs(config.get_info(*self_id));
+	make_all_data_dirs(config.get_info(*args.self_id));
 
 	auto configs = get_runtime_configs();
-	
-	auto vm = std::make_shared<SpeedexVM>(params, speedex_options, experiment_results_folder, configs);
 
-	auto app = hotstuff::make_speculative_hotstuff_instance(config, *self_id, sk, vm);
+	auto vm = std::make_shared<SpeedexVM>(params, speedex_options, args.experiment_results_folder, configs);
 
-	if (load_from_lmdb) {
+	auto app = hotstuff::make_speculative_hotstuff_instance(config, *args.self_id, sk, vm);
+
+	if (args.load_from_lmdb) {
 		app->init_from_disk();
 	} else {
 		app->init_clean();
 	}
 
-	SyntheticDataStream data_stream(experiment_data_folder);
+	SyntheticDataStream data_stream(args.experiment_data_folder);
 
 	auto& mp = vm -> get_mempool();
 
 	OverlayServer server(mp, config);
 
-	OverlayClientManager client_manager(config, *self_id, mp, server.get_handler());
+	OverlayClientManager client_manager(config, *args.self_id, mp, server.get_handler());
 
 	tbb::global_control control(
 		tbb::global_control::max_allowed_parallelism, num_threads);
@@ -192,7 +193,7 @@ int main(int argc, char* const* argv)
 
 	PaceMakerWaitQC pmaker(app);
 
-	if (*self_id == 0) {
+	if (*args.self_id == 0) {
 		pmaker.set_self_as_proposer();
 	}
 
