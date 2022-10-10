@@ -80,7 +80,8 @@ MODLOG_SRCS = \
 	modlog/log_merge_worker.cc
 
 MODLOG_TEST_SRCS = \
-	modlog/tests/test_account_log_entry.cc
+	modlog/tests/test_account_log_entry.cc \
+	modlog/tests/test_tx_accumulate.cc
 
 ORDERBOOK_SRCS = \
 	orderbook/commitment_checker.cc \

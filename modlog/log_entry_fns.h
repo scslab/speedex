@@ -87,13 +87,21 @@ struct LogKeyOnlyInsertFn
 
 //might like to make these one struct, reduce extra code/etc, but type signatures on metadata merge are slightly diff
 struct LogMergeFn {
-	static void value_merge(
-		AccountModificationTxListWrapper& original_value, 
-		AccountModificationTxListWrapper& merge_in_value);
+
+	template<typename metadata_t>
+	static
+	metadata_t value_merge_recyclingimpl(
+		AccountModificationEntry& original_value, 
+		AccountModificationEntry& merge_in_value)
+	{
+		metadata_t out = metadata_t::from_value(original_value) - metadata_t::from_value(merge_in_value);
+		original_value.merge_value(merge_in_value);
+		return out;
+	}
 
 	static void value_merge(
-		AccountModificationEntry& original_value,
-		AccountModificationEntry& merge_in_value);
+		AccountModificationTxListWrapper& original_value,
+		AccountModificationTxListWrapper& merge_in_value);
 };
 
 struct LogNormalizeFn {

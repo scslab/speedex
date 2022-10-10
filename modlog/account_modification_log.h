@@ -144,6 +144,12 @@ public:
 	persist_block(uint64_t block_number, bool return_block, bool write_block);
 
 	void diff_with_prev_log(uint64_t block_number);
+
+	// for testing
+	void test_metadata_integrity()
+	{
+		modification_log.test_metadata_integrity_check();
+	}
 };
 
 /*! For mocks of AccountModificationLog, used when replaying a round

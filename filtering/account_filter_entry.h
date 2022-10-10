@@ -105,9 +105,12 @@ struct AccountFilterInsertFn
 
 struct AccountFilterMergeFn
 {
-    static void value_merge(AccountFilterEntry& into, AccountFilterEntry& from)
+    template<typename metadata_t>
+    static 
+    metadata_t value_merge_recyclingimpl(AccountFilterEntry& into, AccountFilterEntry& from)
     {
         into.merge_in(from);
+        return metadata_t::zero();
     }
 };
 

@@ -101,6 +101,8 @@ struct TxCountMetadata
         return lhs;
     }
 
+    bool operator== (const TxCountMetadata& other) const = default;
+
     TxCountMetadata operator-() const
     {
         return TxCountMetadata{ .num_txs = -this->num_txs };

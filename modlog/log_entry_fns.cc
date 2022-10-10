@@ -145,13 +145,6 @@ LogMergeFn::value_merge(AccountModificationTxListWrapper& original_value,
 }
 
 void
-LogMergeFn::value_merge(AccountModificationEntry& original_value,
-    AccountModificationEntry& merge_in_value)
-{
-    original_value.merge_value(merge_in_value);
-}
-
-void
 LogNormalizeFn::apply_to_value(AccountModificationTxListWrapper& log)
 {
     std::sort(log.identifiers_self.begin(), log.identifiers_self.end());
