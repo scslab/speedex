@@ -285,7 +285,7 @@ speedex_block_creation_logic(
 		price_workspace,
 		achieved_feerate);
 
-	overall_measurements.format_time =utils::measure_time(timestamp);
+	overall_measurements.format_time = utils::measure_time(timestamp);
 
 	tatonnement.oracle.wait_for_all_tatonnement_threads();
 	timeout_th.join();

@@ -136,6 +136,12 @@ EntryAccumulateValuesFn
 	{
 		return metadata.metadata.num_txs;
 	}
+
+	template<typename MetadataType>
+	static size_t vector_size(const MetadataType& root_metadata)
+	{
+		return root_metadata.num_txs;
+	}
 };
 
 

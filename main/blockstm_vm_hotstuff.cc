@@ -175,6 +175,15 @@ int main(int argc, char* const* argv)
 	bool self_signalled_end = false;
 
 	size_t idx = 0;
+	if (pmaker.should_propose())
+	{
+		pmaker.do_propose();
+		pmaker.wait_for_qc();
+		pmaker.do_propose();
+		pmaker.wait_for_qc();
+		pmaker.do_propose();
+		pmaker.wait_for_qc();
+	}
 	while (true) {
 		if (pmaker.should_propose()) {
 			app->put_vm_in_proposer_mode();
