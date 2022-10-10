@@ -341,7 +341,10 @@ int main(int argc, char* const* argv)
 	fy_document_destroy(fyd);
 
 	wait_for_all_online(config);
-	check_suffixes(config);
+	if (!check_suffixes(config))
+	{
+		throw std::runtime_error("mismatching config suffixes!");
+	}
 
 	send_all_breakpoints(config);
 
