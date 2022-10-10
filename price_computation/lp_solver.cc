@@ -5,13 +5,6 @@
 
 namespace speedex {
 
-//! Lower and upper trade bounds for a given orderbook.
-struct BoundsInfo {
-	std::pair<uint64_t, uint64_t> bounds;
-	OfferCategory category;
-};
-
-
 BoundsInfo 
 get_bounds_info(
 	Orderbook& orderbook, 

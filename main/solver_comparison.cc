@@ -62,12 +62,13 @@ std::vector<Price> gen_prices(size_t num_assets, rand_gen& gen) {
 	return price_out;
 }
 
+/*
 std::unique_ptr<LPInstance> make_instance(size_t num_assets) {
 	size_t num_orderbooks = get_num_orderbooks_by_asset_count(num_assets);
 	size_t nnz = 1 + 2 * num_orderbooks;
 
 	return std::make_unique<LPInstance>(nnz);
-}
+} */
 
 bool run_glpk(std::vector<BoundsInfo>& info, std::vector<Price>& prices, std::unique_ptr<LPInstance>& instance, LPSolver& lp_solver, size_t num_assets) {
 
@@ -263,9 +264,11 @@ int main(int argc, char const *argv[])
 		can_run_simplex = false;
 	} 
 
-	auto instance = make_instance(num_assets);
 	OrderbookManager manager(num_assets);
 	LPSolver lp_solver(manager);
+
+	auto instance = lp_solver.make_instance();
+
 
 	#if HAVE_LEMON == 1
 

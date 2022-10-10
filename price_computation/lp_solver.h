@@ -69,7 +69,11 @@ public:
 	}
 };
 
-struct BoundsInfo;
+//! Lower and upper trade bounds for a given orderbook.
+struct BoundsInfo {
+	std::pair<uint64_t, uint64_t> bounds;
+	OfferCategory category;
+};
 
 /*! Constructs and solves instances of the "trade-maximization" linear program.
 
