@@ -143,7 +143,6 @@ AsyncAccountLMDBShardWorker::exec_one_thunk(
 		
 		wtx.put(shard.get_data_dbi(), &key, &val);
 	}
-	std::printf("write %lu of %lu in block %lu\n", written_local, thunk.kvs -> size(), thunk.current_block_number);
 	current_block_number = thunk.current_block_number;
 }
 
@@ -178,12 +177,11 @@ AsyncAccountLMDBShardWorker::exec_thunks()
 		throw std::runtime_error("invalid persist max_round_number");
 	}
 
-	std::printf("thunk process time: %lf\n", utils::measure_time(ts));
+	//std::printf("thunk process time: %lf\n", utils::measure_time(ts));
 
-	//TODO consider whether to sync here or later
 	shard.commit_wtxn(wtx, max_round_number, ACCOUNT_DB_SYNC_IMMEDIATELY);
 
-	std::printf("commit time: %lf\n", utils::measure_time(ts));
+	//std::printf("commit time: %lf\n", utils::measure_time(ts));
 
 	thunks_to_process = nullptr;
 }
