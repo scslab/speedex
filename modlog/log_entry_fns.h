@@ -13,13 +13,12 @@ and called on trie values.
 #include "mtt/trie/prefix.h"
 
 #include "modlog/typedefs.h"
+#include "modlog/account_modification_entry.h"
 
 #include "xdr/database_commitments.h"
 #include "xdr/types.h"
 
 namespace speedex {
-
-class AccountModificationEntry;
 
 //! Insert modifications to the log for one account
 struct LogListInsertFn {
@@ -94,8 +93,16 @@ struct LogMergeFn {
 		AccountModificationEntry& original_value, 
 		AccountModificationEntry& merge_in_value)
 	{
-		metadata_t out = metadata_t::from_value(original_value) - metadata_t::from_value(merge_in_value);
+		auto out = metadata_t::from_value(merge_in_value);
+		
 		original_value.merge_value(merge_in_value);
+
+		if (metadata_t::from_value(merge_in_value).metadata.num_txs > 0)
+		{
+			throw std::runtime_error("tx duplicated in tree");
+		} 
+	
+		out.size_ = 0;
 		return out;
 	}
 
