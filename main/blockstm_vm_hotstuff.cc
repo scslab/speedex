@@ -8,9 +8,6 @@
 #include "hotstuff/hotstuff_app.h"
 #include "hotstuff/liveness.h"
 
-#include "overlay/overlay_client_manager.h"
-#include "overlay/overlay_flooder.h"
-
 #include "speedex/speedex_options.h"
 #include "speedex/speedex_static_configs.h"
 #include "speedex/vm/speedex_vm.h"
@@ -43,7 +40,7 @@ int main(int argc, char* const* argv)
 		args.config_file = get_config_file();
 	}
 
-	if (args.batch_size == 0 || args.num_accounts == 0)
+	if ((args.batch_size == 0 || args.num_accounts == 0) && (*args.self_id == 0))
 	{
 		throw std::runtime_error("failed to set options req'd for blockstm comparison");
 	}
@@ -140,9 +137,11 @@ int main(int argc, char* const* argv)
 	std::vector<double> prices;
 	std::vector<ExperimentBlock> blocks;
 
-	for (size_t i = 0; i < params.num_blocks; i++)
-	{
-		blocks.push_back(generator.make_block(prices));
+	if (*args.self_id == 0) {
+		for (size_t i = 0; i < params.num_blocks; i++)
+		{
+			blocks.push_back(generator.make_block(prices));
+		}
 	}
 
 	auto& mp = vm -> get_mempool();
