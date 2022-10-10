@@ -11,6 +11,8 @@
 
 #include "speedex/speedex_operation.h"
 
+#include "speedex/vm/speedex_vm.h"
+
 #include "mempool/mempool.h"
 
 #include "utils/debug_macros.h"
@@ -24,6 +26,8 @@
 #include <getopt.h>
 
 #include <tbb/global_control.h>
+
+#include <libfyaml.h>
 
 #include <vector>
 #include <cstdint>
@@ -51,6 +55,8 @@ static const struct option opts[] = {
 std::vector<double>
 run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, const uint32_t num_threads);
 
+constexpr static size_t NUM_ROUNDS = 100;
+
 int main(int argc, char* const* argv)
 {
 	int opt;
@@ -71,17 +77,17 @@ int main(int argc, char* const* argv)
 			{
 				auto res = run_blockstm_experiment(acc, batch, n);
 
-				if (res.size() != 15)
+				if (res.size() != NUM_ROUNDS)
 				{
 					throw std::runtime_error("invalid size return");
 				}
 
 				double avg = 0;
-				for (auto i = 5u; i < 15; i++)
+				for (auto i = 0u; i < NUM_ROUNDS; i++)
 				{
 					avg += res[i];
 				}
-				results.push_back({acc, batch, n, avg/10.0});
+				results.push_back({acc, batch, n, avg/NUM_ROUNDS});
 			}
 		}
 	}
@@ -171,8 +177,6 @@ speedex_block_creation_logic_notatonnement(
 std::vector<double>
 run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, const uint32_t num_threads)
 {
- 	tbb::global_control control(tbb::global_control::max_allowed_parallelism, num_threads);
-
 	std::minstd_rand gen(0);
 	GenerationOptions options;
 
@@ -191,7 +195,91 @@ run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, 
 		throw std::runtime_error("invalid num assets");
 	}
 
+	std::string speedex_options_file = "experiment_config/blockstm_params.yaml";
+
+	ReplicaID self_id = 0;
+	std::string config_file = "config/config_local.yaml";
+
+	struct fy_document* fyd = fy_document_build_from_file(NULL, config_file.c_str());
+	if (fyd == NULL) {
+		std::printf("Failed to build doc from file \"%s\"\n", config_file.c_str());
+		exit(1);
+	}
+
+	auto [config, sk] = parse_replica_config(fyd, self_id);
+
+	ExperimentParameters params;
+
+	params.num_assets = 1;
+	params.default_amount = options.new_account_balance;
+	params.account_list_filename = "blockstm_accounts";
+	params.num_blocks = 100;
+	params.n_replicas = config.nreplicas;
+
+	if (options.num_assets != params.num_assets)
+	{
+		throw std::runtime_error("asset amount mismatch");
+	}
+
+	GeneratorState generator (gen, options, "experiment_data/blockstm_comparison_data/");
+
+	generator.dump_account_list(params.account_list_filename);
+
+	SpeedexOptions speedex_options;
+	speedex_options.parse_options(speedex_options_file.c_str());
+
+	speedex_options.block_size = batch_size;
+
+
+	if (speedex_options.num_assets != params.num_assets) {
+		throw std::runtime_error("mismatch in num assets between speedex_options and experiment_options");
+	}
+
 	auto configs = get_runtime_configs(); 
+
+	clear_all_data_dirs(config.get_info(self_id));
+	make_all_data_dirs(config.get_info(self_id));
+
+	std::string experiment_results_folder = "blockstm_comparison_direct_results/";
+
+	auto vm = std::make_shared<SpeedexVM>(params, speedex_options, experiment_results_folder, configs);
+	vm -> init_clean();
+
+	std::vector<double> prices;
+	std::vector<ExperimentBlock> blocks;
+
+	for (size_t i = 0; i < params.num_blocks; i++)
+	{
+		blocks.push_back(generator.make_block(prices));
+	}
+
+	auto& mp = vm -> get_mempool();
+
+	tbb::global_control control(
+		tbb::global_control::max_allowed_parallelism, num_threads);
+
+	std::vector<double> results;
+
+	for (size_t i = 0; i < params.num_blocks; i++)
+	{
+		auto& block = blocks[i];
+		mp.chunkify_and_add_to_mempool_buffer(std::move(block));
+		mp.push_mempool_buffer_to_mempool();
+
+		auto ts = utils::init_time_measurement();
+
+		auto blk = vm -> propose();
+		auto id = blk->get_id();
+
+		vm -> log_commitment(id);
+
+		double t = utils::measure_time(ts);
+		results.push_back(t);
+	}
+	return results;
+}	
+
+	/*
 
 	SpeedexManagementStructures management_structures(options.num_assets, ApproximationParameters(), configs);
 	
@@ -289,3 +377,5 @@ run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, 
 
 	return results;
 }
+
+*/

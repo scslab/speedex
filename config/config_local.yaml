@@ -1,0 +1,5 @@
+num_replicas: 1
+
+replica_0:
+  sk_seed: 1
+  hostname: "localhost"
