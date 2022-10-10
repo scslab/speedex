@@ -727,6 +727,8 @@ GeneratorState<random_generator>::write_block(ExperimentBlock& block)
 	xdr::opaque_vec<> serialized_output = xdr::xdr_to_opaque(block);
 
 	if (save_xdr_to_file(serialized_output, filename.c_str())) {
+		std::printf("failed to save file %s\n", filename.c_str());
+		std::fflush(stdout);
 		throw std::runtime_error("was not able to save file!");
 	}
 }
@@ -783,7 +785,7 @@ void GeneratorState<random_generator>::make_offer_set(const std::vector<double>&
 	std::printf("made %lu offers\n", sim_data.offers.size());
 
 	if (save_xdr_to_file(sim_data, filename.c_str())) {
-		throw std::runtime_error("was not able to save file!");
+		throw std::runtime_error(std::string("was not able to save file = ") + filename);
 	}
 }
 

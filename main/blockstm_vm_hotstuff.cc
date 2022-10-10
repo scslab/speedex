@@ -16,6 +16,8 @@
 
 #include "utils/manage_data_dirs.h"
 
+#include <utils/mkdir.h>
+
 #include "xdr/experiments.h"
 
 #include <optional>
@@ -92,6 +94,8 @@ int main(int argc, char* const* argv)
 	options.block_size = args.batch_size;
 
 	GeneratorState generator (gen, options, "experiment_data/blockstm_comparison_data/");
+	utils::mkdir_safe("experiment_data/");
+	utils::mkdir_safe("experiment_data/blockstm_comparison_data/");
 
 	ExperimentParameters params;
 
