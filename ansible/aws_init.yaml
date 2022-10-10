@@ -39,10 +39,16 @@
           - name: set node name
             shell: "cd xfs/speedex && echo \"node-3\n\" > automation/replica"
 
-- name: set config
-  hosts: all
-  tasks:
-          - name: set config
-            shell: "cd xfs/speedex && echo \"config/config_geoff_aws.yaml\" > automation/config_file"
+- name: set configs
+  ansible.builtin.import_playbook: ansible/set_config_aws.yaml
+
+- name: make all
+  ansible.builtin.import_playbook: ansible/make_all.yaml
+
+#- name: set config
+# hosts: all
+#  tasks:
+#          - name: set config
+#            shell: "cd xfs/speedex && echo \"config/config_geoff_aws.yaml\" > automation/config_file"
 
 
