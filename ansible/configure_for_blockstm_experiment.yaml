@@ -3,5 +3,5 @@
   hosts: all
   tasks:
           - name: autogen configure
-            shell: "cd ~/xfs/speedex && ./autogen.sh && ./configure CXXFLAGS=\"-D_MAX_SEQ_NUMS_PER_BLOCK=10'000\""
+            shell: "cd ~/xfs/speedex && ./autogen.sh && ./configure DEFINES=\"-D_MAX_SEQ_NUMS_PER_BLOCK=10000\""
 
