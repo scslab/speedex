@@ -166,6 +166,7 @@ GENERIC_CCS = \
 
 MAIN_CCS = \
 	main/blockstm_comparison.cc \
+	main/blockstm_vm_hotstuff.cc \
 	main/cda_experiment.cc \
 	main/clean_lmdbs.cc \
 	main/counting_vm_hotstuff.cc \
@@ -235,6 +236,7 @@ test_runner.cc : $(TEST_SRCS) $(XHFILES)
 
 bin_PROGRAMS = \
 	blockstm_comparison \
+	blockstm_vm_hotstuff \
 	cda_experiment \
 	clean_lmdbs \
 	counting_vm_hotstuff \
@@ -254,6 +256,7 @@ bin_PROGRAMS = \
 	ctest
 
 blockstm_comparison_SOURCES = $(SRCS) main/blockstm_comparison.cc
+blockstm_vm_hotstuff_SOURCES = $(SRCS) main/blockstm_vm_hotstuff.cc
 cda_experiment_SOURCES = $(SRCS) main/cda_experiment.cc
 clean_lmdbs_SOURCES = $(SRCS) main/clean_lmdbs.cc
 counting_vm_hotstuff_SOURCES = $(SRCS) $(GENERIC_CCS) main/counting_vm_hotstuff.cc

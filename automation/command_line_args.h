@@ -26,10 +26,15 @@ static void usage(std::string binary_name) {
 enum opttag {
 	OPT_REPLICA_ID = 0x100,
 	OPT_CONFIG_FILE,
+
 	SPEEDEX_OPTIONS,
 	EXPERIMENT_DATA_FOLDER,
 	RESULTS_FOLDER,
 	LOAD_FROM_LMDB,
+
+	EXPERIMENT_OPTIONS,
+	EXPERIMENT_NAME,
+	JUST_PARAMS,
 
 	// blockstm_comparison-specific
 	NUM_ACCOUNTS,
@@ -39,12 +44,19 @@ enum opttag {
 static const struct option opts[] = {
 	{"replica_id", required_argument, nullptr, OPT_REPLICA_ID},
 	{"config_file", required_argument, nullptr, OPT_CONFIG_FILE},
+
 	{"speedex_options", required_argument, nullptr, SPEEDEX_OPTIONS},
 	{"exp_data_folder", required_argument, nullptr, EXPERIMENT_DATA_FOLDER},
 	{"results_folder", required_argument, nullptr, RESULTS_FOLDER},
 	{"load_lmdb", no_argument, nullptr, LOAD_FROM_LMDB},
+
+	{"exp_options", required_argument, nullptr, EXPERIMENT_OPTIONS},
+	{"exp_name", required_argument, nullptr, EXPERIMENT_NAME},
+	{"just_params", no_argument, nullptr, JUST_PARAMS},
+
+	//blockstm comparison
 	{"num_accounts", required_argument, nullptr, NUM_ACCOUNTS},
-	{"batch_size", required_argument, nullptr, BATCH_SIZE}
+	{"batch_size", required_argument, nullptr, BATCH_SIZE},
 	{nullptr, 0, nullptr, 0}
 };
 
@@ -59,6 +71,10 @@ struct CommandLineArgs
 	std::string experiment_results_folder;
 
 	bool load_from_lmdb = false;
+
+	std::string experiment_options_file;
+	std::string experiment_name;
+	bool just_params = false;
 
 	uint64_t num_accounts = 0;
 	uint64_t batch_size = 0;
@@ -94,6 +110,15 @@ parse_cmd(int argc, char* const* argv, std::string binary_name)
 			case LOAD_FROM_LMDB:
 				out.load_from_lmdb = true;
 				break;
+			case EXPERIMENT_OPTIONS:
+				out.experiment_options_file = optarg;
+				break;
+			case EXPERIMENT_NAME:
+				out.experiment_name = optarg;
+				break;
+			case JUST_PARAMS:
+				out.just_params = true;
+				break;	
 			case NUM_ACCOUNTS:
 				out.num_accounts = std::stol(optarg);
 				break;

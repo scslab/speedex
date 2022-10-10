@@ -49,6 +49,7 @@ log.txt
 
 #binaries
 blockstm_comparison
+blockstm_vm_hotstuff
 cda_experiment
 clean_lmdbs
 counting_vm_hotstuff
