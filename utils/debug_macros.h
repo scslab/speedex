@@ -42,7 +42,7 @@ Printouts include file/line information.
 
 #define MEMDB_DEBUG DEBUG_LEVEL_NONE
 
-#define HOTSTUFF_DEBUG DEBUG_LEVEL_INFO
+#define HOTSTUFF_DEBUG DEBUG_LEVEL_NONE
 
 #define LOG(s, ...) std::printf((std::string("%-45s") + s + "\n").c_str(), (std::string(__FILE__) + "." + std::to_string(__LINE__) + ":").c_str() __VA_OPT__(,) __VA_ARGS__)
 

@@ -7,6 +7,7 @@
 
 #include "speedex/autorollback_validation_structures.h"
 #include "speedex/speedex_management_structures.h"
+#include "speedex/speedex_static_configs.h"
 
 #include "stats/block_update_stats.h"
 
@@ -195,31 +196,35 @@ speedex_block_creation_logic(
 		BLOCK_INFO("done rerunning");
 	}
 
-	//TODO could be removed later.  Good rn as a sanititimeouttheck.
-	auto clearing_check = lp_results.check_clearing(price_workspace);
 
-	stats.clearing_check_time =utils::measure_time(timestamp);
-	BLOCK_INFO("clearing sanity check took %fs", stats.clearing_check_time);
+	if constexpr (DISABLE_PRICE_COMPUTATION)
+	{
+		//TODO could be removed later.  Good rn as a sanititimeouttheck.
+		auto clearing_check = lp_results.check_clearing(price_workspace);
 
-	double vol_metric = management_structures.orderbook_manager
-		.get_weighted_price_asymmetry_metric(lp_results, price_workspace);
-	
-	BLOCK_INFO("regular Tat vol metric: timeout %lu %lf", 
-		!use_lower_bound, vol_metric);
+		stats.clearing_check_time =utils::measure_time(timestamp);
+		BLOCK_INFO("clearing sanity check took %fs", stats.clearing_check_time);
 
-	auto [satisfied, lost] = management_structures.orderbook_manager
-		.satisfied_and_lost_utility(lp_results, price_workspace.data());
+		double vol_metric = management_structures.orderbook_manager
+			.get_weighted_price_asymmetry_metric(lp_results, price_workspace);
+		
+		BLOCK_INFO("regular Tat vol metric: timeout %lu %lf", 
+			!use_lower_bound, vol_metric);
 
-	BLOCK_INFO("satisfied and lost utility: timeout %lu satisfied %lf lost %lf",
-		!use_lower_bound, satisfied, lost);
+		auto [satisfied, lost] = management_structures.orderbook_manager
+			.satisfied_and_lost_utility(lp_results, price_workspace.data());
 
-	if (!clearing_check) {
-		std::fflush(stdout);
-		throw std::runtime_error("The prices we computed did not result in clearing!!!");
+		BLOCK_INFO("satisfied and lost utility: timeout %lu satisfied %lf lost %lf",
+			!use_lower_bound, satisfied, lost);
+
+		if (!clearing_check) {
+			std::fflush(stdout);
+			throw std::runtime_error("The prices we computed did not result in clearing!!!");
+		}
+
+		tatonnement.rolling_averages.update_averages(
+			lp_results, price_workspace.data());
 	}
-
-	tatonnement.rolling_averages.update_averages(
-		lp_results, price_workspace.data());
 
 	stats.num_open_offers = orderbook_manager.num_open_offers();
 	BLOCK_INFO("num open offers is %lu", stats.num_open_offers);

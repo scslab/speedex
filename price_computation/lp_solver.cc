@@ -1,6 +1,8 @@
 #include "price_computation/lp_solver.h"
 #include "utils/debug_macros.h"
 
+#include "speedex/speedex_static_configs.h"
+
 #include <cmath>
 
 namespace speedex {
@@ -208,6 +210,11 @@ LPSolver::solve(
 	Price* prices, 
 	const ApproximationParameters approx_params, 
 	bool use_lower_bound) {
+
+	if constexpr(DISABLE_PRICE_COMPUTATION)
+	{
+		return ClearingParams::get_null_clearing(manager.get_orderbooks().size());
+	}
 
 	std::unique_lock lock(mtx);
 

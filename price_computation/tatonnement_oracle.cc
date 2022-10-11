@@ -544,7 +544,7 @@ std::thread
 TatonnementOracle::launch_timeout_thread(uint32_t num_milliseconds, std::atomic<bool>& timeout_happened_flag, std::atomic<bool>& cancel_timeout_flag) {
 	return std::thread([this, &timeout_happened_flag, num_milliseconds, &cancel_timeout_flag] () {
 
-		if (!USE_TATONNEMENT_TIMEOUT_THREAD)
+		if constexpr (!USE_TATONNEMENT_TIMEOUT_THREAD)
 		{
 			return;
 		}
@@ -573,7 +573,12 @@ void TatonnementOracle::finish_tatonnement_query() {
 }
 
 TatonnementMeasurements
-TatonnementOracle::compute_prices_grid_search(Price* prices_workspace, const ApproximationParameters approx_params, const uint16_t* v_relativizers) {
+TatonnementOracle::compute_prices_grid_search(Price* prices_workspace, const ApproximationParameters approx_params, const uint16_t* v_relativizers)
+{
+	if constexpr (DISABLE_PRICE_COMPUTATION)
+	{
+		return TatonnementMeasurements();
+	}
 
 	auto timestamp = utils::init_time_measurement();
 

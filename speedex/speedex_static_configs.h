@@ -10,10 +10,16 @@ namespace speedex
   #define _MAX_SEQ_NUMS_PER_BLOCK 64
 #endif
 
-#ifndef DISABLE_TATONNEMENT_TIMEOUT
+#ifndef _DISABLE_TATONNEMENT_TIMEOUT
 	constexpr static bool USE_TATONNEMENT_TIMEOUT_THREAD = true;
 #else
 	constexpr static bool USE_TATONNEMENT_TIMEOUT_THREAD = false;
+#endif
+
+#ifndef _DISABLE_PRICE_COMPUTATION
+	constexpr static bool DISABLE_PRICE_COMPUTATION = true;
+#else
+	constexpr static bool DISABLE_PRICE_COMPUTATION = false;
 #endif
 
 constexpr static uint32_t MAX_SEQ_NUMS_PER_BLOCK = _MAX_SEQ_NUMS_PER_BLOCK;

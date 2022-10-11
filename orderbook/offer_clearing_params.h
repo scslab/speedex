@@ -29,6 +29,15 @@ struct ClearingParams {
 	//! Check whether a given set of prices clears the market with
 	//! these clearing params (i.e. supply exceeds taxed demand).
 	bool check_clearing(const std::vector<Price>& prices) const;
+
+	static ClearingParams
+	get_null_clearing(uint8_t tax_rate, size_t num_orderbooks)
+	{
+		ClearingParams out;
+		out.tax_rate = tax_rate;
+		out.orderbook_params.resize(num_orderbooks);
+		return out;
+	}
 };
 
 } /* speedex */
