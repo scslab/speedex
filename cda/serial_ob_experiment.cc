@@ -33,7 +33,7 @@ SerialOrderbookExperiment::exec_one_offer(Offer const& offer)
 
 	if (offer.category == a_to_b_cat)
 	{
-		auto[a_sold, b_recv] = a_to_b.try_execute(max_price, offer.amount, db);
+		auto[a_sold, b_recv] = a_to_b.try_execute(max_price, offer.amount, view);
 
 		if (a_sold > offer.amount)
 		{
@@ -53,7 +53,7 @@ SerialOrderbookExperiment::exec_one_offer(Offer const& offer)
 	} 
 	else
 	{
-		auto[b_sold, a_recv] = b_to_a.try_execute(max_price, offer.amount, db);
+		auto[b_sold, a_recv] = b_to_a.try_execute(max_price, offer.amount, view);
 
 		if (b_sold > offer.amount)
 		{

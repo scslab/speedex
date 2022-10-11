@@ -67,9 +67,10 @@ int main(int argc, char* const* argv)
 		throw std::runtime_error("invalid asset number for cda 2asset experiment");
 	}
 
-	MemoryDatabase db;
-
+	
 	GeneratorState generator (gen, options, "foo");
+	
+	MemoryDatabase db;
 
 	MemoryDatabaseGenesisData data;
 	data.id_list = generator.get_accounts();
@@ -102,7 +103,8 @@ int main(int argc, char* const* argv)
 		}
 	}
 
-	std::printf("results: db size was %lu\n", db.size());
+
+	std::vector<double> results;
 	for (size_t i = 0; i < num_trials; i++)
 	{
 		SerialOrderbookExperiment exp(db);
@@ -113,8 +115,14 @@ int main(int argc, char* const* argv)
 		double exec_time = utils::measure_time(ts);
 
 		std::printf("time: %lf tps %lf\n", exec_time, trials[i].size() / exec_time);
+		results.push_back(exec_time);
 
+		db.rollback_values();
 	}
 
-
+	std::printf("results: db size was %lu\n", db.size());
+	for (size_t i = 0; i < num_trials; i++)
+	{
+		std::printf("time %lf tps %lf\n", results[i], trials[i].size() / results[i]);
+	}
 }

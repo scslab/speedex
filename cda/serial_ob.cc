@@ -1,6 +1,6 @@
 #include "cda/serial_ob.h"
 
-#include "memory_database/memory_database.h"
+#include "memory_database/memory_database_view.h"
 
 namespace speedex
 {
@@ -27,7 +27,7 @@ SerialOrderbook::cancel_offer(const Price& mp, const AccountID& account, const u
 }
 
 std::pair<uint64_t, uint64_t>
-SerialOrderbook::try_execute(const Price& max_price, const uint64_t sell_amount, MemoryDatabase& db)
+SerialOrderbook::try_execute(const Price& max_price, const uint64_t sell_amount, BufferedMemoryDatabaseView& db)
 {
 	uint64_t remaining_sell = sell_amount;
 	uint64_t bought_amount = 0;
