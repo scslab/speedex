@@ -248,8 +248,8 @@ run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, 
 	{
 		std::printf("start controller\n");
 		ExperimentController controller(vm, "");
-		controller.await_pollset_shutdown();
 	}
+	std::printf("controller shutdown\n");
 
 	std::vector<double> prices;
 	std::vector<ExperimentBlock> blocks;
