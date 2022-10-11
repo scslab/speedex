@@ -221,6 +221,8 @@ run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, 
 		throw std::runtime_error("asset amount mismatch");
 	}
 
+	utils::mkdir_safe("experiment_data/blockstm_comparison_data/");
+
 	GeneratorState generator (gen, options, "experiment_data/blockstm_comparison_data/");
 
 	generator.dump_account_list(params.account_list_filename);
