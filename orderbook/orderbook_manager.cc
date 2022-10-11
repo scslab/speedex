@@ -169,8 +169,12 @@ void OrderbookManager::persist_lmdb(uint64_t current_block_number) {
 				garbage.add(orderbook_garbage->release());
 			}
 		}
-		local_lmdb.commit_wtxn(wtx, current_block_number);
 
+		if constexpr (!DISABLE_LMDB)
+		{
+			local_lmdb.commit_wtxn(wtx, current_block_number);
+		}
+		
 		thunk_garbage_deleter.call_delete(garbage.release());
 	}
 }

@@ -211,7 +211,7 @@ LPSolver::solve(
 	const ApproximationParameters approx_params, 
 	bool use_lower_bound) {
 
-	if constexpr(DISABLE_PRICE_COMPUTATION)
+	if constexpr (DISABLE_PRICE_COMPUTATION)
 	{
 		return ClearingParams::get_null_clearing(approx_params.tax_rate, manager.get_orderbooks().size());
 	}
