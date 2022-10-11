@@ -34,7 +34,6 @@ static const struct option opts[] = {
 
 int main(int argc, char* const* argv)
 {
-
 	auto args = parse_cmd(argc, argv, "cda_experiment");
 	
 	std::minstd_rand gen(0);
@@ -51,7 +50,7 @@ int main(int argc, char* const* argv)
 	}
 
 	if (experiment_options_file.size() == 0) {
-		throw std::runtime_error("invalid options file");
+		experiment_options_file = "synthetic_data_config/cda_params.yaml"
 	}
 
 	auto parsed = options.parse(experiment_options_file.c_str());
@@ -59,6 +58,8 @@ int main(int argc, char* const* argv)
 		std::printf("failed to parse experiment options file\n");
 		return 1;
 	}
+
+	options.num_accounts = num_accounts;
 
 	if (options.num_assets != 2)
 	{
@@ -73,6 +74,8 @@ int main(int argc, char* const* argv)
 	MemoryDatabaseGenesisData data;
 	data.id_list = generator.get_accounts();
 	data.pk_list.resize(data.id_list.size());
+
+	std::printf("num accounts in genesis: %lu\n", data.id_list.size());
 
 	auto init_lambda = [&](UserAccount& user)
 	{
