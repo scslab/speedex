@@ -30,14 +30,22 @@ BlockHeaderHashMap::BlockHeaderHashMap()
     : block_map()
     , lmdb_instance()
     , last_committed_block_number(0)
-    , mtx()
+    , lmdb_mtx()
+    , last_committed_block_number_mtx()
 {}
+
+void
+BlockHeaderHashMap::hash(Hash& hash_out)
+{
+    std::lock_guard lock(last_committed_block_number_mtx);
+    block_map.hash(hash_out);
+}
 
 void
 BlockHeaderHashMap::insert(const Block& block, bool res)
 {
 
-    std::lock_guard lock(mtx);
+    std::lock_guard lock(last_committed_block_number_mtx);
 
     uint64_t block_number = block.blockNumber;
     if (block_number == 0)
@@ -68,8 +76,7 @@ BlockHeaderHashMap::insert(const Block& block, bool res)
 void
 BlockHeaderHashMap::persist_lmdb(uint64_t current_block_number)
 {
-
-    std::lock_guard lock(mtx);
+    std::lock_guard lock(lmdb_mtx);
 
     BLOCK_INFO("persisting header hash map at round %lu", current_block_number);
 
@@ -120,7 +127,8 @@ BlockHeaderHashMap::persist_lmdb(uint64_t current_block_number)
 void
 BlockHeaderHashMap::rollback_to_committed_round(uint64_t committed_block_number)
 {
-    std::lock_guard lock(mtx);
+    std::lock_guard lock(lmdb_mtx);
+    std::lock_guard lock2(last_committed_block_number_mtx);
 
     if (committed_block_number < lmdb_instance.get_persisted_round_number())
     {
@@ -149,8 +157,8 @@ BlockHeaderHashMap::rollback_to_committed_round(uint64_t committed_block_number)
 void
 BlockHeaderHashMap::load_lmdb_contents_to_memory()
 {
-
-    std::lock_guard lock(mtx);
+    std::lock_guard lock(lmdb_mtx);
+    std::lock_guard lock2(last_committed_block_number_mtx);
 
     auto rtx = lmdb_instance.rbegin();
 
@@ -200,8 +208,7 @@ BlockHeaderHashMap::load_lmdb_contents_to_memory()
 std::optional<BlockHeaderHashValue>
 BlockHeaderHashMap::get(uint64_t round_number) const
 {
-
-    std::lock_guard lock(mtx);
+    std::lock_guard lock(lmdb_mtx);
 
     if (round_number > get_persisted_round_number())
     {

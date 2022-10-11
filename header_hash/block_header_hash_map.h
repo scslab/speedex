@@ -66,13 +66,18 @@ class BlockHeaderHashMap
 
     using TrieT = trie::MerkleTrie<prefix_t, ValueT, MetadataT>;
 
+    static_assert(TrieT::LOCKABLE, "need locks in internal block map");
+
     TrieT block_map;
 
     BlockHeaderHashMapLMDB lmdb_instance;
 
     uint64_t last_committed_block_number;
 
-    mutable std::mutex mtx;
+    // separate locks: one for managing access to lmdb (it's convenient
+    // to lock access, ensuring get_persisted_round_number() results
+    // are always consistent) and one managing access to local state.
+    mutable std::mutex lmdb_mtx, last_committed_block_number_mtx;
 
 public:
     constexpr static unsigned int KEY_LEN = sizeof(uint64_t);
@@ -88,7 +93,7 @@ public:
     void insert(const Block& block, bool validation_success);
 
     //! Hash the merkle trie.
-    void hash(Hash& hash) { block_map.hash(hash); }
+    void hash(Hash& hash);
 
     void open_lmdb_env() { lmdb_instance.open_env(); }
     void create_lmdb() { lmdb_instance.create_db(); }
