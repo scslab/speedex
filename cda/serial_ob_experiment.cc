@@ -1,6 +1,7 @@
 #include "cda/serial_ob_experiment.h"
 
 #include "memory_database/memory_database.h"
+#include "memory_database/memory_database_view.h"
 
 
 using xdr::operator==;
