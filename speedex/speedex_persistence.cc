@@ -40,7 +40,7 @@ persist_critical_round_data(
 	{
 		save_header(header);
 	}
-	
+
 	measurements.header_write_time = utils::measure_time(timestamp);
 
 	uint64_t current_block_number = header.block.blockNumber;
@@ -60,7 +60,7 @@ persist_critical_round_data(
 	management_structures.account_modification_log.detached_clear();
 	BLOCK_INFO("done persist critical round data");
 
-	std::unique_ptr<SignedTransactionList> list_out;
+	auto list_out = std::make_unique<SignedTransactionList>();
 	write_tx_data(*list_out, *block_out);
 	//offer db thunks, header hash map already updated
 	return list_out;
