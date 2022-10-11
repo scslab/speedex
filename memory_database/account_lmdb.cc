@@ -277,6 +277,8 @@ AccountLMDB::wait_for_all_syncers()
 void 
 AccountLMDB::create_db()
 {
+	std::lock_guard lock(mtx);
+
 	crypto_shorthash_keygen(HASH_KEY);
 
 	for (auto& shard : shards)
@@ -285,17 +287,26 @@ AccountLMDB::create_db()
 	}
 
 	opened = true;
+
+	min_persisted_round_number = 0;
+	max_persisted_round_number = 0;
 }
 
 void
 AccountLMDB::open_db()
 {
+	std::lock_guard lock(mtx);
+
 	for (auto& shard : shards)
 	{
 		shard->open_db();
 	}
 	shards.at(0)->export_hash_key(HASH_KEY);
 	opened = true;
+
+	auto [min_round, max_round] = get_min_max_persisted_round_numbers_direct();
+	min_persisted_round_number = min_round;
+	max_persisted_round_number = max_round;
 }
 
 void
@@ -310,11 +321,15 @@ AccountLMDB::open_env()
 void 
 AccountLMDB::persist_thunks(const std::vector<DBPersistenceThunk>& thunks, uint64_t max_round_number, bool ignore_too_low)
 {
+	std::lock_guard lock(mtx);
 	for (auto& worker : workers)
 	{
 		worker->add_thunks(thunks, max_round_number, ignore_too_low);
 	}
 	wait_for_all_workers();
+
+	min_persisted_round_number = std::max(min_persisted_round_number, max_round_number);
+	max_persisted_round_number = std::max(max_persisted_round_number, max_round_number);
 }
 
 void
@@ -345,8 +360,8 @@ AccountLMDB::get_persisted_round_number_by_account(const AccountID& account) con
 }
 
 std::pair<uint64_t, uint64_t> 
-AccountLMDB::get_min_max_persisted_round_numbers() const
-{
+AccountLMDB::get_min_max_persisted_round_numbers_direct() const
+{	
 	uint64_t min = UINT64_MAX, max = 0;
 	for (auto& shard : shards)
 	{
@@ -355,21 +370,29 @@ AccountLMDB::get_min_max_persisted_round_numbers() const
 		min = std::min(min, round);
 		max = std::max(max, round);
 	}
-	return {min, max};
-
+	return {min, max}; 
 }
+
+std::pair<uint64_t, uint64_t> 
+AccountLMDB::get_min_max_persisted_round_numbers() const
+{	
+	std::lock_guard lock(mtx);
+
+	return {min_persisted_round_number, max_persisted_round_number};
+}
+
+
 
 uint64_t 
 AccountLMDB::assert_snapshot_and_get_persisted_round_number() const
 {
-	auto [min, max] = get_min_max_persisted_round_numbers();
-
-	if (min != max)
+	std::lock_guard lock(mtx);
+	if (min_persisted_round_number != max_persisted_round_number)
 	{
 		throw std::runtime_error("shorn read");
 	}
-	return min;
-}
+	return min_persisted_round_number;
+} 
 
 
 } /* speedex */

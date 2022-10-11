@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <mutex>
 
 #include "memory_database/typedefs.h"
 
@@ -130,6 +131,12 @@ class AccountLMDB
 	// many copies of this key, but that's not a huge problem
 	uint8_t HASH_KEY[crypto_shorthash_KEYBYTES];
 
+	mutable std::mutex mtx;
+	
+	uint64_t min_persisted_round_number, max_persisted_round_number;
+
+	std::pair<uint64_t, uint64_t> get_min_max_persisted_round_numbers_direct() const;
+
 public:
 
 	AccountLMDB();
@@ -153,7 +160,6 @@ public:
 	uint64_t get_persisted_round_number_by_account(const AccountID& account) const;
 
 	std::pair<uint64_t, uint64_t> get_min_max_persisted_round_numbers() const;
-
 	uint64_t assert_snapshot_and_get_persisted_round_number() const;
 
 	struct rtxn {
