@@ -75,8 +75,10 @@ int main(int argc, char* const* argv)
 	data.id_list = generator.get_accounts();
 	data.pk_list.resize(data.id_list.size());
 
-	auto init_lambda = [](UserAccount& user)
+	auto init_lambda = [&](UserAccount& user)
 	{
+		user.transfer_available(0, options.new_account_balance);
+		user.transfer_available(1, options.new_account_balance);
 		user.commit();
 	};
 
@@ -100,15 +102,17 @@ int main(int argc, char* const* argv)
 		}
 	}
 
+	std::printf("results: db size was %lu\n", db.size());
 	for (size_t i = 0; i < num_trials; i++)
 	{
-
 		SerialOrderbookExperiment exp(db);
 		auto ts = utils::init_time_measurement();
 
 		exp.exec_offers(trials[i]);
 
-		std::printf("time: %lf\n", utils::measure_time(ts));
+		double exec_time = utils::measure_time(ts);
+
+		std::printf("time: %lf tps %lf\n", exec_time, trials[i].size() / exec_time);
 
 	}
 

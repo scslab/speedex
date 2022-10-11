@@ -13,7 +13,22 @@ SerialOrderbookExperiment::exec_one_offer(Offer const& offer)
 
 	Price max_price = (((uint128_t)1) << (2*price::PRICE_RADIX)) / offer.minPrice;
 
-	//std::printf("maxPrice = %lu minPrice = %lu\n", max_price, offer.minPrice);
+	BufferedMemoryDatabaseView view(db);
+
+	auto* user = view.lookup_user(offer.owner);
+
+	if (user == nullptr)
+	{
+		throw std::runtime_error("wtf");
+	}
+
+	auto res = view.escrow(user, offer.category.sellAsset, offer.amount);
+
+	if (res != TransactionProcessingStatus::SUCCESS)
+	{
+		view.unwind();
+		return;
+	}
 
 	if (offer.category == a_to_b_cat)
 	{
@@ -24,14 +39,7 @@ SerialOrderbookExperiment::exec_one_offer(Offer const& offer)
 			throw std::runtime_error("invalid");
 		}
 
-		auto* user = db.lookup_user(offer.owner);
-
-		if (user == nullptr)
-		{
-			throw std::runtime_error("wtf");
-		}
-
-		db.transfer_available(user, a_to_b_cat.buyAsset, b_recv);
+		view.transfer_available(user, a_to_b_cat.buyAsset, b_recv);
 
 		Offer to_add = offer;
 
@@ -51,14 +59,7 @@ SerialOrderbookExperiment::exec_one_offer(Offer const& offer)
 			throw std::runtime_error("invalid");
 		}
 
-		auto* user = db.lookup_user(offer.owner);
-
-		if (user == nullptr)
-		{
-			throw std::runtime_error("wtf");
-		}
-
-		db.transfer_available(user, b_to_a_cat.buyAsset, a_recv);
+		view.transfer_available(user, b_to_a_cat.buyAsset, a_recv);
 
 		Offer to_add = offer;
 
@@ -69,6 +70,7 @@ SerialOrderbookExperiment::exec_one_offer(Offer const& offer)
 			a_to_b.add_offer(to_add);
 		}
 	}
+	view.commit();
 }
 
 

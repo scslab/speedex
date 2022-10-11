@@ -154,7 +154,7 @@ AsyncAccountLMDBShardWorker::exec_thunks()
 		throw std::runtime_error("tried to exec_thunks when no thunks present");
 	}
 
-	auto ts = utils::init_time_measurement();
+	// auto ts = utils::init_time_measurement();
 
 	uint64_t current_block_number = shard.get_persisted_round_number();
 

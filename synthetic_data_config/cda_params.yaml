@@ -1,7 +1,7 @@
 experiment:
   output_prefix: "experiment_data/"
   num_assets: 2
-  num_accounts: 100000
+  num_accounts: 10000000
   account_dist_param: 0.00001
   block_size: 500000
   num_blocks: 30
@@ -22,7 +22,7 @@ experiment:
   payment_rate: 0.0
   create_offer_rate: 1.0
   account_creation_rate: 0.0
-  new_account_balance: 100000000
+  new_account_balance: 10000000000
   cancel_delay_rounds_min: 1
   cancel_delay_rounds_max: 5
   bad_offer_cancel_chance: 0.0
