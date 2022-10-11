@@ -322,12 +322,15 @@ void
 AccountLMDB::persist_thunks(const std::vector<DBPersistenceThunk>& thunks, uint64_t max_round_number, bool ignore_too_low)
 {
 	std::lock_guard lock(mtx);
-	for (auto& worker : workers)
-	{
-		worker->add_thunks(thunks, max_round_number, ignore_too_low);
-	}
-	wait_for_all_workers();
 
+	if constexpr(!DISABLE_LMDB)
+	{
+		for (auto& worker : workers)
+		{
+			worker->add_thunks(thunks, max_round_number, ignore_too_low);
+		}
+		wait_for_all_workers();
+	}
 	min_persisted_round_number = std::max(min_persisted_round_number, max_round_number);
 	max_persisted_round_number = std::max(max_persisted_round_number, max_round_number);
 }
@@ -339,13 +342,15 @@ AccountLMDB::sync()
 	{
 		auto ts = utils::init_time_measurement();
 
-		for (auto& sync : syncers)
+		if constexpr (!DISABLE_LMDB)
 		{
-			sync->call_fsync();
+			for (auto& sync : syncers)
+			{
+				sync->call_fsync();
+			}
+
+			wait_for_all_syncers();
 		}
-
-		wait_for_all_syncers();
-
 		std::printf("out of band sync time: %lf\n", utils::measure_time(ts));
 	}
 	//else nothing to do, sync already was done

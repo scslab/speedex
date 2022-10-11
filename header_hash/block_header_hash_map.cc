@@ -4,6 +4,8 @@
 
 #include <utils/serialize_endian.h>
 
+#include "speedex/speedex_static_configs.h"
+
 #include "utils/hash.h"
 
 #include "utils/debug_macros.h"
@@ -76,6 +78,11 @@ BlockHeaderHashMap::insert(const Block& block, bool res)
 void
 BlockHeaderHashMap::persist_lmdb(uint64_t current_block_number)
 {
+    if constexpr (DISABLE_LMDB)
+    {
+        return;
+    }
+
     std::lock_guard lock(lmdb_mtx);
 
     BLOCK_INFO("persisting header hash map at round %lu", current_block_number);

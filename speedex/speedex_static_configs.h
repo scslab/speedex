@@ -16,10 +16,16 @@ namespace speedex
 	constexpr static bool USE_TATONNEMENT_TIMEOUT_THREAD = false;
 #endif
 
-#ifndef _DISABLE_PRICE_COMPUTATION
+#ifdef _DISABLE_PRICE_COMPUTATION
 	constexpr static bool DISABLE_PRICE_COMPUTATION = true;
 #else
 	constexpr static bool DISABLE_PRICE_COMPUTATION = false;
+#endif
+
+#ifdef _DISABLE_LMDB
+	constexpr static bool DISABLE_LMDB = true;
+#else
+	constexpr static bool DISABLE_LMDB = false;
 #endif
 
 constexpr static uint32_t MAX_SEQ_NUMS_PER_BLOCK = _MAX_SEQ_NUMS_PER_BLOCK;

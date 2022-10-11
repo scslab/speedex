@@ -197,7 +197,7 @@ speedex_block_creation_logic(
 	}
 
 
-	if constexpr (DISABLE_PRICE_COMPUTATION)
+	if constexpr (!DISABLE_PRICE_COMPUTATION)
 	{
 		//TODO could be removed later.  Good rn as a sanititimeouttheck.
 		auto clearing_check = lp_results.check_clearing(price_workspace);

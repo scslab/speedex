@@ -213,7 +213,7 @@ LPSolver::solve(
 
 	if constexpr(DISABLE_PRICE_COMPUTATION)
 	{
-		return ClearingParams::get_null_clearing(manager.get_orderbooks().size());
+		return ClearingParams::get_null_clearing(approx_params.tax_rate, manager.get_orderbooks().size());
 	}
 
 	std::unique_lock lock(mtx);
