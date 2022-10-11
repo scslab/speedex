@@ -23,8 +23,13 @@ void add_tx(AccountModificationBlock& list, const SignedTransaction& tx)
 		if (l.owner == tx.transaction.metadata.sourceAccount)
 		{
 			l.new_transactions_self.push_back(tx);
+			return;
 		}
 	}
+	AccountModificationTxList l;
+	l.owner = tx.transaction.metadata.sourceAccount;
+	l.new_transactions_self.push_back(tx);
+	list.push_back(l);
 }
 
 
