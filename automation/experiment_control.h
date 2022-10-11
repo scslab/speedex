@@ -61,7 +61,12 @@ class ExperimentController {
 	HotstuffVMControl_server server;
 
 	xdr::pollset ps;
-	xdr::srpc_tcp_listener<> listener;
+	std::unique_ptr<xdr::srpc_tcp_listener<>> listener;
+
+	bool shutdown = false;
+	std::mutex mtx;
+	std::condition_variable cv;
+
 public:
 
 	ExperimentController(std::shared_ptr<SpeedexVM> vm, std::string measurement_name_suffix = "");
@@ -72,6 +77,21 @@ public:
 
 	bool producer_is_done_signal_was_received() const {
 		return server.got_experiment_done_flag();
+	}
+
+	void await_pollset_shutdown()
+	{
+		listener.reset();
+
+		auto done_lambda = [this] () -> bool {
+			return shutdown;
+		};
+
+		std::unique_lock lock(mtx);
+		if (!done_lambda()) {
+			cv.wait(lock, done_lambda);
+		}
+		std::printf("shutdown happened\n");
 	}
 };
 

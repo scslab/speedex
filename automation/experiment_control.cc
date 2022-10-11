@@ -63,11 +63,18 @@ HotstuffVMControl_server::wait_for_breakpoint_signal() {
 ExperimentController::ExperimentController(std::shared_ptr<SpeedexVM> vm, std::string measurement_name_suffix)
 	: server(vm, measurement_name_suffix)
 	, ps()
-	, listener(ps, xdr::tcp_listen(EXPERIMENT_CONTROL_PORT, AF_INET), false, xdr::session_allocator<void>())
+	, listener(std::make_unique<xdr::srpc_tcp_listener<>>(ps, xdr::tcp_listen(EXPERIMENT_CONTROL_PORT, AF_INET), false, xdr::session_allocator<void>()))
 	{
-		listener.register_service(server);
+		listener->register_service(server);
 
-		std::thread th([this] {ps.run();});
+		std::thread th([this] {
+			ps.run();
+			std::printf("done run\n");
+			std::lock_guard lock(mtx);
+			shutdown = true;
+			cv.notify_all();
+		});
+
 		th.detach();
 	}
 

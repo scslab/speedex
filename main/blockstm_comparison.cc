@@ -5,7 +5,7 @@
 #include "speedex/speedex_management_structures.h"
 
 #include "block_processing/block_producer.h"
-
+#include "automation/experiment_control.h"
 
 #include "stats/block_update_stats.h"
 
@@ -232,7 +232,6 @@ run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, 
 
 	speedex_options.block_size = batch_size;
 
-
 	if (speedex_options.num_assets != params.num_assets) {
 		throw std::runtime_error("mismatch in num assets between speedex_options and experiment_options");
 	}
@@ -246,6 +245,11 @@ run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, 
 
 	auto vm = std::make_shared<SpeedexVM>(params, speedex_options, experiment_results_folder, configs);
 	vm -> init_clean();
+	{
+		std::printf("start controller\n");
+		ExperimentController controller(vm, "");
+		controller.await_pollset_shutdown();
+	}
 
 	std::vector<double> prices;
 	std::vector<ExperimentBlock> blocks;
