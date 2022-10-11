@@ -4,12 +4,15 @@
 
 #include "memory_database/memory_database.h"
 
+#include "automation/command_line_args.h"
+
 #include <utils/time.h>
 
 #include <getopt.h>
 
 using namespace speedex;
 
+/*
 
 [[noreturn]]
 static void usage() {
@@ -27,33 +30,28 @@ static const struct option opts[] = {
 	{nullptr, 0, nullptr, 0}
 };
 
+*/
 
 int main(int argc, char* const* argv)
 {
 
-	size_t num_offers = 500'000;
-
+	auto args = parse_cmd(argc, argv, "cda_experiment");
+	
 	std::minstd_rand gen(0);
 	GenerationOptions options;
 
-	std::string experiment_options_file;
-	
-	int opt;
+	std::string experiment_options_file = args.experiment_options_file;
 
-	while ((opt = getopt_long_only(argc, argv, "",
-				 opts, nullptr)) != -1)
+	size_t num_accounts = args.num_accounts;
+	size_t num_offers = args.batch_size;
+
+	if (num_offers == 0 || num_accounts == 0)
 	{
-		switch(opt) {
-			case EXPERIMENT_OPTIONS:
-				experiment_options_file = optarg;
-				break;
-			default:
-				usage();
-		}
+		throw std::runtime_error("invalid params");
 	}
 
 	if (experiment_options_file.size() == 0) {
-		usage();
+		throw std::runtime_error("invalid options file");
 	}
 
 	auto parsed = options.parse(experiment_options_file.c_str());
