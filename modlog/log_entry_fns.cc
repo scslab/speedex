@@ -121,9 +121,9 @@ void
 LogMergeFn::value_merge(AccountModificationTxListWrapper& original_value,
                         AccountModificationTxListWrapper& merge_in_value)
 {
-    for (const auto& new_tx : merge_in_value.new_transactions_self)
+    for (auto& new_tx : merge_in_value.new_transactions_self)
     {
-        original_value.new_transactions_self.push_back(new_tx);
+        original_value.new_transactions_self.emplace_back(std::move(new_tx));
     }
     // original_value.new_transactions_self.insert(
     //	original_value.new_transactions_self.end(),
