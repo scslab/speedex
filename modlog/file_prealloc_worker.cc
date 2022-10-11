@@ -28,8 +28,8 @@ FilePreallocWorker::prealloc(uint64_t block_number)
 	if constexpr (PREALLOC_BLOCK_FILES)
 	{
 		auto filename = tx_block_name(block_number);
-		std::printf("preallocating file for block %" PRIu64 " filename %s\n", 
-			block_number, filename.c_str());
+//		std::printf("preallocating file for block %" PRIu64 " filename %s\n", 
+//			block_number, filename.c_str());
 		block_fd = preallocate_file(filename.c_str());
 	}
 }
