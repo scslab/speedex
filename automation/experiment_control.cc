@@ -68,10 +68,13 @@ ExperimentController::ExperimentController(std::shared_ptr<SpeedexVM> vm, std::s
 		listener->register_service(server);
 
 		std::thread th([this] {
-			ps.run();
+			while(!start_shutdown)
+			{
+				ps.poll(1000);
+			}
 			std::printf("done run\n");
 			std::lock_guard lock(mtx);
-			shutdown = true;
+			ps_is_shutdown = true;
 			cv.notify_all();
 		});
 
