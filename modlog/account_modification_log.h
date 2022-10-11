@@ -122,11 +122,11 @@ public:
 
 	//! Prepare a file descriptor for saving account log.
 	void prepare_block_fd(uint64_t block_number) {
-		file_preallocator.call_prealloc(block_number);
+		//file_preallocator.call_prealloc(block_number);
 	}
 
 	void cancel_prepare_block_fd() {
-		file_preallocator.cancel_prealloc();
+		//file_preallocator.cancel_prealloc();
 	}
 
 	template<typename VectorType>
