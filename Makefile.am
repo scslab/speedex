@@ -129,6 +129,7 @@ SPEEDEX_SRCS = \
 	speedex/speedex_operation.cc \
 	speedex/speedex_options.cc \
 	speedex/speedex_persistence.cc \
+	speedex/speedex_static_configs.cc \
 	speedex/vm/speedex_vm.cc \
 	speedex/vm/speedex_vm_init.cc
 

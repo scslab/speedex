@@ -30,7 +30,12 @@ namespace speedex
 
 constexpr static uint32_t MAX_SEQ_NUMS_PER_BLOCK = _MAX_SEQ_NUMS_PER_BLOCK;
 
-constexpr static bool DETAILED_MOD_LOGGING = true;
+#ifndef _DISABLE_MOD_LOGGING
+	constexpr static bool DETAILED_MOD_LOGGING = true;
+#else
+	constexpr static bool DETAILED_MOD_LOGGING = false;
+#endif
+
 constexpr static bool PREALLOC_BLOCK_FILES = true;
 
 #if 0
@@ -42,5 +47,9 @@ constexpr static bool PREALLOC_BLOCK_FILES = false;
 
 // general
 constexpr static bool ACCOUNT_DB_SYNC_IMMEDIATELY = false;
+
+void
+__attribute__((constructor))
+log_static_configs();
 
 } /* speedex */
