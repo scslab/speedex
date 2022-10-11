@@ -27,7 +27,7 @@ AccountModificationLog::hash(Hash& hash)
 
     *persistable_block
         = modification_log
-              .template accumulate_values_parallel<saved_block_t, EntryAccumulateValuesFn>();
+              .template accumulate_values_parallel<saved_block_t, AccumulateFn>();
 
     float res2 = utils::measure_time(timestamp);
 
@@ -75,7 +75,7 @@ AccountModificationLog::persist_block(uint64_t block_number,
             std::printf("forming log in persist_block\n");
             *persistable_block
                 = modification_log.template accumulate_values_parallel<
-                    saved_block_t, EntryAccumulateValuesFn>();
+                    saved_block_t, AccumulateFn>();
         }
     }
 

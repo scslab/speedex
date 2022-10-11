@@ -10,6 +10,21 @@
 
 namespace speedex {
 
+void write_tx_data(SignedTransactionList& list_out, SignedTransactionList& list_in)
+{
+	list_out = std::move(list_in);
+}
+
+void write_tx_data(SignedTransactionList& list_out, AccountModificationBlock& block_in)
+{
+	for (auto& log : block_in)
+	{
+		for (auto& tx : log.new_transactions_self) {
+			list_out.emplace_back(std::move(tx));
+		}
+	}
+}
+
 std::unique_ptr<SignedTransactionList>
 persist_critical_round_data(
 	SpeedexManagementStructures& management_structures,
@@ -21,8 +36,11 @@ persist_critical_round_data(
 
 	auto timestamp = utils::init_time_measurement();
 
-	save_header(header);
-
+	if (write_block)
+	{
+		save_header(header);
+	}
+	
 	measurements.header_write_time = utils::measure_time(timestamp);
 
 	uint64_t current_block_number = header.block.blockNumber;
@@ -41,8 +59,11 @@ persist_critical_round_data(
 
 	management_structures.account_modification_log.detached_clear();
 	BLOCK_INFO("done persist critical round data");
+
+	std::unique_ptr<SignedTransactionList> list_out;
+	write_tx_data(*list_out, *block_out);
 	//offer db thunks, header hash map already updated
-	return block_out;
+	return list_out;
 }
 
 void persist_async_phase1(

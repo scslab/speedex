@@ -11,6 +11,8 @@
 namespace speedex
 {
 
+class TxCountMetadata;
+
 typedef trie::UInt64Prefix AccountIDPrefix;
 
 // warning police
@@ -25,5 +27,11 @@ struct ModificationLogFns
 typedef trie::XdrTypeWrapper<AccountModificationTxList,
                              &ModificationLogFns::serialize>
     AccountModificationTxListWrapper;
+
+typedef AccountModificationTxListWrapper LogValueT;
+
+typedef std::conditional<std::is_same<LogValueT, AccountModificationTxListWrapper>::value,
+	void,
+	TxCountMetadata>::type LogValueMetadataT;
 
 } // namespace speedex

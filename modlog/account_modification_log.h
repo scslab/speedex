@@ -45,18 +45,24 @@ class AccountModificationLog : private utils::NonMovableOrCopyable {
 
 public:
 	
-	using LogValueT = 
-		AccountModificationEntry;
+	//using LogValueT = 
+	//	AccountModificationEntry;
 		//AccountModificationTxListWrapper;
 
-	using TrieT = trie::RecyclingTrie<LogValueT, AccountIDPrefix, TxCountMetadata>;
+	using TrieT = trie::RecyclingTrie<LogValueT, AccountIDPrefix, LogValueMetadataT>;
 	using serial_trie_t = TrieT::serial_trie_t;
 
 	static_assert(std::is_same<TrieT::prefix_t, AccountIDPrefix>::value, "unexpected prefix type");
 
 	using serial_cache_t = utils::ThreadlocalCache<serial_trie_t>;
 
-	using saved_block_t = SignedTransactionList; // AccountModificationBlock
+	using saved_block_t = typename std::conditional<std::is_same<LogValueT, AccountModificationTxListWrapper>::value,
+		AccountModificationBlock,
+		SignedTransactionList>::type; // AccountModificationBlock
+
+	using AccumulateFn = typename std::conditional<std::is_same<LogValueT, AccountModificationTxListWrapper>::value,
+		trie::DefaultAccumulateValuesFn,
+		EntryAccumulateValuesFn>::type;
 
 private:
 
@@ -126,7 +132,7 @@ public:
 	template<typename VectorType>
 	void parallel_accumulate_values(VectorType& vec) const {
 		std::shared_lock lock(mtx);
-		modification_log.template accumulate_values_parallel<VectorType, EntryAccumulateValuesFn>(vec);
+		modification_log.template accumulate_values_parallel<VectorType, AccumulateFn>(vec);
 	}
 
 	//! Nominally accumulates a vector with all of the values in the trie.
@@ -178,7 +184,7 @@ class SerialAccountModificationLog {
 	AccountModificationLog& main_log;
 
 	using LogInsertFn = typename
-		std::conditional<std::is_same<AccountModificationLog::LogValueT, AccountModificationTxListWrapper>::value,
+		std::conditional<std::is_same<LogValueT, AccountModificationTxListWrapper>::value,
 			LogListInsertFn,
 			LogEntryInsertFn>::type;
 

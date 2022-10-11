@@ -106,6 +106,17 @@ struct LogMergeFn {
 		return out;
 	}
 
+	template<typename metadata_t>
+	static
+	metadata_t value_merge_recyclingimpl(
+		AccountModificationTxListWrapper& original_value, 
+		AccountModificationTxListWrapper& merge_in_value)
+	{
+		value_merge(original_value, merge_in_value);
+		return metadata_t::zero();
+	}
+
+
 	static void value_merge(
 		AccountModificationTxListWrapper& original_value,
 		AccountModificationTxListWrapper& merge_in_value);
