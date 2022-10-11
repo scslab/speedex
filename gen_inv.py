@@ -30,14 +30,22 @@ for instance in instances:
 print (hosts)
 
 with open("awsinv", 'w') as f:
-        f.write ("[host0]\nubuntu@")
-        f.write  (hosts["node-0"]["pub"])
-        f.write  ("\n[host1]\nubuntu@")
-        f.write  (hosts["node-1"]["pub"])
-        f.write  ("\n[host2]\nubuntu@")
-        f.write  (hosts["node-2"]["pub"])
-        f.write  ("\n[host3]\nubuntu@")
-        f.write  (hosts["node-3"]["pub"])
+        f.write ("[host0]\n")
+        if (len(hosts["node-0"]["pub"]) > 0):
+            f.write("ubuntu@")
+            f.write(hosts["node-0"]["pub"])
+        f.write  ("\n[host1]\n")
+        if (len(hosts["node-1"]["pub"]) > 0):
+            f.write("ubuntu@")
+            f.write(hosts["node-1"]["pub"])
+        f.write  ("\n[host2]\n")
+        if (len(hosts["node-2"]["pub"]) > 0):
+            f.write("ubuntu@")
+            f.write(hosts["node-2"]["pub"])
+        f.write  ("\n[host3]\n")
+        if (len(hosts["node-3"]["pub"]) > 0):
+            f.write("ubuntu@")
+            f.write(hosts["node-3"]["pub"])
         f.write  ("\n") 
 
 with open("config/config_aws_generated.yaml", 'w') as f:
