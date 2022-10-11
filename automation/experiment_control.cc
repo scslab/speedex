@@ -63,7 +63,7 @@ HotstuffVMControl_server::wait_for_breakpoint_signal() {
 ExperimentController::ExperimentController(std::shared_ptr<SpeedexVM> vm, std::string measurement_name_suffix)
 	: server(vm, measurement_name_suffix)
 	, ps()
-	, listener(xdr::srpc_tcp_listener<>(ps, xdr::tcp_listen(EXPERIMENT_CONTROL_PORT, AF_INET), false, xdr::session_allocator<void>()))
+	, listener(ps, xdr::tcp_listen(EXPERIMENT_CONTROL_PORT, AF_INET), false, xdr::session_allocator<void>())
 	{
 		listener.register_service(server);
 
@@ -72,7 +72,6 @@ ExperimentController::ExperimentController(std::shared_ptr<SpeedexVM> vm, std::s
 			{
 				ps.poll(1000);
 			}
-			std::printf("done run\n");
 			std::lock_guard lock(mtx);
 			ps_is_shutdown = true;
 			cv.notify_all();
@@ -80,5 +79,19 @@ ExperimentController::ExperimentController(std::shared_ptr<SpeedexVM> vm, std::s
 
 		th.detach();
 	}
+
+void
+ExperimentController::await_pollset_shutdown()
+{
+	auto done_lambda = [this] () -> bool {
+		return ps_is_shutdown;
+	};
+
+	std::unique_lock lock(mtx);
+	if (!done_lambda()) {
+		cv.wait(lock, done_lambda);
+	}
+	std::printf("shutdown happened\n");
+}
 
 } /* speedex */

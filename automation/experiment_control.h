@@ -68,18 +68,7 @@ class ExperimentController {
 	std::mutex mtx;
 	std::condition_variable cv;
 
-	void await_pollset_shutdown()
-	{
-		auto done_lambda = [this] () -> bool {
-			return ps_is_shutdown;
-		};
-
-		std::unique_lock lock(mtx);
-		if (!done_lambda()) {
-			cv.wait(lock, done_lambda);
-		}
-		std::printf("shutdown happened\n");
-	}
+	void await_pollset_shutdown();
 
 public:
 
