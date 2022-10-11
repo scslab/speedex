@@ -113,7 +113,7 @@ AsyncAccountLMDBShardWorker::exec_one_thunk(
 {
 	// Used to require strict sequentiality, now gaps allowed in case of validation failures
 	// due to byzantine proposers.
-	if (thunk.current_block_number < current_block_number + 1) {
+	if (thunk.current_block_number < current_block_number + 1 && current_block_number != 0) {
 		throw std::runtime_error("can't persist blocks in wrong order!!!");
 	}
 
@@ -166,8 +166,11 @@ AsyncAccountLMDBShardWorker::exec_thunks()
 	{
 		if (ignore_too_low && thunk.current_block_number <= starting_persisted_number)
 		{
-			//thunk at block i is included if persisted to round i
-			continue;
+			if (!(thunk.current_block_number == 0 && starting_persisted_number == 0))
+			{
+				//thunk at block i is included if persisted to round i
+				continue;
+			}
 		}
 		exec_one_thunk(thunk, wtx, current_block_number);
 	}
@@ -176,8 +179,6 @@ AsyncAccountLMDBShardWorker::exec_thunks()
 	{
 		throw std::runtime_error("invalid persist max_round_number");
 	}
-
-	//std::printf("thunk process time: %lf\n", utils::measure_time(ts));
 
 	shard.commit_wtxn(wtx, max_round_number, ACCOUNT_DB_SYNC_IMMEDIATELY);
 

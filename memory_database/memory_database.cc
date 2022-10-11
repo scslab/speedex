@@ -508,7 +508,7 @@ void MemoryDatabase::clear_persistence_thunks_and_reload(uint64_t expected_persi
 
 						//auto res = rtx.get(account_lmdb_instance.get_data_dbi(), key);
 						auto res = rtx.get(thunk.kvs->at(idx).key);
-
+							
 						if (res) {
 							AccountCommitment commitment;
 							dbval_to_xdr(*res, commitment);
@@ -664,7 +664,7 @@ void MemoryDatabase::persist_lmdb(uint64_t current_block_number) {
 	auto& thunk = thunks.back();
 
 	thunk.kvs->resize(database.size());
-
+	
 	tbb::parallel_for(
 		tbb::blocked_range<size_t>(0, database.size()),
 		[&] (auto r) {
