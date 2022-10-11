@@ -11,12 +11,28 @@ namespace speedex
 
 using xdr::operator==;
 
+void add_tx(SignedTransactionList& list, const SignedTransaction& tx)
+{
+	list.push_back(tx);
+}
+
+void add_tx(AccountModificationBlock& list, const SignedTransaction& tx)
+{
+	for (auto& l : list)
+	{
+		if (l.owner == tx.transaction.metadata.sourceAccount)
+		{
+			l.new_transactions_self.push_back(tx);
+		}
+	}
+}
+
 
 TEST_CASE("tx accumulate", "[modlog]")
 {
 	AccountModificationLog log;
 
-	std::vector<SignedTransaction> expect;
+	AccountModificationBlock expect;
 	{
 		SerialAccountModificationLog s(log);
 
@@ -25,15 +41,14 @@ TEST_CASE("tx accumulate", "[modlog]")
 		tx.transaction.metadata.sequenceNumber = 1llu << 8;
 
 		s.log_new_self_transaction(tx);
-
-		expect.push_back(tx);
+		add_tx(expect, tx);
 	}
 
 	SECTION("one tx")
 	{
 		log.merge_in_log_batch();
 
-		std::vector<SignedTransaction> result;
+		AccountModificationBlock result;
 		log.parallel_accumulate_values(result);
 
 		REQUIRE(result == expect);
@@ -51,12 +66,12 @@ TEST_CASE("tx accumulate", "[modlog]")
 
 			s.log_new_self_transaction(tx);
 
-			expect.push_back(tx);
+			add_tx(expect, tx);
 		}
 
 		log.merge_in_log_batch();
 
-		std::vector<SignedTransaction> result;
+		AccountModificationBlock result;
 		log.parallel_accumulate_values(result);
 
 		REQUIRE(result == expect);

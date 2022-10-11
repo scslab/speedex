@@ -5,6 +5,8 @@
 #include "orderbook/commitment_checker.h"
 #include "orderbook/offer_clearing_params.h"
 
+#include "speedex/speedex_static_configs.h"
+
 #include "stats/block_update_stats.h"
 
 #include "utils/debug_macros.h"	
