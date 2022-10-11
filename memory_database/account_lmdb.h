@@ -28,7 +28,11 @@ uint32_t get_shard(AccountID const& account, const uint8_t* HASH_KEY);
 
 class AccountLMDBShard : public lmdb::LMDBInstance, utils::NonMovableOrCopyable
 {
+	public:
 	const uint32_t idx;
+	
+	
+	private:
 	const std::string DB_NAME;
 
 	uint8_t HASH_KEY[crypto_shorthash_KEYBYTES];
