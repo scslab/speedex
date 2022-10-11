@@ -87,7 +87,7 @@ public:
 
 	~ExperimentController()
 	{
-		start_shutdown = true;
+		start_shutdown.test_and_set();
 		await_pollset_shutdown();
 	}
 

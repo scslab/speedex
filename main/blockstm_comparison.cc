@@ -245,12 +245,7 @@ run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, 
 
 	auto vm = std::make_shared<SpeedexVM>(params, speedex_options, experiment_results_folder, configs);
 	vm -> init_clean();
-	{
-		std::printf("start controller\n");
-		ExperimentController controller(vm, "");
-	}
-	std::printf("controller shutdown\n");
-
+	
 	std::vector<double> prices;
 	std::vector<ExperimentBlock> blocks;
 
