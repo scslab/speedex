@@ -1,0 +1,22 @@
+---
+- name: autogen configure for blockstm_comparison
+  import_playbook: configure_for_blockstm_experiment.yaml
+
+- name: make all
+  import_playbook: make_all.yaml
+
+- name: run experiment
+  hosts: host0
+  tasks:
+          - name: run
+            shell: "cd xfs/speedex && ./blockstm_comparison > blockstm_comparison_results_log"
+
+          - name: get results
+            ansible.builtin.fetch:
+              src: ~/xfs/speedex/blockstm_comparison_results_log
+              dest: ../blockstm_comparison_results_log
+              mode: '0666'
+              flat: yes
+
+
+          
