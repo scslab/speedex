@@ -50,7 +50,7 @@ int main(int argc, char* const* argv)
 	}
 
 	if (experiment_options_file.size() == 0) {
-		experiment_options_file = "synthetic_data_config/cda_params.yaml"
+		experiment_options_file = "synthetic_data_config/cda_params.yaml";
 	}
 
 	auto parsed = options.parse(experiment_options_file.c_str());
