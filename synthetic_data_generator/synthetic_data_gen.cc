@@ -524,7 +524,7 @@ GeneratorState<random_generator>::gen_cancel_tx(const SignedTransaction& creatio
 
 	SignedTransaction tx_out;
 	tx_out.transaction.metadata.sourceAccount = creation_tx.transaction.metadata.sourceAccount;
-	tx_out.transaction.operations.push_back(tx_formatter	::make_operation(cancel_op));
+	tx_out.transaction.operations.push_back(tx_formatter::make_operation(cancel_op));
 	return tx_out;
 }
 
@@ -741,6 +741,21 @@ GeneratorState<random_generator>::shuffle_block(ExperimentBlock& block)
 }
 
 template<typename random_generator>
+void
+GeneratorState<random_generator>::shuffle_offers_and_fill_in_seqnos(xdr::xvector<Offer>& offers)
+{
+	std::shuffle(offers.begin(), offers.end(), gen);
+
+	for (auto& offer : offers)
+	{
+		AccountID owner = offer.owner;
+		uint64_t prev_seq_num = block_state.sequence_num_map[owner];
+		offer.offerId = ((prev_seq_num + 1) << 8);
+		block_state.sequence_num_map[owner] ++;
+	}
+}
+
+template<typename random_generator>
 xdr::xvector<Offer>
 GeneratorState<random_generator>::make_offer_list(const std::vector<double>& prices, size_t num_offers)
 {
@@ -766,6 +781,7 @@ GeneratorState<random_generator>::make_offer_list(const std::vector<double>& pri
 			}
 		}
 	}
+	shuffle_offers_and_fill_in_seqnos(offers);
 	return offers;
 }
 

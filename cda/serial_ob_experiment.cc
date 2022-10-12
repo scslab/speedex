@@ -23,7 +23,16 @@ SerialOrderbookExperiment::exec_one_offer(Offer const& offer)
 		throw std::runtime_error("wtf");
 	}
 
-	auto res = view.escrow(user, offer.category.sellAsset, offer.amount);
+	auto res = view.reserve_sequence_number(user, offer.offerId & 0xFFFF'FFFF'FFFF'FF00);
+
+	if (res != TransactionProcessingStatus::SUCCESS)
+	{
+		throw std::runtime_error("should not happen in experiments");
+		view.unwind();
+		return;
+	}
+
+	res = view.escrow(user, offer.category.sellAsset, offer.amount);
 
 	if (res != TransactionProcessingStatus::SUCCESS)
 	{

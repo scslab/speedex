@@ -170,6 +170,8 @@ struct GeneratorState {
 
 	void filter_by_replica_id(ExperimentBlock& block);
 
+	void shuffle_offers_and_fill_in_seqnos(xdr::xvector<Offer>& offers);
+
 public:
 
 	GeneratorState(
