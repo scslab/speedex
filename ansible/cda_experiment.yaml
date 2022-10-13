@@ -1,0 +1,15 @@
+- name: run experiment
+  hosts: host0
+  tasks:
+          #- name: make
+          #  shell: "cd xfs/speedex && ./autogen.sh && ./configure DEFINES=\"-D_MAX_SEQ_NUMS_PER_BLOCK=10000\" && make -j"
+
+          - name: run
+            shell: "cd xfs/speedex && ./cda_experiment --num_accounts={{ num_accounts }} --batch_size={{ batch_size }} > cda_res_{{ num_accounts }}_{{ batch_size }}"
+
+          - name: get results
+            ansible.builtin.fetch:
+              src: ~/xfs/speedex/cda_res_{{ num_accounts }}_{{ batch_size }}
+              dest: ../cda_res/cda_res_{{ num_accounts }}_{{ batch_size }}
+              mode: '0666'
+              flat: yes
