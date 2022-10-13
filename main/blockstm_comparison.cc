@@ -216,7 +216,7 @@ run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, 
 	params.num_assets = 1;
 	params.default_amount = options.new_account_balance;
 	params.account_list_filename = "blockstm_accounts";
-	params.num_blocks = 100;
+	params.num_blocks = NUM_ROUNDS;
 	params.n_replicas = config.nreplicas;
 
 	if (options.num_assets != params.num_assets)
