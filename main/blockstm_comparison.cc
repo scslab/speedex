@@ -63,7 +63,7 @@ int main(int argc, char* const* argv)
 
 	std::vector<uint32_t> thread_counts = {1, 2, 4, 8, 16, 32, 48, 96};
 
-	std::vector<uint32_t> num_accounts = {2, 10, 100, 1000, 10000, 100000};
+	std::vector<uint32_t> num_accounts = {2, 10, 100, 1000, 10000};
 
 	std::vector<uint32_t> batch_sizes = {100, 1000, 10'000, 20'000, 100'000};
 
