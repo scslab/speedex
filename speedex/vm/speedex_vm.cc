@@ -141,8 +141,6 @@ SpeedexVM::exec_block(const hotstuff::VMBlock& blk_unparsed)
 	uint64_t prev_block_number = last_committed_block.block.blockNumber;
 	measurements_base.blockNumber = prev_block_number + 1;
 
-	measurements_log.add_measurement(measurements_base);
-
 	if (last_committed_block.block.blockNumber + 1 != blk.hashedBlock.block.blockNumber) {
 		BLOCK_INFO("incorrect block height appended to speedex vm chain -- no-op, except incrementing blockNumber");
 		return;
@@ -193,6 +191,8 @@ SpeedexVM::exec_block(const hotstuff::VMBlock& blk_unparsed)
 	current_measurements.total_persistence_time = measure_time(persistence_start);
 
 	current_measurements.total_time = measure_time(timestamp);
+
+	measurements_log.add_measurement(measurements_base);
 
 	//last_committed_block = new_header;
 
