@@ -2,12 +2,12 @@
 - name: aws init
   hosts: all
   tasks:
-          - name: mdadm
-            shell: "sudo mdadm -C /dev/md127 -l 0 -n 4 /dev/nvme1n1 /dev/nvme2n1 /dev/nvme3n1 /dev/nvme4n1"
+#          - name: mdadm
+#           shell: "sudo mdadm -C /dev/md127 -l 0 -n 4 /dev/nvme1n1 /dev/nvme2n1 /dev/nvme3n1 /dev/nvme4n1"
           - name: mkdir
             shell: "mkdir -p xfs"
-          - name: mkfs
-            shell: "sudo mkfs.xfs /dev/md127 -f && sudo mount /dev/md127 xfs -o discard"
+#         - name: mkfs
+#           shell: "sudo mkfs.xfs /dev/md127 -f && sudo mount /dev/md127 xfs -o discard"
           - name: chmod
             shell: "sudo chmod -R 0777 xfs"
           - name: clone

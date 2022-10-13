@@ -14,7 +14,7 @@
           - name: get results
             ansible.builtin.fetch:
               src: ~/xfs/speedex/blockstm_comparison_results_log
-              dest: ../blockstm_comparison_results_log
+              dest: ../blockstm_comparison_results_log_final
               mode: '0666'
               flat: yes
 

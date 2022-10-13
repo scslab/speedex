@@ -55,7 +55,7 @@ static const struct option opts[] = {
 std::vector<double>
 run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, const uint32_t num_threads);
 
-constexpr static size_t NUM_ROUNDS = 100;
+constexpr static size_t NUM_ROUNDS = 10;
 
 int main(int argc, char* const* argv)
 {
@@ -73,8 +73,11 @@ int main(int argc, char* const* argv)
 	{
 		for (auto batch : batch_sizes)
 		{
+			std::printf("n_acc %lu batch %lu\n", acc, batch);
 			for (auto n : thread_counts)
 			{
+				std::printf("threadcount %lu\n", n);
+
 				auto res = run_blockstm_experiment(acc, batch, n);
 
 				if (res.size() != NUM_ROUNDS)
