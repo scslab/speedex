@@ -173,7 +173,7 @@ OrderbookStateCommitmentChecker::check_clearing()
 
     for (auto i = 0u; i < num_assets; i++)
     {
-        FractionalAsset taxed_demand = demands[i].tax_and_round(tax_rate);
+        FractionalAsset taxed_demand = FractionalAsset::from_integral(demands[i].tax_and_round(tax_rate));
 
         CLEARING_INFO("asset %d supplies %lf demands %lf taxed_demand %lf",
                       i,
@@ -185,7 +185,7 @@ OrderbookStateCommitmentChecker::check_clearing()
             std::printf("invalid clearing: asset %d supply %lf demand %lf taxed_demand %lf\n", i,
                 supplies[i].to_double(),
                 demands[i].to_double(),
-                taxed_demand[i].to_double());
+                taxed_demand.to_double());
             return false;
         }
     }
