@@ -35,7 +35,7 @@ ClearingParams::check_clearing(const std::vector<Price>& prices) const {
 	CLEARING_INFO("rounded asset results");
 	CLEARING_INFO("Asset\tsupply\tdemand\tprice");
 	for (unsigned int i = 0; i < num_assets; i++) {
-		FractionalAsset taxed_demand = demands[i].tax(tax_rate);
+		FractionalAsset taxed_demand = demands[i].tax_and_round(tax_rate);
 		if (supplies[i] < taxed_demand) {
 			CLEARING_INFO("failed on %d %f %f", 
 				i, supplies[i].to_double(), taxed_demand.to_double());
