@@ -67,7 +67,7 @@ public:
 	//! Construct from double
 	static FixedPrecision from_double(double val)
 	{
-		return FixedPrecision(val);
+		return FixedPrecision(val, EmptyStruct2{});
 	}
 
 	template<unsigned int other_radix>
