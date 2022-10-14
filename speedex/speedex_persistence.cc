@@ -60,10 +60,14 @@ persist_critical_round_data(
 	management_structures.account_modification_log.detached_clear();
 	BLOCK_INFO("done persist critical round data");
 
-	auto list_out = std::make_unique<SignedTransactionList>();
-	write_tx_data(*list_out, *block_out);
+	if (block_out)
+	{
+		auto list_out = std::make_unique<SignedTransactionList>();
+		write_tx_data(*list_out, *block_out);
+		return list_out;
+	}
 	//offer db thunks, header hash map already updated
-	return list_out;
+	return nullptr;
 }
 
 void persist_async_phase1(
