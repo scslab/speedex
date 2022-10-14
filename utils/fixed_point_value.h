@@ -16,6 +16,7 @@ namespace
 {
 
 struct EmptyStruct {};
+struct EmptyStruct2 {};
 
 } // anonymous namespace
 
@@ -39,7 +40,7 @@ private:
 	//! Construct from raw value
 	FixedPrecision(value_t value, EmptyStruct) : value(value) {}
 	//! Construct from double (i.e. round double to fixed-point)
-	FixedPrecision(double d_val) : value(std::round(d_val * (((value_t) 1)<<radix))) {}
+	FixedPrecision(double d_val, EmptyStruct2) : value(std::round(d_val * (((value_t) 1)<<radix))) {}
 public:
 
 	//! Construct with default value 0.
