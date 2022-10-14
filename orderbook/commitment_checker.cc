@@ -182,7 +182,7 @@ OrderbookStateCommitmentChecker::check_clearing()
                       taxed_demand.to_double());
         if (supplies[i] < taxed_demand)
         {
-            std::printf("invalid clearing: asset %d supply %lf demand %lf taxed_demand %lf\n", i
+            std::printf("invalid clearing: asset %d supply %lf demand %lf taxed_demand %lf\n", i,
                 supplies[i].to_double(),
                 demands[i].to_double(),
                 taxed_demand[i].to_double());
