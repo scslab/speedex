@@ -16,6 +16,7 @@ log_static_configs()
 	std::printf("PREALLOC_BLOCK_FILES           = %u\n", PREALLOC_BLOCK_FILES);
 	std::printf("ACCOUNT_DB_SYNC_IMMEDIATELY    = %u\n", ACCOUNT_DB_SYNC_IMMEDIATELY);
 	std::printf("MAX_SEQ_NUMS_PER_BLOCK         = %lu\n", MAX_SEQ_NUMS_PER_BLOCK);
+	std::printf("LOG_TRANSFERS                  = %u\n", LOG_TRANSFERS);
 	std::printf("====================================\n");
 }
 

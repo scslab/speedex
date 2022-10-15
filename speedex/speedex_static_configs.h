@@ -38,7 +38,13 @@ constexpr static uint32_t MAX_SEQ_NUMS_PER_BLOCK = _MAX_SEQ_NUMS_PER_BLOCK;
 
 constexpr static bool PREALLOC_BLOCK_FILES = true;
 
-constexpr static bool LOG_TRANSFERS = true;
+
+#ifdef _LOG_TRANSFERS
+	constexpr static bool LOG_TRANSFERS = true;
+#else
+	constexpr static bool LOG_TRANSFERS = false;
+#endif
+
 
 #if 0
 // setup for blockstm replication
