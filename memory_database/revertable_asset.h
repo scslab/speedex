@@ -83,6 +83,11 @@ public:
 	//! Negative inputs cannot fail (i.e. negative inputs mean releasing money
 	//! from escrow).
 	bool conditional_escrow(const amount_t& amount) {
+		if (amount == INT64_MIN)
+		{
+			// cannot negate
+			return false;
+		}
 		if (amount > 0) {
 			auto result = conditional_transfer_available(-amount);
 			return result;
@@ -111,6 +116,10 @@ public:
 		while (true) {
 			amount_t current_available
 				= available.load(std::memory_order_relaxed);
+			if (__builtin_add_overflow_p(current_available, amount, static_cast<amount_t>(0)))
+			{
+				return false;
+			}
 			amount_t tentative_available = current_available + amount;
 			if (tentative_available < 0) {
 				return false;
