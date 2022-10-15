@@ -5,6 +5,7 @@
 
 #include "utils/debug_macros.h"
 #include "utils/save_load_xdr.h"
+#include "utils/manage_data_dirs.h"
 
 #include "speedex/speedex_static_configs.h"
 
@@ -15,13 +16,13 @@ namespace speedex {
 constexpr static bool DIFF_LOGS_ENABLED = false;
 
 void
-AccountModificationLog::hash(Hash& hash)
+AccountModificationLog::hash(Hash& hash, uint64_t block_number)
 {
     std::lock_guard lock(mtx);
 
     auto timestamp = utils::init_time_measurement();
 
-    modification_log.hash<LogNormalizeFn>(hash);
+    modification_log.hash<LogNormalizeFn>(hash, hash_log);
 
     float res = utils::measure_time(timestamp);
 
@@ -31,7 +32,13 @@ AccountModificationLog::hash(Hash& hash)
 
     float res2 = utils::measure_time(timestamp);
 
-    BLOCK_INFO("acct log hash: hash/normalize %lf acc vals %lf", res, res2);
+    std::string log_filename = log_dir() + "account_hash_" + std::to_string(block_number);
+
+    hash_log.write_logs(log_filename);
+
+    float res3 = utils::measure_time(timestamp);
+
+    BLOCK_INFO("acct log hash: hash/normalize %lf acc vals %lf wait on hash logs write %lf", res, res2, res3);
 }
 
 void
@@ -80,6 +87,9 @@ AccountModificationLog::persist_block(uint64_t block_number,
     }
 
     if (persist_block) {
+      
+        throw std::runtime_error("dead code path");
+        /*
         auto& block_fd = file_preallocator.wait_for_prealloc();
         if (!block_fd) {
             throw std::runtime_error("block wasn't preallocated!!!");
@@ -100,6 +110,7 @@ AccountModificationLog::persist_block(uint64_t block_number,
           //      *persistable_block, block_fd, write_buffer, BUF_SIZE);
         }
         block_fd.clear();
+        */
     }
 
     if (return_block) {

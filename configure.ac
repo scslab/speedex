@@ -45,6 +45,7 @@ AS_IF([test -z "${OFFER_DB}"], [OFFER_DB="offer_database/"])
 AS_IF([test -z "${HEADER_HASH_DB}"], [HEADER_HASH_DB="header_hash_database/"])
 AS_IF([test -z "${TX_BLOCK_DB}"], [TX_BLOCK_DB="tx_block_database/"])
 AS_IF([test -z "${HEADER_DB}"], [HEADER_DB="header_database/"])
+AS_IF([test -z "${LOG_DIR}"], [LOG_DIR="logs/"])
 
 AC_DEFINE_UNQUOTED([ROOT_DB_DIRECTORY], ["$ROOT_DB_DIRECTORY"], [Root directory for storing lmdbs + txs])
 AC_DEFINE_UNQUOTED([ACCOUNT_DB], ["$ACCOUNT_DB"], [Subdirectory of ROOT_DB_DIRECTORY for account lmdb])
@@ -52,6 +53,8 @@ AC_DEFINE_UNQUOTED([OFFER_DB], ["$OFFER_DB"], [Subdirectory of ROOT_DB_DIRECTORY
 AC_DEFINE_UNQUOTED([HEADER_HASH_DB], ["$HEADER_HASH_DB"], [Subdirectory of ROOT_DB_DIRECTORY for header hash lmdb])
 AC_DEFINE_UNQUOTED([TX_BLOCK_DB], ["$TX_BLOCK_DB"], [Subdirectory of ROOT_DB_DIRECTORY for transaction block lists])
 AC_DEFINE_UNQUOTED([HEADER_DB], ["$HEADER_DB"], [Subdirectory of ROOT_DB_DIRECTORY for block headers])
+AC_DEFINE_UNQUOTED([LOG_DIR], ["$LOG_DIR"], [Subdirectory of ROOT_DB_DIRECTORY for logs])
+
 
 AS_MKDIR_P([$ROOT_DB_DIRECTORY$ACCOUNT_DB])
 AS_MKDIR_P([$ROOT_DB_DIRECTORY$OFFER_DB])

@@ -25,7 +25,8 @@ namespace detail {
 void speedex_make_state_commitment(
 	InternalHashes& hashes,
 	SpeedexManagementStructures& management_structures,
-	BlockProductionHashingMeasurements& measurements) {
+	BlockProductionHashingMeasurements& measurements,
+	uint64_t current_block_number) {
 	{
 		auto timestamp = utils::init_time_measurement();
 
@@ -42,7 +43,7 @@ void speedex_make_state_commitment(
 
 	auto timestamp = utils::init_time_measurement();
 	management_structures.account_modification_log.hash(
-		hashes.modificationLogHash);
+		hashes.modificationLogHash, current_block_number);
 	measurements.account_log_hash_time = utils::measure_time(timestamp);
 
 	management_structures.block_header_hash_map.hash(hashes.blockMapHash);
@@ -280,7 +281,8 @@ speedex_block_creation_logic(
 	detail::speedex_make_state_commitment(
 		new_block.block.internalHashes,
 		management_structures,
-		hashing_measurements);
+		hashing_measurements,
+		current_block_number);
 
 	overall_measurements.state_commitment_time = utils::measure_time(timestamp);
 
@@ -552,7 +554,7 @@ bool _speedex_block_validation_logic(
 	stats.workunit_hash_time = utils::measure_time(timestamp);
 
 	management_structures.account_modification_log.hash(
-		comparison_next_block.internalHashes.modificationLogHash);
+		comparison_next_block.internalHashes.modificationLogHash, current_block_number);
 
 	management_structures.block_header_hash_map.hash(
 		comparison_next_block.internalHashes.blockMapHash);

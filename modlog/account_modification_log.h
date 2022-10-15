@@ -11,10 +11,10 @@ Implicitly assembles a block of transactions during block production.
 #include <thread>
 
 #include "modlog/account_modification_entry.h"
-#include "modlog/file_prealloc_worker.h"
 #include "modlog/typedefs.h"
 
 #include <mtt/trie/recycling_impl/trie.h>
+#include <mtt/trie/hash_log.h>
 #include <utils/non_movable.h>
 
 #include "utils/background_deleter.h"
@@ -23,6 +23,8 @@ Implicitly assembles a block of transactions during block production.
 #include "xdr/database_commitments.h"
 #include "xdr/types.h"
 #include "xdr/block.h"
+
+#include "config.h"
 
 #include <xdrpp/marshal.h>
 
@@ -68,10 +70,11 @@ private:
 
 	serial_cache_t cache;
 
+	std::optional<trie::HashLog<AccountIDPrefix>> hash_log;
+
 	TrieT modification_log;
 	std::unique_ptr<saved_block_t> persistable_block;
 	mutable std::shared_mutex mtx;
-	FilePreallocWorker file_preallocator;
 	BackgroundDeleter<saved_block_t> deleter;
 
 	constexpr static unsigned int BUF_SIZE = 5*1677716;
@@ -81,10 +84,11 @@ private:
 public:
 
 	AccountModificationLog() 
-		: modification_log()
+		: cache()
+		, hash_log(std::make_optional<trie::HashLog<AccountIDPrefix>>())
+		, modification_log()
 		, persistable_block(std::make_unique<saved_block_t>())
 		, mtx()
-		, file_preallocator()
 		, deleter() 
 		{};
 
@@ -115,7 +119,7 @@ public:
 
 	//! Hash account modification log.  Also accumulates the block of
 	//! transactions from the mod log.
-	void hash(Hash& hash);
+	void hash(Hash& hash, uint64_t block_number);
 
 	//! Clears any leftover resources (sometimes in a background thread).
 	void detached_clear();

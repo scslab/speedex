@@ -68,7 +68,7 @@ ExperimentController::ExperimentController(std::shared_ptr<SpeedexVM> vm, std::s
 		listener.register_service(server);
 
 		std::thread th([this] {
-			while(!start_shutdown.test())
+			while(!start_shutdown)
 			{
 				ps.poll(1000);
 			}
