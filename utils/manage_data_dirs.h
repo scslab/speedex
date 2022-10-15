@@ -9,7 +9,7 @@ namespace hotstuff
 
 namespace speedex {
 
-std::strinbg log_dir();
+std::string log_dir();
 
 std::string memory_database_lmdb_dir();
 void

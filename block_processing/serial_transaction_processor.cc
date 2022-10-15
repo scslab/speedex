@@ -54,6 +54,15 @@ inline int64_t fee_required(int tx_op_count)
 	return BASE_FEE_PER_TX + FEE_PER_OP * tx_op_count;
 }
 
+inline std::string make_tx_id_string(const TransactionMetadata& metadata) 
+{
+	return std::string("TX=(")
+		+ std::to_string(metadata.sourceAccount)
+		+ ", "
+		+ std::to_string(metadata.sequenceNumber)
+		+ ")";
+}
+
 
 template<typename SerialManager>
 SerialTransactionHandler<SerialManager>::SerialTransactionHandler(
@@ -132,7 +141,7 @@ bool SerialTransactionValidator<ManagerViewType>::validate_transaction(
 	SerialAccountModificationLog& serial_account_log,
 	Args... lmdb_args) {
 
-	auto& tx = signed_tx.transaction;
+	auto const& tx = signed_tx.transaction;
 	int tx_op_count = tx.operations.size();
 
 
@@ -178,7 +187,7 @@ bool SerialTransactionValidator<ManagerViewType>::validate_transaction(
 		source_account_idx, tx.metadata.sequenceNumber);
 
 	if (op_metadata.db_view.transfer_available(
-		source_account_idx, MemoryDatabase::NATIVE_ASSET, -fee_req)
+		source_account_idx, MemoryDatabase::NATIVE_ASSET, -fee_req, (make_tx_id_string(tx.metadata) + " fee").c_str())
 		!= TransactionProcessingStatus::SUCCESS)
 	{
 		return false;
@@ -318,7 +327,7 @@ SerialTransactionProcessor::process_transaction(
 
 	auto fee_status = 
 		op_metadata.db_view.transfer_available(
-			source_account_idx, MemoryDatabase::NATIVE_ASSET, -fee_req);
+			source_account_idx, MemoryDatabase::NATIVE_ASSET, -fee_req, (make_tx_id_string(tx.metadata) + "fee").c_str());
 
 	if (fee_status != TransactionProcessingStatus::SUCCESS)
 	{
@@ -463,14 +472,16 @@ SerialTransactionHandler<SerialManager>::process_operation(
 	status = metadata.db_view.transfer_available(
 		metadata.source_account_idx,
 		Database::NATIVE_ASSET,
-		-op.startingBalance);
+		-op.startingBalance,
+		(make_tx_id_string(metadata.tx_metadata) + " create account send initial funding").c_str());
 	if (status != TransactionProcessingStatus::SUCCESS) {
 		return status;
 	}
 	status = metadata.db_view.transfer_available(
 		new_account_idx,
 		Database::NATIVE_ASSET,
-		op.startingBalance);
+		op.startingBalance,
+		(make_tx_id_string(metadata.tx_metadata) + " create account recv initial funding").c_str());
 
 	if (status != TransactionProcessingStatus::SUCCESS) {
 		return status;
@@ -513,7 +524,8 @@ SerialTransactionHandler<SerialManager>::process_operation(
 	serial_manager.add_offer(market_idx, to_add, metadata, serial_account_log);
 
 	auto status = metadata.db_view.escrow(
-		metadata.source_account_idx, op.category.sellAsset, op.amount);
+		metadata.source_account_idx, op.category.sellAsset, op.amount,
+		(make_tx_id_string(metadata.tx_metadata) + " create sell funding").c_str());
 	if (status != TransactionProcessingStatus::SUCCESS) {
 		TX("escrow failed, unwinding create sell offer: account %lu, account_db_idx %lu, asset %lu, op.amount %lu", 
 			metadata.tx_metadata.sourceAccount, metadata.source_account_idx, op.category.sellAsset, op.amount);
@@ -556,7 +568,8 @@ SerialTransactionHandler<SerialManager>::process_operation(
 		auto status = metadata.db_view.escrow(
 			metadata.source_account_idx, 
 			op.category.sellAsset, 
-			-found_offer -> amount);
+			-found_offer -> amount,
+			(make_tx_id_string(metadata.tx_metadata) + " cancel offer recv back initial funding").c_str());
 		if (status != TransactionProcessingStatus::SUCCESS) {
 			serial_manager.undelete_offer(
 				market_idx, 
@@ -610,12 +623,14 @@ SerialTransactionHandler<SerialManager>::process_operation(
 	}
 
 	auto status = metadata.db_view.transfer_available(
-		metadata.source_account_idx, op.asset, -op.amount);
+		metadata.source_account_idx, op.asset, -op.amount,
+		(make_tx_id_string(metadata.tx_metadata) + " transfer send").c_str());
 	if (status != TransactionProcessingStatus::SUCCESS) {
 		return status;
 	}
 	status = metadata.db_view.transfer_available(
-		target_account_idx, op.asset, op.amount);
+		target_account_idx, op.asset, op.amount,
+		(make_tx_id_string(metadata.tx_metadata) + " transfer recv").c_str());
 	if (status != TransactionProcessingStatus::SUCCESS) {
 		return status;
 	}
@@ -637,7 +652,8 @@ SerialTransactionHandler<SerialManager>::process_operation(
 	}
 
 	return metadata.db_view.transfer_available(
-		metadata.source_account_idx, op.asset, op.amount);
+		metadata.source_account_idx, op.asset, op.amount,
+		(make_tx_id_string(metadata.tx_metadata) + " money printer").c_str());
 }
 
-} // namespace edce
+} // namespace speedex

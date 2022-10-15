@@ -18,7 +18,7 @@ namespace speedex {
 
 using utils::mkdir_safe;
 
-std::strinbg log_dir() {
+std::string log_dir() {
 	return std::string(ROOT_DB_DIRECTORY) + std::string(LOG_DIR);
 }
 

@@ -79,8 +79,8 @@ int main(int argc, char* const* argv)
 
 	auto init_lambda = [&](UserAccount& user)
 	{
-		user.transfer_available(0, options.new_account_balance);
-		user.transfer_available(1, options.new_account_balance);
+		db.transfer_available(&user, 0, options.new_account_balance);
+		db.transfer_available(&user, 1, options.new_account_balance);
 		user.commit();
 	};
 

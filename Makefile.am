@@ -308,7 +308,7 @@ clean-local:
 xdrpy_module: $(XDRC) $(PYX_FILES) $(PXD_FILES) $(PXD_INCLUDE_FILES) $(X_FILES:.x=.h)
 	python3 setup.py build_ext --inplace --makeflags="$(MAKEFLAGS)" --pyx_files="$(PYX_FILES)"
 
-all-local: xdrpy_module $(SRCS:.cc=.o)
+# all-local: xdrpy_module $(SRCS:.cc=.o)
 
 README: README.md
 

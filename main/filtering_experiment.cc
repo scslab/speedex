@@ -94,9 +94,9 @@ int main(int argc, char* const* argv)
 		MemoryDatabase db;
 
 		auto account_init_lambda = [&] (UserAccount& user_account) -> void {
-			user_account.transfer_available(MemoryDatabase::NATIVE_ASSET, 10000);
+			db.transfer_available(&user_account, MemoryDatabase::NATIVE_ASSET, 10000);
 			for (auto i = 0u; i < num_assets; i++) {
-				user_account.transfer_available(i, default_amount);
+				db.transfer_available(&user_account, i, default_amount);
 			}
 			user_account.commit();
 		};

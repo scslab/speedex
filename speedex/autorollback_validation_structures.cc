@@ -45,10 +45,11 @@ DatabaseAutoRollback::tentative_commit_for_validation()
 void
 DatabaseAutoRollback::tentative_produce_state_commitment(
     Hash& hash,
-    const AccountModificationLog& dirty_accounts)
+    const AccountModificationLog& dirty_accounts,
+    uint64_t block_number)
 {
     do_rollback_produce_state_commitment = true;
-    db.tentative_produce_state_commitment(hash, dirty_accounts);
+    db.tentative_produce_state_commitment(hash, dirty_accounts, block_number);
     rollback_log = &dirty_accounts;
 }
 //! Finalize state changes.  Makes destucturo into a no-op.

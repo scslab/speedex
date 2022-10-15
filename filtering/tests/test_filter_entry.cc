@@ -82,7 +82,7 @@ TEST_CASE("single account", "[filtering]")
 
 	auto account_init_lambda = [&] (UserAccount& user_account) -> void {
 		for (auto i = 0u; i < num_assets; i++) {
-			user_account.transfer_available(i, default_amount);
+			db.transfer_available(&user_account, i, default_amount);
 		}
 		REQUIRE(user_account.reserve_sequence_number(initial_seqno) == TransactionProcessingStatus::SUCCESS);
 		user_account.commit_sequence_number(initial_seqno);

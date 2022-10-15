@@ -32,7 +32,7 @@ SerialOrderbookExperiment::exec_one_offer(Offer const& offer)
 		return;
 	}
 
-	res = view.escrow(user, offer.category.sellAsset, offer.amount);
+	res = view.escrow(user, offer.category.sellAsset, offer.amount, "cda escrow");
 
 	if (res != TransactionProcessingStatus::SUCCESS)
 	{
@@ -49,7 +49,7 @@ SerialOrderbookExperiment::exec_one_offer(Offer const& offer)
 			throw std::runtime_error("invalid");
 		}
 
-		view.transfer_available(user, a_to_b_cat.buyAsset, b_recv);
+		view.transfer_available(user, a_to_b_cat.buyAsset, b_recv, "received amount");
 
 		Offer to_add = offer;
 
@@ -69,7 +69,7 @@ SerialOrderbookExperiment::exec_one_offer(Offer const& offer)
 			throw std::runtime_error("invalid");
 		}
 
-		view.transfer_available(user, b_to_a_cat.buyAsset, a_recv);
+		view.transfer_available(user, b_to_a_cat.buyAsset, a_recv, "recv amount");
 
 		Offer to_add = offer;
 

@@ -3,9 +3,12 @@
 #include "modlog/account_modification_log.h"		
 
 #include "utils/debug_macros.h"
+#include "utils/manage_data_dirs.h"
 
 #include <tbb/parallel_for.h>
 #include <tbb/parallel_reduce.h>
+
+#include "speedex/speedex_static_configs.h"
 
 #include <utils/time.h>
 
@@ -17,27 +20,56 @@
 namespace speedex {
 
 void MemoryDatabase::transfer_available(
-	UserAccount* user_index, AssetID asset_type, int64_t change) {
+	UserAccount* user_index, AssetID asset_type, int64_t change, const char* reason) {
 	user_index -> transfer_available(asset_type, change);
+	if constexpr (LOG_TRANSFERS)
+	{
+		if (transfer_logs)
+		{
+			transfer_logs -> log_transfer(*user_index, asset_type, change, reason);
+		}
+	}
 //	find_account(user_index).transfer_available(asset_type, change);
 }
 
 void MemoryDatabase::escrow(
-	UserAccount* user_index, AssetID asset_type, int64_t change) {
+	UserAccount* user_index, AssetID asset_type, int64_t change, const char* reason) {
 	user_index -> escrow(asset_type, change);
+
+	if constexpr (LOG_TRANSFERS)
+	{
+		if (transfer_logs)
+		{
+			transfer_logs -> log_transfer(*user_index, asset_type, change, reason);
+		}
+	}
 	//find_account(user_index).escrow(asset_type, change);
 }
 
 bool MemoryDatabase::conditional_transfer_available(
-	UserAccount* user_index, AssetID asset_type, int64_t change) {
+	UserAccount* user_index, AssetID asset_type, int64_t change, const char* reason) {
 	//return find_account(user_index)
+	if constexpr (LOG_TRANSFERS)
+	{
+		if (transfer_logs)
+		{
+			transfer_logs -> log_transfer(*user_index, asset_type, change, reason);
+		}
+	}
 	return user_index ->
 		conditional_transfer_available(asset_type, change);
 }
 
 bool MemoryDatabase::conditional_escrow(
-	UserAccount* user_index, AssetID asset_type, int64_t change) {
+	UserAccount* user_index, AssetID asset_type, int64_t change, const char* reason) {
 	//return find_account(user_index).conditional_escrow(asset_type, change);
+	if constexpr (LOG_TRANSFERS)
+	{
+		if (transfer_logs)
+		{
+			transfer_logs -> log_transfer(*user_index, asset_type, change, reason);
+		}
+	}
 	return user_index -> conditional_escrow(asset_type, change);
 }
 
@@ -409,7 +441,7 @@ struct ParallelApplyLambda {
 	}
 };
 
-void MemoryDatabase::tentative_produce_state_commitment(Hash& hash, const AccountModificationLog& log) {
+void MemoryDatabase::tentative_produce_state_commitment(Hash& hash, const AccountModificationLog& log, uint64_t block_number) {
 	std::lock_guard lock(committed_mtx);
 
 	TentativeValueModifyLambda func{database, user_id_to_idx_map};
@@ -420,7 +452,19 @@ void MemoryDatabase::tentative_produce_state_commitment(Hash& hash, const Accoun
 
 	log.parallel_iterate_over_log(apply_lambda);
 
-	commitment_trie.hash(hash);
+	commitment_trie.hash(hash, hash_log);
+
+	std::string hash_filename = log_dir() + "validation_db_hash_" + std::to_string(block_number);
+	if (hash_log)
+	{
+		hash_log->write_logs(hash_filename);
+	}
+	std::string transfer_filename = log_dir() + "transfers_" + std::to_string(block_number);
+
+	if (transfer_logs)
+	{
+		transfer_logs -> write_logs(transfer_filename);
+	}
 }
 
 void MemoryDatabase::set_trie_commitment_to_user_account_commits(const AccountModificationLog& log) {
@@ -435,13 +479,25 @@ void MemoryDatabase::set_trie_commitment_to_user_account_commits(const AccountMo
 }
 
 
-void MemoryDatabase::produce_state_commitment(Hash& hash, const AccountModificationLog& log) {
+void MemoryDatabase::produce_state_commitment(Hash& hash, const AccountModificationLog& log, uint64_t block_number) {
 
 	std::lock_guard lock(committed_mtx);
 
 	set_trie_commitment_to_user_account_commits(log);
 
-	commitment_trie.hash(hash);
+	commitment_trie.hash(hash, hash_log);
+
+	std::string hash_filename = log_dir() + "produce_db_hash_" + std::to_string(block_number);
+	if (hash_log)
+	{
+		hash_log->write_logs(hash_filename);
+	}
+	std::string transfer_filename = log_dir() + "transfers_" + std::to_string(block_number);
+
+	if (transfer_logs)
+	{
+		transfer_logs -> write_logs(transfer_filename);
+	}
 }
 
 void

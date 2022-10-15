@@ -6,7 +6,7 @@
 namespace speedex {
 
 TransactionProcessingStatus UserAccountView::conditional_escrow(
-	AssetID asset, int64_t amount) {
+	AssetID asset, int64_t amount, const char* reason) {
 	if (amount < 0) {
 		//freeing escrowed money
 		available_buffer[asset] -= amount;
@@ -17,7 +17,7 @@ TransactionProcessingStatus UserAccountView::conditional_escrow(
 	if (new_buffer < 0) {
 		MEMDB_INFO("new_buffer = %ld", new_buffer);
 		MEMDB_INFO("current amount:%ld", main.lookup_available_balance(asset));
-		auto result = main.conditional_escrow(asset, -new_buffer);
+		auto result = main_db.conditional_escrow(main, asset, -new_buffer, reason);
 		if (!result) {
 			return TransactionProcessingStatus::INSUFFICIENT_BALANCE;
 		}
@@ -29,12 +29,12 @@ TransactionProcessingStatus UserAccountView::conditional_escrow(
 }
 
 TransactionProcessingStatus UserAccountView::transfer_available(
-	AssetID asset, int64_t amount) {
+	AssetID asset, int64_t amount, const char* reason) {
 	
 	int64_t current_buffer = available_buffer[asset];
 	int64_t new_buffer = current_buffer + amount;
 	if (new_buffer < 0) {
-		bool result = main.conditional_transfer_available(asset, new_buffer);
+		bool result = main_db.conditional_transfer_available(main, asset, new_buffer, reason);
 		if (!result) {
 			return TransactionProcessingStatus::INSUFFICIENT_BALANCE;
 		}
@@ -47,14 +47,14 @@ TransactionProcessingStatus UserAccountView::transfer_available(
 
 int64_t
 UserAccountView::lookup_available_balance(AssetID asset) {
-	return main.lookup_available_balance(asset) + available_buffer[asset];
+	return main_db.lookup_available_balance(main, asset) + available_buffer[asset];
 }
 
 void UserAccountView::commit() {
 	for (auto iter = available_buffer.begin(); 
 		iter != available_buffer.end(); 
 		iter++) {
-		main.transfer_available(iter->first, iter->second);
+		main_db.transfer_available(main, iter->first, iter->second, "commit transaction");
 	}
 }
 
@@ -62,18 +62,18 @@ void UserAccountView::unwind() {
 	for (auto iter = available_side_effects.begin(); 
 		iter != available_side_effects.end(); 
 		iter++) {
-		main.transfer_available(iter->first, -iter->second);
+		main_db.transfer_available(main, iter->first, -iter->second, "unwind transaction");
 	}
 }
 
 TransactionProcessingStatus
 BufferedMemoryDatabaseView::escrow(
-	UserAccount* account, AssetID asset, int64_t amount) {
+	UserAccount* account, AssetID asset, int64_t amount, const char* reason) {
 	
 
 	for (auto& it : new_accounts) {
 		if (&(it.second) == account) {
-			auto res = account ->conditional_escrow(asset, amount);
+			auto res = main_db.conditional_escrow(account, asset, amount, reason);
 			if (res) {
 				return TransactionProcessingStatus::SUCCESS;
 			} else {
@@ -109,7 +109,7 @@ BufferedMemoryDatabaseView::escrow(
 
 	auto& view = get_existing_account(account);
 
-	auto status = view.conditional_escrow(asset, amount);
+	auto status = view.conditional_escrow(asset, amount, reason);
 
 	TX_F(
 		if (status != TransactionProcessingStatus::SUCCESS) {
@@ -124,14 +124,15 @@ BufferedMemoryDatabaseView::escrow(
 
 TransactionProcessingStatus 
 BufferedMemoryDatabaseView::transfer_available(
-	UserAccount* account, AssetID asset, int64_t amount) {
+	UserAccount* account, AssetID asset, int64_t amount, const char* reason) {
 	
 	//auto it = new_accounts.find(account);
 
 	for (auto& it : new_accounts) {
 		if (&(it.second) == account) {
-			// using direct ptr method because account is not yet in main memdb
-			auto res = account ->conditional_transfer_available(asset, amount);
+			// account is not yet in main_db, but this method only looks at account ptr.
+			// usees this method over direct to log transfers
+			auto res = main_db.conditional_transfer_available(account, asset, amount, reason);
 
 			if (res) {
 				return TransactionProcessingStatus::SUCCESS;
@@ -158,7 +159,7 @@ BufferedMemoryDatabaseView::transfer_available(
 	}*/
 
 	auto& view = get_existing_account(account);
-	return view.transfer_available(asset, amount);
+	return view.transfer_available(asset, amount, reason);
 }
 
 UserAccountView& 
@@ -170,7 +171,10 @@ BufferedMemoryDatabaseView::get_existing_account(UserAccount* account) {
 	if (account == nullptr) {
 		throw std::runtime_error("cant' deref null account ptr");
 	}
-	accounts.emplace(account, *account);//main_db.find_account(account));
+	accounts.emplace(std::piecewise_construct,
+		std::forward_as_tuple(account),
+		std::forward_as_tuple(main_db, 
+		account));
 	return accounts.at(account);
 }
 
@@ -198,9 +202,9 @@ BufferedMemoryDatabaseView::unwind() {
 
 TransactionProcessingStatus 
 UnbufferedMemoryDatabaseView::escrow(
-	UserAccount* account, AssetID asset, int64_t amount) {
+	UserAccount* account, AssetID asset, int64_t amount, const char* reason) {
 
-	account -> escrow(asset, amount);
+	main_db.escrow(account, asset, amount, reason);
 
 	/*if (account < db_size) {
 		main_db.escrow(account, asset, amount);
@@ -211,9 +215,9 @@ UnbufferedMemoryDatabaseView::escrow(
 }
 TransactionProcessingStatus 
 UnbufferedMemoryDatabaseView::transfer_available(
-	UserAccount* account, AssetID asset, int64_t amount) {
+	UserAccount* account, AssetID asset, int64_t amount, const char* reason) {
 	
-	account -> transfer_available(asset, amount);
+	main_db.transfer_available(account, asset, amount, reason);
 	/*if (account < db_size) {
 		main_db.transfer_available(account, asset, amount);
 	} else {

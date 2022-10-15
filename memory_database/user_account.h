@@ -28,7 +28,6 @@ Manage the account state for one user.
 
 namespace speedex {
 
-
 /*!
 Stores a user's account information.
 
@@ -125,6 +124,11 @@ public:
 		return seq_tracker.produce_commitment();
 	}
 
+
+private:
+
+	friend class MemoryDatabase;
+
 	//! Transfer amount of asset to the account's (unescrowed) balance.
 	//! Negative amounts mean a withdrawal.
 	//! Unconditionally executes.
@@ -171,6 +175,9 @@ public:
 				return asset.conditional_escrow(amount);
 			});
 	}
+
+public:
+
 
 	//! Returns an account's available balance of some asset.
 	amount_t lookup_available_balance(unsigned int asset) const {

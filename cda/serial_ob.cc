@@ -86,7 +86,7 @@ SerialOrderbook::try_execute(const Price& max_price, const uint64_t sell_amount,
 			}
 
 			//db.transfer_available(user, offer.category.sellAsset, amount_offer_consumed);
-			db.transfer_available(user, offer.category.buyAsset, amount_remaining_sell_consumed);
+			db.transfer_available(user, offer.category.buyAsset, amount_remaining_sell_consumed, "cda transfer");
 
 			if (amount_offer_consumed == offer.amount)
 			{

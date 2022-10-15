@@ -11,6 +11,22 @@ namespace speedex {
 
 class UserAccount;
 
+[[maybe_unused]]
+static std::string 
+make_offer_string(const Offer& offer)
+{
+	return std::string("owner= ")
+		+ std::to_string(offer.owner)
+		+ std::string(" minprice = ")
+		+ std::to_string(offer.minPrice)
+		+ std::string(" id = ")
+		+ std::to_string(offer.offerId)
+		+ std::string(" sell = ")
+		+ std::to_string(offer.category.sellAsset)
+		+ std::string(" buy = ")
+		+ std::to_string(offer.category.buyAsset);
+}
+
 /*! Fully clear a trade offer.
 
 Template argument is to allow passing either 
@@ -40,7 +56,8 @@ clear_offer_full(
 
 	db.transfer_available(
 		db_idx, offer.category.buyAsset, 
-		buy_amount_fractional.tax_and_round(tax_rate));
+		buy_amount_fractional.tax_and_round(tax_rate),
+		(make_offer_string(offer) + " clear offer full").c_str());
 }
 
 /*! Partially clear an offer.
@@ -69,7 +86,8 @@ clear_offer_partial(
 	out_buy_amount = buy_amount_fractional.tax_and_round(tax_rate);
 	out_sell_amount = remaining_to_clear.ceil();
 	
-	db.transfer_available(db_idx, offer.category.buyAsset, out_buy_amount);
+	db.transfer_available(db_idx, offer.category.buyAsset, out_buy_amount,
+		(make_offer_string(offer) + " clear partial sell_amount= " + std::to_string(out_sell_amount)).c_str());
 }
 
 } /* speedex */

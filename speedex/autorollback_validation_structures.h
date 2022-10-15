@@ -54,7 +54,8 @@ struct DatabaseAutoRollback
     //! this should be undone later.
     void tentative_produce_state_commitment(
         Hash& hash,
-        const AccountModificationLog& dirty_accounts);
+        const AccountModificationLog& dirty_accounts,
+        uint64_t block_number);
     //! Finalize state changes.  Makes destucturo into a no-op.
     void finalize_commit();
 };

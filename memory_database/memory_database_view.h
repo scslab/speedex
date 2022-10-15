@@ -34,7 +34,8 @@ side effects.
 Call commit to persist positive side effects to db.
 */
 class UserAccountView {
-	UserAccount& main;
+	MemoryDatabase& main_db;
+	UserAccount* main;
 	//should be always positive.
 	//How much additional asset to add to escrow/available accounts
 	//if view is successfully committed.
@@ -47,15 +48,18 @@ class UserAccountView {
 
 public:
 
-	UserAccountView(UserAccount& main)
-		: main(main) {}
+	UserAccountView(
+		MemoryDatabase& main_db,
+		UserAccount* main)
+		: main_db(main_db)
+		, main(main) {}
 
 	/*! Escrow some amount of an asset.
 	Returns SUCCESS on successful escrow,
 	and an error code otherwise.
 	*/
 	TransactionProcessingStatus conditional_escrow(
-		AssetID asset, int64_t amount);
+		AssetID asset, int64_t amount, const char* reason);
 
 	/*! Transfer some amount of an asset to an account.
 
@@ -67,7 +71,7 @@ public:
 	and an error code otherwise.
 	*/
 	TransactionProcessingStatus transfer_available(
-		AssetID asset, int64_t amount);
+		AssetID asset, int64_t amount, const char* reason);
 
 	int64_t lookup_available_balance(AssetID asset);
 
@@ -104,8 +108,6 @@ public:
 
 	UserAccount* lookup_user(AccountID account);
 	
-	//bool lookup_user_id(AccountID account, account_db_idx* index_out);
-
 	//! Create new account (id, pk).  Returns a database index
 	//! This index (out) is only usable in this account view.
 	TransactionProcessingStatus 
@@ -150,9 +152,9 @@ public:
 	void unwind();
 
 	TransactionProcessingStatus escrow(
-		UserAccount* account, AssetID asset, int64_t amount);
+		UserAccount* account, AssetID asset, int64_t amount, const char* reason);
 	TransactionProcessingStatus transfer_available(
-		UserAccount* account, AssetID asset, int64_t amount);
+		UserAccount* account, AssetID asset, int64_t amount, const char* reason);
 
 	using AccountCreationView::reserve_sequence_number;
 	using AccountCreationView::commit_sequence_number;
@@ -177,9 +179,9 @@ public:
 		: AccountCreationView(main_db) {}
 
 	TransactionProcessingStatus escrow(
-		UserAccount* account, AssetID asset, int64_t amount);
+		UserAccount* account, AssetID asset, int64_t amount, const char* reason);
 	TransactionProcessingStatus transfer_available(
-		UserAccount* account, AssetID asset, int64_t amount);
+		UserAccount* account, AssetID asset, int64_t amount, const char* reason);
 
 	//uint64_t get_persisted_round_number() {
 //		return main_db.get_persisted_round_number();
@@ -217,20 +219,20 @@ public:
 	{}
 
 	TransactionProcessingStatus
-	escrow(UserAccount* account, AssetID asset, int64_t amount)
+	escrow(UserAccount* account, AssetID asset, int64_t amount, const char* reason)
 	{
 		if (do_action(account))
 		{
-			return base_view.escrow(account, asset, amount);
+			return base_view.escrow(account, asset, amount, (std::string("loading from db:") + reason).c_str());
 		}
 		return TransactionProcessingStatus::SUCCESS;
 	}
 
 	TransactionProcessingStatus 
-	transfer_available(UserAccount* account, AssetID asset, int64_t amount) {
+	transfer_available(UserAccount* account, AssetID asset, int64_t amount, const char* reason) {
 		if (do_action(account))
 		{
-			return base_view.transfer_available(account, asset, amount);
+			return base_view.transfer_available(account, asset, amount, (std::string("loading from db:") + reason).c_str());
 		}
 		return TransactionProcessingStatus::SUCCESS;
 	}

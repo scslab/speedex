@@ -31,7 +31,7 @@ void speedex_make_state_commitment(
 		auto timestamp = utils::init_time_measurement();
 
 		management_structures.db.produce_state_commitment(
-			hashes.dbHash, management_structures.account_modification_log);
+			hashes.dbHash, management_structures.account_modification_log, current_block_number);
 		measurements.db_state_commitment_time = utils::measure_time(timestamp);
 	}
 
@@ -540,7 +540,8 @@ bool _speedex_block_validation_logic(
 	stats.get_dirty_account_time = utils::measure_time(timestamp);
 	db_autorollback.tentative_produce_state_commitment(
 		comparison_next_block.internalHashes.dbHash,
-		management_structures.account_modification_log);
+		management_structures.account_modification_log,
+		current_block_number);
 
 	stats.db_tentative_commit_time = utils::measure_time(timestamp);
 	BLOCK_INFO("db tentative_commit_time = %lf", stats.db_tentative_commit_time);

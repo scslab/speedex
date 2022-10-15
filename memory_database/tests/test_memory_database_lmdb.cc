@@ -42,9 +42,9 @@ void init_memdb(MemoryDatabase& db, uint64_t num_accounts, uint32_t num_assets, 
 			}
 		});
 
-	auto account_init_lambda = [&num_assets, &default_amount] (UserAccount& user_account) -> void {
+	auto account_init_lambda = [&num_assets, &default_amount, &db] (UserAccount& user_account) -> void {
 		for (auto i = 0u; i < num_assets; i++) {
-			user_account.transfer_available(i, default_amount);
+			db.transfer_available(&user_account, i, default_amount);
 		}
 		user_account.commit();
 	};

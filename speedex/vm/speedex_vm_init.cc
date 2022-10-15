@@ -37,9 +37,9 @@ SpeedexVM::init_clean() {
 			}
 		});
 
-	auto account_init_lambda = [this] (UserAccount& user_account) -> void {
+	auto account_init_lambda = [this, &db] (UserAccount& user_account) -> void {
 		for (auto i = 0u; i < params.num_assets; i++) {
-			user_account.transfer_available(i, params.default_amount);
+			db.transfer_available(&user_account, i, params.default_amount, "genesis");
 		}
 		user_account.commit();
 	};

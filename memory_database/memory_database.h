@@ -15,6 +15,7 @@
 #include "memory_database/thunk.h"
 #include "memory_database/typedefs.h"
 #include "memory_database/user_account.h"
+#include "memory_database/transfer_logs.h"
 
 #include "mtt/trie/merkle_trie.h"
 #include "mtt/trie/prefix.h"
@@ -174,6 +175,11 @@ private:
 	std::vector<DBPersistenceThunk> persistence_thunks;
 	std::vector<AccountCreationThunk> account_creation_thunks;
 
+	std::optional<TransferLogs> transfer_logs;
+	std::optional<trie::HashLog<trie_prefix_t>> hash_log;
+
+ 	constexpr static char UNKNOWN_REASON[] = "unknown";
+
 	//delete copy constructors, implicitly blocks move ctors
 	MemoryDatabase(const MemoryDatabase&) = delete;
 	MemoryDatabase& operator=(const MemoryDatabase&) = delete;
@@ -254,7 +260,9 @@ public:
 		committed_mtx(),
 		uncommitted_mtx(),
 		commitment_trie(),
-		account_lmdb_instance() {};
+		account_lmdb_instance(),
+		transfer_logs(std::make_optional<TransferLogs>())
+		, hash_log(std::make_optional<trie::HashLog<trie_prefix_t>>()) {};
 
 	uint64_t size() const {
 		return database.size();
@@ -301,7 +309,7 @@ public:
 	void rollback_new_accounts(uint64_t current_block_number);
 
 	//! Generates a state commitment using committed account balance values.
-	void produce_state_commitment(Hash& hash, const AccountModificationLog& log);
+	void produce_state_commitment(Hash& hash, const AccountModificationLog& log, uint64_t block_number);
 	void produce_state_commitment() {
 		//for init only
 		std::lock_guard lock(committed_mtx);
@@ -317,7 +325,7 @@ public:
 	//! Generates a state commitment using account balance values
 	//! that reflect uncommitted changes.
 	void tentative_produce_state_commitment(
-		Hash& hash, const AccountModificationLog& log);
+		Hash& hash, const AccountModificationLog& log, uint64_t current_block_number);
 
 	//! Undo tentative_produce_state_commitment().  Note that in this case,
 	//! we can use the modification log to rollback, given that when we get
@@ -344,15 +352,15 @@ public:
 	UserAccount* lookup_user(AccountID account) const;
 
 	void transfer_available(
-		UserAccount* user_index, AssetID asset_type, int64_t change);
+		UserAccount* user_index, AssetID asset_type, int64_t change, const char* reason = UNKNOWN_REASON);
 
 	void escrow(
-		UserAccount* user_index, AssetID asset_type, int64_t change);
+		UserAccount* user_index, AssetID asset_type, int64_t change, const char* reason = UNKNOWN_REASON);
 
 	bool conditional_transfer_available(
-		UserAccount* user_index, AssetID asset_type, int64_t change);
+		UserAccount* user_index, AssetID asset_type, int64_t change, const char* reason = UNKNOWN_REASON);
 	bool conditional_escrow(
-		UserAccount* user_index, AssetID asset_type, int64_t change);
+		UserAccount* user_index, AssetID asset_type, int64_t change, const char* reason = UNKNOWN_REASON);
 
 
 	int64_t lookup_available_balance(
@@ -433,26 +441,30 @@ public:
 	}
 
 	void transfer_available(
-		[[maybe_unused]] UserAccount*, 
-		[[maybe_unused]] AssetID asset_type, 
-		[[maybe_unused]] int64_t change) {}
+		UserAccount*, 
+		AssetID, 
+		int64_t,
+		const char*) {}
 
 	void escrow(
 		[[maybe_unused]] UserAccount*, 
 		[[maybe_unused]] AssetID asset_type, 
-		[[maybe_unused]] int64_t change) {}
+		[[maybe_unused]] int64_t change,
+		const char*) {}
 
 	bool conditional_transfer_available(
 		[[maybe_unused]] UserAccount*, 
 		[[maybe_unused]] AssetID asset_type, 
-		[[maybe_unused]] int64_t change) {
+		int64_t,
+		const char*) {
 		return true;
 	}
 
 	bool conditional_escrow(
 		[[maybe_unused]] UserAccount*, 
 		[[maybe_unused]] AssetID asset_type, 
-		[[maybe_unused]] int64_t change) {
+		[[maybe_unused]] int64_t change,
+		const char*) {
 		return true;
 	}
 };

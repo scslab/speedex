@@ -34,7 +34,10 @@ AccountModificationLog::hash(Hash& hash, uint64_t block_number)
 
     std::string log_filename = log_dir() + "account_hash_" + std::to_string(block_number);
 
-    hash_log.write_logs(log_filename);
+    if (hash_log)
+    {
+        hash_log->write_logs(log_filename);
+    }
 
     float res3 = utils::measure_time(timestamp);
 
@@ -185,10 +188,10 @@ AccountModificationLog::diff_with_prev_log(uint64_t block_number)
             "TODO can't compare account log if we didn't save entire log");
     }
 
-    auto filename = tx_block_name(block_number);
-    if (load_xdr_from_file(prev, filename.c_str())) {
-        throw std::runtime_error("couldn't load previous comparison data");
-    }
+    //auto filename = tx_block_name(block_number);
+    //if (load_xdr_from_file(prev, filename.c_str())) {
+      //  throw std::runtime_error("couldn't load previous comparison data");
+    //}
 
     throw std::runtime_error("unimpl yet for AccountModificationEntry");
     /*

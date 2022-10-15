@@ -38,6 +38,8 @@ constexpr static uint32_t MAX_SEQ_NUMS_PER_BLOCK = _MAX_SEQ_NUMS_PER_BLOCK;
 
 constexpr static bool PREALLOC_BLOCK_FILES = true;
 
+constexpr static bool LOG_TRANSFERS = true;
+
 #if 0
 // setup for blockstm replication
 constexpr static uint32_t MAX_SEQ_NUMS_PER_BLOCK = 16'000;
