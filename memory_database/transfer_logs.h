@@ -21,7 +21,8 @@ public:
 			+ " " 
 			+ std::to_string(amount) 
 			+ " " 
-			+ std::string(reason);
+			+ std::string(reason)
+			+ std::string("\n");
 		logs.log(log);
 	}
 

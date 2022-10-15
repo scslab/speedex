@@ -178,7 +178,7 @@ private:
 	std::optional<TransferLogs> transfer_logs;
 	std::optional<trie::HashLog<trie_prefix_t>> hash_log;
 
- 	constexpr static char UNKNOWN_REASON[] = "unknown";
+ 	constexpr static char UNKNOWN_REASON[] = "unknown\0";
 
 	//delete copy constructors, implicitly blocks move ctors
 	MemoryDatabase(const MemoryDatabase&) = delete;
