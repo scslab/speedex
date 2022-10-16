@@ -64,6 +64,19 @@ inline std::string make_tx_id_string(const TransactionMetadata& metadata)
 }
 
 
+inline bool
+is_valid_amount(int64_t amount)
+{
+	// most that one account can send in a block: max_payment_amount * 256 * 64
+	// = max_payment_amount * 2^14 must be at most INT64_MAX = (2^63 - 1),
+	// plus fees => 2^15
+	// to ensure that there is no trace in a validator that causes an overflow
+	constexpr int64_t max_amount = static_cast<int64_t>(1) << (63 - 15);
+	return (amount > 0) && (amount <= max_amount);
+}
+
+
+
 template<typename SerialManager>
 SerialTransactionHandler<SerialManager>::SerialTransactionHandler(
 	SpeedexManagementStructures& management_structures, 
@@ -482,6 +495,11 @@ SerialTransactionHandler<SerialManager>::process_operation(
 	if (status != TransactionProcessingStatus::SUCCESS) {
 		return status;
 	}
+	if (!is_valid_amount(op.startingBalance))
+	{
+		return TransactionProcessingStatus::INVALID_AMOUNT;
+	}
+
 	status = metadata.db_view.transfer_available(
 		new_account_idx,
 		Database::NATIVE_ASSET,
@@ -515,7 +533,7 @@ SerialTransactionHandler<SerialManager>::process_operation(
 		TX("price out of bounds!");
 		return TransactionProcessingStatus::INVALID_PRICE;
 	}
-	if (op.amount <= 0) {
+	if (!is_valid_amount(op.amount)) {
 		TX("amount is 0!");
 		return TransactionProcessingStatus::INVALID_AMOUNT;
 	}
@@ -604,17 +622,6 @@ SerialTransactionProcessor::unwind_operation(
 }
 
 //PAYMENT
-
-inline bool
-is_valid_amount(int64_t amount)
-{
-	// most that one account can send in a block: max_payment_amount * 256 * 64
-	// = max_payment_amount * 2^14 must be at most 2^63
-	// to ensure that there is no trace in a validator that causes an overflow
-	constexpr int64_t max_payment_amount = static_cast<int64_t>(1) << (63 - 14);
-	return (amount > 0) && (amount < max_payment_amount);
-}
-
 template<typename SerialManager>
 template<typename DatabaseView>
 TransactionProcessingStatus 

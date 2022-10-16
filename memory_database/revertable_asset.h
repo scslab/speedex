@@ -55,7 +55,7 @@ private:
 	
 	amount_t committed_available;
 
-	bool overflow = false;
+	//bool overflow = false;
 
 	constexpr static auto read_order = std::memory_order_relaxed; 
 	constexpr static auto write_order = std::memory_order_relaxed;
@@ -80,13 +80,15 @@ public:
 	//! Converts some amount of available money into escrowed money.
 	//! (decreases amount of available money).
 	void escrow(const amount_t& amount) {
-		overflow = overflow || __builtin_sub_overflow_p(available.fetch_sub(amount, write_order), amount, static_cast<amount_t>(0));
+		available.fetch_sub(amount, write_order);
+		//overflow = overflow || __builtin_sub_overflow_p(available.fetch_sub(amount, write_order), amount, static_cast<amount_t>(0));
 	}
 
 	//! Adjust the amount of available money by amount (which can be positive
 	//! or negative).
 	void transfer_available(const amount_t& amount) {
-		overflow = overflow || __builtin_add_overflow_p(available.fetch_add(amount, write_order), amount, static_cast<amount_t>(0));
+		available.fetch_add(amount, write_order);
+		//overflow = overflow || __builtin_add_overflow_p(available.fetch_add(amount, write_order), amount, static_cast<amount_t>(0));
 	}
 
 	//! Attempt to escrow amount units of money.
@@ -180,7 +182,7 @@ public:
 	//! Check that the amount of available money is nonnegative.
 	bool in_valid_state() {
 		int64_t available_load = available.load(read_order);
-		return (available_load >= 0) && (!overflow);
+		return (available_load >= 0);// && (!overflow);
 	}
 };
 
