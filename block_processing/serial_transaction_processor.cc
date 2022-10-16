@@ -612,7 +612,7 @@ is_valid_amount(int64_t amount)
 	// = max_payment_amount * 2^14 must be at most 2^63
 	// to ensure that there is no trace in a validator that causes an overflow
 	constexpr int64_t max_payment_amount = static_cast<int64_t>(1) << (63 - 14);
-	return (amount > 0) && (amount < max_payment_amount)
+	return (amount > 0) && (amount < max_payment_amount);
 }
 
 template<typename SerialManager>
