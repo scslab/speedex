@@ -30,21 +30,32 @@ Use commit and rollback to finalize/revert any pending changes.
 Stores amount of asset that is freely available at the moment.
 Escrowed money (i.e. money locked up to back sell offers) is
 not counted (no need to duplicate data).
+
+=== overflows: ===
+In block production, the fact that we do conditional_escrow
+before transfer_available (i.e. subtract before adding)
+ensures that invalid txs (i.e. payments that would move more money
+than can exist) dannot cause an overflow.
+In block validation, we can do the overflow checks ex-post 
+and if an overflow happens, we just log that it happened
+and revert everything when restoring the block.
+
+Requires -fwrapv to make behavior fully defined.
+
 */
 class RevertableAsset {
 	
 public:
 	using amount_t = int64_t;
-
 private:
 
 	using atomic_amount_t = std::atomic<amount_t>;
 
-	using pointer_t = std::unique_ptr<std::atomic<amount_t>>;
-
 	atomic_amount_t available;
 	
 	amount_t committed_available;
+
+	bool overflow = false;
 
 	constexpr static auto read_order = std::memory_order_relaxed; 
 	constexpr static auto write_order = std::memory_order_relaxed;
@@ -53,12 +64,12 @@ public:
 
 	// Initialize asset with 0 balance.
 	RevertableAsset() 
-		: available(0),
-		committed_available(0) {}
+		: available(0)
+		, committed_available(0) {}
 
 	RevertableAsset(amount_t amount)
-		: available(amount),
-		committed_available(amount) {}
+		: available(amount)
+		, committed_available(amount) {}
 
 	//! Cannot be called concurrently with anything else.  Be careful
 	//! therefore when resizing vectors of these objects.
@@ -69,13 +80,13 @@ public:
 	//! Converts some amount of available money into escrowed money.
 	//! (decreases amount of available money).
 	void escrow(const amount_t& amount) {
-		available.fetch_add(-amount, write_order);
+		overflow = overflow || __builtin_sub_overflow_p(available.fetch_sub(amount, write_order), amount, static_cast<amount_t>(0));
 	}
 
 	//! Adjust the amount of available money by amount (which can be positive
 	//! or negative).
 	void transfer_available(const amount_t& amount) {
-		available.fetch_add(amount, write_order);
+		overflow = overflow || __builtin_add_overflow_p(available.fetch_add(amount, write_order), amount, static_cast<amount_t>(0));
 	}
 
 	//! Attempt to escrow amount units of money.
@@ -89,14 +100,12 @@ public:
 			return false;
 		}
 		if (amount > 0) {
-			auto result = conditional_transfer_available(-amount);
-			return result;
+			return conditional_transfer_available(-amount);
 		} else {
 			transfer_available(-amount);
 			return true;
 		}
 	}
-
 
 	//! Attempt to change the amount of available money.
 	//! Reductions of the amount below 0 will fail.
@@ -159,6 +168,7 @@ public:
 	amount_t commit() {
 		amount_t new_avail = available.load(read_order);
 		committed_available = new_avail;
+		overflow = false;
 		return committed_available;
 	}
 
@@ -170,7 +180,7 @@ public:
 	//! Check that the amount of available money is nonnegative.
 	bool in_valid_state() {
 		int64_t available_load = available.load(read_order);
-		return (available_load >= 0);
+		return (available_load >= 0) && (!overflow);
 	}
 };
 

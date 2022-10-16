@@ -42,7 +42,7 @@ TEST_CASE("ensure fee failure unwinds seqno", "[tx]")
 	{
 		// enough for one transaction, not two
 		db.transfer_available(&user, 0, 20);
-		
+
 		db.transfer_available(&user, 1, 100000);
 		user.commit();
 	};
@@ -102,17 +102,7 @@ TEST_CASE("ensure fee failure unwinds seqno", "[tx]")
 		produce_commitment = idx -> produce_commitment();
 
 		REQUIRE(tentative_commitment == produce_commitment);
-
 	}
-
-
-
-
-
-
-
-
 }
-
 
 }
