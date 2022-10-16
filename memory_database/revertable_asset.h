@@ -170,7 +170,7 @@ public:
 	amount_t commit() {
 		amount_t new_avail = available.load(read_order);
 		committed_available = new_avail;
-		overflow = false;
+		//overflow = false;
 		return committed_available;
 	}
 
