@@ -320,7 +320,7 @@ SerialTransactionProcessor::process_transaction(
 	if (seq_num_status != TransactionProcessingStatus::SUCCESS) {
 		TX_INFO("bad seq num on account %lu seqnum %lu", 
 			tx.metadata.sourceAccount, tx.metadata.sequenceNumber);
-
+		op_metadata.unwind();
 		return seq_num_status;
 	}
 
