@@ -5,8 +5,6 @@ string = sys.stdin.read()
 
 res = json.loads(string)
 
-instances = res["Reservations"][0]["Instances"]
-
 def get_name(tags):
     for obj in tags:
         key = obj["Key"]
@@ -16,16 +14,19 @@ def get_name(tags):
     raise Error("invalid key")
 
 hosts = {}
+
+for reservation in res["Reservations"]:
+    instances = reservation["Instances"]
     
-for instance in instances:
-    name = get_name(instance["Tags"])
-    print(name)
-    ip = instance["PrivateIpAddress"]
-    pub = instance["PublicDnsName"]
-    hosts[name] = {}
-    hosts[name]["ip"] = ip
-    hosts[name]["pub"] = pub
-    hosts[name]["id"] = instance["InstanceId"]
+    for instance in instances:
+        name = get_name(instance["Tags"])
+        print(name)
+        ip = instance["PrivateIpAddress"]
+        pub = instance["PublicDnsName"]
+        hosts[name] = {}
+        hosts[name]["ip"] = ip
+        hosts[name]["pub"] = pub
+        hosts[name]["id"] = instance["InstanceId"]
 
 print (hosts)
 
