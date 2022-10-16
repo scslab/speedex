@@ -27,6 +27,9 @@ BLOCK_PROCESSING_SRCS = \
 	block_processing/block_validator.cc \
 	block_processing/serial_transaction_processor.cc
 
+BLOCK_PROCESSING_TEST_SRCS = \
+	block_processing/tests/test_serial_transaction_processor.cc
+
 CDA_SRCS = \
 	cda/serial_ob.cc \
 	cda/serial_ob_experiment.cc
@@ -65,6 +68,7 @@ MEMORY_DATABASE_SRCS = \
 
 MEMORY_DATABASE_TEST_SRCS = \
 	memory_database/tests/test_memory_database_lmdb.cc \
+	memory_database/tests/test_revertable_asset.cc \
 	memory_database/tests/test_seqno_gadget.cc
 
 MEMPOOL_SRCS = \
@@ -137,6 +141,9 @@ SYNTHETIC_DATA_GEN_SRCS = \
 	synthetic_data_generator/synthetic_data_gen.cc \
 	synthetic_data_generator/synthetic_data_gen_options.cc \
 	synthetic_data_generator/synthetic_data_stream.cc
+
+TEST_UTILS_SRCS = \
+	test_utils/formatting.cc
 
 UTILS_SRCS = \
 	utils/header_persistence.cc \
@@ -215,11 +222,13 @@ LDADD = \
 
 CATCH_TEST_CCS = \
 	filtering/tests/test_filter_entry.cc \
+	$(BLOCK_PROCESSING_TEST_SRCS) \
 	$(HEADER_HASH_TEST_SRCS) \
 	$(MEMORY_DATABASE_TEST_SRCS) \
 	$(MODLOG_TEST_SRCS) \
 	$(ORDERBOOK_TEST_SRCS) \
-	$(PRICE_COMPUTATION_TEST_SRCS)
+	$(PRICE_COMPUTATION_TEST_SRCS) \
+	$(TEST_UTILS_SRCS)
 
 
 $(CATCH_TEST_SRCS:.cc=.o) : CXXFLAGS += $(Catch2_CFLAGS)
