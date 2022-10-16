@@ -172,6 +172,7 @@ bool SerialTransactionValidator<ManagerViewType>::validate_transaction(
 
 	OperationMetadata<UnbufferedViewT> op_metadata(
 		tx.metadata, source_account_idx, account_database, lmdb_args...);
+	op_metadata.set_no_unwind();
 
 	auto id_status = op_metadata.db_view.reserve_sequence_number(
 		source_account_idx, tx.metadata.sequenceNumber);
@@ -183,8 +184,8 @@ bool SerialTransactionValidator<ManagerViewType>::validate_transaction(
 	}
 
 	//commit early because no reason not to, maybe marginally better cache perf
-	op_metadata.db_view.commit_sequence_number(
-		source_account_idx, tx.metadata.sequenceNumber);
+	//op_metadata.db_view.commit_sequence_number(
+//		source_account_idx, tx.metadata.sequenceNumber);
 
 	if (op_metadata.db_view.transfer_available(
 		source_account_idx, MemoryDatabase::NATIVE_ASSET, -fee_req, (make_tx_id_string(tx.metadata) + " fee").c_str())
@@ -327,10 +328,11 @@ SerialTransactionProcessor::process_transaction(
 
 	auto fee_status = 
 		op_metadata.db_view.transfer_available(
-			source_account_idx, MemoryDatabase::NATIVE_ASSET, -fee_req, (make_tx_id_string(tx.metadata) + "fee").c_str());
+			source_account_idx, MemoryDatabase::NATIVE_ASSET, -fee_req, (make_tx_id_string(tx.metadata) + " fee").c_str());
 
 	if (fee_status != TransactionProcessingStatus::SUCCESS)
 	{
+		op_metadata.unwind();
 		return fee_status;
 	}
 
@@ -376,15 +378,17 @@ SerialTransactionProcessor::process_transaction(
 		{
 			TX_INFO("got bad status from an op");
 			unwind_transaction(tx, static_cast<int32_t>(i)-1);
-			op_metadata.db_view.release_sequence_number(
-				source_account_idx, tx.metadata.sequenceNumber);
+			//op_metadata.db_view.release_sequence_number(
+			//	source_account_idx, tx.metadata.sequenceNumber);
+			// now unwind handles release sequence number
 			op_metadata.unwind();
 			return status;
 		}
 	}
 
-	op_metadata.db_view.commit_sequence_number(
-		source_account_idx, tx.metadata.sequenceNumber);
+	//op_metadata.db_view.commit_sequence_number(
+	//	source_account_idx, tx.metadata.sequenceNumber);
+	// now commit handles commit_sequence_number
 	op_metadata.commit(stats);
 
 	log_modified_accounts(signed_tx, serial_account_log);
@@ -404,6 +408,7 @@ SerialTransactionProcessor::unwind_transaction(
 
 	OperationMetadata<UnbufferedViewT> op_metadata(
 		tx.metadata, source_account_idx, account_database);
+	op_metadata.set_no_unwind();
 
 	int32_t op_idx = last_valid_op;
 	

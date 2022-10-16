@@ -30,9 +30,10 @@ TransactionProcessingStatus UserAccountView::conditional_escrow(
 
 TransactionProcessingStatus UserAccountView::transfer_available(
 	AssetID asset, int64_t amount, const char* reason) {
-	
+
 	int64_t current_buffer = available_buffer[asset];
 	int64_t new_buffer = current_buffer + amount;
+
 	if (new_buffer < 0) {
 		bool result = main_db.conditional_transfer_available(main, asset, new_buffer, reason);
 		if (!result) {
@@ -42,6 +43,7 @@ TransactionProcessingStatus UserAccountView::transfer_available(
 		new_buffer = 0;
 	}
 	available_buffer[asset] = new_buffer;
+
 	return TransactionProcessingStatus::SUCCESS;
 }
 
@@ -70,7 +72,6 @@ TransactionProcessingStatus
 BufferedMemoryDatabaseView::escrow(
 	UserAccount* account, AssetID asset, int64_t amount, const char* reason) {
 	
-
 	for (auto& it : new_accounts) {
 		if (&(it.second) == account) {
 			auto res = main_db.conditional_escrow(account, asset, amount, reason);
@@ -195,9 +196,8 @@ BufferedMemoryDatabaseView::unwind() {
 		iter++) {
 		iter->second.unwind();
 	}
-	for (auto iter = new_accounts.begin(); iter != new_accounts.end(); iter++) {
-		main_db.release_account_creation(iter->first);
-	}
+
+	AccountCreationView::unwind();
 }
 
 TransactionProcessingStatus 
@@ -287,6 +287,24 @@ AccountCreationView::commit() {
 	for (auto iter = new_accounts.begin(); iter != new_accounts.end(); iter++) {
 		main_db.commit_account_creation(
 			iter->first, std::move(iter->second));
+	}
+
+	for (auto const& res : reservations)
+	{
+		main_db.commit_sequence_number(res.account, res.seqno);
+	}
+}
+
+void
+AccountCreationView::unwind()
+{
+	for (auto iter = new_accounts.begin(); iter != new_accounts.end(); iter++) {
+		main_db.release_account_creation(iter->first);
+	}
+
+	for (auto const& res : reservations)
+	{
+		main_db.release_sequence_number(res.account, res.seqno);
 	}
 }
 /*

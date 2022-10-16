@@ -1,12 +1,20 @@
 #pragma once
 
 #include "xdr/types.h"
+#include "xdr/transaction.h"
+
 
 namespace speedex {
 
 // ensures I don't forget some parameter if I modify types later
 
 namespace tx_formatter {
+
+[[maybe_unused]]
+static uint32_t compute_min_fee(const SignedTransaction& tx)
+{
+	return BASE_FEE_PER_TX + FEE_PER_OP * tx.transaction.operations.size();
+}
 
 [[maybe_unused]]
 static Operation make_operation(CreateAccountOp op) {

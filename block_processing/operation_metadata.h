@@ -39,6 +39,19 @@ struct OperationMetadata {
 	//! Local stats object, will be merged in later to main stats object.
 	BlockStateUpdateStats local_stats;
 
+private:
+	bool was_committed_or_unwound = false;
+
+	void assert_committed_or_unwound()
+	{
+		if (!was_committed_or_unwound)
+		{
+			throw std::runtime_error("OperationMetadata was not committed or unwound!");
+		}
+	}
+	
+public:
+
 	//! Initialize metadata.  DBViewArgs are for mocking out db
 	//! when loading from lmdb.  Empty parameter pack in regular operation.
 	template<typename... DBViewArgs>
@@ -53,16 +66,30 @@ struct OperationMetadata {
 	, db_view(args..., db)
 	, operation_id(0) {}
 
+	~OperationMetadata()
+	{
+		assert_committed_or_unwound();
+	}
+
 	//! Call when commiting the overall transaction.
 	//! Merges in local transaction stats and commits db view.
 	void commit(BlockStateUpdateStatsWrapper& stats) {
 		stats += local_stats;
 		db_view.commit();
+		was_committed_or_unwound = true;
 	}
 	
 	//! Unwind the contained db view.
 	void unwind() {
 		db_view.unwind();
+		was_committed_or_unwound = true;
+	}
+
+	//! no actual need to unwind anything during validation,
+	//! or when already unwinding a tx
+	void set_no_unwind()
+	{
+		was_committed_or_unwound = true;
 	}
 };
 

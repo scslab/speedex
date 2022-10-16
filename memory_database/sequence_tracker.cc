@@ -64,10 +64,10 @@ UInt64SequenceTracker::reserve_sequence_number(
 }
 
 void
-UInt64SequenceTracker::release_sequence_number(
-		uint64_t sequence_number)
-	{
-			if (sequence_number <= last_committed_id) {
+UInt64SequenceTracker::release_sequence_number(uint64_t sequence_number)
+{
+
+	if (sequence_number <= last_committed_id) {
 		throw std::runtime_error("cannot release invalid seq num!");
 	}
 
@@ -80,7 +80,7 @@ UInt64SequenceTracker::release_sequence_number(
 	uint64_t bit_mask = ~(((uint64_t) 1) << offset);
 
 	sequence_number_vec.fetch_and(bit_mask, std::memory_order_relaxed);
-	}
+}
 
 void 
 UInt64SequenceTracker::commit_sequence_number(

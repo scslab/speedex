@@ -22,8 +22,6 @@ takes care of this restriction.
 #include <unordered_map>
 #include <vector>
 
-
-
 namespace speedex {
 
 /*! View of a single user's account.
@@ -52,7 +50,8 @@ public:
 		MemoryDatabase& main_db,
 		UserAccount* main)
 		: main_db(main_db)
-		, main(main) {}
+		, main(main)
+		{}
 
 	/*! Escrow some amount of an asset.
 	Returns SUCCESS on successful escrow,
@@ -75,9 +74,17 @@ public:
 
 	int64_t lookup_available_balance(AssetID asset);
 
+	TransactionProcessingStatus reserve_sequence_number(uint64_t seqno);
+
 	//! View should not be used after commit/unwind.
 	void commit();
 	void unwind();
+};
+
+struct SeqnoReservation
+{
+	UserAccount* account;
+	uint64_t seqno;
 };
 
 /*! Database view that also manages creation of new accounts.
@@ -96,13 +103,16 @@ protected:
 
 	std::unordered_map<AccountID, UserAccount*> temporary_idxs;
 
+	std::vector<SeqnoReservation> reservations;
+
 	void commit();
+	void unwind();
 
 	AccountCreationView(MemoryDatabase& db)
-		: main_db(db),
-		//db_size(db.size()),
-		new_accounts(),
-		temporary_idxs() {}
+		: main_db(db)
+		, new_accounts()
+		, temporary_idxs()
+		, reservations() {}
 
 public:
 
@@ -116,18 +126,23 @@ public:
 
 	TransactionProcessingStatus 
 	reserve_sequence_number(UserAccount* idx, uint64_t sequence_number) {
-		return main_db.reserve_sequence_number(idx, sequence_number);
+		auto status = main_db.reserve_sequence_number(idx, sequence_number);
+
+		if (status == TransactionProcessingStatus::SUCCESS)
+		{
+			reservations.emplace_back(idx, sequence_number);
+		}
+		return status;
 	}
 
-	void 
+/*	void 
 	commit_sequence_number(UserAccount* idx, uint64_t sequence_number) {
 		main_db.commit_sequence_number(idx, sequence_number);
 	}
 
 	void release_sequence_number(UserAccount* idx, uint64_t sequence_number) {
 		main_db.release_sequence_number(idx, sequence_number);
-	}
-
+	} */
 };
 
 /*! View of the whole database that buffers negative 
@@ -157,8 +172,8 @@ public:
 		UserAccount* account, AssetID asset, int64_t amount, const char* reason);
 
 	using AccountCreationView::reserve_sequence_number;
-	using AccountCreationView::commit_sequence_number;
-	using AccountCreationView::release_sequence_number;
+	//using AccountCreationView::commit_sequence_number;
+	//using AccountCreationView::release_sequence_number;
 };
 
 /*! View of database that does not buffer negative side effects.
@@ -189,8 +204,8 @@ public:
 
 	using AccountCreationView::commit;
 	using AccountCreationView::reserve_sequence_number;
-	using AccountCreationView::commit_sequence_number;
-	using AccountCreationView::release_sequence_number;
+	//using AccountCreationView::commit_sequence_number;
+	//using AccountCreationView::release_sequence_number;
 };
 
 class LoadLMDBMemoryDatabaseView
@@ -269,7 +284,7 @@ public:
 		return TransactionProcessingStatus::SUCCESS;
 	}
 
-	void commit_sequence_number(UserAccount* idx, uint64_t sequence_number)
+	/*void commit_sequence_number(UserAccount* idx, uint64_t sequence_number)
 	{
 		if (do_action(idx))
 		{
@@ -279,7 +294,7 @@ public:
 
 	void release_sequence_number(UserAccount* idx, uint64_t sequence_number) {
 		throw std::runtime_error("release_sequence_number should never be called when replaying trusted block");
-	}
+	} */
 };
 
 /*! Mock database view that either acts as an unbuffered view or as a no-op,
