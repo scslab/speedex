@@ -27,7 +27,7 @@ struct OperationMetadata {
 	const TransactionMetadata& tx_metadata;
 	//! database index of the source account.
 	//! (Saves repeated db lookups)
-	UserAccount* source_account_idx;
+	UserAccount* const source_account_idx;
 	//const account_db_idx source_account_idx;
 	//! View of the database for the transaction.
 	//! Tx processor should call commit or unwind
@@ -49,7 +49,7 @@ private:
 			throw std::runtime_error("OperationMetadata was not committed or unwound!");
 		}
 	}
-	
+
 public:
 
 	//! Initialize metadata.  DBViewArgs are for mocking out db
