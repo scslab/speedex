@@ -6,8 +6,6 @@
 #include <memory>
 #include <mutex>
 
-#include "memory_database/typedefs.h"
-
 #include "lmdb/lmdb_wrapper.h"
 
 #include "xdr/types.h"

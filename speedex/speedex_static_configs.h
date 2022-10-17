@@ -46,6 +46,12 @@ constexpr static bool PREALLOC_BLOCK_FILES = true;
 #endif
 
 
+#ifndef _NUM_ACCOUNT_DB_SHARDS
+	constexpr static uint32_t NUM_ACCOUNT_DB_SHARDS = 16;
+#else
+	constexpr static uint32_t NUM_ACCOUNT_DB_SHARDS = _NUM_ACCOUNT_DB_SHARDS;
+#endif
+
 #if 0
 // setup for blockstm replication
 constexpr static uint32_t MAX_SEQ_NUMS_PER_BLOCK = 16'000;
