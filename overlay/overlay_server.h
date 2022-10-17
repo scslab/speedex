@@ -5,6 +5,8 @@
 #include "xdr/overlay.h"
 
 #include <atomic>
+#include <condition_variable>
+#include <mutex>
 
 #include <xdrpp/pollset.h>
 #include <xdrpp/srpc.h>
@@ -48,6 +50,13 @@ class OverlayServer {
 	xdr::pollset ps;
 	xdr::srpc_tcp_listener<> overlay_listener;
 
+	bool ps_is_shutdown = false;
+	std::atomic<bool> start_shutdown = false;
+	std::mutex mtx;
+	std::condition_variable cv;
+
+	void await_pollset_shutdown();
+
 public:
 
 	OverlayServer(Mempool& mempool, hotstuff::ReplicaConfig& config);
@@ -58,6 +67,12 @@ public:
 
 	OverlayHandler& get_handler() {
 		return handler;
+	}
+
+	~OverlayServer()
+	{
+		start_shutdown = true;
+		await_pollset_shutdown();
 	}
 
 };

@@ -63,7 +63,31 @@ OverlayServer::OverlayServer(Mempool& mempool, ReplicaConfig& config)
 	{
 		overlay_listener.register_service(handler);
 
-		std::thread([this] {ps.run();}).detach();
+		std::thread th([this] {
+			while(!start_shutdown)
+			{
+				ps.poll(1000);
+			}
+			std::lock_guard lock(mtx);
+			ps_is_shutdown = true;
+			cv.notify_all();
+		});
+
+		th.detach();
 	}
+
+void
+OverlayServer::await_pollset_shutdown()
+{
+	auto done_lambda = [this] () -> bool {
+		return ps_is_shutdown;
+	};
+
+	std::unique_lock lock(mtx);
+	if (!done_lambda()) {
+		cv.wait(lock, done_lambda);
+	}
+	std::printf("shutdown happened\n");
+}
 
 } /* speedex */
