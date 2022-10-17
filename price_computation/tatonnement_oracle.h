@@ -248,7 +248,7 @@ public:
 	is the cause of compute_prices_grid_search() returning,
 	then timeout_happend_flag will be set.
 	*/
-	std::thread 
+	std::optional<std::thread>
 	launch_timeout_thread(
 		uint32_t num_milliseconds, 
 		std::atomic<bool>& timeout_happened_flag, 

@@ -71,33 +71,6 @@ class MemoryDatabase;
 
 class AccountModificationLog;
 
-/*! Wrapper class around an LMDB instance for the account database,
-with some extra parameters filled in (i.e. database file location).
-*/
-/*
-struct AccountLMDB : public LMDBInstance {
-
-	constexpr static auto DB_NAME = "account_lmdb";
-
-	AccountLMDB() : LMDBInstance() {}
-
-	void open_env() {
-		LMDBInstance::open_env(
-			std::string(ROOT_DB_DIRECTORY) + std::string(ACCOUNT_DB));
-	}
-
-	void create_db() {
-		LMDBInstance::create_db(DB_NAME);
-	}
-
-	void open_db() {
-		LMDBInstance::open_db(DB_NAME);
-	}
-
-	using LMDBInstance::sync;
-}; */
-
-
 struct AccountCreationThunk {
 	uint64_t current_block_number;
 	uint64_t num_accounts_created;
@@ -251,18 +224,7 @@ public:
 		return account_lmdb_instance.get_min_max_persisted_round_numbers();
 	}
 
-	MemoryDatabase()
-		: user_id_to_idx_map(),
-	//	uncommitted_idx_map(),
-		reserved_account_ids(),
-		database(),
-		uncommitted_db(),
-		committed_mtx(),
-		uncommitted_mtx(),
-		commitment_trie(),
-		account_lmdb_instance(),
-		transfer_logs(std::make_optional<TransferLogs>())
-		, hash_log(std::make_optional<trie::HashLog<trie_prefix_t>>()) {};
+	MemoryDatabase();
 
 	uint64_t size() const {
 		return database.size();

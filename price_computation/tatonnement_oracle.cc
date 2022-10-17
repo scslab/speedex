@@ -540,14 +540,14 @@ void TatonnementOracle::wait_for_all_tatonnement_threads() {
 		});
 }
 
-std::thread 
+std::optional<std::thread>
 TatonnementOracle::launch_timeout_thread(uint32_t num_milliseconds, std::atomic<bool>& timeout_happened_flag, std::atomic<bool>& cancel_timeout_flag) {
-	return std::thread([this, &timeout_happened_flag, num_milliseconds, &cancel_timeout_flag] () {
+	if constexpr(!USE_TATONNEMENT_TIMEOUT_THREAD)
+	{
+		return std::nullopt;
+	}
 
-		if constexpr (!USE_TATONNEMENT_TIMEOUT_THREAD)
-		{
-			return;
-		}
+	return std::thread([this, &timeout_happened_flag, num_milliseconds, &cancel_timeout_flag] () {
 		for (size_t i = 0; i < 10; i ++) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(num_milliseconds/10));
 			if (cancel_timeout_flag.load(std::memory_order_relaxed)) {

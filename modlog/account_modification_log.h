@@ -83,14 +83,7 @@ private:
 
 public:
 
-	AccountModificationLog() 
-		: cache()
-		, hash_log(std::make_optional<trie::HashLog<AccountIDPrefix>>())
-		, modification_log()
-		, persistable_block(std::make_unique<saved_block_t>())
-		, mtx()
-		, deleter() 
-		{};
+	AccountModificationLog();
 
 	~AccountModificationLog() {
 		std::lock_guard lock(mtx);

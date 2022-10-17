@@ -11,9 +11,27 @@
 
 #include <utils/time.h>
 
+#include <mtt/trie/configs.h>
+
 namespace speedex {
 
 constexpr static bool DIFF_LOGS_ENABLED = false;
+
+
+AccountModificationLog::AccountModificationLog() 
+    : cache()
+    , hash_log(std::nullopt)
+    , modification_log()
+    , persistable_block(std::make_unique<saved_block_t>())
+    , mtx()
+    , deleter() 
+    {
+        if constexpr (TRIE_LOG_HASH_RECORDS)
+        {
+            hash_log = std::make_optional<trie::HashLog<AccountIDPrefix>>();
+        }
+    };
+
 
 void
 AccountModificationLog::hash(Hash& hash, uint64_t block_number)

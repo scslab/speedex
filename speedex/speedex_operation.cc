@@ -164,7 +164,10 @@ speedex_block_creation_logic(
 
 		tatonnement.oracle.wait_for_all_tatonnement_threads();
 
-		timeout_th.join();
+		if (timeout_th)
+		{
+			timeout_th->join();
+		}
 		tatonnement_timeout = false;
 		cancel_timeout = false;
 			
@@ -295,7 +298,11 @@ speedex_block_creation_logic(
 	overall_measurements.format_time = utils::measure_time(timestamp);
 
 	tatonnement.oracle.wait_for_all_tatonnement_threads();
-	timeout_th.join();
+
+	if (timeout_th)
+	{
+		timeout_th->join();
+	}
 
 	management_structures.block_header_hash_map.insert(new_block.block, true);//new_block.block.blockNumber, new_block.hash);
 

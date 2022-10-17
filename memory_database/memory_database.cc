@@ -9,6 +9,7 @@
 #include <tbb/parallel_reduce.h>
 
 #include "speedex/speedex_static_configs.h"
+#include <mtt/trie/configs.h>
 
 #include <utils/time.h>
 
@@ -18,6 +19,32 @@
 #include <cinttypes>
 
 namespace speedex {
+
+
+MemoryDatabase::MemoryDatabase()
+	: user_id_to_idx_map(),
+	reserved_account_ids(),
+	database(),
+	uncommitted_db(),
+	committed_mtx(),
+	uncommitted_mtx(),
+	commitment_trie(),
+	account_lmdb_instance(),
+	transfer_logs(std::nullopt)
+	, hash_log(std::nullopt)
+	{
+		if constexpr (TRIE_LOG_HASH_RECORDS)
+		{
+			hash_log = std::make_optional<trie::HashLog<trie_prefix_t>>();
+		}
+
+		if constexpr (LOG_TRANSFERS)
+		{
+			transfer_logs = std::make_optional<TransferLogs>();
+		}
+
+	}
+
 
 void MemoryDatabase::transfer_available(
 	UserAccount* user_index, AssetID asset_type, int64_t change, const char* reason) {
