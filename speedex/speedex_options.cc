@@ -3,22 +3,23 @@
 #include <stdexcept>
 
 #include <libfyaml.h>
+#include "utils/yaml.h"
 
 namespace speedex {
 
 
 void SpeedexOptions::parse_options(const char* filename) {
 
-	struct fy_document* fyd = fy_document_build_from_file(NULL, filename);
+	yaml fyd(filename);
 	
-	if (fyd == NULL) {
+	if (!fyd) {
 		throw std::runtime_error(
 			"could not open file (did you forget to type .yaml?)");
 	}
 
 	int count = 0;
 	count += fy_document_scanf(
-		fyd,
+		fyd.get(),
 		"/protocol/tax_rate %hhu "
 		"/protocol/smooth_mult %hhu "
 		"/protocol/num_assets %hu "
@@ -26,7 +27,7 @@ void SpeedexOptions::parse_options(const char* filename) {
 		&tax_rate, &smooth_mult, &num_assets, &block_size);
 
 	count += fy_document_scanf(
-		fyd,
+		fyd.get(),
 		"/speedex-node/persistence_frequency %lu "
 		"/speedex-node/mempool_target %lu "
 		"/speedex-node/mempool_chunk %lu",
@@ -35,7 +36,6 @@ void SpeedexOptions::parse_options(const char* filename) {
 	if (count != 7) {
 		throw std::runtime_error("failed to parse options yaml");
 	}
-	fy_document_destroy(fyd);
 }
 
 

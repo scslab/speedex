@@ -1,6 +1,8 @@
 #include "synthetic_data_generator/synthetic_data_gen_options.h"
 #include <stdexcept>
 
+#include "utils/yaml.h"
+
 namespace speedex {
 
 void CycleDistribution::create_acc_probabilities(
@@ -114,8 +116,8 @@ bool PriceOptions::parse(struct fy_document* fyd) {
 
 bool GenerationOptions::parse(const char* filename) {
 
-	struct fy_document* fyd = fy_document_build_from_file(NULL, filename);
-	if (fyd == NULL) {
+	yaml fyd(filename);
+	if (!fyd) {
 		std::printf("failed to build doc from file \"%s\"\n", filename);
 		return false;
 	}
@@ -125,7 +127,7 @@ bool GenerationOptions::parse(const char* filename) {
 	int shuffle;
 
 	int count = fy_document_scanf(
-		fyd,
+		fyd.get(),
 		"/experiment/output_prefix %256s " 					// 1
 		"/experiment/num_assets %u "						// 2
 		"/experiment/num_accounts %u "						// 3
@@ -168,39 +170,32 @@ bool GenerationOptions::parse(const char* filename) {
 
 	if (count != 19) {
 		std::printf("missing something got %d\n", count);
-		fy_document_destroy(fyd);
 		return false;
 	}
 
 	if (initial_endow_min > initial_endow_max) {
 		std::printf("don't be a fool\n");
-		fy_document_destroy(fyd);
 		return false;
 	}
-	//std::printf("min endow: %ld, max endow: %ld\n", 
-	//	initial_endow_min, initial_endow_max);
 
 	output_prefix = std::string(filename_buf);
 
 	std::printf("output prefix is %s\n", output_prefix.c_str());
 
-	auto status = cycle_dist.parse(fyd, num_assets);
+	auto status = cycle_dist.parse(fyd.get(), num_assets);
 
 	if (!status) {
 		std::printf("cycle problem\n");
-		fy_document_destroy(fyd);
 		return false;
 	}
 
-	status = price_options.parse(fyd);
+	status = price_options.parse(fyd.get());
 	if (!status) {
 		std::printf("price problem\n");
-		fy_document_destroy(fyd);
 		return false;
 	}
 
 	do_shuffle = (shuffle > 0);
-	fy_document_destroy(fyd);
 	return true;
 }
 
