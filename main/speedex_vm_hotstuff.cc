@@ -231,7 +231,7 @@ int main(int argc, char* const* argv)
 
 			control_server.wait_for_breakpoint_signal();
 			vm -> write_measurements();
-			exit(0);
+			return 0;
 		}
 
 		// conditions for validator nodes
@@ -239,7 +239,7 @@ int main(int argc, char* const* argv)
 			std::printf("leader terminated experiment, waiting for signal\n");
 			control_server.wait_for_breakpoint_signal();
 			vm -> write_measurements();
-			exit(0);
+			return 0;
 		}
 	}
 }
