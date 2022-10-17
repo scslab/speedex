@@ -12,7 +12,7 @@
 #include "hotstuff/manage_data_dirs.h"
 #include "hotstuff/config/replica_config.h"
 
-#include "memory_database/typedefs.h"
+#include "speedex/speedex_static_configs.h"
 
 namespace speedex {
 

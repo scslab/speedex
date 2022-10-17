@@ -138,14 +138,16 @@ int main(int argc, char const *argv[])
 
 		BlockStateUpdateStatsWrapper state_update_stats;
 
-		std::thread th = tatonnement.oracle.launch_timeout_thread(3000, timeout_flag, cancel_timeout_thread);
+		auto th = tatonnement.oracle.launch_timeout_thread(3000, timeout_flag, cancel_timeout_thread);
 
 		auto res = tatonnement.oracle.compute_prices_grid_search(prices.data(), approx_params);
 
 		cancel_timeout_thread = true;
 
-		th.join();
-
+		if (th)
+		{
+			th->join();
+		}
 		auto lp_results = tatonnement.lp_solver.solve(prices.data(), approx_params, !timeout_flag);
 
 		if (!timeout_flag) {
