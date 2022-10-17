@@ -4,7 +4,7 @@ experiment:
   num_accounts: 10000000
   account_dist_param: 0.0000001
   block_size: 100000
-  num_blocks: 500
+  num_blocks: 1000
   bad_tx_fraction: 0.1
   prices:
     price_tolerance_min: 0.00
@@ -15,12 +15,12 @@ experiment:
     per_block_delta: 0.05
   cycle_size_dist:
     dist_max: 7
-    2: 1
-    3: 0.8
-    4: 0.5
-    5: 0.3
-    6: 0.1
-    7: 0.05 
+    2: 100
+    3: 80
+    4: 50
+    5: 30
+    6: 10
+    7: 5
   block_boundary_crossing_fraction: 0.1
   initial_endow_min: 1000
   initial_endow_max: 1000000
