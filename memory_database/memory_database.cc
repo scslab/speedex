@@ -33,14 +33,14 @@ MemoryDatabase::MemoryDatabase()
 	transfer_logs(std::nullopt)
 	, hash_log(std::nullopt)
 	{
-		if constexpr (TRIE_LOG_HASH_RECORDS)
+		if constexpr (trie::TRIE_LOG_HASH_RECORDS)
 		{
-			hash_log = std::make_optional<trie::HashLog<trie_prefix_t>>();
+			hash_log.emplace();
 		}
 
 		if constexpr (LOG_TRANSFERS)
 		{
-			transfer_logs = std::make_optional<TransferLogs>();
+			transfer_logs.emplace();
 		}
 
 	}

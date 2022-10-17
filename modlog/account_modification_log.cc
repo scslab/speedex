@@ -26,9 +26,9 @@ AccountModificationLog::AccountModificationLog()
     , mtx()
     , deleter() 
     {
-        if constexpr (TRIE_LOG_HASH_RECORDS)
+        if constexpr (trie::TRIE_LOG_HASH_RECORDS)
         {
-            hash_log = std::make_optional<trie::HashLog<AccountIDPrefix>>();
+            hash_log.emplace();
         }
     };
 
