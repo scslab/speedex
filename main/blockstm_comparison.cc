@@ -27,20 +27,14 @@
 
 #include <tbb/global_control.h>
 
-#include <libfyaml.h>
+#include "utils/yaml.h"
 
 #include <vector>
 #include <cstdint>
+#include <cinttypes>
 
 using namespace speedex;
 
-[[noreturn]]
-static void usage() {
-	std::printf(R"(
-usage: blockstm_comparison --num_accounts=<n> --batch_size=<n>
-)");
-	exit(1);
-}
 enum opttag {
 	NUM_ACCOUNTS,
 	BATCH_SIZE
@@ -59,8 +53,6 @@ constexpr static size_t NUM_ROUNDS = 10;
 
 int main(int argc, char* const* argv)
 {
-	int opt;
-
 	std::vector<uint32_t> thread_counts = {1, 2, 4, 8, 16, 32};
 
 	std::vector<uint32_t> num_accounts = {2, 10, 100, 1000, 10000};
@@ -73,10 +65,10 @@ int main(int argc, char* const* argv)
 	{
 		for (auto batch : batch_sizes)
 		{
-			std::printf("n_acc %lu batch %lu\n", acc, batch);
+			std::printf("n_acc %" PRIu32 " batch %" PRIu32 "\n", acc, batch);
 			for (auto n : thread_counts)
 			{
-				std::printf("threadcount %lu\n", n);
+				std::printf("threadcount %" PRIu32 "\n", n);
 
 				auto res = run_blockstm_experiment(acc, batch, n);
 
@@ -99,10 +91,11 @@ int main(int argc, char* const* argv)
 
 	for (auto [acc, batch, n, time] : results)
 	{
-		std::printf("accounts = %lu batch_size = %lu nthread = %lu time = %lf tps = %lf\n", acc, batch, n, time, batch/time);
+		std::printf("accounts = %" PRIu32 " batch_size = %" PRIu32 " nthread = %" PRIu32 " time = %lf tps = %lf\n", acc, batch, n, time, batch/time);
 	}
 }
 
+/*
 
 HashedBlock
 speedex_block_creation_logic_notatonnement(
@@ -175,7 +168,7 @@ speedex_block_creation_logic_notatonnement(
 	management_structures.block_header_hash_map.insert(new_block.block, true);//new_block.block.blockNumber, new_block.hash);
 
 	return new_block;
-}
+} */
 
 std::vector<double>
 run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, const uint32_t num_threads)
@@ -203,13 +196,15 @@ run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, 
 	ReplicaID self_id = 0;
 	std::string config_file = "config/config_local.yaml";
 
-	struct fy_document* fyd = fy_document_build_from_file(NULL, config_file.c_str());
-	if (fyd == NULL) {
+	yaml fyd(config_file);
+
+	//struct fy_document* fyd = fy_document_build_from_file(NULL, config_file.c_str());
+	if (!fyd) {
 		std::printf("Failed to build doc from file \"%s\"\n", config_file.c_str());
 		exit(1);
 	}
 
-	auto [config, sk] = parse_replica_config(fyd, self_id);
+	auto [config, sk] = parse_replica_config(fyd.get(), self_id);
 
 	ExperimentParameters params;
 
