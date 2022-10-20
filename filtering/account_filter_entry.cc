@@ -1,4 +1,5 @@
 #include "filtering/account_filter_entry.h"
+#include "filtering/filter_log.h"
 
 #include "memory_database/memory_database.h"
 
@@ -66,7 +67,7 @@ AccountFilterEntry::add_cancel_id(uint64_t id)
 }
 
 void
-AccountFilterEntry::compute_reqs()
+AccountFilterEntry::compute_reqs(AccountCreationFilter& accounts)
 {
 	if (reqs_computed)
 	{
@@ -81,6 +82,7 @@ AccountFilterEntry::compute_reqs()
                 case CREATE_ACCOUNT:
                     add_req(MemoryDatabase::NATIVE_ASSET,
                             op.body.createAccountOp().startingBalance);
+                    accounts.log_account_creation(op.body.createAccountOp().newAccountId);
                     break;
                 case CREATE_SELL_OFFER:
                     add_req(op.body.createSellOfferOp().category.sellAsset,
@@ -189,7 +191,7 @@ AccountFilterEntry::log_double_cancel()
 
 
 void
-AccountFilterEntry::compute_validity(MemoryDatabase const& db)
+AccountFilterEntry::compute_validity(MemoryDatabase const& db, AccountCreationFilter& accounts)
 {
 //	std::printf("compute_validity\n");
     if (checked_reqs_cached)
@@ -206,7 +208,7 @@ AccountFilterEntry::compute_validity(MemoryDatabase const& db)
 
     assert_initialized();
 
-    compute_reqs();
+    compute_reqs(accounts);
 
     auto const* acc = db.lookup_user(account);
     if (acc == nullptr)

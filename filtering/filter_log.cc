@@ -29,7 +29,7 @@ FilterLog::add_txs(std::vector<SignedTransaction> const& txs,
     entries.template batch_merge_in<AccountFilterMergeFn>(cache);
 
     auto validate_lambda = [&db, this](AccountFilterEntry& entry) {
-        entry.compute_validity(db);
+        entry.compute_validity(db, accounts);
     };
     entries.parallel_apply(validate_lambda);
 }
@@ -43,6 +43,40 @@ FilterLog::check_valid_account(AccountID const& account) const
         return FilterResult::VALID_NO_TXS;
     }
 	return res -> check_valid();
+}
+
+bool 
+AccountCreationFilter::is_valid_account_creation(AccountID account) const
+{
+    auto it = created_counts.find(account);
+    if (it == created_counts.end())
+    {
+        return true;
+    }
+    return it -> second == 1;
+}
+
+void
+AccountCreationFilter::log_account_creation(AccountID src)
+{
+    std::lock_guard lock(mtx);
+    created_counts[src] ++;
+}
+
+bool 
+AccountCreationFilter::check_valid_tx(const SignedTransaction& tx) const
+{
+    for (auto const& op : tx.transaction.operations)
+    {
+        if (op.body.type() == OperationType::CREATE_ACCOUNT)
+        {
+            if (!is_valid_account_creation(op.body.createAccountOp().newAccountId))
+            {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 } // namespace speedex

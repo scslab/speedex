@@ -17,6 +17,7 @@ namespace speedex
 {
 
 class MemoryDatabase;
+class AccountCreationFilter;
 
 class AccountFilterEntry
 {
@@ -50,7 +51,7 @@ class AccountFilterEntry
     void log_reqs_invalid();
     void log_reqs_checked();
 
-    void compute_reqs();
+    void compute_reqs(AccountCreationFilter& accounts);
 
     void assert_initialized() const;
 
@@ -72,7 +73,7 @@ public:
 
     void add_tx(SignedTransaction const& tx, MemoryDatabase const& db);
 
-    void compute_validity(MemoryDatabase const& db);
+    void compute_validity(MemoryDatabase const& db, AccountCreationFilter& accounts);
 
     void merge_in(AccountFilterEntry& other);
 
