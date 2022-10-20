@@ -114,6 +114,7 @@ double run_experiment(const size_t n_threads, std::string const& experiment_root
 {
 	FilterLog log;
 
+	std::printf("num accounts %lu\n", id_list.size());
 	tbb::global_control control(
 		tbb::global_control::max_allowed_parallelism, n_threads);
 
@@ -131,6 +132,10 @@ double run_experiment(const size_t n_threads, std::string const& experiment_root
 			std::printf("no trial %lu, exiting\n", trial);
 			break;
 		}
+
+		xdr::xdr_from_opaque(vec, block);
+
+		std::printf("trial size %lu txs\n", block.size());
 
 		auto ts = utils::init_time_measurement();
 
@@ -171,6 +176,7 @@ double run_experiment(const size_t n_threads, std::string const& experiment_root
 					throw std::runtime_error("invalid filter result");
 			}
 		}
+		log.clear();
 		std::printf("stats: num_valid_with_txs %lu num_bad_duplicates %lu num_missing_requirements %lu total %lu\n", 
 			num_valid_with_txs, num_bad_duplicates,
 			num_missing_requirements,
