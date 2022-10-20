@@ -23,12 +23,10 @@ usage: filtering_experiment --exp_name=<experiment_name, required> --num_threads
 }
 enum opttag {
 	EXPERIMENT_NAME,
-	NUM_THREADS,
 };
 
 static const struct option opts[] = {
 	{"exp_name", required_argument, nullptr, EXPERIMENT_NAME},
-	{"num_threads", required_argument, nullptr, NUM_THREADS},
 	{nullptr, 0, nullptr, 0}
 };
 
@@ -40,9 +38,7 @@ int main(int argc, char* const* argv)
 {
 	MemoryDatabaseGenesisData memdb_genesis;
 
-	std::string experiment_name = "filtering";
-	std::string nthreads = "1";
-	
+	std::string experiment_name = "filtering";	
 	int opt;
 
 	while ((opt = getopt_long_only(argc, argv, "",
@@ -52,9 +48,6 @@ int main(int argc, char* const* argv)
 			case EXPERIMENT_NAME:
 				experiment_name = optarg;
 				break;
-			case NUM_THREADS:
-				nthreads = optarg;
-				break;
 
 			default:
 				usage();
@@ -62,11 +55,6 @@ int main(int argc, char* const* argv)
 	}
 
 	if (experiment_name.size() == 0) {
-		usage();
-	}
-
-	if (nthreads.size() == 0)
-	{
 		usage();
 	}
 
@@ -92,7 +80,6 @@ int main(int argc, char* const* argv)
 	size_t num_assets = 50;
 	size_t default_amount = 1;
 
-	size_t num_threads = std::stoi(nthreads);
 	MemoryDatabase db;
 
 	auto account_init_lambda = [&] (UserAccount& user_account) -> void {
@@ -105,16 +92,30 @@ int main(int argc, char* const* argv)
 
 	db.install_initial_accounts_and_commit(memdb_genesis, account_init_lambda);
 
-	double avg = run_experiment(num_threads, experiment_root, memdb_genesis.id_list, db);
+	std::vector<uint32_t> thread_counts = {1, 6, 12, 24, 48};
+	std::map<uint32_t, double> res;
 
-	std::printf("avg experiment %s with %lu threads: %lf\n", experiment_root.c_str(), avg, num_threads);
+	for (auto n : thread_counts)
+	{
+		double avg = run_experiment(n, experiment_root, memdb_genesis.id_list, db);
+		std::printf("avg experiment %s with %lu threads: %lf\n", experiment_root.c_str(), avg, n);
+
+		res[n] = avg;
+	}
+
+	std::printf("=======results:=======\n");
+	for (auto n : thread_counts)
+	{
+		std::printf("n: %lu time %lf speedup relative to 1x %lf\n", n, res[n], res[n] / res[1]);
+	}
+
 }
 
 double run_experiment(const size_t n_threads, std::string const& experiment_root, const std::vector<AccountID>& id_list, MemoryDatabase const& db)
 {
 	FilterLog log;
 
-	std::printf("num accounts %lu\n", id_list.size());
+	std::printf("num accounts %lu num_threads %lu\n", id_list.size());
 	tbb::global_control control(
 		tbb::global_control::max_allowed_parallelism, n_threads);
 
