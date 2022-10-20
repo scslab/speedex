@@ -55,6 +55,17 @@ AccountFilterEntry::add_req(AssetID const& asset, int64_t amount)
 }
 
 void
+AccountFilterEntry::add_cancel_id(uint64_t id)
+{
+    if (consumed_cancel_ids.find(id) != consumed_cancel_ids.end())
+    {
+        log_double_cancel();
+        return;
+    }
+    consumed_cancel_ids.insert(id);
+}
+
+void
 AccountFilterEntry::compute_reqs()
 {
 	if (reqs_computed)
@@ -76,6 +87,7 @@ AccountFilterEntry::compute_reqs()
                             op.body.createSellOfferOp().amount);
                     break;
                 case CANCEL_SELL_OFFER:
+                    add_cancel_id(op.body.cancelSellOfferOp().offerId);
                     break;
                 case PAYMENT:
                     add_req(op.body.paymentOp().asset,
@@ -167,6 +179,12 @@ void
 AccountFilterEntry::log_overflow_req()
 {
 	overflow_req = true;
+}
+
+void
+AccountFilterEntry::log_double_cancel()
+{
+    double_cancel = true;
 }
 
 

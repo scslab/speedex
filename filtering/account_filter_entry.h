@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <map>
+#include <set>
 
 #include "filtering/error_code.h"
 
@@ -28,16 +29,24 @@ class AccountFilterEntry
 
     std::map<AssetID, int64_t> required_assets;
 
+    std::set<uint64_t> consumed_cancel_ids;
+
     bool found_bad_duplicate = false;
     bool found_invalid_reqs = false;
     bool found_account_nexist = false;
+
     bool overflow_req = false;
+    bool double_cancel = false;
+
     bool checked_reqs_cached = false;
 
     void add_req(AssetID const& asset, int64_t amount);
+    void add_cancel_id(uint64_t id);
+
     void log_invalid_account();
     void log_bad_duplicate();
     void log_overflow_req();
+    void log_double_cancel();
     void log_reqs_invalid();
     void log_reqs_checked();
 
@@ -47,7 +56,7 @@ class AccountFilterEntry
 
     bool found_error() const
     {
-    	return found_bad_duplicate || found_invalid_reqs || found_account_nexist || overflow_req;
+    	return found_bad_duplicate || found_invalid_reqs || found_account_nexist || overflow_req || double_cancel;
     }
 
 public:
