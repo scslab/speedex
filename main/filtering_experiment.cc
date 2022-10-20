@@ -107,7 +107,7 @@ int main(int argc, char* const* argv)
 
 	double avg = run_experiment(num_threads, experiment_root, memdb_genesis.id_list, db);
 
-	std::printf("avg with %lu threads: %lf\n", avg, num_threads);
+	std::printf("avg experiment %s with %lu threads: %lf\n", experiment_root.c_str(), avg, num_threads);
 }
 
 double run_experiment(const size_t n_threads, std::string const& experiment_root, const std::vector<AccountID>& id_list, MemoryDatabase const& db)
