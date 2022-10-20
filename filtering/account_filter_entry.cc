@@ -294,7 +294,7 @@ AccountFilterEntry::merge_in(AccountFilterEntry& other)
     }
 
     txs.merge(other.txs);
-
+    
     for (auto const& [seqno, tx] : other.txs)
     {
         auto it = txs.find(seqno);

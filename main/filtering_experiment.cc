@@ -30,6 +30,8 @@ static const struct option opts[] = {
 	{nullptr, 0, nullptr, 0}
 };
 
+const size_t warmup = 10;
+
 using namespace speedex;
 
 double run_experiment(const size_t n_threads, std::string const& experiment_root, const std::vector<AccountID>& id_list, MemoryDatabase const& db);
@@ -106,7 +108,7 @@ int main(int argc, char* const* argv)
 	std::printf("=======results:=======\n");
 	for (auto n : thread_counts)
 	{
-		std::printf("n: %lu time %lf speedup relative to 1x %lf\n", n, res[n], res[n] / res[1]);
+		std::printf("n: %lu time %lf speedup relative to 1x %lf\n", n, res[n], res[1] / res[n]);
 	}
 
 }
@@ -121,9 +123,9 @@ double run_experiment(const size_t n_threads, std::string const& experiment_root
 
 	double acc = 0;
 
-	size_t trial = 0;
+	size_t count = 0;
 
-	for (; ; trial++)
+	for (size_t trial = 0; ; trial++)
 	{
 		xdr::opaque_vec<> vec;
 		ExperimentBlock block;
@@ -144,7 +146,11 @@ double run_experiment(const size_t n_threads, std::string const& experiment_root
 
 		auto res = utils::measure_time(ts);
 
-		acc += res;
+		if (trial >= warmup)
+		{
+			acc += res;
+			count++;
+		}
 
 		std::printf("duration: %lf\n", res);
 
@@ -183,7 +189,7 @@ double run_experiment(const size_t n_threads, std::string const& experiment_root
 			num_missing_requirements,
 			 num_valid_with_txs + num_bad_duplicates + num_missing_requirements);
 	}
-	return acc / trial;
+	return acc / count;
 }
 
 

@@ -98,7 +98,7 @@ int main(int argc, char* const* argv)
 
 	size_t num_bad_seq_accounts = 1'000;
 
-	for (size_t b = 0; b < 5; b++)
+	for (size_t b = 0; b < 50; b++)
 	{
 
 		ExperimentBlock block;
