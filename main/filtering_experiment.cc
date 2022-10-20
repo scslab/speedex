@@ -34,6 +34,8 @@ static const struct option opts[] = {
 
 using namespace speedex;
 
+double run_experiment(const size_t n_threads, std::string const& experiment_root, const std::vector<AccountID>& id_list, MemoryDatabase const& db);
+
 int main(int argc, char* const* argv)
 {
 	MemoryDatabaseGenesisData memdb_genesis;
@@ -91,55 +93,59 @@ int main(int argc, char* const* argv)
 	size_t default_amount = 1;
 
 	size_t num_threads = std::stoi(nthreads);
-		MemoryDatabase db;
+	MemoryDatabase db;
 
-		auto account_init_lambda = [&] (UserAccount& user_account) -> void {
-			db.transfer_available(&user_account, MemoryDatabase::NATIVE_ASSET, 10000);
-			for (auto i = 0u; i < num_assets; i++) {
-				db.transfer_available(&user_account, i, default_amount);
-			}
-			user_account.commit();
-		};
+	auto account_init_lambda = [&] (UserAccount& user_account) -> void {
+		db.transfer_available(&user_account, MemoryDatabase::NATIVE_ASSET, 10000);
+		for (auto i = 0u; i < num_assets; i++) {
+			db.transfer_available(&user_account, i, default_amount);
+		}
+		user_account.commit();
+	};
 
-		db.install_initial_accounts_and_commit(memdb_genesis, account_init_lambda);
+	db.install_initial_accounts_and_commit(memdb_genesis, account_init_lambda);
 
-		std::printf("num_accounts: %lu\n", memdb_genesis.pk_list.size());
-		std::printf("db size: %lu\n", db.size());
+	double avg = run_experiment(num_threads, experiment_root, memdb_genesis.id_list, db);
 
-	for (size_t trial = 1; ; trial++)
+	std::printf("avg with %lu threads: %lf\n", avg, num_threads);
+}
+
+double run_experiment(const size_t n_threads, std::string const& experiment_root, const std::vector<AccountID>& id_list, MemoryDatabase const& db)
+{
+	FilterLog log;
+
+	tbb::global_control control(
+		tbb::global_control::max_allowed_parallelism, n_threads);
+
+	double acc = 0;
+
+	size_t trial = 0;
+
+	for (; ; trial++)
 	{
-
 		xdr::opaque_vec<> vec;
 		ExperimentBlock block;
-		std::string filename = experiment_root + "/" + std::to_string(trial) + ".txs";
+		std::string filename = experiment_root + "/" + std::to_string(trial + 1) + ".txs";
 
 		if (load_xdr_from_file(vec, filename.c_str())) {
 			std::printf("no trial %lu, exiting\n", trial);
 			break;
 		}
 
-		xdr::xdr_from_opaque(vec, block);
-
-		tbb::global_control control(
-			tbb::global_control::max_allowed_parallelism, num_threads);
-
 		auto ts = utils::init_time_measurement();
 
-	//	ExperimentBlock truncated;
-	//	truncated.insert(truncated.end(), block.begin(), block.begin() + 10);
-
-		FilterLog log;
 		log.add_txs(block, db);
 
 		auto res = utils::measure_time(ts);
+
+		acc += res;
 
 		std::printf("duration: %lf\n", res);
 
 		size_t num_valid_with_txs = 0, num_bad_duplicates = 0, num_missing_requirements = 0;
 
-		for (auto const& acct : memdb_genesis.id_list)
+		for (auto const& acct : id_list)
 		{
-
 			switch(log.check_valid_account(acct))
 			{
 				case FilterResult::VALID_NO_TXS:
@@ -170,7 +176,8 @@ int main(int argc, char* const* argv)
 			num_missing_requirements,
 			 num_valid_with_txs + num_bad_duplicates + num_missing_requirements);
 	}
-
+	return acc / trial;
 }
+
 
 

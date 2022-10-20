@@ -25,6 +25,10 @@ public:
                  MemoryDatabase const& db);
 
     FilterResult check_valid_account(AccountID const& account) const;
+
+    void clear() {
+        entries.clear();
+    }
 };
 
 } // namespace speedex
