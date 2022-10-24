@@ -4,6 +4,7 @@
 #include "memory_database/memory_database.h"
 
 #include "filtering/account_filter_entry.h"
+#include "filtering/filter_log.h"
 
 #include "xdr/types.h"
 
@@ -70,6 +71,7 @@ TEST_CASE("single account", "[filtering]")
 	const AccountID id = 0x1234;
 	AccountFilterEntry entry(id);
 
+	AccountCreationFilter acf;
 	MemoryDatabase db;
 	MemoryDatabaseGenesisData memdb_genesis;
 	memdb_genesis.id_list.push_back(id);
@@ -98,7 +100,7 @@ TEST_CASE("single account", "[filtering]")
 
 	SECTION("no txs, is valid")
 	{
-		entry.compute_validity(db);
+		entry.compute_validity(db, acf);
 		//misnomer here, valid_no_txs is when there's no txs so accountfilterentry doesn't exist
 		REQUIRE(entry.check_valid() == FilterResult::VALID_HAS_TXS);
 	}
@@ -107,49 +109,49 @@ TEST_CASE("single account", "[filtering]")
 	{
 		auto tx = make_empty_tx(id, initial_seqno + 10 * 256, 10);
 		entry.add_tx(tx, db);
-		entry.compute_validity(db);
+		entry.compute_validity(db, acf);
 		REQUIRE(entry.check_valid() == FilterResult::VALID_HAS_TXS);
 	}
 	SECTION("empty tx, just fee (not payable)")
 	{
 		auto tx = make_empty_tx(id, initial_seqno + 10 * 256, 100000);
 		entry.add_tx(tx, db);
-		entry.compute_validity(db);
+		entry.compute_validity(db, acf);
 		REQUIRE(entry.check_valid() == FilterResult::MISSING_REQUIREMENT);
 	}
 	SECTION("empty tx, just fee (bad seqno)")
 	{
 		auto tx = make_empty_tx(id, initial_seqno - 10 * 256, 10);
 		entry.add_tx(tx, db);
-		entry.compute_validity(db);
+		entry.compute_validity(db, acf);
 		REQUIRE(entry.check_valid() == FilterResult::VALID_HAS_TXS);
 	}
 	SECTION("empty tx, just fee (bad seqno, bad fee ignored)")
 	{
 		auto tx = make_empty_tx(id, initial_seqno - 10 * 256, 10000000);
 		entry.add_tx(tx, db);
-		entry.compute_validity(db);
+		entry.compute_validity(db, acf);
 		REQUIRE(entry.check_valid() == FilterResult::VALID_HAS_TXS);
 	}
 	SECTION("payment tx good")
 	{
 		auto tx = make_payment_tx(id, initial_seqno + 10 * 256, 10, id, 1, 10);
 		entry.add_tx(tx, db);
-		entry.compute_validity(db);
+		entry.compute_validity(db, acf);
 		REQUIRE(entry.check_valid() == FilterResult::VALID_HAS_TXS);
 	}	
 	SECTION("payment tx bad")
 	{
 		auto tx = make_payment_tx(id, initial_seqno + 10 * 256, 10, id, 1, 11);
 		entry.add_tx(tx, db);
-		entry.compute_validity(db);
+		entry.compute_validity(db, acf);
 		REQUIRE(entry.check_valid() == FilterResult::MISSING_REQUIREMENT);
 	}
 	SECTION("payment tx bad conflict with fee")
 	{
 		auto tx = make_payment_tx(id, initial_seqno + 10 * 256, 5, id, 0, 6);
 		entry.add_tx(tx, db);
-		entry.compute_validity(db);
+		entry.compute_validity(db, acf);
 		REQUIRE(entry.check_valid() == FilterResult::MISSING_REQUIREMENT);
 	}
 	SECTION("two payment tx good")
@@ -158,7 +160,7 @@ TEST_CASE("single account", "[filtering]")
 		auto tx2 = make_payment_tx(id, initial_seqno + 11 * 256, 5, id, 2, 6);
 		entry.add_tx(tx1, db);
 		entry.add_tx(tx2, db);
-		entry.compute_validity(db);
+		entry.compute_validity(db, acf);
 		REQUIRE(entry.check_valid() == FilterResult::VALID_HAS_TXS);
 	}
 	SECTION("two payment tx bad")
@@ -167,7 +169,7 @@ TEST_CASE("single account", "[filtering]")
 		auto tx2 = make_payment_tx(id, initial_seqno + 11 * 256, 5, id, 1, 6);
 		entry.add_tx(tx1, db);
 		entry.add_tx(tx2, db);
-		entry.compute_validity(db);
+		entry.compute_validity(db, acf);
 		REQUIRE(entry.check_valid() == FilterResult::MISSING_REQUIREMENT);
 	}
 	SECTION("same seqno fail")
@@ -176,7 +178,7 @@ TEST_CASE("single account", "[filtering]")
 		auto tx2 = make_payment_tx(id, initial_seqno + 10 * 256, 5, id, 2, 1);
 		entry.add_tx(tx1, db);
 		entry.add_tx(tx2, db);
-		entry.compute_validity(db);
+		entry.compute_validity(db, acf);
 		REQUIRE(entry.check_valid() == FilterResult::INVALID_DUPLICATE);
 	}
 	SECTION("same seqno duplicate ok")
@@ -185,7 +187,7 @@ TEST_CASE("single account", "[filtering]")
 		auto tx2 = make_payment_tx(id, initial_seqno + 10 * 256, 5, id, 1, 10);
 		entry.add_tx(tx1, db);
 		entry.add_tx(tx2, db);
-		entry.compute_validity(db);
+		entry.compute_validity(db, acf);
 		REQUIRE(entry.check_valid() == FilterResult::VALID_HAS_TXS);
 	}
 }
