@@ -114,7 +114,7 @@ array_get_seq_num_offset(uint64_t sequence_number, uint64_t last_committed_id) {
 	return offset;
 }
 
-template<uint64_t NUM_WORDS>
+template<size_t NUM_WORDS>
 inline uint64_t
 array_get_seq_num_increment(std::array<std::atomic<uint64_t>, NUM_WORDS> const& bv)
 {
