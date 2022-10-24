@@ -83,13 +83,9 @@ int main(int argc, char **argv)
 
 	auto [config, sk] = speedex::parse_replica_config(fyd, *self_id);
 
-	//auto sk = config.parse(fyd, *self_id);
-
 	auto vm = std::make_shared<CountingVM>();
 
-	auto app = make_speculative_hotstuff_instance(config, *self_id, sk, vm, HotstuffConfigs());
-
-	//HotstuffApp app(config, *self_id, sk, vm);
+	auto app = make_speculative_hotstuff_instance(std::move(config), *self_id, sk, vm, HotstuffConfigs());
 
 	if (load_from_lmdb) {
 		app->init_from_disk();

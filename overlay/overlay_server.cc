@@ -56,10 +56,10 @@ OverlayHandler::get_min_max_seen_batch_nums() const
 }
 
 
-OverlayServer::OverlayServer(Mempool& mempool, ReplicaConfig& config)
+OverlayServer::OverlayServer(Mempool& mempool, const ReplicaConfig& config, std::string const& overlay_port)
 	: handler(mempool, config)
 	, ps()
-	, overlay_listener(ps, xdr::tcp_listen(OVERLAY_PORT, AF_INET), false, xdr::session_allocator<void>())
+	, overlay_listener(ps, xdr::tcp_listen(overlay_port.c_str(), AF_INET), false, xdr::session_allocator<void>())
 	{
 		overlay_listener.register_service(handler);
 

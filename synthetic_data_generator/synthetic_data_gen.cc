@@ -617,7 +617,7 @@ GeneratorState<random_generator>::filter_by_replica_id(ExperimentBlock& block) {
 
 		for (size_t i = 0; i < block.size();) {
 			AccountID src_account = block[i].transaction.metadata.sourceAccount;
-			if (src_account % (conf_pair -> second.nreplicas) != conf_pair -> first) {
+			if (src_account % (conf_pair -> second->nreplicas) != conf_pair -> first) {
 				block[i] = block.back();
 				block.pop_back();
 			} else {

@@ -20,6 +20,8 @@
 #include "utils/save_load_xdr.h"
 #include "utils/manage_data_dirs.h"
 
+#include "utils/yaml.h"
+
 #include "xdr/experiments.h"
 
 #include <optional>
@@ -123,15 +125,15 @@ int main(int argc, char* const* argv)
 		args.config_file = get_config_file();
 	}
 
-	struct fy_document* fyd = fy_document_build_from_file(NULL, args.config_file->c_str());
-	if (fyd == NULL) {
+	auto fyd = yaml(*args.config_file);
+
+	//struct fy_document* fyd = fy_document_build_from_file(NULL, args.config_file->c_str());
+	if (!fyd) {
 		std::printf("Failed to build doc from file \"%s\"\n", args.config_file->c_str());
 		exit(1);
 	}
 
-	auto [config, sk] = parse_replica_config(fyd, *args.self_id);
-
-	fy_document_destroy(fyd);
+	auto [parsed_config, sk] = parse_replica_config(fyd.get(), *args.self_id);
 
 	if (args.speedex_options_file.size() == 0) {
 		args.speedex_options_file = get_speedex_options();
@@ -158,17 +160,19 @@ int main(int argc, char* const* argv)
 		throw std::runtime_error("mismatch in num assets between speedex_options and experiment_options");
 	}
 
-	if (config.nreplicas != params.n_replicas) {
+	if (parsed_config.nreplicas != params.n_replicas) {
 		std::printf("WARNING: mismatch between experiment data sharding and num replicas\n");
 	}
 
-	make_all_data_dirs(config.get_info(*args.self_id));
+	make_all_data_dirs(parsed_config.get_info(*args.self_id));
 
 	auto configs = get_runtime_configs();
 
 	auto vm = std::make_shared<SpeedexVM>(params, speedex_options, args.experiment_results_folder, configs);
 
-	auto app = hotstuff::make_speculative_hotstuff_instance(config, *args.self_id, sk, vm, HotstuffConfigs());
+	auto app = hotstuff::make_speculative_hotstuff_instance(std::move(parsed_config), *args.self_id, sk, vm, HotstuffConfigs());
+
+	auto const& config = app -> get_config();
 
 	if (args.load_from_lmdb) {
 		app->init_from_disk();

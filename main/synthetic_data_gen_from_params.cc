@@ -150,7 +150,7 @@ int main(int argc, char* const* argv)
 		throw std::runtime_error("failed to save params file");
 	}
 
-	GeneratorState generator (gen, options, output_root, std::make_pair(rid, config));
+	GeneratorState generator (gen, options, output_root, std::make_pair(rid, &config));
 	generator.dump_account_list(params.account_list_filename);
 
 	if (!just_params) {

@@ -87,7 +87,7 @@ struct GeneratorState {
 
 	BlockState block_state;
 
-	using config_pair_t = std::pair<hotstuff::ReplicaID, hotstuff::ReplicaConfig>;
+	using config_pair_t = std::pair<hotstuff::ReplicaID, const hotstuff::ReplicaConfig*>;
 
 	std::optional<config_pair_t> conf_pair;
 

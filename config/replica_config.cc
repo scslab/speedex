@@ -11,7 +11,7 @@
 
 namespace speedex {
 
-std::pair<hotstuff::ReplicaInfo, SecretKey>
+std::pair<std::unique_ptr<hotstuff::ReplicaInfo>, SecretKey>
 parse_replica_info(fy_node* info_yaml, ReplicaID id)
 {
     char hostname_buf[1024];
@@ -34,13 +34,13 @@ parse_replica_info(fy_node* info_yaml, ReplicaID id)
 
     std::string hostname = std::string(hostname_buf);
 
-    hotstuff::ReplicaInfo out(id,
+    auto out = std::make_unique<hotstuff::ReplicaInfo>(id,
                               pk,
                               hostname,
                               HOTSTUFF_BLOCK_FETCH_PORT,
                               HOTSTUFF_PROTOCOL_PORT,
                               ROOT_DB_DIRECTORY);
-    return { out, sk };
+    return { std::move(out), sk };
 }
 
 std::pair<hotstuff::ReplicaConfig, SecretKey>
@@ -76,17 +76,18 @@ parse_replica_config(fy_document* config_yaml, ReplicaID self_id)
         }
         auto [info, sk] = parse_replica_info(info_node, i);
 
-        out.add_replica(info);
+        out.add_replica(std::move(info));
 
         if (self_id == i) {
             sk_out = sk;
         }
     }
-    if (sk_out) {
-        out.finish_init();
-        return { out, *sk_out };
+    if (!sk_out)
+    {
+        throw std::runtime_error("failed to parse self node");
     }
-    throw std::runtime_error("failed to parse self node");
+    out.finish_init();
+    return { std::move(out), *sk_out };
 }
 
 } // namespace speedex

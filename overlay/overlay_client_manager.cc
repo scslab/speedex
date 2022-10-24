@@ -35,9 +35,9 @@ OverlayClientManager::OverlayClientManager(ReplicaConfig const& config, ReplicaI
 		auto infos = config.list_info();
 		for (auto const& info : infos)
 		{
-			if (info.id != self_id)
+			if (info->id != self_id)
 			{
-				other_clients.emplace_back(std::make_unique<OverlayClient>(info, self_id));
+				other_clients.emplace_back(std::make_unique<OverlayClient>(*info, self_id));
 			}
 		}
 	}

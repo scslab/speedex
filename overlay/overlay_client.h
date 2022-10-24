@@ -46,14 +46,17 @@ class OverlayClient : public NonblockingRpcClient<xdr::srpc_client<OverlayV1>> {
 
 	ReplicaID self_id;
 
+	const std::string port;
+
 public:
 
-	OverlayClient(const hotstuff::ReplicaInfo& info, ReplicaID self_id)
+	OverlayClient(const hotstuff::ReplicaInfo& info, ReplicaID self_id, const std::string& target_port = std::string(OVERLAY_PORT))
 		: NonblockingRpcClient<client_t>(info)
 		, foreign_mempool_size(0)
 		, connected_to_foreign_mempool(false)
 		, force_repoll(false)
 		, self_id(self_id)
+		, port(target_port)
 		{
 			start_async_thread([this] {run();});
 		}
@@ -65,7 +68,7 @@ public:
 	void send_txs(forward_t txs);
 
 	const char* get_service() const override final {
-		return OVERLAY_PORT;
+		return port.c_str();
 	}
 
 	~OverlayClient()

@@ -132,8 +132,6 @@ int main(int argc, char* const* argv)
 
 	size_t num_threads = get_num_threads();
 
-	make_all_data_dirs(config.get_info(*args.self_id));
-
 	auto vm = std::make_shared<SpeedexVM>(params, speedex_options, args.experiment_results_folder, configs);
 
 	HotstuffConfigs hs_configs
@@ -142,7 +140,7 @@ int main(int argc, char* const* argv)
 		.immediately_refill_proposal_buffer = false
 	};
 
-	auto app = hotstuff::make_speculative_hotstuff_instance(config, *args.self_id, sk, vm, hs_configs);
+	auto app = hotstuff::make_speculative_hotstuff_instance(std::move(config), *args.self_id, sk, vm, hs_configs);
 
 	if (args.load_from_lmdb)
 	{

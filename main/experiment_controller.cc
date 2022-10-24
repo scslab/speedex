@@ -20,7 +20,6 @@
 #include <utils/mkdir.h>
 
 using namespace speedex;
-using namespace hotstuff;
 
 using xdr::operator==;
 
@@ -48,7 +47,7 @@ static const struct option opts[] = {
 	{nullptr, 0, nullptr, 0}
 };
 
-bool node_is_online(const ReplicaInfo& info) {
+bool node_is_online(const hotstuff::ReplicaInfo& info) {
 	try {
 		std::printf("querying to see if node %s is ready\n", info.get_hostname().c_str());
 		auto fd = info.tcp_connect(EXPERIMENT_CONTROL_PORT);
@@ -61,12 +60,12 @@ bool node_is_online(const ReplicaInfo& info) {
 	}
 }
 
-void wait_for_all_online(const ReplicaConfig& config) {
+void wait_for_all_online(const hotstuff::ReplicaConfig& config) {
 	auto infos = config.list_info();
 	while(true) {
 		bool failed = false;
 		for (auto& info : infos) {
-			if (!node_is_online(info)) {
+			if (!node_is_online(*info)) {
 				failed = true;
 			}
 		}
@@ -77,7 +76,7 @@ void wait_for_all_online(const ReplicaConfig& config) {
 	}
 }
 
-bool send_one_breakpoint(const ReplicaInfo& info) {
+bool send_one_breakpoint(const hotstuff::ReplicaInfo& info) {
 	try {
 		auto fd = info.tcp_connect(EXPERIMENT_CONTROL_PORT);
 		//auto fd = xdr::tcp_connect(info.hostname.c_str(), EXPERIMENT_CONTROL_PORT);
@@ -90,14 +89,14 @@ bool send_one_breakpoint(const ReplicaInfo& info) {
 	}
 }
 
-void send_all_breakpoints(const ReplicaConfig& config) {
+void send_all_breakpoints(const hotstuff::ReplicaConfig& config) {
 	auto infos = config.list_info();
 	for (auto& info : infos) {
-		while (!send_one_breakpoint(info)) {}
+		while (!send_one_breakpoint(*info)) {}
 	}
 }
 
-bool experiment_done(const ReplicaInfo& info) {
+bool experiment_done(const hotstuff::ReplicaInfo& info) {
 	try {
 		std::printf("querying to see if node %s marked experiment done\n", info.get_hostname().c_str());
 		auto fd = info.tcp_connect(EXPERIMENT_CONTROL_PORT);
@@ -114,12 +113,12 @@ bool experiment_done(const ReplicaInfo& info) {
 	}
 }
 
-void wait_for_one_experiment_done(const ReplicaConfig& config) {
+void wait_for_one_experiment_done(const hotstuff::ReplicaConfig& config) {
 	auto infos = config.list_info();
 	while(true) {
 		bool finished = false;
 		for (auto& info : infos) {
-			if (experiment_done(info)) {
+			if (experiment_done(*info)) {
 				finished = true;
 			}
 		}
@@ -130,7 +129,7 @@ void wait_for_one_experiment_done(const ReplicaConfig& config) {
 	}
 }
 
-bool send_experiment_done_signal(const ReplicaInfo& info) {
+bool send_experiment_done_signal(const hotstuff::ReplicaInfo& info) {
 	try {
 		std::printf("querying to see if node %s marked experiment done\n", info.get_hostname().c_str());
 		auto fd = info.tcp_connect(EXPERIMENT_CONTROL_PORT);
@@ -145,12 +144,12 @@ bool send_experiment_done_signal(const ReplicaInfo& info) {
 }
 
 void
-send_all_experiment_done_signals(const ReplicaConfig& config) {
+send_all_experiment_done_signals(const hotstuff::ReplicaConfig& config) {
 	auto infos = config.list_info();
 	while(true) {
 		bool failed = false;
 		for (auto& info : infos) {
-			if (!send_experiment_done_signal(info)) {
+			if (!send_experiment_done_signal(*info)) {
 				failed = true;
 			}
 		}
@@ -162,7 +161,7 @@ send_all_experiment_done_signals(const ReplicaConfig& config) {
 }
 
 std::optional<uint64_t>
-get_num_blocks(const ReplicaInfo& info) {
+get_num_blocks(const hotstuff::ReplicaInfo& info) {
 	try {
 		std::printf("querying to get node %s num blocks\n", info.get_hostname().c_str());
 		auto fd = info.tcp_connect(EXPERIMENT_CONTROL_PORT);
@@ -181,14 +180,14 @@ get_num_blocks(const ReplicaInfo& info) {
 }
 
 void
-wait_for_all_same_height(const ReplicaConfig& config) {
+wait_for_all_same_height(const hotstuff::ReplicaConfig& config) {
 	auto infos = config.list_info();
 	while(true) {
 		std::optional<uint64_t> height;
 		bool comm_failure = false;
 		bool mismatch = false;
 		for (auto& info : infos) {
-			auto res = get_num_blocks(info);
+			auto res = get_num_blocks(*info);
 			if (!res) {
 				comm_failure = true;
 				break;
@@ -209,11 +208,11 @@ wait_for_all_same_height(const ReplicaConfig& config) {
 	}
 }
 
-std::string get_measurements_filename(std::string const& folder, ReplicaInfo const& info) {
+std::string get_measurements_filename(std::string const& folder, hotstuff::ReplicaInfo const& info) {
 	return folder + std::string("measurements_") + std::to_string(info.id) + std::string("_") + std::to_string(get_num_threads());
 }
 
-bool save_measurement(std::string const& folder, const ReplicaInfo& info) {
+bool save_measurement(std::string const& folder, const hotstuff::ReplicaInfo& info) {
 	try {
 		std::printf("querying to see if node %s marked experiment done\n", info.get_hostname().c_str());
 		auto fd = info.tcp_connect(EXPERIMENT_CONTROL_PORT);
@@ -238,7 +237,7 @@ bool save_measurement(std::string const& folder, const ReplicaInfo& info) {
 	}
 }
 
-bool check_suffixes(const ReplicaConfig& config)
+bool check_suffixes(const hotstuff::ReplicaConfig& config)
 {
 	std::vector<xdr::xstring<>> suffixes;
 	auto const& infos = config.list_info();
@@ -247,7 +246,7 @@ bool check_suffixes(const ReplicaConfig& config)
 		while(true)
 		{
 			try {
-				auto fd = info.tcp_connect(EXPERIMENT_CONTROL_PORT);
+				auto fd = info->tcp_connect(EXPERIMENT_CONTROL_PORT);
 				auto client = xdr::srpc_client<HotstuffVMControlV1>(fd.get());
 				auto suffix = client.get_measurement_name_suffix();
 				if (suffix)
@@ -258,7 +257,7 @@ bool check_suffixes(const ReplicaConfig& config)
 			}
 			catch(...)
 			{
-				std::printf("node %s is not responding to messages, retrying...\n", info.get_hostname().c_str());
+				std::printf("node %s is not responding to messages, retrying...\n", info->get_hostname().c_str());
 				std::this_thread::sleep_for(1000ms);
 			}
 		}
@@ -274,12 +273,12 @@ bool check_suffixes(const ReplicaConfig& config)
 	return true;
 }
 
-void wait_for_all_measurements(std::string const& folder, const ReplicaConfig& config) {
+void wait_for_all_measurements(std::string const& folder, const hotstuff::ReplicaConfig& config) {
 	auto infos = config.list_info();
 	while(true) {
 		bool failed = false;
 		for (auto& info : infos) {
-			if (!save_measurement(folder, info)) {
+			if (!save_measurement(folder, *info)) {
 				failed = true;
 			}
 		}
@@ -336,7 +335,7 @@ int main(int argc, char* const* argv)
 		usage();
 	}
 
-	ReplicaConfig config = parse_replica_config(fyd, 0).first;
+	hotstuff::ReplicaConfig config = parse_replica_config(fyd, 0).first;
 
 	fy_document_destroy(fyd);
 

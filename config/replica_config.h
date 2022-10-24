@@ -10,6 +10,11 @@
 
 namespace speedex {
 
+class ReplicaInfo : public hotstuff::ReplicaInfo
+{
+
+};
+
 std::pair<hotstuff::ReplicaConfig, SecretKey>
 parse_replica_config(fy_document* config_yaml, ReplicaID self_id);
 
