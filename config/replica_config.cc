@@ -11,6 +11,41 @@
 
 namespace speedex {
 
+template<typename out_type>
+bool try_parse_attr(fy_node* info_yaml, std::string query, out_type* out)
+{
+    if (fy_node_scanf(info_yaml,
+            query.c_str(),
+            out) != 1)
+    {
+        return false;
+    }
+    return true;
+}
+
+std::string get_attr_uint32(fy_node* info_yaml, std::string query, std::string default_string)
+{
+    std::string out = default_string;
+    uint32_t out_read;
+    if (try_parse_attr(info_yaml, query, &out_read))
+    {
+        out = std::to_string(out_read);
+    }
+    return out;
+}
+
+// query should be of the form "query %1023s"
+std::string get_attr_string(fy_node* info_yaml, std::string query, std::string default_string)
+{
+    char buf[1024];
+    memset(buf, 0, 1024);
+    if (try_parse_attr(info_yaml, query, buf))
+    {
+        return std::string(buf);
+    }
+    return default_string;
+}
+
 std::pair<std::unique_ptr<hotstuff::ReplicaInfo>, SecretKey>
 parse_replica_info(fy_node* info_yaml, ReplicaID id)
 {
@@ -34,12 +69,19 @@ parse_replica_info(fy_node* info_yaml, ReplicaID id)
 
     std::string hostname = std::string(hostname_buf);
 
-    auto out = std::make_unique<hotstuff::ReplicaInfo>(id,
+    std::string overlay_port = get_attr_uint32(info_yaml, "overlay_port %lu", OVERLAY_PORT);
+    std::string hs_block_fetch_port = get_attr_uint32(info_yaml, "hotstuff_block_fetch_port %lu", HOTSTUFF_BLOCK_FETCH_PORT);
+    std::string hs_protocol_port = get_attr_uint32(info_yaml, "hotstuff_protocol_port %lu", HOTSTUFF_PROTOCOL_PORT);
+
+    std::string db_directory = get_attr_string(info_yaml, "root_database %1023s", ROOT_DB_DIRECTORY) + "/";
+
+    auto out = std::make_unique<ReplicaInfo>(id,
                               pk,
                               hostname,
-                              HOTSTUFF_BLOCK_FETCH_PORT,
-                              HOTSTUFF_PROTOCOL_PORT,
-                              ROOT_DB_DIRECTORY);
+                              hs_block_fetch_port,
+                              hs_protocol_port,
+                              db_directory,
+                              overlay_port);
     return { std::move(out), sk };
 }
 

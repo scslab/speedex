@@ -82,7 +82,7 @@ int main(int argc, char **argv)
 	//config.parse(fyd, *self_id);
 
 	Mempool mp(10'000, 2'000'000);
-	OverlayServer server(mp, config);
+	OverlayServer server(mp, config, *self_id);
 
 	OverlayClientManager client_manager(config, *self_id, mp, server.get_handler());
 

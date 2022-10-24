@@ -184,7 +184,7 @@ int main(int argc, char* const* argv)
 
 	auto& mp = vm -> get_mempool();
 
-	OverlayServer server(mp, config);
+	OverlayServer server(mp, config, *args.self_id);
 
 	OverlayClientManager client_manager(config, *args.self_id, mp, server.get_handler());
 

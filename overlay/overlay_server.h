@@ -11,8 +11,6 @@
 #include <xdrpp/pollset.h>
 #include <xdrpp/srpc.h>
 
-#include "rpc/rpcconfig.h"
-
 namespace speedex {
 
 class Mempool;
@@ -61,7 +59,7 @@ class OverlayServer {
 
 public:
 
-	OverlayServer(Mempool& mempool, const hotstuff::ReplicaConfig& config, std::string const& overlay_port = std::string(OVERLAY_PORT));
+	OverlayServer(Mempool& mempool, const hotstuff::ReplicaConfig& config, hotstuff::ReplicaID self_id);
 
 	uint32_t tx_batch_limit() const {
 		return handler.get_min_max_seen_batch_nums() + 1;
