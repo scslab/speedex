@@ -49,7 +49,8 @@ static const struct option opts[] = {
 std::vector<double>
 run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, const uint32_t num_threads);
 
-constexpr static size_t NUM_ROUNDS = 10;
+constexpr static size_t NUM_ROUNDS = 100;
+constexpr static size_t WARMUP = 2;
 
 int main(int argc, char* const* argv)
 {
@@ -72,13 +73,13 @@ int main(int argc, char* const* argv)
 
 				auto res = run_blockstm_experiment(acc, batch, n);
 
-				if (res.size() != NUM_ROUNDS)
+				if (res.size() != NUM_ROUNDS + WARMUP)
 				{
 					throw std::runtime_error("invalid size return");
 				}
 
 				double avg = 0;
-				for (auto i = 0u; i < NUM_ROUNDS; i++)
+				for (auto i = WARMUP; i < NUM_ROUNDS + WARMUP; i++)
 				{
 					avg += res[i];
 				}
@@ -211,7 +212,7 @@ run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, 
 	params.num_assets = 1;
 	params.default_amount = options.new_account_balance;
 	params.account_list_filename = "blockstm_accounts";
-	params.num_blocks = NUM_ROUNDS;
+	params.num_blocks = NUM_ROUNDS + WARMUP;
 	params.n_replicas = config.nreplicas;
 
 	if (options.num_assets != params.num_assets)
