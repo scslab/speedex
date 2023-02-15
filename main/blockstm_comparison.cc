@@ -53,7 +53,7 @@ constexpr static size_t NUM_ROUNDS = 10;
 
 int main(int argc, char* const* argv)
 {
-	std::vector<uint32_t> thread_counts = {1, 2, 4, 8, 16, 32};
+	std::vector<uint32_t> thread_counts = {1, 2, 4, 8, 16, 24, 32, 48};
 
 	std::vector<uint32_t> num_accounts = {2, 10, 100, 1000, 10000};
 
