@@ -85,7 +85,7 @@ parse_replica_info(fy_node* info_yaml, ReplicaID id)
     return { std::move(out), sk };
 }
 
-std::pair<hotstuff::ReplicaConfig, SecretKey>
+std::pair<std::shared_ptr<hotstuff::ReplicaConfig>, SecretKey>
 parse_replica_config(fy_document* config_yaml, ReplicaID self_id)
 {
     if (config_yaml == NULL) {
@@ -105,7 +105,7 @@ parse_replica_config(fy_document* config_yaml, ReplicaID self_id)
         throw std::runtime_error("invalid document root");
     }
 
-    hotstuff::ReplicaConfig out;
+    std::shared_ptr<hotstuff::ReplicaConfig> out = std::make_shared<hotstuff::ReplicaConfig>();
 
     for (ReplicaID i = 0; i < num_replicas; i++) {
 
@@ -118,7 +118,7 @@ parse_replica_config(fy_document* config_yaml, ReplicaID self_id)
         }
         auto [info, sk] = parse_replica_info(info_node, i);
 
-        out.add_replica(std::move(info));
+        out->add_replica(std::move(info));
 
         if (self_id == i) {
             sk_out = sk;
@@ -128,8 +128,8 @@ parse_replica_config(fy_document* config_yaml, ReplicaID self_id)
     {
         throw std::runtime_error("failed to parse self node");
     }
-    out.finish_init();
-    return { std::move(out), *sk_out };
+    out->finish_init();
+    return { out, *sk_out };
 }
 
 } // namespace speedex

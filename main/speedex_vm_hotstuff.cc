@@ -160,17 +160,17 @@ int main(int argc, char* const* argv)
 		throw std::runtime_error("mismatch in num assets between speedex_options and experiment_options");
 	}
 
-	if (parsed_config.nreplicas != params.n_replicas) {
+	if (parsed_config->nreplicas != params.n_replicas) {
 		std::printf("WARNING: mismatch between experiment data sharding and num replicas\n");
 	}
 
-	make_all_data_dirs(parsed_config.get_info(*args.self_id));
+	make_all_data_dirs(parsed_config->get_info(*args.self_id));
 
 	auto configs = get_runtime_configs();
 
 	auto vm = std::make_shared<SpeedexVM>(params, speedex_options, args.experiment_results_folder, configs);
 
-	auto app = hotstuff::make_speculative_hotstuff_instance(std::move(parsed_config), *args.self_id, sk, vm, HotstuffConfigs());
+	auto app = hotstuff::make_speculative_hotstuff_instance(parsed_config, *args.self_id, sk, vm, HotstuffConfigs());
 
 	auto const& config = app -> get_config();
 
@@ -201,6 +201,8 @@ int main(int argc, char* const* argv)
 	if (*args.self_id == 0) {
 		pmaker.set_self_as_proposer();
 	}
+
+	std::printf("init done\n");
 
 	std::this_thread::sleep_for(2000ms);
 

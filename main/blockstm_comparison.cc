@@ -213,7 +213,7 @@ run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, 
 	params.default_amount = options.new_account_balance;
 	params.account_list_filename = "blockstm_accounts";
 	params.num_blocks = NUM_ROUNDS + WARMUP;
-	params.n_replicas = config.nreplicas;
+	params.n_replicas = config->nreplicas;
 
 	if (options.num_assets != params.num_assets)
 	{
@@ -237,8 +237,8 @@ run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, 
 
 	auto configs = get_runtime_configs(); 
 
-	clear_all_data_dirs(config.get_info(self_id));
-	make_all_data_dirs(config.get_info(self_id));
+	clear_all_data_dirs(config->get_info(self_id));
+	make_all_data_dirs(config->get_info(self_id));
 
 	std::string experiment_results_folder = "blockstm_comparison_direct_results/";
 

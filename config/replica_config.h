@@ -32,10 +32,11 @@ struct ReplicaInfo : public hotstuff::ReplicaInfo
 		{}
 
 	~ReplicaInfo() override
-	{}
+	{
+	}
 };
 
-std::pair<hotstuff::ReplicaConfig, SecretKey>
+std::pair<std::shared_ptr<hotstuff::ReplicaConfig>, SecretKey>
 parse_replica_config(fy_document* config_yaml, ReplicaID self_id);
 
 } // namespace speedex
