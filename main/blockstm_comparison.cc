@@ -54,6 +54,16 @@ constexpr static size_t WARMUP = 2;
 
 int main(int argc, char* const* argv)
 {
+
+	if (!DETAILED_MOD_LOGGING) {
+		throw std::runtime_error("you should probably turn on the full modification log generation for a better comparison");
+	}
+
+	if (USE_TATONNEMENT_TIMEOUT_THREAD || !DISABLE_PRICE_COMPUTATION)
+	{
+		throw std::runtime_error("why do you have price comp on here");
+	}
+
 	std::vector<uint32_t> thread_counts = {1, 2, 4, 8, 16, 24, 32, 48};
 
 	std::vector<uint32_t> num_accounts = {2, 10, 100, 1000, 10000};
