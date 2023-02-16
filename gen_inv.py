@@ -19,6 +19,8 @@ for reservation in res["Reservations"]:
     instances = reservation["Instances"]
     
     for instance in instances:
+        if (instance["State"]["Name"] != "running"):
+            continue
         name = get_name(instance["Tags"])
         print(name)
         ip = instance["PrivateIpAddress"]
