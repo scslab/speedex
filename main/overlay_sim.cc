@@ -77,14 +77,14 @@ int main(int argc, char **argv)
 		usage();
 	}
 
-	ReplicaConfig config = parse_replica_config(fyd, *self_id).first;
+	auto config = parse_replica_config(fyd, *self_id).first;
 
 	//config.parse(fyd, *self_id);
 
 	Mempool mp(10'000, 2'000'000);
-	OverlayServer server(mp, config, *self_id);
+	OverlayServer server(mp, *config, *self_id);
 
-	OverlayClientManager client_manager(config, *self_id, mp, server.get_handler());
+	OverlayClientManager client_manager(*config, *self_id, mp, server.get_handler());
 
 	MockDataStream data_stream;
 

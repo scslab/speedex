@@ -335,28 +335,28 @@ int main(int argc, char* const* argv)
 		usage();
 	}
 
-	hotstuff::ReplicaConfig config = parse_replica_config(fyd, 0).first;
+	auto config = parse_replica_config(fyd, 0).first;
 
 	fy_document_destroy(fyd);
 
-	wait_for_all_online(config);
-	if (!check_suffixes(config))
+	wait_for_all_online(*config);
+	if (!check_suffixes(*config))
 	{
 		throw std::runtime_error("mismatching config suffixes!");
 	}
 
-	send_all_breakpoints(config);
+	send_all_breakpoints(*config);
 
-	wait_for_one_experiment_done(config);
-	send_all_experiment_done_signals(config);
+	wait_for_one_experiment_done(*config);
+	send_all_experiment_done_signals(*config);
 
-	wait_for_all_same_height(config);
+	wait_for_all_same_height(*config);
 
 	std::string combined_name = output_folder + output_prefix;
 
-	wait_for_all_measurements(combined_name, config);
+	wait_for_all_measurements(combined_name, *config);
 
-	send_all_breakpoints(config);
+	send_all_breakpoints(*config);
 }
 
 

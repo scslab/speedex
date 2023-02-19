@@ -170,7 +170,7 @@ int main(int argc, char* const* argv)
 	params.account_list_filename = output_root + "accounts";
 	params.default_amount = options.new_account_balance;
 	params.num_blocks = options.num_blocks;
-	params.n_replicas = conf.nreplicas;
+	params.n_replicas = conf->nreplicas;
 
 	if (utils::mkdir_safe(options.output_prefix.c_str())) {
 		std::printf("directory %s already exists, continuing\n", options.output_prefix.c_str());
