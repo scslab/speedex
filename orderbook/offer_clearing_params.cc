@@ -24,7 +24,7 @@ ClearingParams::check_clearing(const std::vector<Price>& prices) const {
 		auto category = category_from_idx(i, num_assets);
 		auto& supply_activated = orderbook_params[i].supply_activated;
 
-		supplies[category.sellAsset] += supply_activated;
+		supplies[category.sellAsset] += FractionalAsset::from_integral(supply_activated.ceil());
 		auto demanded = price::wide_multiply_val_by_a_over_b(
 			supply_activated.value, 
 			prices[category.sellAsset], 
@@ -38,8 +38,8 @@ ClearingParams::check_clearing(const std::vector<Price>& prices) const {
 		//FractionalAsset taxed_demand = demands[i].tax_and_round(tax_rate);
 		FractionalAsset taxed_demand = FractionalAsset::from_integral(demands[i].tax_and_round(tax_rate));
 		if (supplies[i] < taxed_demand) {
-			CLEARING_INFO("failed on %d %f %f", 
-				i, supplies[i].to_double(), taxed_demand.to_double());
+			std::printf("failed on %d %f %f (delta %f)\n", 
+				i, supplies[i].to_double(), taxed_demand.to_double(), (supplies[i]-taxed_demand).to_double());
 			return false;
 		}
 		CLEARING_INFO("%d %f %f %f", 

@@ -161,7 +161,7 @@ OrderbookStateCommitmentChecker::check_clearing()
 
         auto supply_activated = commitments[i].fractionalSupplyActivated();
 
-        supplies[category.sellAsset] += supply_activated;
+        supplies[category.sellAsset] += FractionalAsset::from_integral(supply_activated.ceil());
 
         auto demanded_raw
             = price::wide_multiply_val_by_a_over_b(supply_activated.value,
