@@ -1,6 +1,7 @@
 #include "speedex/speedex_options.h"
 
 #include <stdexcept>
+#include <cinttypes>
 
 #include <libfyaml.h>
 #include "utils/yaml.h"
@@ -40,8 +41,13 @@ void SpeedexOptions::parse_options(const char* filename) {
 
 
 void SpeedexOptions::print_options() {
-	std::printf("tax_rate=%u smooth_mult=%u num_assets=%u\n", 
-		tax_rate, smooth_mult, num_assets);
+	std::printf("===== SPEEDEX OPTIONS =====\n");
+	std::printf("tax rate    %" PRIu8 "\n", tax_rate);
+	std::printf("smooth mult %" PRIu8 "\n", smooth_mult);
+	std::printf("num assets  %" PRIu16 "\n", num_assets);
+	std::printf("block size  %" PRIu32 "\n", block_size);
+	std::printf("mp target   %u\n", mempool_target);
+	std::printf("mp chunk sz %u\n", mempool_chunk);
 }
 
 } /* speedex */

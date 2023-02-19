@@ -1,0 +1,10 @@
+protocol: 
+  tax_rate: 15
+  smooth_mult: 10
+  num_assets: 50
+  block_size: 200000
+
+speedex-node:
+  persistence_frequency: 5
+  mempool_target: 2000000
+  mempool_chunk: 100

@@ -155,6 +155,7 @@ int main(int argc, char* const* argv)
 
 	SpeedexOptions speedex_options;
 	speedex_options.parse_options(args.speedex_options_file.c_str());
+	speedex_options.print_options();
 
 	if (speedex_options.num_assets != params.num_assets) {
 		throw std::runtime_error("mismatch in num assets between speedex_options and experiment_options");
