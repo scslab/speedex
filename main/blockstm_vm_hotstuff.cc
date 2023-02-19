@@ -104,7 +104,7 @@ int main(int argc, char* const* argv)
 	params.default_amount = options.new_account_balance;
 	params.account_list_filename = "blockstm_accounts";
 	params.num_blocks = 100;
-	params.n_replicas = config.nreplicas;
+	params.n_replicas = config->nreplicas;
 
 	if (options.num_assets != params.num_assets)
 	{
@@ -115,18 +115,19 @@ int main(int argc, char* const* argv)
 
 	SpeedexOptions speedex_options;
 	speedex_options.parse_options(args.speedex_options_file.c_str());
+	speedex_options.print_options();
 
 	if (speedex_options.num_assets != params.num_assets) {
 		throw std::runtime_error("mismatch in num assets between speedex_options and experiment_options");
 	}
 
-	if (config.nreplicas != params.n_replicas) {
+	if (config->nreplicas != params.n_replicas) {
 		std::printf("WARNING: mismatch between experiment data sharding and num replicas\n");
 	}
 
 	speedex_options.block_size = args.batch_size;
 
-	make_all_data_dirs(config.get_info(*args.self_id));
+	make_all_data_dirs(config->get_info(*args.self_id));
 
 	auto configs = get_runtime_configs();
 
@@ -140,7 +141,7 @@ int main(int argc, char* const* argv)
 		.immediately_refill_proposal_buffer = false
 	};
 
-	auto app = hotstuff::make_speculative_hotstuff_instance(std::move(config), *args.self_id, sk, vm, hs_configs);
+	auto app = hotstuff::make_speculative_hotstuff_instance(config, *args.self_id, sk, vm, hs_configs);
 
 	if (args.load_from_lmdb)
 	{
