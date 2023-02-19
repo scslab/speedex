@@ -1,9 +1,12 @@
 #include "utils/manage_data_dirs.h"
 
+#include "automation/command_line_args.h"
 #include "automation/get_experiment_vars.h"
 #include "automation/get_replica_id.h"
 
 #include "config/replica_config.h"
+
+#include "utils/yaml.h"
 
 #include <optional>
 #include <chrono>
@@ -16,7 +19,7 @@ using namespace hotstuff;
 using namespace speedex;
 
 using namespace std::chrono_literals;
-
+ /*
 [[noreturn]]
 static void usage() {
 	std::printf(R"(
@@ -38,11 +41,13 @@ static const struct option opts[] = {
 	{"replica_id", required_argument, nullptr, OPT_REPLICA_ID},
 	{"config_file", required_argument, nullptr, OPT_CONFIG_FILE},
 	{nullptr, 0, nullptr, 0}
-};
+}; */
 
 int main(int argc, char* const* argv)
 {
-	std::optional<ReplicaID> self_id;
+	auto args = parse_cmd(argc, argv, "speedex_vm_hotstuff");
+
+/*	std::optional<ReplicaID> self_id;
 	std::optional<std::string> config_file;
 	
 	int opt;
@@ -61,26 +66,24 @@ int main(int argc, char* const* argv)
 				usage();
 		}
 	}
+	*/
 
-	if (!self_id) {
-		self_id = get_replica_id();
+	if (!args.self_id) {
+		args.self_id = get_replica_id();
 	}
-	if (!config_file) {
-		config_file = get_config_file();
+	if (!args.config_file) {
+		args.config_file = get_config_file();
+	} 
+
+	auto fyd = yaml(*args.config_file);
+	if (!fyd) {
+		std::printf("Failed to build doc from file \"%s\"\n", args.config_file->c_str());
+		exit(1);
 	}
 
-	struct fy_document* fyd = fy_document_build_from_file(NULL, config_file->c_str());
-	if (fyd == NULL) {
-		std::printf("Failed to build doc from file \"%s\"\n", config_file->c_str());
-		usage();
-	}
+	auto [parsed_config, sk] = parse_replica_config(fyd.get(), *args.self_id);
 
-	auto [config, _] = parse_replica_config(fyd, *self_id);
-
-	fy_document_destroy(fyd);
-
-	auto info = config.get_info(*self_id);
-
+	auto info = parsed_config->get_info(*args.self_id);
 
 	clear_all_data_dirs(info);
 	make_all_data_dirs(info);

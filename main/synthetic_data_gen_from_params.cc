@@ -136,7 +136,7 @@ int main(int argc, char* const* argv)
 	params.account_list_filename = output_root + "accounts";
 	params.default_amount = 100'000'000;
 	params.num_blocks = options.num_blocks;
-	params.n_replicas = config.nreplicas;
+	params.n_replicas = config->nreplicas;
 
 	if (utils::mkdir_safe(options.output_prefix.c_str())) {
 		std::printf("directory %s already exists, continuing\n", options.output_prefix.c_str());
@@ -150,7 +150,7 @@ int main(int argc, char* const* argv)
 		throw std::runtime_error("failed to save params file");
 	}
 
-	GeneratorState generator (gen, options, output_root, std::make_pair(rid, &config));
+	GeneratorState generator (gen, options, output_root, std::make_pair(rid, config.get()));
 	generator.dump_account_list(params.account_list_filename);
 
 	if (!just_params) {
