@@ -53,6 +53,20 @@ SpeedexVM::SpeedexVM(
 		utils::mkdir_safe(measurement_output_folder.c_str());
 	}
 
+std::unique_ptr<hotstuff::VMBlock>
+SpeedexVM::try_parse(xdr::opaque_vec<> const& body) override final
+{
+	HashedBlockTransactionListPair out;
+	try {
+		xdr::xdr_from_opaque(body, out);
+		return std::make_unique<SpeedexVMBlock>(out);
+	} catch(...)
+	{
+		std::printf("message parsing failed, rejecting\n");
+		return nullptr;
+	}
+}
+
 void 
 SpeedexVM::rewind_structs_to_committed_height() 
 {

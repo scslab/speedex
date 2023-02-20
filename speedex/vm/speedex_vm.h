@@ -112,17 +112,7 @@ public:
 		SpeedexRuntimeConfigs const& configs);
 
 	std::unique_ptr<hotstuff::VMBlock>
-	try_parse(xdr::opaque_vec<> const& body) override final
-	{
-		HashedBlockTransactionListPair out;
-		try {
-			xdr::xdr_from_opaque(body, out);
-			return std::make_unique<SpeedexVMBlock>(out);
-		} catch(...)
-		{
-			return nullptr;
-		}
-	}
+	try_parse(xdr::opaque_vec<> const& body) override final;
 
 	std::unique_ptr<hotstuff::VMBlock> propose() override final;
 
