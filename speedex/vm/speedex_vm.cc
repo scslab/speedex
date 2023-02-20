@@ -54,7 +54,7 @@ SpeedexVM::SpeedexVM(
 	}
 
 std::unique_ptr<hotstuff::VMBlock>
-SpeedexVM::try_parse(xdr::opaque_vec<> const& body) override final
+SpeedexVM::try_parse(xdr::opaque_vec<> const& body)
 {
 	HashedBlockTransactionListPair out;
 	try {
