@@ -195,7 +195,7 @@ int main(int argc, char* const* argv)
 	ExperimentController control_server(vm);
 	control_server.wait_for_breakpoint_signal();
 
-	OverlayFlooder flooder(data_stream, client_manager, server, 2'000'000);
+	OverlayFlooder flooder(data_stream, client_manager, server, speedex_options.mempool_target);
 
 	PaceMakerWaitQC pmaker(app);
 
