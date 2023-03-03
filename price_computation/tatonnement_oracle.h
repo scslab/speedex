@@ -1,5 +1,21 @@
 #pragma once
 
+/**
+ * Copyright 2023 Geoffrey Ramseyer
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /*! \file tatonnement_oracle.h
 
 Run Tatonnement in one interface.
@@ -40,12 +56,10 @@ struct TatonnementControlParameters {
 	uint64_t min_step = ((uint64_t)1)<<7;
 	uint8_t step_adjust_radix = 5;
 	uint8_t diff_reduction = 0;
-	bool use_in_case_of_timeout = false;
+	//bool use_in_case_of_timeout = false;
 	bool use_volume_relativizer = false;
 	bool use_dynamic_relativizer = false;
 	std::optional<ParallelDemandOracle<NUM_DEMAND_WORKERS>> oracle;
-
-	//TatonnementControlParameters() : oracle(std::nullopt) {}
 
 	TatonnementControlParameters(size_t num_assets, size_t num_work_units)
 		: oracle(std::make_optional<ParallelDemandOracle<NUM_DEMAND_WORKERS>>(num_work_units, num_assets)) {}
@@ -165,12 +179,6 @@ class TatonnementOracle {
 		uint16_t* relativizers);
 
 	void clear_supply_demand_workspaces(uint128_t* supplies, uint128_t* demands);
-	//void get_supply_demand(
-	//	Price* active_prices,
-	//	uint128_t* supplies, 
-	//	uint128_t* demands, 
-	//	std::vector<Orderbook>& work_units,
-	//	const uint8_t smooth_mult);
 
 	//! Create Tatonnement threads.
 	void start_tatonnement_threads();
@@ -187,10 +195,6 @@ class TatonnementOracle {
 
 	//! Run one Tatonnement query with a given set of control params.
 	//! return true if this thread is the first to find successful equilibrium
-//	bool grid_search_tatonnement_query(
-//		TatonnementControlParameters& control_params, 
-//		Price* prices_workspace, 
-//		std::unique_ptr<LPInstance>& lp_instance);
 	bool better_grid_search_tatonnement_query(
 		TatonnementControlParameters& control_params, 
 		Price* prices_workspace, 
@@ -253,9 +257,5 @@ public:
 		uint32_t num_milliseconds, 
 		std::atomic<bool>& timeout_happened_flag, 
 		std::atomic<bool>& cancel_timeout_flag);
-
-	//TatonnementMeasurements
-	//compute_prices(Price* prices_workspace, const ApproximationParameters approx_params);
-
 };
 }
