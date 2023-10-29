@@ -45,3 +45,39 @@ This must be installed before building SPEEDEX.
 
 `make test` builds the tests.
 
+# Running Experiments
+
+`blockstm_comparison` runs the payment experiments comparing SPEEDEX to Block-STM (https://arxiv.org/abs/2203.06871),
+as in Figure 7 of our paper.
+
+Let `X<=65535` be a a reasonable upper bound on the number of transactions per account in one block (i.e., for a
+block with 2 accounts and 100'000 accounts per block, use to 65'535)
+The binary should be built after running 
+`./configure -D_MAX_SEQ_NUMS_PER_BLOCK=X -D_DISABLE_PRICE_COMPUTATION -D_DISABLE_TATONNEMENT_TIMEOUT -D_NUM_ACCOUNT_DB_SHARDS=1`
+
+The binary will print its own configuration data before running.
+Figure 7 was produced with the following configuration.
+
+```
+========== trie configs ==========
+TRIE_LOG_HASH_RECORDS         = 0
+========== static configs ==========
+USE_TATONNEMENT_TIMEOUT_THREAD = 0
+DISABLE_PRICE_COMPUTATION      = 1
+DISABLE_LMDB                   = 0
+DETAILED_MOD_LOGGING           = 1
+PREALLOC_BLOCK_FILES           = 1
+ACCOUNT_DB_SYNC_IMMEDIATELY    = 0
+MAX_SEQ_NUMS_PER_BLOCK         = 60000
+LOG_TRANSFERS                  = 0
+NUM_ACCOUNT_DB_SHARDS          = 1
+====================================
+initialized sodium
+```
+
+
+
+
+
+
+
