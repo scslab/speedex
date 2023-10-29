@@ -125,10 +125,10 @@ SIMPLEX_SRCS = \
 	simplex/sparse.cc
 
 SIMPLEX_TEST_SRCS = \
-	simplex/tests/test_bitcompressed_row.h \
-	simplex/tests/test_feasibility_solver.h \
-	simplex/tests/test_simplex.h \
-	simplex/tests/test_tableau.h
+	simplex/tests/test_bitcompressed_row.cc \
+	simplex/tests/test_feasibility_solver.cc \
+	simplex/tests/test_simplex.cc \
+	simplex/tests/test_tableau.cc
 
 SPEEDEX_SRCS = \
 	speedex/autorollback_validation_structures.cc \
@@ -235,6 +235,7 @@ CATCH_TEST_CCS = \
 	$(MODLOG_TEST_SRCS) \
 	$(ORDERBOOK_TEST_SRCS) \
 	$(PRICE_COMPUTATION_TEST_SRCS) \
+	$(SIMPLEX_TEST_SRCS) \
 	$(TEST_UTILS_SRCS) \
 	$(mtt_TEST_CCS) \
 	$(hotstuff_TEST_CCS)
@@ -249,10 +250,7 @@ $(GENERIC_CCS:.cc=.o) : $(XH_FILES)
 $(CATCH_TEST_CCS:.cc=.o) : $(XH_FILES)
 
 TEST_SRCS = \
-	$(SIMPLEX_TEST_SRCS)
-
-test_runner.cc : $(TEST_SRCS) $(XHFILES)
-	cxxtestgen --error-printer -o test_runner.cc $(TEST_SRCS)
+	$(SIMPLEX_CXXTEST_SRCS)
 
 bin_PROGRAMS = \
 	blockstm_comparison \
@@ -272,8 +270,7 @@ bin_PROGRAMS = \
 	tatonnement_experiment_data_gen \
 	tatonnement_mega_graph \
 	trie_comparison \
-	test \
-	ctest
+	test
 
 blockstm_comparison_SOURCES = $(SRCS) main/blockstm_comparison.cc
 blockstm_vm_hotstuff_SOURCES = $(SRCS) main/blockstm_vm_hotstuff.cc
@@ -293,10 +290,9 @@ tatonnement_experiment_data_gen_SOURCES = $(SRCS) main/tatonnement_experiment_da
 tatonnement_mega_graph_SOURCES = $(SRCS) main/tatonnement_mega_graph.cc
 trie_comparison_SOURCES = $(SRCS) main/trie_comparison.cc
 
-test_SOURCES = $(SRCS) test_runner.cc
-ctest_SOURCES = $(SRCS) $(CATCH_TEST_CCS) main/test.cc
+test_SOURCES = $(SRCS) $(CATCH_TEST_CCS) main/test.cc
 
-ctest_LDADD = $(LDADD) $(Catch2_LIBS)
+test_LDADD = $(LDADD) $(Catch2_LIBS)
 
 #building x files
 $(XH_FILES) : $(XDRC)
