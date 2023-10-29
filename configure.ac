@@ -69,7 +69,7 @@ export CXXFLAGS
 
 dnl AC_CONFIG_SUBDIRS([xdrpp])
 
-AX_PKGCONFIG_SUBDIR(lib/utility)
+dnl AX_PKGCONFIG_SUBDIR(lib/utility)
 
 AX_PKGCONFIG_SUBDIR(lib/xdrpp)
 AC_MSG_CHECKING(for xdrc)
@@ -88,9 +88,6 @@ ABS_TOP_SRCDIR=$ac_pwd
 export ABS_TOP_BUILDDIR
 export ABS_TOP_SRCDIR
 
-AX_PKGCONFIG_SUBDIR(lib/hotstuff)
-AX_PKGCONFIG_SUBDIR(lib/merkle_trie_toolkit)
-
 export xdrpp_INTERNAL
 
 global_XDRC=$XDRC
@@ -99,9 +96,12 @@ export global_XDRC
 export xdrpp_CFLAGS
 export xdrpp_LIBS
 
-export utility_INTERNAL
-export utility_CFLAGS
-export utility_LIBS
+dnl export utility_INTERNAL
+dnl export utility_CFLAGS
+dnl export utility_LIBS
+
+dnl AX_PKGCONFIG_SUBDIR(lib/hotstuff)
+dnl AX_PKGCONFIG_SUBDIR(lib/merkle_trie_toolkit)
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])

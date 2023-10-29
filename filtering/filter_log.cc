@@ -46,10 +46,10 @@ FilterLog::add_txs(std::vector<SignedTransaction> const& txs,
 
     entries.template batch_merge_in<AccountFilterMergeFn>(cache);
 
-    auto validate_lambda = [&db, this](AccountFilterEntry& entry) {
+    auto const validate_lambda = [&db, this](AccountFilterEntry& entry) {
         entry.compute_validity(db, accounts);
     };
-    entries.parallel_apply(validate_lambda);
+    entries.parallel_apply<decltype(validate_lambda), 1000>(validate_lambda);
 }
 
 FilterResult

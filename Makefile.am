@@ -2,6 +2,10 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = $(PKGCONFIG_SUBDIRS)
 
+include $(srcdir)/lib/merkle_trie_toolkit/Makefile.am.fragment
+include $(srcdir)/lib/utility/Makefile.am.fragment
+include $(srcdir)/lib/hotstuff/Makefile.am.fragment
+
 CLEANFILES = *~ .*~
 
 X_FILES = \
@@ -13,7 +17,8 @@ X_FILES = \
 	xdr/consensus_api.x \
 	xdr/cryptocoin_experiment.x \
 	xdr/experiments.x \
-	xdr/overlay.x
+	xdr/overlay.x \
+	$(hotstuff_X_FILES)
 
 XH_FILES = $(X_FILES:.x=.h)
 
@@ -168,7 +173,9 @@ SRCS = \
 	$(SIMPLEX_SRCS) \
 	$(SPEEDEX_SRCS) \
 	$(SYNTHETIC_DATA_GEN_SRCS) \
-	$(UTILS_SRCS)
+	$(UTILS_SRCS) \
+	$(hotstuff_CCS) \
+	$(utility_CCS)
 
 GENERIC_CCS = \
 	generic/counting_vm.cc
@@ -202,7 +209,7 @@ AM_CPPFLAGS = \
 	$(tbb_CFLAGS) \
 	$(lmdb_CFLAGS) \
 	$(lemon_CFLAGS) \
-	$(merkle_trie_toolkit_CFLAGS) \
+	$(mtt_CFLAGS) \
 	$(hotstuff_CFLAGS) \
 	$(utility_CFLAGS)
 
@@ -215,7 +222,7 @@ LDADD = \
 	$(tbb_LIBS) \
 	$(lmdb_LIBS) \
 	$(lemon_LIBS) \
-	$(merkle_trie_toolkit_LIBS) \
+	$(mtt_LIBS) \
 	$(hotstuff_LIBS) \
 	$(utility_LIBS) \
 	-lglpk
@@ -228,7 +235,9 @@ CATCH_TEST_CCS = \
 	$(MODLOG_TEST_SRCS) \
 	$(ORDERBOOK_TEST_SRCS) \
 	$(PRICE_COMPUTATION_TEST_SRCS) \
-	$(TEST_UTILS_SRCS)
+	$(TEST_UTILS_SRCS) \
+	$(mtt_TEST_CCS) \
+	$(hotstuff_TEST_CCS)
 
 
 $(CATCH_TEST_SRCS:.cc=.o) : CXXFLAGS += $(Catch2_CFLAGS)

@@ -33,7 +33,7 @@ millions of blocks.
 
 #include <mtt/trie/merkle_trie.h>
 #include <mtt/trie/metadata.h>
-#include <mtt/trie/prefix.h>
+#include <mtt/common/prefix.h>
 
 #include "xdr/block.h"
 #include "xdr/types.h"
@@ -85,7 +85,7 @@ class BlockHeaderHashMap
 
     using TrieT = trie::MerkleTrie<prefix_t, ValueT, MetadataT>;
 
-    static_assert(TrieT::LOCKABLE, "need locks in internal block map");
+    static_assert(TrieT::USE_LOCKS, "need locks in internal block map");
 
     TrieT block_map;
 

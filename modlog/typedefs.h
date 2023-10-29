@@ -19,7 +19,7 @@
  */
 
 #include <mtt/trie/utils.h>
-#include <mtt/trie/prefix.h>
+#include <mtt/common/prefix.h>
 
 #include "xdr/database_commitments.h"
 #include "xdr/types.h"

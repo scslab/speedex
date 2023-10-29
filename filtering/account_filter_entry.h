@@ -21,7 +21,7 @@
 #include "xdr/transaction.h"
 #include "xdr/types.h"
 
-#include "mtt/trie/prefix.h"
+#include "mtt/common/prefix.h"
 
 #include <cstdint>
 #include <map>

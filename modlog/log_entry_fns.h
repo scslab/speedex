@@ -28,7 +28,7 @@ and called on trie values.
 
 #include <cstdint>
 
-#include "mtt/trie/prefix.h"
+#include "mtt/common/prefix.h"
 
 #include "modlog/typedefs.h"
 #include "modlog/account_modification_entry.h"

@@ -36,7 +36,7 @@
 #include "memory_database/transfer_logs.h"
 
 #include "mtt/trie/merkle_trie.h"
-#include "mtt/trie/prefix.h"
+#include "mtt/common/prefix.h"
 
 #include "xdr/database_commitments.h"
 #include "xdr/types.h"

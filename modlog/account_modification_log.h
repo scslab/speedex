@@ -121,7 +121,7 @@ public:
 	template<typename ApplyFn>
 	void parallel_iterate_over_log(ApplyFn& fn) const {
 		std::shared_lock lock(mtx);
-		modification_log.parallel_batch_value_modify(fn);
+		modification_log.parallel_batch_value_modify<ApplyFn, 1000>(fn);
 	}
 
 	//! Merge an accumulated batch of threadlocal trie modifications into
