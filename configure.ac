@@ -3,7 +3,7 @@ AM_INIT_AUTOMAKE([subdir-objects])
 AC_CONFIG_SRCDIR([configure.ac])
 AC_CONFIG_MACRO_DIR([m4])
 
-OPT_FLAGS="-march=native -O3 -flto"
+OPT_FLAGS="-march=native -O3 -flto=auto"
 DEBUG_FLAGS="-ggdb -O0"
 
 CXXFLAGS="-std=gnu++2a -fcoroutines -fwrapv $OPT_FLAGS $DEFINES"
