@@ -23,6 +23,7 @@
 #include <random>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 #include <tbb/parallel_for.h>
 #include <xdrpp/marshal.h>

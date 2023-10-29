@@ -678,10 +678,12 @@ ExperimentBlock GeneratorState<random_generator>::make_block(const std::vector<d
 
 	for (int swap_cnt = 0; swap_cnt < num_swaps; swap_cnt++) {
 		int idx_1 = idx_dist(gen);
-		int idx_2 = idx_dist(gen) + options.block_size;
+		int idx_2 = idx_dist(gen) + options.block_size; 
 
 		std::swap(block_state.tx_buffer[idx_1], block_state.tx_buffer[idx_2]);
-		std::swap(block_state.cancel_flags[idx_1], block_state.cancel_flags[idx_2]);
+		// This used to work with just regular swap(), but vector<bool> is unusual,
+		// and gcc13.{1,2} doesn't like swap() on vector<bool>
+		std::iter_swap(block_state.cancel_flags.begin() + idx_1, block_state.cancel_flags.begin() + idx_2);
 	}
 
 	auto& txs = block_state.tx_buffer;
