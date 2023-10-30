@@ -490,7 +490,9 @@ Orderbook::get_metadata(Price p) const
         DEMAND_CALC_INFO("empty work unit, outputting 0");
         return EndowAccumulator{};
     }
-    if (p > indexed_metadata[end].key) {
+
+    // should be >=, as per test case in test_demand_calc.cc
+    if (p >= indexed_metadata[end].key) {
         DEMAND_CALC_INFO("outputting end");
         DEMAND_CALC_INFO("%lu, %lu", p, indexed_metadata[end].key);
         return indexed_metadata[end].metadata;
@@ -520,7 +522,28 @@ Orderbook::get_execution_prices(Price sell_price,
                                 Price buy_price,
                                 const uint8_t smooth_mult) const
 {
-    uint8_t extra_bits_len = (64 - price::PRICE_RADIX);
+    /**
+     * The market exchange rate is sell_price / buy_price.
+     * We need to guarantee that all offers with limit prices
+     * _above_ this rate do NOT execute, and should guarantee that those with
+     * limit prices _below_ (market_rate) * (1-mu) execute fully.
+     * This means that we round _down_ the market_rate when 
+     * upper bounding supply, and round _up_ when lower bounding supply.
+     * 
+     * Note that the lower bound on price does not have to be as strict
+     * as in the upper bound case.  We round down on the subtraction
+     * (net rounding up), but this doesn't guarantee that 
+     * lower_bound_price >= sell_price / buy_price * (1-mu).
+     * It guarantees that lower_bound_price
+     * >= floor(sp / bp) - floor(floor(sp/bp) * mu).
+     * 
+     * In practice, this distinction shifts the lower bound price by at most
+     * 2^-price::PRICE_RADIX (2^-24), and so we specify our guarantees
+     * relative to this simpler-to-calculate formula.
+     */
+    constexpr uint8_t extra_bits_len = (64 - price::PRICE_RADIX);
+
+    // implicitly rounds down
     uint128_t ratio = (((uint128_t)sell_price) << 64) / buy_price;
     ratio >>= extra_bits_len;
 

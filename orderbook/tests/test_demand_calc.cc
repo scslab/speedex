@@ -47,6 +47,103 @@ void make_basic_orderbook(OrderbookManager& manager) {
 	manager.commit_for_production(1);
 }
 
+TEST_CASE("small orderbook metadata edge cases", "[orderbook]")
+{
+	OrderbookManager manager(2);
+
+	ProcessingSerialManager sm(manager);
+
+	auto const unit_idx = manager.look_up_idx(make_default_category());
+	auto& orderbooks = manager.get_orderbooks();
+
+	SECTION("no orders")
+	{
+		sm.finish_merge();
+		manager.commit_for_production(1);
+
+		SECTION("lookup valid price")
+		{
+			auto meta = orderbooks[unit_idx].get_metadata(10);
+
+			REQUIRE(meta.endow == 0);
+			REQUIRE(meta.endow_times_price == 0);
+		}
+
+		SECTION("lookup zero price")
+		{
+			auto meta = orderbooks[unit_idx].get_metadata(0);
+
+			REQUIRE(meta.endow == 0);
+			REQUIRE(meta.endow_times_price == 0);
+		}
+	}
+	SECTION("one order")
+	{
+
+		Offer offer;
+		offer.category = make_default_category();
+		offer.offerId = 10;
+		offer.owner = 1;
+		offer.amount = 100;
+		offer.minPrice = 500;
+
+		int x;
+		sm.add_offer(unit_idx, offer, x, x);
+
+		sm.finish_merge();
+		manager.commit_for_production(1);
+
+		SECTION("lookup zero price")
+		{
+			auto meta = orderbooks[unit_idx].get_metadata(0);
+			REQUIRE(meta.endow == 0);
+			REQUIRE(meta.endow_times_price == 0);
+		}
+
+		SECTION("lookup high price")
+		{
+			auto meta = orderbooks[unit_idx].get_metadata(1000);
+			REQUIRE(meta.endow == 100);
+			REQUIRE(meta.endow_times_price == 50000);
+		}
+
+		SECTION("lookup equal price")
+		{
+			auto meta = orderbooks[unit_idx].get_metadata(500);
+			REQUIRE(meta.endow == 100);
+			REQUIRE(meta.endow_times_price == 50000);
+		}
+	}
+	SECTION("two orders")
+	{
+		// for comparison with one order case
+
+		Offer offer;
+		offer.category = make_default_category();
+		offer.offerId = 10;
+		offer.owner = 1;
+		offer.amount = 100;
+		offer.minPrice = 500;
+
+		int x;
+		sm.add_offer(unit_idx, offer, x, x);
+
+		offer.offerId = 20;
+		offer.owner = 2;
+		offer.amount = 200;
+		offer.minPrice = 5000;
+
+		sm.add_offer(unit_idx, offer, x, x);
+
+		sm.finish_merge();
+		manager.commit_for_production(1);
+
+		auto meta = orderbooks[unit_idx].get_metadata(500);
+		REQUIRE(meta.endow == 100);
+		REQUIRE(meta.endow_times_price == 50000);
+	}
+}
+
 #define TS_ASSERT_EQUALS(x,y) REQUIRE(x == y)
 
 TEST_CASE("basic supply demand", "[orderbook]")
