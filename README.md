@@ -57,6 +57,7 @@ The binary should be built after running
 
 The binary will print its own configuration data before running.
 Figure 7 was produced with the following configuration.
+Hyperthreading was disabled.
 
 ```
 ========== trie configs ==========
