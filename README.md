@@ -76,6 +76,22 @@ NUM_ACCOUNT_DB_SHARDS          = 1
 initialized sodium
 ```
 
+Running the experiments on synthetic trading data are more complicated.
+`make synthetic_data_gen` builds a tool for generating this data.
+It requires 4 arguments: a config file (e.g. the file at `config/config_local.yaml`),
+a replica id (which replica as listed in the config file should the tool simulate)
+an experiment name, and an experiment data config (in the format of the files in `synthetic_data_config/`).
+The experiments measured in the final paper, unless otherwise specified, used the configuration
+in `synthetic_data_config/synthetic_data_params_giant_50_more_cancels.yaml`.
+
+`./synthetic_data_gen` needs the replica configuration because it generates data as one logical process,
+and then subdivides that data between replicas (by partitioning the stream of data into pieces, uniformly at random, with
+one piece to each replica).  During an experiment, replicas read input from their local subset of the data stream,
+and broadcast this data to other replicas.
+
+This process can take a _long_ time, and requires quite a lot of disk space.  I recommend substantially reducing experiment length
+(the `num_blocks` parameter) unless you need an experiment to run for a long time.
+
 
 
 
