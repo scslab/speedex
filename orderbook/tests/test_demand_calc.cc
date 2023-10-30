@@ -100,11 +100,25 @@ TEST_CASE("small orderbook metadata edge cases", "[orderbook]")
 			REQUIRE(meta.endow_times_price == 0);
 		}
 
+		SECTION("lookup below price")
+		{
+			auto meta = orderbooks[unit_idx].get_metadata(499);
+			REQUIRE(meta.endow == 0);
+			REQUIRE(meta.endow_times_price == 0);
+		}
+
+		SECTION("lookup above price")
+		{
+			auto meta = orderbooks[unit_idx].get_metadata(501);
+			REQUIRE(meta.endow == 100);
+			REQUIRE(meta.endow_times_price == 50'000);
+		}
+
 		SECTION("lookup high price")
 		{
 			auto meta = orderbooks[unit_idx].get_metadata(1000);
 			REQUIRE(meta.endow == 100);
-			REQUIRE(meta.endow_times_price == 50000);
+			REQUIRE(meta.endow_times_price == 50'000);
 		}
 
 		SECTION("lookup equal price")
