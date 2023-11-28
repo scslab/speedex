@@ -53,7 +53,9 @@ as in Figure 7 of our paper.
 Let `X<=65535` be a a reasonable upper bound on the number of transactions per account in one block (i.e., for a
 block with 2 accounts and 100'000 accounts per block, use to 65'535)
 The binary should be built after running 
-`./configure -D_MAX_SEQ_NUMS_PER_BLOCK=X -D_DISABLE_PRICE_COMPUTATION -D_DISABLE_TATONNEMENT_TIMEOUT -D_NUM_ACCOUNT_DB_SHARDS=1`
+`./configure DEFINES="-D_MAX_SEQ_NUMS_PER_BLOCK=X -D_DISABLE_PRICE_COMPUTATION -D_DISABLE_TATONNEMENT_TIMEOUT -D_NUM_ACCOUNT_DB_SHARDS=1"`
+
+Add in `-D_DISABLE_LMDB` to turn off disk logging.
 
 The binary will print its own configuration data before running.
 Figure 7 was produced with the following configuration.
