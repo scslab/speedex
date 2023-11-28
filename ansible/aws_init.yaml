@@ -2,12 +2,12 @@
 - name: aws init
   hosts: all
   tasks:
-#          - name: mdadm
-#           shell: "sudo mdadm -C /dev/md127 -l 0 -n 4 /dev/nvme1n1 /dev/nvme2n1 /dev/nvme3n1 /dev/nvme4n1"
+          - name: mdadm
+            shell: "sudo mdadm -C /dev/md127 -l 0 -n 2 /dev/nvme1n1 /dev/nvme2n1 " #/dev/nvme3n1 /dev/nvme4n1"
           - name: mkdir
             shell: "mkdir -p xfs"
-#         - name: mkfs
-#           shell: "sudo mkfs.xfs /dev/md127 -f && sudo mount /dev/md127 xfs -o discard"
+          - name: mkfs
+            shell: "sudo mkfs.xfs /dev/md127 -f && sudo mount /dev/md127 xfs -o discard"
           - name: chmod
             shell: "sudo chmod -R 0777 xfs"
           - name: clone
@@ -38,6 +38,37 @@
   tasks:
           - name: set node name
             shell: "cd xfs/speedex && echo \"node-3\n\" > automation/replica"
+
+- name: init host 4
+  hosts: host4
+  tasks:
+          - name: set node name
+            shell: "cd xfs/speedex && echo \"node-4\n\" > automation/replica"
+- name: init host 5
+  hosts: host5
+  tasks:
+          - name: set node name
+            shell: "cd xfs/speedex && echo \"node-5\n\" > automation/replica"
+- name: init host 6
+  hosts: host6
+  tasks:
+          - name: set node name
+            shell: "cd xfs/speedex && echo \"node-6\n\" > automation/replica"
+- name: init host 7
+  hosts: host7
+  tasks:
+          - name: set node name
+            shell: "cd xfs/speedex && echo \"node-7\n\" > automation/replica"
+- name: init host 8
+  hosts: host8
+  tasks:
+          - name: set node name
+            shell: "cd xfs/speedex && echo \"node-8\n\" > automation/replica"
+- name: init host 9
+  hosts: host9
+  tasks:
+          - name: set node name
+            shell: "cd xfs/speedex && echo \"node-9\n\" > automation/replica"
 
 - name: set configs
   import_playbook: set_config_aws.yaml
