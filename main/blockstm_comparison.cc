@@ -49,8 +49,8 @@ static const struct option opts[] = {
 std::vector<double>
 run_blockstm_experiment(const uint32_t num_accounts, const uint32_t batch_size, const uint32_t num_threads);
 
-constexpr static size_t NUM_ROUNDS = 100;
-constexpr static size_t WARMUP = 2;
+constexpr static size_t NUM_ROUNDS = 20;
+constexpr static size_t WARMUP = 5;
 
 int main(int argc, char* const* argv)
 {
@@ -64,13 +64,19 @@ int main(int argc, char* const* argv)
 		throw std::runtime_error("why do you have price comp on here");
 	}
 
-	std::vector<uint32_t> thread_counts = {1, 2, 4, 8, 16, 24, 32, 48};
+	std::vector<uint32_t> thread_counts = {1, 2, 4, 8, 16, 32, 64, 96};
 
 	std::vector<uint32_t> num_accounts = {2, 10, 100, 1000, 10000};
+	std::vector<uint32_t> long_accounts = {100'000, 1'000'000, 10'000'000};
 
 	std::vector<uint32_t> batch_sizes = {100, 1000, 10'000, 100'000};
 
 	std::vector<std::tuple<uint32_t, uint32_t, uint32_t, double>> results;
+
+	bool short_stuff = false;
+	bool long_stuff = true;
+	if (short_stuff)
+	{
 
 	for (auto acc : num_accounts)
 	{
@@ -94,6 +100,27 @@ int main(int argc, char* const* argv)
 					avg += res[i];
 				}
 				results.push_back({acc, batch, n, avg/NUM_ROUNDS});
+			}
+		}
+	}
+	}
+	if (long_stuff) {
+		for (auto acc : long_accounts)
+		{
+			for (auto n : thread_counts)
+			{
+				std::printf("n_acc %" PRIu32 " threads %u\n", acc, n);
+				auto res = run_blockstm_experiment(acc, 100'000, n);
+				if (res.size() != NUM_ROUNDS + WARMUP)
+				{
+					throw std::runtime_error("invalid size return");
+				}
+				double avg = 0;
+				for (auto i = WARMUP; i < NUM_ROUNDS + WARMUP; i++)
+				{
+					avg += res[i];
+				}
+				results.push_back({acc, 100'000, n, avg/NUM_ROUNDS});
 			}
 		}
 	}
