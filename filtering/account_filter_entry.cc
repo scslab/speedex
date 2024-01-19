@@ -48,23 +48,29 @@ AccountFilterEntry::assert_initialized() const
 void
 AccountFilterEntry::add_req(AssetID const& asset, int64_t amount)
 {
-	//std::printf("add req %u amt %ld\n", asset, amount);
     if (amount < 0)
     {
-   // 	std::printf("negative\n");
+        // negative required amount, nothing to do
         return;
     }
 
     if (found_error())
     {
-    //	std::printf("found error, quick exit\n");
+        // found error, quick exit
         return;
     }
 
-    if (__builtin_add_overflow_p(
-            amount, required_assets[asset], static_cast<int64_t>(0)))
-    {
-    //	std::printf("got overflow\n");
+    #if __has_builtin(__builtin_add_overflow_p)
+        if (__builtin_add_overflow_p(
+                amount, required_assets[asset], static_cast<int64_t>(0)))
+        {
+    #else
+        int64_t temp = 0;
+        if (__builtin_add_overflow(amount, required_assets[asset], &temp))
+        {
+    #endif 
+    
+        // overflow max requirement
         required_assets[asset] = INT64_MAX;
 	    log_overflow_req();
         return;
