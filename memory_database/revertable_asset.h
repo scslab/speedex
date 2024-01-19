@@ -145,10 +145,20 @@ public:
 		while (true) {
 			amount_t current_available
 				= available.load(std::memory_order_relaxed);
-			if (__builtin_add_overflow_p(current_available, amount, static_cast<amount_t>(0)))
-			{
-				return false;
-			}
+			
+			#if __has_builtin(__builtin_add_overflow_p)
+				if (__builtin_add_overflow_p(current_available, amount, static_cast<amount_t>(0)))
+				{
+					return false;
+				}
+			#else
+				amount_t temp = 0;
+				if (__builtin_add_overflow(current_available, amount, &temp))
+				{
+					return false;
+				}
+			#endif
+
 			amount_t tentative_available = current_available + amount;
 			if (tentative_available < 0) {
 				return false;
