@@ -202,7 +202,6 @@ MAIN_CCS = \
 
 AM_CPPFLAGS = \
 	$(libcrypto_CFLAGS) \
-	$(gsl_CFLAGS) \
 	$(xdrpp_CFLAGS) \
 	$(libsodium_CFLAGS) \
 	$(LIBFYAML_CFLAGS) \
@@ -215,7 +214,6 @@ AM_CPPFLAGS = \
 
 LDADD = \
 	$(libcrypto_LIBS) \
-	$(gsl_LIBS) \
 	$(xdrpp_LIBS) \
 	$(libsodium_LIBS) \
 	$(LIBFYAML_LIBS) \

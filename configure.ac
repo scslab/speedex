@@ -18,7 +18,6 @@ AS_IF([test -z "${WFLAGS+set}"], AX_APPEND_COMPILE_FLAGS([-Wall], WFLAGS))
 CXXFLAGS="$CXXFLAGS $WFLAGS"
 
 PKG_PROG_PKG_CONFIG
-PKG_CHECK_MODULES([gsl], [gsl])
 PKG_CHECK_MODULES([libsodium], [libsodium])
 PKG_CHECK_MODULES([lmdb], [lmdb])
 PKG_CHECK_MODULES([tbb], [tbb])

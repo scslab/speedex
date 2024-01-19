@@ -41,7 +41,7 @@ The configure script should identify any missing dependencies, *with one excepti
 SPEEDEX uses the GNU Linear Programming Kit (GLPK), which does not include a pkg-config (.pc)
 file in some (perhaps all) package managers.  The software is available at (https://www.gnu.org/software/glpk/),
 and this project works (at least) on version 5.0.
-This must be installed before building SPEEDEX.
+This must be installed before building SPEEDEX (on Ubuntu, `apt-get install libglpk-dev`).
 
 `make test` builds the tests.
 
