@@ -35,6 +35,8 @@ a previously committed state.
 #include "xdr/types.h"
 #include "xdr/database_commitments.h"
 
+#include <utils/compat.h>
+
 namespace speedex {
 
 /*!
@@ -58,7 +60,7 @@ In block validation, we can do the overflow checks ex-post
 and if an overflow happens, we just log that it happened
 and revert everything when restoring the block.
 
-Requires -fwrapv to make behavior fully defined.
+Requires -fwrapv.
 
 */
 class RevertableAsset {
@@ -170,7 +172,7 @@ public:
 			if (result) {
 				return true;
 			}
-			__builtin_ia32_pause();
+			SPINLOCK_PAUSE();
 		}	
 	}
 

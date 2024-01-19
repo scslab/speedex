@@ -29,6 +29,8 @@ Owns background threads to run these queries.
 
 #include <utils/async_worker.h>
 
+#include <utils/compat.h>
+
 using uint128_t = __uint128_t;
 
 namespace speedex {
@@ -94,7 +96,7 @@ class DemandOracleWorker : public utils::AsyncWorker {
 				sleep_flag.store(false, std::memory_order_relaxed);
 				return true;
 			}
-			__builtin_ia32_pause();
+			SPINLOCK_PAUSE();
 		}
 	}
 
@@ -177,7 +179,7 @@ public:
 				}
 				return;
 			}
-			__builtin_ia32_pause();
+			SPINLOCK_PAUSE();
 		}
 	}
 
